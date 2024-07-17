@@ -1,1 +1,8 @@
-fastapi
+fastapi==0.103.2
+httpx>=0.25.0
+uvicorn==0.23.2
+gunicorn==21.2.0
+python-multipart>=0.0.6
+opencv-python>=4.5.3
+paddleocr>=2.5
+paddlepaddle
