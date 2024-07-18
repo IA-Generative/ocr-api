@@ -1,0 +1,77 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocr-api
+  namespace: "PLACEHOLDER_FOR_NAMESPACE"
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ocr-api
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ocr-api
+      annotations:
+        redeploy-hash: "PLACEHOLDER_FOR_IMAGE_HASH"
+
+    spec:
+      containers:
+      - name: ocr-api
+        image: "PLACEHOLDER_FOR_IMAGE"
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: registry-secret
+      - name: github-regcred
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      terminationGracePeriodSeconds: 10
+---
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ocr-api-service
+spec:
+  type: ClusterIP
+  selector:
+    app: ocr-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha1
+    nginx.ingress.kubernetes.io/session-cookie-name: route
+  name: ocr-api.c0.cloud-pi-native.com
+spec:
+  ingressClassName: public
+  rules:
+  - host: ocr-api.c0.cloud-pi-native.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: ocr-api-service
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
+  tls:
+  - hosts:
+    - ocr-api.c0.cloud-pi-native.com
+    secretName: ocr-api.c0.cloud-pi-native.com-tls
