@@ -51,29 +51,38 @@ def home():
 
 @app.post("/")
 async def ocr(request: ImageRequest):
-    print()
     try:
+        formatted_result = []
         for encoded_image in request.images:
             image_data = base64.b64decode(encoded_image)
             buffer = io.BytesIO(image_data)
-            # Open the image using PIL
-            img = Image.open(buffer)
             # Convert the image to a numpy array
-            img_array = np.array(img)
-            print(img_array.shape)
+            img_array = np.array(Image.open(buffer))
+            # FORMAT OF RESULT = List of elements E found on image
+            # where E is a list containing
+            # 1. The bbox coordinates (List of [A,B] where A,B are a corner coordinates)
+            # 2. The text infos (List of [A,B] where A=Text identified and B=confidence)
             result = OCRCustom.ocr(img_array)
+
+            for element in result[0]:
+                bbox, (text, confidence) = element
+                formatted_result.append({
+                    'confidence': confidence,
+                    'text': text,
+                    'text_region': [[int(x), int(y)] for x, y in bbox]
+                })
 
         json_response = {
             'msg': 'Success',
-            'results': result,
+            'results': [formatted_result],
             'status': '200'
         }
-
 
     except Exception as e:
         json_response = {
             'msg': str(e),
-            'results': result,
+            'results': [[]],
             'status': '500'
         }
+
     return json_response
