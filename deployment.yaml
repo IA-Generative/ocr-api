@@ -57,11 +57,11 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: route
-  name: ocr-api.c0.cloud-pi-native.com
+  name: mirai-ocr-api.c0.cloud-pi-native.com
 spec:
   ingressClassName: public
   rules:
-  - host: ocr-api.c0.cloud-pi-native.com
+  - host: mirai-ocr-api.c0.cloud-pi-native.com
     http:
       paths:
       - backend:
@@ -73,5 +73,5 @@ spec:
         pathType: Prefix
   tls:
   - hosts:
-    - ocr-api.c0.cloud-pi-native.com
-    secretName: ocr-api.c0.cloud-pi-native.com-tls
+    - mirai-ocr-api.c0.cloud-pi-native.com
+    secretName: mirai-ocr-api.c0.cloud-pi-native.com-tls
