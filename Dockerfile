@@ -13,10 +13,8 @@ RUN pip --default-timeout=300 install --upgrade pip \
     && rm -r /root/.cache
 
 RUN mkdir -p /app/models/detection && mkdir -p /app/models/recognition
-ARG PADDLE_URL=https://paddleocr.bj.bcebos.com/PP-OCRv3/chinese
-ARG MODEL_VERSION=ch_PP-OCRv3
-RUN curl -o det_infer.tar ${PADDLE_URL}/${MODEL_VERSION}_det_infer.tar
-RUN curl -o rec_infer.tar ${PADDLE_URL}/${MODEL_VERSION}_rec_infer.tar
+RUN curl -o det_infer.tar https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
+RUN curl -o rec_infer.tar https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar
 RUN tar xf det_infer.tar -C /app/models/detection --strip-components=1 \
     && tar xf rec_infer.tar -C /app/models/recognition --strip-components=1
 

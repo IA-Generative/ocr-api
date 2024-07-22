@@ -35,7 +35,8 @@ OCRCustom=PaddleOCR(
     det_model_dir='/app/models/detection',
     rec_model_dir='/app/models/recognition',
     cls_model_dir='/app/models/recognition',
-    use_angle_cls=False
+    use_angle_cls=False,
+    lang="fr"
 )
 
 class ImageRequest(BaseModel):
