@@ -1,4 +1,5 @@
-import base64, io
+import base64
+import io
 from typing import List
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,8 +17,7 @@ from paddleocr import PaddleOCR
 from PIL import Image
 import numpy as np
 from pydantic import BaseModel
-
-
+import json
 
 app = FastAPI()
 
@@ -31,7 +31,7 @@ app.add_middleware(
 
 # Load OCR model in advance
 # The path of detection and recognition model must contain model and params files
-OCRCustom=PaddleOCR(
+OCRCustom = PaddleOCR(
     det_model_dir='/app/models/detection',
     rec_model_dir='/app/models/recognition',
     cls_model_dir='/app/models/recognition',
@@ -39,15 +39,14 @@ OCRCustom=PaddleOCR(
     lang="fr"
 )
 
+
 class ImageRequest(BaseModel):
     images: List[str]
-
 
 
 @app.get("/", response_class=PlainTextResponse)
 def home():
     return "API endpoint for OCR"
-
 
 
 @app.post("/")
@@ -85,5 +84,7 @@ async def ocr(request: ImageRequest):
             'results': [[]],
             'status': '500'
         }
+        raise HTTPException(status_code=500, detail=json.dumps(json_response))
+
 
     return json_response

@@ -2,10 +2,10 @@ import requests
 import base64
 import glob
 
-if len(glob.glob("test_images/*")) < 1:
+if len(glob.glob("tests/data/*")) < 1:
     raise FileNotFoundError("You must create a folder test_images and put some images in it to test the API !")
 
-for img_path in glob.glob("test_images/*"):
+for img_path in glob.glob("tests/data/*"):
     with open(img_path, "rb") as image_file:
         encoded_data = base64.b64encode(image_file.read()).decode()
 
