@@ -18,6 +18,7 @@ from PIL import Image
 import numpy as np
 from pydantic import BaseModel
 import json
+from pathlib import Path
 
 app = FastAPI()
 
@@ -31,10 +32,13 @@ app.add_middleware(
 
 # Load OCR model in advance
 # The path of detection and recognition model must contain model and params files
+
+path_model = Path(__file__).parent.absolute()  # previously in /app/models
+
 OCRCustom = PaddleOCR(
-    det_model_dir='/app/models/detection',
-    rec_model_dir='/app/models/recognition',
-    cls_model_dir='/app/models/recognition',
+    det_model_dir=str(path_model / "detection"),
+    rec_model_dir=str(path_model / "recognition"),
+    cls_model_dir=str(path_model / "recognition"),
     use_angle_cls=False,
     lang="fr"
 )
@@ -54,6 +58,7 @@ async def ocr(request: ImageRequest):
     try:
         formatted_result = []
         for encoded_image in request.images:
+            print(encoded_image)
             image_data = base64.b64decode(encoded_image)
             buffer = io.BytesIO(image_data)
             # Convert the image to a numpy array
