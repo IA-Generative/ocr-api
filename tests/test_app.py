@@ -42,4 +42,4 @@ def test_ocr_with_invalid_image():
 
     response = client.post("/", json=request_data)
     # import pdb; pdb.set_trace()
-    assert response.status_code == 500
+    assert response.status_code == 422

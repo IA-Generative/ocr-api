@@ -61,10 +61,11 @@ async def ocr(file: UploadFile = File(...), format: Optional[str] = None):
     ext = Path(file.filename).suffix.lower()
     try:
         formatted_result = []
-    
+        base64_image = None
         # Convert the image to a numpy array
         if ext in ['.jpg', '.png']:
             buffer = io.BytesIO(await file.read())
+
             img = Image.open(buffer)
             img_array = np.array(img)
 
@@ -72,8 +73,15 @@ async def ocr(file: UploadFile = File(...), format: Optional[str] = None):
             img = convert_from_bytes(await file.read())
             # new_height = 800
             # img = img.resize((int(img.width * new_height / img.height), new_height))
+            # import pdb; pdb.set_trace()
             img_array = np.array(img[0])
             # TODO: combined all page to y dimension
+
+            # Convert the image to base64 for returning in the response
+            buffered = io.BytesIO()
+            img[0].save(buffered, format="PNG")
+            base64_image = base64.b64encode(buffered.getvalue()).decode('utf-8')
+
         else:
             json_response = {
                 'msg': 'Failed',
@@ -85,8 +93,7 @@ async def ocr(file: UploadFile = File(...), format: Optional[str] = None):
         # where E is a list containing
         # 1. The bbox coordinates (List of [A,B] where A,B are a corner coordinates)
         # 2. The text infos (List of [A,B] where A=Text identified and B=confidence)
-        # import pdb; pdb.set_trace()
-
+        
         result = OCRCustom.ocr(img_array)
         for element in result[0]:
             bbox, (text, confidence) = element
@@ -95,11 +102,16 @@ async def ocr(file: UploadFile = File(...), format: Optional[str] = None):
                 'text': text,
                 'text_region': [[int(x), int(y)] for x, y in bbox]
             })
+
         json_response = {
             'msg': 'Success',
             'results': [formatted_result],
             'status': '200'
         }
+
+        # If a PDF was processed, add the base64 image to the response
+        if base64_image:
+            json_response['image_base64'] = base64_image
 
     except Exception as e:
         json_response = {
