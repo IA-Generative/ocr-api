@@ -5,7 +5,7 @@ API endpoint for testing OCR
 
 ```bash
 # with pip
-pip install -r requirements.txt^
+pip install -r requirements.txt
 
 # with docker
 docker build -t ocr-api .
@@ -18,7 +18,11 @@ uvicorn main:app --reload --host 0.0.0.0 --port 5000
 
 # with docker
 docker run --rm -p 5000:5000 -v $PWD:/app ocr-api
+
+#With docker compose 
+docker compose -f docker-compose.yaml up -d
 ```
+
 
 then open `localhost:5000`
 
@@ -38,4 +42,9 @@ res = requests.post(
 print("-------",res['msg'])
 print(res['results'])
 print("\n\n")
+```
+
+### With pytest
+```
+docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
 ```
