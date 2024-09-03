@@ -3,7 +3,7 @@ WORKDIR /app
 
 # librairies necessary for image processing
 RUN apt update && apt install -y \
-    ffmpeg libsm6 libxext6 curl \
+    ffmpeg libsm6 libxext6 curl poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # install python libraries
