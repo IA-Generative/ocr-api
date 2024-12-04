@@ -53,7 +53,7 @@ def get_health() -> HealthCheck:
 # Load OCR model in advance
 # The path of detection and recognition model must contain model and params files
 
-path_model = os.getenv("MODEL_PATH", Path(__file__).parent.absolute())  # previously in /app/models
+path_model = Path(os.getenv("MODEL_PATH", Path(__file__).parent.absolute()))  # previously in /app/models
 
 OCRCustom = PaddleOCR(
     det_model_dir=str(path_model / "detection"),
