@@ -1,5 +1,5 @@
 import base64
-import io
+import io, os
 from typing import List, Optional
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,7 +53,7 @@ def get_health() -> HealthCheck:
 # Load OCR model in advance
 # The path of detection and recognition model must contain model and params files
 
-path_model = Path(__file__).parent.absolute()  # previously in /app/models
+path_model = os.getenv("MODEL_PATH", Path(__file__).parent.absolute())  # previously in /app/models
 
 OCRCustom = PaddleOCR(
     det_model_dir=str(path_model / "detection"),
