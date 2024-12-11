@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from pathlib import Path
 from pdf2image import convert_from_bytes
 
-app = FastAPI(root_path=f"/{os.getenv('ROOT_PATH', '')}")
+app = FastAPI(root_path=f"{os.getenv('ROOT_PATH', '')}")
 
 app.add_middleware(
     CORSMiddleware,
