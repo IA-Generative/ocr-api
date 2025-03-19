@@ -29,7 +29,8 @@ async def ocr(
 
     try:
         base64_images: List[str] = []
-        formatted_result: List[List[TextBox]] = []
+
+        page_list = []
         if ext in [".jpg", ".png"]:
             pages = [Image.open(io.BytesIO(await file.read()))]
         elif ext == ".pdf":
@@ -50,13 +51,11 @@ async def ocr(
 
             if grayscale:
                 page = ImageOps.grayscale(page)
-            # TODO: Make it batches
-            formatted_result.append(ocr_model.perform_ocr(np.array(page))[0])
 
-        return dict(msg="success", results=formatted_result, status="200", images_base64=base64_images if base64_images else None, page_ids=page_ids)
+            page_list.append(page)
+            page_ids.append(i)
 
-        # if base64_images:
-        #     json_response["images_base64"] = base64_images
+        return dict(msg="success", results=ocr_model.perform_ocr(np.array(page)), status="200", images_base64=base64_images if base64_images else None, page_ids=page_ids)
 
     except Exception as e:
         raise HTTPException(
