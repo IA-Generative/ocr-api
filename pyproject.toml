@@ -1,5 +1,41 @@
+[project]
+name = "ocr-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.11",
+    "httpx==0.28.1",
+    "opencv-contrib-python-headless==4.11.0.86",
+    "opencv-python-headless==4.11.0.86",
+    "paddleocr==2.10.0",
+    "paddlepaddle==2.6.2",
+    "pdf2image==1.17.0",
+    "python-multipart==0.0.20",
+    "setuptools==77.0.1",
+    "toml==0.10.2",
+    "uvicorn==0.34.0",
+]
+
 
 [tool.pytest.ini_options]
 pythonpath = "src"
 testpaths = "tests"
 addopts = "--maxfail=2 -rf"  # exit after 2 failures, report fail info
+
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "pep440"
+version_provider = "pep621"
+update_changelog_on_bump = true
+major_version_zero = true
+[dependency-groups]
+version = [
+    "commitizen>=4.4.1",
+]
+test = [
+    "pytest>=8.3.5",
+]

@@ -3,6 +3,7 @@ version: '3.9'
 services:
   backend:
     image: ocr-api
+    build: .
     volumes:
       - ./:/app
     ports:
