@@ -2,6 +2,7 @@ import logging
 import datetime
 from fastapi import APIRouter, status
 from ..schemas.health import HealthCheck
+from .inference import ocr_model
 from .. import __version__
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,6 @@ async def get_health():
     return {
         "version": __version__,
         "up_time": up_time,
-        "extras": {"model_name": ""},
-        "dependencies": [],
+        "extras": {},
+        "dependencies": [{"paddle_version": ocr_model.__version__}],
     }

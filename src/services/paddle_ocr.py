@@ -2,7 +2,7 @@ import base64
 import io
 import os
 from typing import List
-from paddleocr import PaddleOCR
+from paddleocr import PaddleOCR, __version__
 import numpy as np
 from pathlib import Path
 from ..schemas.inference import TextBox
@@ -22,7 +22,7 @@ class OCRCustom:
 
     @property
     def __version__(self):
-        return
+        return __version__
     # Helper function: Perform OCR and format result
 
     def perform_ocr(self, img_array: np.ndarray) -> List[List[TextBox]]:
