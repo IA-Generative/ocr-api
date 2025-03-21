@@ -1,7 +1,7 @@
 import logging
 import datetime
 from fastapi import APIRouter, status
-from ..schemas.health import HealthCheck
+from ..schemas.health import Health
 from .inference import ocr_model
 from .. import __version__
 
@@ -12,11 +12,14 @@ router = APIRouter()
 up_time = datetime.datetime.now().isoformat()
 
 
-@router.get("/", tags=["healthcheck"],
-            summary="Perform a Health Check",
-            response_description="Return HTTP Status Code 200 (OK)",
-            status_code=status.HTTP_200_OK,
-            response_model=HealthCheck,)
+@router.get(
+    "/",
+    tags=["healthcheck"],
+    summary="Perform a Health Check",
+    response_description="Return HTTP Status Code 200 (OK)",
+    status_code=status.HTTP_200_OK,
+    response_model=Health,
+)
 async def get_health():
     """
     ## Perform a Health Check
@@ -28,9 +31,17 @@ async def get_health():
         HealthCheck: Returns a JSON response with the health status
     """
 
-    return {
-        "version": __version__,
-        "up_time": up_time,
-        "extras": {},
-        "dependencies": [{"paddle_version": ocr_model.__version__}],
-    }
+    return Health(
+        name="ocr",
+        version=__version__,
+        up_time=up_time,
+        status="healthy",
+        dependencies=[
+            Health(
+                name="paddle_ocr",
+                version=ocr_model.__version__,
+                up_time=up_time,
+                status="healthy",
+            )
+        ],
+    )
