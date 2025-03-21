@@ -8,15 +8,15 @@ import numpy as np
 from pathlib import Path
 from pdf2image import convert_from_bytes
 from ..schemas.box import Box
-from ..schemas.inference import PaddleOCRResult, TextBox
+from ..schemas.inference import PaddleOCRResult
 from ..services.paddle_ocr import OCRCustom, image_to_base64
 
-router = APIRouter()
+router = APIRouter(tags=["OCR - Paddle"])
 
 ocr_model = OCRCustom()
 
 
-@router.post("/")
+@router.post("/", response_model=PaddleOCRResult)
 async def ocr(
     file: UploadFile = File(...),
     format: Optional[str] = None,
@@ -36,15 +36,13 @@ async def ocr(
         elif ext == ".pdf":
             pages = convert_from_bytes(await file.read())
         else:
-            raise HTTPException(
-                status_code=400, detail=f"{ext} Unsupported file type")
+            raise HTTPException(status_code=400, detail=f"{ext} Unsupported file type")
 
         for i, page in enumerate(pages):
             width, height = page.size
             # import pdb; pdb.set_trace()
             if max_height and int(height) > max_height:
-                page = page.resize(
-                    (int(width * max_height / height), max_height))
+                page = page.resize((int(width * max_height / height), max_height))
 
             if return_image:
                 base64_images.append(image_to_base64(page))
@@ -54,12 +52,18 @@ async def ocr(
 
             page_list.append(page)
             page_ids.append(i)
+        results = ocr_model.perform_ocr(np.array(page))
 
-        return dict(msg="success", results=ocr_model.perform_ocr(np.array(page)), status="200", images_base64=base64_images if base64_images else None, page_ids=page_ids)
+        return PaddleOCRResult(
+            msg="success",
+            results=results,
+            status="200",
+            images_base64=base64_images if base64_images else None,
+            page_ids=page_ids,
+        )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Internal server error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
 @router.post("/read")
