@@ -1,10 +1,17 @@
-from typing import Dict, Any, List
+from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel
 
 
-class HealthCheck(BaseModel):
-    """Response model to validate and return when performing a health check."""
+class HealthError(BaseModel):
+    name: str
+    error: str
+    code_status: int
+
+
+class Health(BaseModel):
+    name: str
     version: str
     up_time: str
-    extras: Dict[str, Any]
-    dependencies: List[Any]
+    extras: Optional[Dict[str, Any]] = None
+    status: Optional[str] = None
+    dependencies: Optional[List[Union["Health", HealthError]]] = None
