@@ -10,6 +10,6 @@ class TextBox(BaseModel):
 
 class PaddleOCRResult(BaseModel):
     msg: str
-    results: List[TextBox]
+    results: List[List[TextBox]]
     status: str
     images_base64: Optional[List[str]] = None

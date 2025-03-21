@@ -12,6 +12,8 @@ path_model = Path(os.getenv("MODEL_PATH", Path(__file__).parent.absolute()))
 
 class OCRCustom:
     def __init__(self, model_dir: Path = path_model):
+        if not model_dir.exists():
+            raise FileNotFoundError(f"{model_dir} not found")
         self.ocr_model = PaddleOCR(
             det_model_dir=str(model_dir / "detection"),
             rec_model_dir=str(model_dir / "recognition"),
@@ -23,6 +25,7 @@ class OCRCustom:
     @property
     def __version__(self):
         return __version__
+
     # Helper function: Perform OCR and format result
 
     def perform_ocr(self, img_array: np.ndarray) -> List[List[TextBox]]:
@@ -32,8 +35,13 @@ class OCRCustom:
             tmp_result = []
             if result:
                 for bbox, (text, confidence) in result:
-                    tmp_result.append(dict(confidence=round(
-                        confidence, 2), text=text, text_region=[[int(x), int(y)] for x, y in bbox]))
+                    tmp_result.append(
+                        TextBox(
+                            confidence=round(confidence, 2),
+                            text=text,
+                            text_region=[[int(x), int(y)] for x, y in bbox],
+                        )
+                    )
 
                 final_result.append(tmp_result)
 
