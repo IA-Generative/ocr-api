@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers.health import router as heatlh_router
 from .routers.inference import router as paddle_ocr_router
+from . import __version__
 
-
-app = FastAPI(root_path=f"{os.getenv('ROOT_PATH', '')}")
+app = FastAPI(title="OCR", version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
