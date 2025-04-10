@@ -48,3 +48,12 @@ print("\n\n")
 ```
 docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
 ```
+
+## Test api 
+```bash
+curl -X 'POST' \
+  'http://localhost:5000/?grayscale=false&return_image=false' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@VVM.pdf;type=application/pdf'
+```

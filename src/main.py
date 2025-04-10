@@ -1,16 +1,19 @@
 import base64
-import io, os
+import os
+import io
+import time 
 from typing import List, Optional
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from fastapi import File, HTTPException, UploadFile
-from paddleocr import PaddleOCR
 from PIL import Image, ImageOps
 import numpy as np
 from pydantic import BaseModel
 from pathlib import Path
 from pdf2image import convert_from_bytes
+from .logger import logger
+from .models.paddle import perform_ocr_async
 
 app = FastAPI(root_path=f"{os.getenv('ROOT_PATH', '')}")
 
@@ -53,16 +56,6 @@ def get_health() -> HealthCheck:
 # Load OCR model in advance
 # The path of detection and recognition model must contain model and params files
 
-path_model = Path(os.getenv("MODEL_PATH", Path(__file__).parent.absolute()))  # previously in /app/models
-
-OCRCustom = PaddleOCR(
-    det_model_dir=str(path_model / "detection"),
-    rec_model_dir=str(path_model / "recognition"),
-    cls_model_dir=str(path_model / "recognition"),
-    use_angle_cls=False,
-    lang="fr",
-)
-
 
 class Box(BaseModel):
     text: str
@@ -73,23 +66,6 @@ class Box(BaseModel):
 @app.get("/", response_class=PlainTextResponse)
 def home():
     return "API endpoint for OCR"
-
-
-# Helper function: Perform OCR and format result
-def perform_ocr(img_array):
-    result = OCRCustom.ocr(img_array)
-    return (
-        [
-            {
-                "confidence": round(confidence, 2),
-                "text": text,
-                "text_region": [[int(x), int(y)] for x, y in bbox],
-            }
-            for bbox, (text, confidence) in result[0]
-        ]
-        if result != [None]
-        else []
-    )
 
 
 # Helper function: Convert image to base64
@@ -108,17 +84,21 @@ async def ocr(
     return_image: Optional[bool] = True,
 ):
     ext = Path(file.filename).suffix.lower()
-    print(file.filename)
+    logger.debug(file.filename)
+    t = time.time()
     try:
         base64_images, formatted_result = [], []
         if ext in [".jpg", ".png"]:
             pages = [Image.open(io.BytesIO(await file.read()))]
         elif ext == ".pdf":
+            t_convert = time.time()
             pages = convert_from_bytes(await file.read())
+            t_convert = time.time()-t_convert
+            logger.debug(f"{file.filename} convert to image nb pages {len(pages)} into {t_convert}")
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
-        for page in pages:
+        for i, page in enumerate(pages):
             width, height = page.size
             # import pdb; pdb.set_trace()
             if max_height and int(height) > max_height:
@@ -130,7 +110,10 @@ async def ocr(
             if grayscale:
                 page = ImageOps.grayscale(page)
 
-            formatted_result.append(perform_ocr(np.array(page)))
+            t_predict = time.time()
+            partial_result = await perform_ocr_async(np.array(page))
+            formatted_result.append(partial_result)
+            logger.debug(f"{file.filename} time to process page {i+1} - {time.time() - t_predict}s")
 
         json_response = {"msg": "Success", "results": formatted_result, "status": "200"}
 
@@ -138,7 +121,9 @@ async def ocr(
             json_response["images_base64"] = base64_images
 
     except Exception as e:
+        logger.error(str(e))
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+    logger.debug(f"{file.filename} - processed in {time.time() - t}")
     return json_response
 
 
