@@ -1,0 +1,386 @@
+[
+  {
+    "confidence": 0.9714754223823547,
+    "text": "REPUBLIQUE FRANCAISE",
+    "text_region": [
+      318.0,
+      33.0,
+      1008.0,
+      35.0,
+      1008.0,
+      77.0,
+      318.0,
+      75.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9963386058807373,
+    "text": "FR",
+    "text_region": [
+      1112.0,
+      52.0,
+      1178.0,
+      52.0,
+      1178.0,
+      88.0,
+      1112.0,
+      88.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9520987272262573,
+    "text": "CARTE NATIONALE D'IDENTITE/IDENTITY CARD",
+    "text_region": [
+      318.0,
+      88.0,
+      1011.0,
+      88.0,
+      1011.0,
+      116.0,
+      318.0,
+      116.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9820149540901184,
+    "text": "NOM/Sumame",
+    "text_region": [
+      554.0,
+      120.0,
+      686.0,
+      123.0,
+      686.0,
+      148.0,
+      554.0,
+      145.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9978523850440979,
+    "text": "MARTIN",
+    "text_region": [
+      554.0,
+      146.0,
+      740.0,
+      146.0,
+      740.0,
+      184.0,
+      554.0,
+      184.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9958661794662476,
+    "text": "SPECIMEN",
+    "text_region": [
+      1046.0,
+      141.0,
+      1254.0,
+      141.0,
+      1254.0,
+      180.0,
+      1046.0,
+      180.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.7399246692657471,
+    "text": "SMETROHSO",
+    "text_region": [
+      41.0,
+      176.0,
+      60.0,
+      176.0,
+      60.0,
+      301.0,
+      41.0,
+      301.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9824654459953308,
+    "text": "Prenoms/Givennames",
+    "text_region": [
+      554.0,
+      230.0,
+      748.0,
+      232.0,
+      748.0,
+      257.0,
+      554.0,
+      255.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9522423148155212,
+    "text": "Maelis-Gaelle,Marie",
+    "text_region": [
+      556.0,
+      261.0,
+      937.0,
+      262.0,
+      936.0,
+      292.0,
+      555.0,
+      290.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9565131068229675,
+    "text": "SEXE/SexNATIONALITE/Nationality",
+    "text_region": [
+      553.0,
+      336.0,
+      931.0,
+      338.0,
+      931.0,
+      366.0,
+      553.0,
+      364.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9073424339294434,
+    "text": "DATEDENAISS/Dateofb",
+    "text_region": [
+      973.0,
+      342.0,
+      1268.0,
+      342.0,
+      1268.0,
+      361.0,
+      973.0,
+      361.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.5409150719642639,
+    "text": "F",
+    "text_region": [
+      553.0,
+      368.0,
+      579.0,
+      368.0,
+      579.0,
+      398.0,
+      553.0,
+      398.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.8688852190971375,
+    "text": "FRA",
+    "text_region": [
+      678.0,
+      367.0,
+      755.0,
+      367.0,
+      755.0,
+      402.0,
+      678.0,
+      402.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9954978823661804,
+    "text": "13071990",
+    "text_region": [
+      973.0,
+      373.0,
+      1177.0,
+      373.0,
+      1177.0,
+      402.0,
+      973.0,
+      402.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9257699847221375,
+    "text": "LIEU DENAISSANCE/Placeof birth",
+    "text_region": [
+      554.0,
+      405.0,
+      897.0,
+      405.0,
+      897.0,
+      428.0,
+      554.0,
+      428.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9968465566635132,
+    "text": "PARIS",
+    "text_region": [
+      555.0,
+      437.0,
+      657.0,
+      437.0,
+      657.0,
+      467.0,
+      555.0,
+      467.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9344190955162048,
+    "text": "NOM D'USAGE/Altemate name",
+    "text_region": [
+      551.0,
+      471.0,
+      858.0,
+      474.0,
+      858.0,
+      502.0,
+      551.0,
+      499.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9056333899497986,
+    "text": "usage NOM D'USAGE",
+    "text_region": [
+      551.0,
+      507.0,
+      931.0,
+      502.0,
+      931.0,
+      534.0,
+      551.0,
+      539.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9155380129814148,
+    "text": "N\u00b0DU DOCUMENT/DocumentNo",
+    "text_region": [
+      551.0,
+      544.0,
+      886.0,
+      544.0,
+      886.0,
+      568.0,
+      551.0,
+      568.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9025232195854187,
+    "text": "DATE DEXPIR/Exiryda",
+    "text_region": [
+      971.0,
+      543.0,
+      1235.0,
+      547.0,
+      1234.0,
+      572.0,
+      970.0,
+      568.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9990547895431519,
+    "text": "D2H6862M2",
+    "text_region": [
+      549.0,
+      573.0,
+      892.0,
+      576.0,
+      891.0,
+      615.0,
+      548.0,
+      612.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9963701963424683,
+    "text": "11022030",
+    "text_region": [
+      973.0,
+      579.0,
+      1177.0,
+      579.0,
+      1177.0,
+      608.0,
+      973.0,
+      608.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9642108082771301,
+    "text": "Signature",
+    "text_region": [
+      556.0,
+      624.0,
+      928.0,
+      636.0,
+      925.0,
+      722.0,
+      553.0,
+      711.0
+    ],
+    "model_version": null,
+    "extra": null
+  },
+  {
+    "confidence": 0.9231319427490234,
+    "text": "546497",
+    "text_region": [
+      969.0,
+      650.0,
+      1202.0,
+      650.0,
+      1202.0,
+      693.0,
+      969.0,
+      693.0
+    ],
+    "model_version": null,
+    "extra": null
+  }
+]

@@ -1,9 +1,110 @@
-version: '3.9'
-
 services:
-  backend:
-    image: ocr-api
-    volumes:
-      - ./:/app
+  minio:
+    image: minio/minio:latest
+    container_name: minio_dev
     ports:
-      - "5000:5000"
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  redis:
+    image: redis:latest
+    container_name: redis_dev
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  flower_ocr:
+    image: ocr-service-paddle
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+      MINIO_BUCKET_NAME: test
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_END_POINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
+    ports:
+      - "5555:5555"
+    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+
+  ocr_service:
+    deploy:
+      replicas: 1
+    command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
+    image: ocr-service-paddle
+    volumes:
+    - ./ocr_service/:/app/ocr_service/
+    - ./src/:/app/src/
+    build:
+      context: .
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_QUEUE_NAME: redis-queue
+      MINIO_BUCKET_NAME: test
+      MINIO_END_POINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
+    depends_on:
+      - redis
+      - minio
+
+  ocr_backend:
+    image: ocr-api
+    build:
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    ports:
+    - 5000:5000
+    container_name: ocr-api
+    volumes:
+    - ./ocr_backend/:/app/ocr_backend/
+    - ./src/:/app/src/
+    environment:
+      REDIS_HOST: redis
+      DEV_MODE: "true"
+      REDIS_PORT: 6379
+      CELERY_APP_NAME: default
+      MINIO_BUCKET_NAME: test
+      MINIO_END_POINT: minio3:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
+    depends_on:
+      - redis
+      - minio
+
+  db:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: example_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  minio_data:
+    driver: local
+
+  postgres_data:
+    driver: local
