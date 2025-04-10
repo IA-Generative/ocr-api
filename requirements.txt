@@ -7,3 +7,4 @@ paddleocr>=2.5
 paddlepaddle
 pytest
 pdf2image
+python-json-logger==3.3.0
