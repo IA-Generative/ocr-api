@@ -1,5 +1,76 @@
+[project]
+name = "ocr-api"
+version = "0.3.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx==0.25.0",
+    "python-json-logger==3.3.0",
+    "setuptools==78.1.0",
+    "toml>=0.10.2",
+    "minio==7.2.15",
+    "pydantic-settings==2.8.1",
+    "sqlalchemy==2.0.40",
+    "celery[redis]>=5.5.1",
+    "flower>=2.0.1",
+    "psycopg2-binary==2.9.10",
+    "boto3==1.37.36",
+]
 
-[tool.pytest.ini_options]
-pythonpath = "src"
-testpaths = "tests"
-addopts = "--maxfail=2 -rf"  # exit after 2 failures, report fail info
+[dependency-groups]
+stress-test = [
+    "locust>=2.34.1",
+]
+
+test = [
+    "httpx>=0.25.0",
+    "pytest-asyncio>=0.26.0",
+    "pytest==8.3.5",
+    "ruff>=0.11.5",
+    "pytest-cov>=6.1.1",
+    "celery[pytest]>=5.5.1",
+    "pillow>=10.4.0",
+    "requests>=2.32.3",
+]
+ocr-backend = [
+    "httpx==0.25.0",
+    "fastapi==0.111.0",
+    "uvicorn[standard]==0.34.0",
+    "python-multipart==0.0.18"
+]
+ocr-service = [
+    "torch==2.6.0",
+    "pdf2image==1.17.0",
+    "pillow==10.4.0",
+    "psutil>=7.0.0",
+    "surya-ocr==0.13.1"
+]
+ocr-service-paddle = [
+    "pdf2image==1.17.0",
+    "pillow==10.4.0",
+    "psutil>=7.0.0",
+    "paddleocr==2.10.0",
+    "paddlepaddle==3.0.0",
+]
+
+version = [
+    "commitizen>=4.6.0",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+version_scheme = "semver"
+version_provider = "uv"
+update_changelog_on_bump = true
+major_version_zero = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu", group = "ocr-service" }
+
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

@@ -1,108 +1,62 @@
-name: ci-cd-ghcr
+name: CI/CD Workflow
 
 on:
   push:
     branches:
-      - 'main'
-      - 'staging'
+      - '**'
+  pull_request:
+    branches:
+      - staging  # Cette action s'exécute sur des PR vers 'staging'
 
-    # paths:
-    #   - 'src/**'
-    #   - Dockerfile
-    #   - deployment.yaml
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  publish-docker-image:
+  # Lancer les tests sur chaque push
+  run-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make tests
+
+      - name: Stop docker container
+        run: |
+            make down-env
+
+  # Build et Push de l'image seulement sur la branche staging
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: run-tests
+    if: github.ref == 'refs/heads/staging'  # Exécuter seulement sur 'staging'
     permissions:
       contents: read
       packages: write
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Docker for GHCR login
+        uses: docker/login-action@v2
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          logout: true
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  deploy:
-    needs: publish-docker-image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up deployment context
-        id: setup
+      - name: Build and Push Docker image
         run: |
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo 'kubeconfig<<EOF' >> $GITHUB_OUTPUT
-            echo "${{ secrets.KUBE_CONFIG }}" >> $GITHUB_OUTPUT
-            echo 'EOF' >> $GITHUB_OUTPUT
-            echo "namespace=ocr" >> $GITHUB_OUTPUT
-            echo "url=mirai-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_OUTPUT
-          else
-            echo 'kubeconfig<<EOF' >> $GITHUB_OUTPUT
-            echo "${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_OUTPUT
-            echo 'EOF' >> $GITHUB_OUTPUT
-            echo "namespace=ocr-staging" >> $GITHUB_OUTPUT
-            echo "url=mirai-staging-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_OUTPUT
-          fi
-      - name: Set Kubernetes context
-        uses: azure/k8s-set-context@v3
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ steps.setup.outputs.kubeconfig }}
-
-      - name: Update deployment.yaml & deploy
-        run: |
-          IMAGE_HASH=${{ github.sha }}
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
-          IMAGE_LOWERCASE=$(echo $IMAGE | tr '[:upper:]' '[:lower:]')
-
-          sed -i "s|PLACEHOLDER_FOR_IMAGE_HASH|${IMAGE_HASH}|g" deployment.yaml
-          sed -i "s|PLACEHOLDER_FOR_IMAGE|${IMAGE_LOWERCASE}|g" deployment.yaml
-          sed -i "s|PLACEHOLDER_FOR_NAMESPACE|${{ steps.setup.outputs.namespace }}|g" deployment.yaml
-          sed -i "s|PLACEHOLDER_FOR_URL|${{ steps.setup.outputs.url }}|g" deployment.yaml
-
-          cat ./deployment.yaml
-          kubectl apply -f ./deployment.yaml -n ${{ steps.setup.outputs.namespace }}
-  # test-deployement:
-  #   needs: deploy
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Wait for the service to be ready
-  #       run: sleep 60
-
-  #     - name: Test Service Availability
-  #       run: |
-  #         URL="http://${{ github.event.repository.name }}.c0.cloud-pi-native.com"
-  #         STATUS=$(curl -s -L -o /dev/null -w '%{http_code}' $URL)
-  #         if [ $STATUS -ne 200]; then
-  #           echo "Service is not running or returned an unexpected error"
-  #           exit 1
-  #         fi
+          make docker-build
