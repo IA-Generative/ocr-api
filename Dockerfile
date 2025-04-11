@@ -13,7 +13,7 @@ ENV DET_MODEL_DIR=/app/src/detection
 ENV REC_MODEL_DIR=/app/src/recognition
 ENV DET_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
 ENV REC_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar
-
+ENV UV_CACHE_DIR=/app/.cache
 
 
 RUN mkdir -p $DET_MODEL_DIR && mkdir -p $REC_MODEL_DIR
