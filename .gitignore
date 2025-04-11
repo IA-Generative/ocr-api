@@ -2,3 +2,6 @@ __pycache__
 detection
 recognition
 *.pdf
+.venv
+*.csv
+*.tar

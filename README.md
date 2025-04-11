@@ -55,5 +55,11 @@ curl -X 'POST' \
   'http://localhost:5000/?grayscale=false&return_image=false' \
   -H 'accept: application/json' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'file=@VVM.pdf;type=application/pdf'
+  -F 'file=@2109.10282v5.pdf;type=application/pdf'
+```
+
+## Stress test 
+```bash
+uv add locust --group stress-test
+uv run locust -f stress-test.py --host http://localhost:5000   --headless -u 2 -r 10 --run-time 2m --csv results
 ```
