@@ -26,7 +26,7 @@ RUN rm rec_infer.tar det_infer.tar
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 
-RUN uv sync --no-cache && uv cache clean
+RUN uv sync --no-cache
 
 
 COPY . .
