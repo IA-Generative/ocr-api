@@ -1,11 +1,9 @@
 import base64
-import os
 import io
 import time
 from typing import List, Optional
-from fastapi import FastAPI, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
 from fastapi import File, HTTPException, UploadFile
 from PIL import Image, ImageOps
 import numpy as np
@@ -15,8 +13,10 @@ import traceback
 from pdf2image import convert_from_bytes
 from .logger import logger
 from .models.paddle import perform_ocr_async
+from .routers.health import router as health_router
+from . import __name__, __version__
 
-app = FastAPI(root_path=f"{os.getenv('ROOT_PATH', '')}")
+app = FastAPI(title=__name__, version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,46 +27,13 @@ app.add_middleware(
 )
 
 
-class HealthCheck(BaseModel):
-    """Response model to validate and return when performing a health check."""
-
-    status: str = "OK"
-
-
-@app.get(
-    "/health",
-    tags=["healthcheck"],
-    summary="Perform a Health Check",
-    response_description="Return HTTP Status Code 200 (OK)",
-    status_code=status.HTTP_200_OK,
-    response_model=HealthCheck,
-)
-def get_health() -> HealthCheck:
-    """
-    ## Perform a Health Check
-    Endpoint to perform a healthcheck on. This endpoint can primarily be used Docker
-    to ensure a robust container orchestration and management is in place. Other
-    services which rely on proper functioning of the API service will not deploy if this
-    endpoint returns any other HTTP status code except 200 (OK).
-    Returns:
-        HealthCheck: Returns a JSON response with the health status
-    """
-    return HealthCheck(status="OK")
-
-
-# Load OCR model in advance
-# The path of detection and recognition model must contain model and params files
+app.include_router(health_router, prefix="/health")
 
 
 class Box(BaseModel):
     text: str
     text_region: List[List[int]]
     confidence: float
-
-
-@app.get("/", response_class=PlainTextResponse)
-def home():
-    return "API endpoint for OCR"
 
 
 # Helper function: Convert image to base64
