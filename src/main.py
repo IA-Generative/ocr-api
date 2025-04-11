@@ -16,6 +16,5 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(health_router)
 app.include_router(inference_router)
