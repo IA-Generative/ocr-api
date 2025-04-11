@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS base
+FROM python:3.10-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
@@ -28,7 +28,8 @@ COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 
 RUN uv sync --no-cache
-
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 COPY . .
 

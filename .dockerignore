@@ -14,3 +14,13 @@ deployment.yaml
 stress-test.py
 docker-compose.yaml
 README.md
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+.env
+.git/
+.venv/
