@@ -71,8 +71,6 @@ curl -X 'POST' \
   -F 'file=@2109.10282v5.pdf;type=application/pdf'
 ```
 
----
-
 ## Test de charge (stress test)
 
 Utilisation de `locust` :
