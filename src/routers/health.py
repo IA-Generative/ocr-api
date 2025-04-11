@@ -1,11 +1,9 @@
-import logging
 import datetime
 from fastapi import APIRouter, status
 from ..schemas.health import Health
 from .. import __version__, __name__
 from fastdeploy import __version__ as fast_version
-
-logger = logging.getLogger(__name__)
+from ..logger import logger
 
 router = APIRouter()
 
@@ -13,7 +11,7 @@ up_time = datetime.datetime.now().isoformat()
 
 
 @router.get(
-    "/",
+    "/health",
     tags=["healthcheck"],
     summary="Perform a Health Check",
     response_description="Return HTTP Status Code 200 (OK)",
@@ -30,6 +28,7 @@ async def get_health():
     Returns:
         HealthCheck: Returns a JSON response with the health status
     """
+    logger.debug("health hit")
 
     return Health(
         name=__name__,
