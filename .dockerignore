@@ -8,3 +8,9 @@ recognition
 tests/
 models/
 .pytest_cache
+.git*
+Dockerfile
+deployment.yaml
+stress-test.py
+docker-compose.yaml
+README.md
