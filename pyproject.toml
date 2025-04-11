@@ -1,5 +1,25 @@
+[project]
+name = "ocr-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.111.0",
+    "opencv-python-headless>=4.5.3",
+    "fastdeploy-python==1.0.7",
+    "httpx==0.25.0",
+    "paddleocr==2.10.0",
+    "paddlepaddle==3.0.0",
+    "pdf2image==1.17.0",
+    "pytest==8.3.5",
+    "python-json-logger==3.3.0",
+    "python-multipart==0.0.6",
+    "setuptools==78.1.0",
+    "uvicorn==0.16.0",
+]
 
-[tool.pytest.ini_options]
-pythonpath = "src"
-testpaths = "tests"
-addopts = "--maxfail=2 -rf"  # exit after 2 failures, report fail info
+[dependency-groups]
+stress-test = [
+    "locust>=2.34.1",
+]

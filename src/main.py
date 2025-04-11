@@ -1,7 +1,7 @@
 import base64
 import os
 import io
-import time 
+import time
 from typing import List, Optional
 from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,7 @@ from PIL import Image, ImageOps
 import numpy as np
 from pydantic import BaseModel
 from pathlib import Path
+import traceback
 from pdf2image import convert_from_bytes
 from .logger import logger
 from .models.paddle import perform_ocr_async
@@ -86,15 +87,19 @@ async def ocr(
     ext = Path(file.filename).suffix.lower()
     logger.debug(file.filename)
     t = time.time()
+    content = await file.read()
+
     try:
         base64_images, formatted_result = [], []
         if ext in [".jpg", ".png"]:
-            pages = [Image.open(io.BytesIO(await file.read()))]
+            pages = [Image.open(io.BytesIO(content))]
         elif ext == ".pdf":
             t_convert = time.time()
-            pages = convert_from_bytes(await file.read())
-            t_convert = time.time()-t_convert
-            logger.debug(f"{file.filename} convert to image nb pages {len(pages)} into {t_convert}")
+            pages = convert_from_bytes(content)
+            t_convert = time.time() - t_convert
+            logger.debug(
+                f"{file.filename} convert to image nb pages {len(pages)} into {t_convert}"
+            )
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
@@ -109,11 +114,24 @@ async def ocr(
 
             if grayscale:
                 page = ImageOps.grayscale(page)
-
+        n = 2
+        for i in range(0, len(pages), n):
             t_predict = time.time()
-            partial_result = await perform_ocr_async(np.array(page))
-            formatted_result.append(partial_result)
-            logger.debug(f"{file.filename} time to process page {i+1} - {time.time() - t_predict}s")
+            batch = pages[i : i + n]
+
+            # Si une seule image restante, empile avec une nouvelle dimension
+            if len(batch) == 1:
+                images = np.array(batch[0])
+            else:
+                images = np.stack(batch, axis=0)
+
+            partial_result = await perform_ocr_async(images)
+            formatted_result.extend(partial_result)
+
+            page_range = f"{i+1}" if len(batch) == 1 else f"{i+1}-{i+n}"
+            logger.debug(
+                f"{file.filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
+            )
 
         json_response = {"msg": "Success", "results": formatted_result, "status": "200"}
 
@@ -121,7 +139,7 @@ async def ocr(
             json_response["images_base64"] = base64_images
 
     except Exception as e:
-        logger.error(str(e))
+        logger.error(f"{str(e)} - {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     logger.debug(f"{file.filename} - processed in {time.time() - t}")
     return json_response

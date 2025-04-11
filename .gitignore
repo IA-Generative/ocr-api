@@ -3,3 +3,5 @@ detection
 recognition
 *.pdf
 .venv
+*.csv
+*.tar

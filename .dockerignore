@@ -3,3 +3,8 @@ detection
 recognition
 *.pdf
 .venv
+*.csv
+*.tar
+tests/
+models/
+.pytest_cache
