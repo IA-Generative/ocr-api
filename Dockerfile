@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS base
+FROM python:3.10-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,6 +14,7 @@ ENV REC_MODEL_DIR=/app/src/recognition
 ENV DET_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
 ENV REC_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar
 ENV UV_CACHE_DIR=/app/.cache
+ENV FASTDEPLOY_HUB_HOME=/app/
 
 
 RUN mkdir -p $DET_MODEL_DIR && mkdir -p $REC_MODEL_DIR
@@ -28,6 +29,8 @@ COPY uv.lock /app/uv.lock
 
 RUN uv sync --no-cache
 
+ENV UV_COMPILE_BYTECODE=1 \
+    UV_LINK_MODE=copy
 
 COPY . .
 
