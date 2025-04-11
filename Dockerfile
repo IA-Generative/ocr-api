@@ -28,6 +28,7 @@ COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 
 RUN uv sync --no-cache
+
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy
 
