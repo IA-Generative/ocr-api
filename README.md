@@ -1,55 +1,68 @@
-# ocr-api
-API endpoint for testing OCR
 
-## Install
+# OCR API
 
+
+---
+
+##  Installation
+
+### Avec `uv`
 ```bash
-# with pip
-pip install -r requirements.txt
+uv sync
+```
 
-# with docker
+### Avec Docker
+```bash
 docker build -t ocr-api .
 ```
 
-## Run
+---
+
+## Lancement de l’API
+
+### En local avec Python
 ```bash
-# with python
-uvicorn main:app --reload --host 0.0.0.0 --port 5000
+uv run uvicorn main:app --reload --host 0.0.0.0 --port 5000 --workers 2
+```
 
-# with docker
+### Avec Docker
+```bash
 docker run --rm -p 5000:5000 -v $PWD:/app ocr-api
+```
 
-#With docker compose 
+### Avec Docker Compose
+```bash
 docker compose -f docker-compose.yaml up -d
 ```
 
+Accède ensuite à l'API via : [http://localhost:5000](http://localhost:5000)
 
-then open `localhost:5000`
+---
 
-## Test
-Use file `test.py` or write some code:
+## Tester l’API
+
+### Exemple avec un script Python
 ```python
 import requests
 import base64
-
 
 with open("image_test.jpg", "rb") as image_file:
     encoded_data = base64.b64encode(image_file.read()).decode()
 
 res = requests.post(
-                    url='http://localhost:5000/',
-                    json={"images": [encoded_data]}).json()
-print("-------",res['msg'])
+    url='http://localhost:5000/',
+    json={"images": [encoded_data]}
+).json()
+
+print("-------", res['msg'])
 print(res['results'])
-print("\n\n")
 ```
 
-### With pytest
-```
-docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
-```
 
-## Test api 
+---
+
+## Tester avec `curl`
+
 ```bash
 curl -X 'POST' \
   'http://localhost:5000/?grayscale=false&return_image=false' \
@@ -58,8 +71,12 @@ curl -X 'POST' \
   -F 'file=@2109.10282v5.pdf;type=application/pdf'
 ```
 
-## Stress test 
+## Test de charge (stress test)
+
+Utilisation de `locust` :
+
 ```bash
 uv add locust --group stress-test
-uv run locust -f stress-test.py --host http://localhost:5000   --headless -u 2 -r 10 --run-time 2m --csv results
+uv run locust -f stress-test.py --host http://localhost:5000 \
+  --headless -u 2 -r 10 --run-time 2m --csv results
 ```
