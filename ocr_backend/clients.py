@@ -1,5 +1,6 @@
 from src.config.fs import FileSystemSettings
 from src.config.minio import MinioSettings
+from src.config.redis import RedisSettings
 from src.connector.fs import FileSystemConnector
 from src.connector.minio_connector import MinioConnector
 from minio import Minio
@@ -7,6 +8,7 @@ from src.schemas.health import Health, HealthError
 from src import __version__
 from datetime import datetime
 import minio
+import redis
 
 health_check = []
 up_time = datetime.now().isoformat()
@@ -36,3 +38,6 @@ except Exception as e:
 
 
 health_check.append(health)
+redis_settings = RedisSettings()
+redis_client = redis.Redis(
+    host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
