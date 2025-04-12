@@ -1,5 +1,4 @@
 import json
-from uuid import uuid4
 import tempfile
 import shutil
 import os
@@ -30,8 +29,11 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             user_id, task_data.id, temp_file_path)
         logger.debug(f'Save into minio - {saved_path}')
 
+        _, extension = os.path.splitext(file.filename)
+
         task_data = task_table.update_task(task_id=task_data.id, form_data=TaskUpdateForm(
-            status="pending", extras={"file_path": saved_path}))
+            status="pending", extras={"file_path": saved_path, "raw_filename": os.path.basename(file.filename),
+                                      "content_type": file.content_type, "ext": extension}))
 
         os.remove(temp_file_path)
 
