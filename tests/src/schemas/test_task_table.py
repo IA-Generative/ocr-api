@@ -1,7 +1,4 @@
 from src.schemas.task import TaskTable, TaskForm, TaskUpdateForm
-from src.internal.db import Base, engine
-
-Base.metadata.create_all(bind=engine)
 
 
 def test_insert_new_task():
