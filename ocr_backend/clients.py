@@ -1,4 +1,4 @@
-from .config.fs import FileSystemSettings
+from src.config.fs import FileSystemSettings
 from src.connector.fs import FileSystemConnector
 
 fs_settings = FileSystemSettings()
