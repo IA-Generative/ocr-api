@@ -5,14 +5,13 @@ from src import __version__, __name__
 from fastdeploy import __version__ as fast_version
 from src.logger import logger
 
-router = APIRouter()
+router = APIRouter(tags=['Health'])
 
 up_time = datetime.datetime.now().isoformat()
 
 
 @router.get(
     "/health",
-    tags=["healthcheck"],
     summary="Perform a Health Check",
     response_description="Return HTTP Status Code 200 (OK)",
     status_code=status.HTTP_200_OK,
