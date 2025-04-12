@@ -1270,34 +1270,34 @@ source = { virtual = "." }
 dependencies = [
     { name = "httpx" },
     { name = "minio" },
-    { name = "paddleocr" },
-    { name = "paddlepaddle" },
-    { name = "pdf2image" },
     { name = "pydantic-settings" },
-    { name = "pytest" },
     { name = "python-json-logger" },
-    { name = "python-multipart" },
     { name = "redis" },
     { name = "setuptools" },
     { name = "sqlalchemy" },
     { name = "toml" },
-    { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
 ocr-backend = [
     { name = "fastapi" },
+    { name = "httpx" },
+    { name = "python-multipart" },
+    { name = "uvicorn" },
 ]
 ocr-service = [
     { name = "fastdeploy-python" },
     { name = "opencv-python-headless" },
     { name = "paddleocr" },
+    { name = "paddlepaddle" },
+    { name = "pdf2image" },
 ]
 stress-test = [
     { name = "locust" },
 ]
 test = [
     { name = "httpx" },
+    { name = "pytest" },
     { name = "pytest-asyncio" },
 ]
 
@@ -1305,30 +1305,32 @@ test = [
 requires-dist = [
     { name = "httpx", specifier = "==0.25.0" },
     { name = "minio", specifier = "==7.2.15" },
-    { name = "paddleocr", specifier = "==2.10.0" },
-    { name = "paddlepaddle", specifier = "==3.0.0" },
-    { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pydantic-settings", specifier = "==2.8.1" },
-    { name = "pytest", specifier = "==8.3.5" },
     { name = "python-json-logger", specifier = "==3.3.0" },
-    { name = "python-multipart", specifier = "==0.0.18" },
     { name = "redis", specifier = "==5.2.1" },
     { name = "setuptools", specifier = "==78.1.0" },
     { name = "sqlalchemy", specifier = "==2.0.40" },
     { name = "toml", specifier = ">=0.10.2" },
-    { name = "uvicorn", specifier = "==0.16.0" },
 ]
 
 [package.metadata.requires-dev]
-ocr-backend = [{ name = "fastapi", specifier = "==0.111.0" }]
+ocr-backend = [
+    { name = "fastapi", specifier = "==0.111.0" },
+    { name = "httpx", specifier = "==0.25.0" },
+    { name = "python-multipart", specifier = "==0.0.18" },
+    { name = "uvicorn", specifier = "==0.16.0" },
+]
 ocr-service = [
     { name = "fastdeploy-python", specifier = "==1.0.7" },
     { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
     { name = "paddleocr", specifier = "==2.10.0" },
+    { name = "paddlepaddle", specifier = "==3.0.0" },
+    { name = "pdf2image", specifier = "==1.17.0" },
 ]
 stress-test = [{ name = "locust", specifier = ">=2.34.1" }]
 test = [
     { name = "httpx", specifier = ">=0.25.0" },
+    { name = "pytest", specifier = "==8.3.5" },
     { name = "pytest-asyncio", specifier = ">=0.26.0" },
 ]
 

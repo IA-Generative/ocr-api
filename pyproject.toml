@@ -6,19 +6,13 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "httpx==0.25.0",
-    "paddleocr==2.10.0",
-    "paddlepaddle==3.0.0",
-    "pdf2image==1.17.0",
-    "pytest==8.3.5",
     "python-json-logger==3.3.0",
-    "python-multipart==0.0.18",
     "setuptools==78.1.0",
-    "uvicorn==0.16.0",
     "toml>=0.10.2",
     "minio==7.2.15",
     "redis==5.2.1",
     "pydantic-settings==2.8.1",
-    "sqlalchemy==2.0.40",
+    "sqlalchemy==2.0.40"
 ]
 
 [dependency-groups]
@@ -29,12 +23,18 @@ stress-test = [
 test = [
     "httpx>=0.25.0",
     "pytest-asyncio>=0.26.0",
+    "pytest==8.3.5",
 ]
 ocr-backend = [
+    "httpx==0.25.0",
     "fastapi==0.111.0",
+    "uvicorn==0.16.0",
+    "python-multipart==0.0.18",
 ]
 ocr-service = [
     "fastdeploy-python==1.0.7",
     "opencv-python-headless>=4.11.0.86",
     "paddleocr==2.10.0",
+    "paddlepaddle==3.0.0",
+    "pdf2image==1.17.0",
 ]

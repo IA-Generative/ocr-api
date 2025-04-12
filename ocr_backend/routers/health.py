@@ -2,7 +2,6 @@ import datetime
 from fastapi import APIRouter, status
 from src.schemas.health import Health, HealthError
 from src import __version__, __name__
-from fastdeploy import __version__ as fast_version
 from src.logger import logger
 from ..clients import health_check
 
@@ -22,12 +21,6 @@ async def get_health():
 
     logger.debug("health hit")
     dependencies = [
-        Health(
-            name="fastdeploy",
-            version=fast_version,
-            up_time=up_time,
-            status="healthy",
-        )
     ]
     dependencies.extend(health_check)
     status = "healthy"
