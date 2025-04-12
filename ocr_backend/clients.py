@@ -38,6 +38,19 @@ except Exception as e:
 
 
 health_check.append(health)
-redis_settings = RedisSettings()
-redis_client = redis.Redis(
-    host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
+try:
+    redis_settings = RedisSettings()
+    redis_client = redis.Redis(
+        host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
+
+    if redis_client.ping():
+        health = Health(name="redis", version=redis.__version__,
+                        up_time=up_time, status="healthy")
+    else:
+        health = HealthError(
+            name="redis", error="Not Reachable", code_status=500)
+
+except Exception as e:
+    health = HealthError(name="redis", error=str(e), code_status=500)
+
+health_check.append(health)
