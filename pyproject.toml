@@ -5,9 +5,6 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "fastapi>=0.111.0",
-    "opencv-python-headless>=4.5.3",
-    "fastdeploy-python==1.0.7",
     "httpx==0.25.0",
     "paddleocr==2.10.0",
     "paddlepaddle==3.0.0",
@@ -18,9 +15,26 @@ dependencies = [
     "setuptools==78.1.0",
     "uvicorn==0.16.0",
     "toml>=0.10.2",
+    "minio==7.2.15",
+    "redis==5.2.1",
+    "pydantic-settings==2.8.1",
+    "sqlalchemy==2.0.40",
 ]
 
 [dependency-groups]
 stress-test = [
     "locust>=2.34.1",
+]
+
+test = [
+    "httpx>=0.25.0",
+    "pytest-asyncio>=0.26.0",
+]
+ocr-backend = [
+    "fastapi==0.111.0",
+]
+ocr-service = [
+    "fastdeploy-python==1.0.7",
+    "opencv-python-headless>=4.11.0.86",
+    "paddleocr==2.10.0",
 ]
