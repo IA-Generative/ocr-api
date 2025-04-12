@@ -13,7 +13,7 @@ class MinioConnector(BaseFileConnector):
             self.client.make_bucket(self.bucket_name)
 
     def get_by_task_id(self, user_id: str, task_id: str) -> BytesIO:
-        object_name = f"{user_id}/{task_id}/file"
+        object_name = f"{user_id}/{task_id}"
         try:
             # Télécharger l'objet depuis Minio et retourner en tant que BytesIO
             data = self.client.get_object(self.bucket_name, object_name)
@@ -22,21 +22,21 @@ class MinioConnector(BaseFileConnector):
             return file_data
         except S3Error as e:
             raise FileNotFoundError(
-                f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id}: {e}")
+                f"{object_name} not found: {e}")
 
     def save(self, user_id: str, task_id: str, file_path: str) -> str:
         """Sauvegarde le fichier vers Minio"""
-        object_name = f"{user_id}/{task_id}/file"
+        object_name = f"{user_id}/{task_id}"
         try:
             self.client.fput_object(
-                self.bucket_name, object_name, file_path, length=-1, part_size=5 * 1024 * 1024)
+                self.bucket_name, object_name, file_path, part_size=5 * 1024 * 1024)
             return object_name
         except S3Error as e:
             raise Exception(f"Erreur lors de la sauvegarde du fichier : {e}")
 
     def delete_by_task_id(self, user_id: str, task_id: str) -> bool:
         """Supprime le fichier d'un task_id spécifique dans Minio"""
-        object_name = f"{user_id}/{task_id}/file"
+        object_name = f"{user_id}/{task_id}"
         try:
             self.client.remove_object(self.bucket_name, object_name)
             return True
