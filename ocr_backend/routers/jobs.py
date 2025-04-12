@@ -4,7 +4,7 @@ from uuid import uuid4
 import tempfile
 import shutil
 import os
-from ..clients import fs_connector
+from ..clients import minio_connector
 from src.logger import logger
 from src.schemas.task import task_table, TaskForm, TaskModel
 
@@ -21,7 +21,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             with open(temp_file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-        saved_path = fs_connector.save(user_id, task_id, temp_file_path)
+        saved_path = minio_connector.save(user_id, task_id, temp_file_path)
 
         os.remove(temp_file_path)
 
