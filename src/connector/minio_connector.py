@@ -28,7 +28,8 @@ class MinioConnector(BaseFileConnector):
         """Sauvegarde le fichier vers Minio"""
         object_name = f"{user_id}/{task_id}/file"
         try:
-            self.client.fput_object(self.bucket_name, object_name, file_path)
+            self.client.fput_object(
+                self.bucket_name, object_name, file_path, length=-1, part_size=5 * 1024 * 1024)
             return object_name
         except S3Error as e:
             raise Exception(f"Erreur lors de la sauvegarde du fichier : {e}")
