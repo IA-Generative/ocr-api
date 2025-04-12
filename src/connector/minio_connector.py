@@ -1,7 +1,7 @@
+from io import BytesIO
 from minio import Minio
 from minio.error import S3Error
 from .base import BaseFileConnector
-from io import BytesIO
 
 
 class MinioConnector(BaseFileConnector):
