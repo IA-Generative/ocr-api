@@ -1,9 +1,10 @@
 import datetime
 from fastapi import APIRouter, status
-from src.schemas.health import Health
+from src.schemas.health import Health, HealthError
 from src import __version__, __name__
 from fastdeploy import __version__ as fast_version
 from src.logger import logger
+from ..clients import health_check
 
 router = APIRouter(tags=['Health'])
 
@@ -20,18 +21,24 @@ up_time = datetime.datetime.now().isoformat()
 async def get_health():
 
     logger.debug("health hit")
+    dependencies = [
+        Health(
+            name="fastdeploy",
+            version=fast_version,
+            up_time=up_time,
+            status="healthy",
+        )
+    ]
+    dependencies.extend(health_check)
+    status = "healthy"
+    for dep in dependencies:
+        if isinstance(dep, HealthError):
+            status = "unhealthy"
 
     return Health(
         name=__name__,
         version=__version__,
         up_time=up_time,
-        status="healthy",
-        dependencies=[
-            Health(
-                name="fastdeploy",
-                version=fast_version,
-                up_time=up_time,
-                status="healthy",
-            )
-        ],
+        status=status,
+        dependencies=dependencies
     )

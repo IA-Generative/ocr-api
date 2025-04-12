@@ -1,0 +1,19 @@
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio_dev
+    ports:
+      - "9000:9000"   # Le port d'accès à Minio
+      - "9001:9001"   # Port pour l'interface d'administration de Minio
+    environment:
+      MINIO_ROOT_USER: minioadmin        # Identifiant d'accès
+      MINIO_ROOT_PASSWORD: minioadmin    # Mot de passe d'accès
+    volumes:
+      - minio_data:/data   # Volume pour persister les données de Minio
+    command: server /data
+    restart: unless-stopped
+
+
+volumes:
+  minio_data:
+    driver: local
