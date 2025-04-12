@@ -5,3 +5,4 @@ recognition
 .venv
 *.csv
 *.tar
+*.db
