@@ -6,6 +6,7 @@ from src.connector.minio_connector import MinioConnector
 from minio import Minio
 from src.schemas.health import Health, HealthError
 from src import __version__
+from src.logger import logger
 from datetime import datetime
 import minio
 import redis
@@ -35,6 +36,9 @@ try:
 
 except Exception as e:
     health = HealthError(name="minio_connector", error=str(e), code_status=500)
+    fs_settings = FileSystemSettings()
+    minio_connector = FileSystemConnector(base_folder=fs_settings.FOLDER)
+    logger.error(f"Instead of minio we will use fs {e}")
 
 
 health_check.append(health)
