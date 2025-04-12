@@ -24,7 +24,7 @@ def temp_file():
     temp_file.close()
     yield temp_file.name
     os.remove(temp_file.name)
-    os.remove('.exemple.db')
+    os.remove('./example.db')
     shutil.rmtree('tmp')
 
 
