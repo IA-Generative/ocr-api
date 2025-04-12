@@ -2,8 +2,22 @@ version: '3.9'
 
 services:
   backend:
-    image: ocr-api
+    image: ocr-backend
+    build:
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
     volumes:
-      - ./:/app
+      - ./ocr_backend:/app/ocr_backend
+      - ./src:/app/src
     ports:
       - "5000:5000"
+    env_file:
+      - .env
+
+  service-ocr:
+    image: ocr-service
+    build:
+      context: .
+      dockerfile: Dockerfiles/ocr_service/Dockerfile
+    env_file:
+      - .env

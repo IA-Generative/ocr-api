@@ -12,6 +12,8 @@ services:
       - minio_data:/data   # Volume pour persister les données de Minio
     command: server /data
     restart: unless-stopped
+    env_file:
+      - .env
 
   redis:
     image: redis:latest
@@ -19,6 +21,8 @@ services:
     ports:
       - "6379:6379"  # Port d'accès à Redis
     restart: unless-stopped
+    env_file:
+      - .env
 
 volumes:
   minio_data:
