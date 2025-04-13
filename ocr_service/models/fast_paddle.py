@@ -17,7 +17,6 @@ from src.logger import logger
 
 
 def build_option(args):
-
     det_option = fd.RuntimeOption()
     cls_option = fd.RuntimeOption()
     rec_option = fd.RuntimeOption()
@@ -28,9 +27,9 @@ def build_option(args):
         rec_option.use_gpu(args.device_id)
 
     if args.backend.lower() == "trt":
-        assert (
-            args.device.lower() == "gpu"
-        ), "TensorRT backend require inference on device GPU."
+        assert args.device.lower() == "gpu", (
+            "TensorRT backend require inference on device GPU."
+        )
         det_option.use_trt_backend()
         cls_option.use_trt_backend()
         rec_option.use_trt_backend()
@@ -42,12 +41,10 @@ def build_option(args):
             "x", [1, 3, 64, 64], [1, 3, 640, 640], [1, 3, 960, 960]
         )
         cls_option.set_trt_input_shape(
-            "x", [1, 3, 48, 10], [args.cls_bs, 3, 48, 320], [
-                args.cls_bs, 3, 48, 1024]
+            "x", [1, 3, 48, 10], [args.cls_bs, 3, 48, 320], [args.cls_bs, 3, 48, 1024]
         )
         rec_option.set_trt_input_shape(
-            "x", [1, 3, 48, 10], [args.rec_bs, 3, 48, 320], [
-                args.rec_bs, 3, 48, 2304]
+            "x", [1, 3, 48, 10], [args.rec_bs, 3, 48, 320], [args.rec_bs, 3, 48, 2304]
         )
 
         # Users could save TRT cache file to disk as follow.
@@ -56,9 +53,9 @@ def build_option(args):
         rec_option.set_trt_cache_file(args.rec_model + "/rec_trt_cache.trt")
 
     elif args.backend.lower() == "pptrt":
-        assert (
-            args.device.lower() == "gpu"
-        ), "Paddle-TensorRT backend require inference on device GPU."
+        assert args.device.lower() == "gpu", (
+            "Paddle-TensorRT backend require inference on device GPU."
+        )
         det_option.use_paddle_infer_backend()
         det_option.paddle_infer_option.collect_trt_shape = True
         det_option.paddle_infer_option.enable_trt = True
@@ -78,12 +75,10 @@ def build_option(args):
             "x", [1, 3, 64, 64], [1, 3, 640, 640], [1, 3, 960, 960]
         )
         cls_option.set_trt_input_shape(
-            "x", [1, 3, 48, 10], [args.cls_bs, 3, 48, 320], [
-                args.cls_bs, 3, 48, 1024]
+            "x", [1, 3, 48, 10], [args.cls_bs, 3, 48, 320], [args.cls_bs, 3, 48, 1024]
         )
         rec_option.set_trt_input_shape(
-            "x", [1, 3, 48, 10], [args.rec_bs, 3, 48, 320], [
-                args.rec_bs, 3, 48, 2304]
+            "x", [1, 3, 48, 10], [args.rec_bs, 3, 48, 320], [args.rec_bs, 3, 48, 2304]
         )
 
         # Users could save TRT cache file to disk as follow.
@@ -102,17 +97,17 @@ def build_option(args):
         rec_option.use_paddle_infer_backend()
 
     elif args.backend.lower() == "openvino":
-        assert (
-            args.device.lower() == "cpu"
-        ), "OpenVINO backend require inference on device CPU."
+        assert args.device.lower() == "cpu", (
+            "OpenVINO backend require inference on device CPU."
+        )
         det_option.use_openvino_backend()
         cls_option.use_openvino_backend()
         rec_option.use_openvino_backend()
 
     elif args.backend.lower() == "pplite":
-        assert (
-            args.device.lower() == "cpu"
-        ), "Paddle Lite backend require inference on device CPU."
+        assert args.device.lower() == "cpu", (
+            "Paddle Lite backend require inference on device CPU."
+        )
         det_option.use_lite_backend()
         cls_option.use_lite_backend()
         rec_option.use_lite_backend()
@@ -120,10 +115,10 @@ def build_option(args):
     return det_option, cls_option, rec_option
 
 
-logger.info('Start FastDeploy')
+logger.info("Start FastDeploy")
 DET_MODEL_DIR = os.getenv("DET_MODEL_DIR", "models/detection")
 REC_MODEL_DIR = os.getenv("REC_MODEL_DIR", "models/recognition")
-logger.debug(f'model dir : {DET_MODEL_DIR} - {REC_MODEL_DIR}')
+logger.debug(f"model dir : {DET_MODEL_DIR} - {REC_MODEL_DIR}")
 
 model_detection_folder: str = DET_MODEL_DIR
 model_recognition_folder: str = REC_MODEL_DIR
@@ -172,11 +167,11 @@ det_model.postprocessor.use_dilation = False
 cls_model.postprocessor.cls_thresh = 0.1
 
 # Create PP-OCRv3, if cls_model is not needed, just set cls_model=None .
-logger.debug('Start fd vsion')
+logger.debug("Start fd vsion")
 ppocr_v3 = fd.vision.ocr.PPOCRv3(
     det_model=det_model, cls_model=cls_model, rec_model=rec_model
 )
-logger.debug('Done fd vsion')
+logger.debug("Done fd vsion")
 
 # Set inference batch size for cls model and rec model, the value could be -1 and 1 to positive infinity.
 # When inference batch size is set to -1, it means that the inference batch size

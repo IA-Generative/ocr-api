@@ -15,7 +15,8 @@ class FileSystemConnector(BaseFileConnector):
             return folder_task
         else:
             raise FileNotFoundError(
-                f"Fichiers pour la tâche {task_id} de l'utilisateur {user_id} non trouvés.")
+                f"Fichiers pour la tâche {task_id} de l'utilisateur {user_id} non trouvés."
+            )
 
     def save(self, user_id: str, task_id: str, file_path: str) -> str:
         folder_task = os.path.join(self.__folder, user_id, task_id)
@@ -28,7 +29,6 @@ class FileSystemConnector(BaseFileConnector):
         return destination_path
 
     def delete_by_task_id(self, user_id: str, task_id: str) -> bool:
-
         folder_task = os.path.join(self.__folder, user_id, task_id)
         if os.path.exists(folder_task):
             shutil.rmtree(folder_task)
@@ -36,7 +36,6 @@ class FileSystemConnector(BaseFileConnector):
         return False
 
     def delete_by_user_id(self, user_id: str) -> bool:
-
         folder_user = os.path.join(self.__folder, user_id)
         if os.path.exists(folder_user):
             shutil.rmtree(folder_user)

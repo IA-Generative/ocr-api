@@ -1,10 +1,8 @@
 import pytest
 from minio import Minio
-from io import BytesIO
 from uuid import uuid4
 import tempfile
 import os
-from minio.error import S3Error
 from src.connector.minio_connector import MinioConnector
 from src.config.minio import MinioSettings
 
@@ -13,12 +11,11 @@ minio_settings = MinioSettings()
 
 @pytest.fixture(scope="module")
 def minio_client() -> Minio:
-
     client = Minio(
         minio_settings.MINIO_END_POINT,  # L'adresse Minio
         access_key=minio_settings.MINIO_ACCESS_KEY,  # L'accès
         secret_key=minio_settings.MINIO_SECRET_KEY,  # Le mot de passe
-        secure=False  # HTTP pour le développement
+        secure=False,  # HTTP pour le développement
     )
     return client
 
@@ -48,7 +45,7 @@ def test_save_and_get_file(minio_connector):
 
     try:
         # Sauvegarder le fichier
-        object_name = minio_connector.save(user_id, task_id, temp_file_path)
+        minio_connector.save(user_id, task_id, temp_file_path)
 
         # Vérifier que le fichier est bien sauvegardé en récupérant son contenu
         file_data = minio_connector.get_by_task_id(user_id, task_id)

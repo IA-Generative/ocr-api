@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class BaseFileConnector(ABC):
-
     @abstractmethod
     def get_by_task_id(self, user_id: str, task_id: str) -> str: ...
 

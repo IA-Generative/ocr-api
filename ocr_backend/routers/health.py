@@ -5,7 +5,7 @@ from src import __version__, __name__
 from src.logger import logger
 from ..clients import health_check
 
-router = APIRouter(tags=['Health'])
+router = APIRouter(tags=["Health"])
 
 up_time = datetime.datetime.now().isoformat()
 
@@ -18,10 +18,8 @@ up_time = datetime.datetime.now().isoformat()
     response_model=Health,
 )
 async def get_health():
-
     logger.debug("health hit")
-    dependencies = [
-    ]
+    dependencies = []
     dependencies.extend(health_check)
     status = "healthy"
     for dep in dependencies:
@@ -33,5 +31,5 @@ async def get_health():
         version=__version__,
         up_time=up_time,
         status=status,
-        dependencies=dependencies
+        dependencies=dependencies,
     )

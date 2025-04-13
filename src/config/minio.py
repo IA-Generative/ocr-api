@@ -7,4 +7,5 @@ class MinioSettings(BaseSettings):
     MINIO_ACCESS_KEY: str = "minioadmin"
     MINIO_SECRET_KEY: str = "minioadmin"
     model_config = SettingsConfigDict(
-        from_attributes=True, case_sensitive=True, env_file=".env")
+        from_attributes=True, case_sensitive=True, env_file=".env"
+    )

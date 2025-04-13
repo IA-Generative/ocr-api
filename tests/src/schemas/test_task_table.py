@@ -9,7 +9,7 @@ def test_insert_new_task():
         type="classification",
         status="queued",
         percentage=10.5,
-        extras={"source": "test"}
+        extras={"source": "test"},
     )
 
     # Appelle la méthode
@@ -35,16 +35,14 @@ def test_update_task():
             type="ocr",
             status="queued",
             percentage=0.0,
-            extras={"initial": True}
-        )
+            extras={"initial": True},
+        ),
     )
 
     assert new_task is not None
 
     update_form = TaskUpdateForm(
-        status="done",
-        percentage=100.0,
-        extras={"updated": True}
+        status="done", percentage=100.0, extras={"updated": True}
     )
 
     updated = table.update_task(task_id=new_task.id, form_data=update_form)
@@ -67,8 +65,8 @@ def test_get_task_by_id():
             type="detection",
             status="queued",
             percentage=0.0,
-            extras={"test": True}
-        )
+            extras={"test": True},
+        ),
     )
 
     assert task is not None
@@ -100,8 +98,8 @@ def test_delete_task_by_id():
             type="task_type",
             status="queued",
             percentage=50.0,
-            extras={"key": "value"}
-        )
+            extras={"key": "value"},
+        ),
     )
 
     assert task is not None
@@ -133,25 +131,22 @@ def test_get_tasks_by_user_id_with_pagination():
                 type=f"task_type_{i}",
                 status="queued",
                 percentage=50.0,
-                extras={"key": f"value_{i}"}
-            )
+                extras={"key": f"value_{i}"},
+            ),
         )
 
     # Step 2: Retrieve first page with 5 tasks per page
-    tasks_page_1 = table.get_tasks_by_user_id(
-        user_id="user123", page=1, page_size=5)
+    tasks_page_1 = table.get_tasks_by_user_id(user_id="user123", page=1, page_size=5)
     assert tasks_page_1 is not None
     assert len(tasks_page_1) == 5  # First page should contain 5 tasks
 
     # Step 3: Retrieve second page with 5 tasks per page
-    tasks_page_2 = table.get_tasks_by_user_id(
-        user_id="user123", page=2, page_size=5)
+    tasks_page_2 = table.get_tasks_by_user_id(user_id="user123", page=2, page_size=5)
     assert tasks_page_2 is not None
     assert len(tasks_page_2) == 5  # Second page should also contain 5 tasks
 
     # Step 4: Retrieve third page with 5 tasks per page (which should be the last page)
-    tasks_page_3 = table.get_tasks_by_user_id(
-        user_id="user123", page=3, page_size=5)
+    tasks_page_3 = table.get_tasks_by_user_id(user_id="user123", page=3, page_size=5)
     assert tasks_page_3 is not None
 
     assert len(tasks_page_3) == 5  # Last page should also contain 5 tasks
@@ -169,8 +164,8 @@ def test_delete_tasks_by_user_id():
                 type=f"task_type_{i}",
                 status="queued",
                 percentage=50.0,
-                extras={"key": f"value_{i}"}
-            )
+                extras={"key": f"value_{i}"},
+            ),
         )
 
     # Step 2: Delete all tasks for user123
@@ -182,6 +177,8 @@ def test_delete_tasks_by_user_id():
 
     # Step 4: Verify that tasks are actually deleted (should return None when trying to get them)
     tasks_after_deletion = table.get_tasks_by_user_id(
-        user_id="user1234", page=1, page_size=10)
-    assert tasks_after_deletion is None or len(
-        tasks_after_deletion) == 0  # No tasks left for this user
+        user_id="user1234", page=1, page_size=10
+    )
+    assert (
+        tasks_after_deletion is None or len(tasks_after_deletion) == 0
+    )  # No tasks left for this user

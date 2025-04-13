@@ -8,7 +8,7 @@ client = TestClient(app)
 
 
 # Test pour récupérer une tâche par ID
-@patch.object(TaskTable, 'get_task_by_id')
+@patch.object(TaskTable, "get_task_by_id")
 def test_get_task_by_id(mock_get_task_by_id):
     # Simuler une tâche retournée
     mock_task = TaskModel(
@@ -19,7 +19,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         percentage=50.0,
         created_at=1633036800,
         updated_at=1633036800,
-        extras={"key": "value"}
+        extras={"key": "value"},
     )
 
     mock_get_task_by_id.return_value = mock_task
@@ -37,11 +37,11 @@ def test_get_task_by_id(mock_get_task_by_id):
         "percentage": 50.0,
         "created_at": 1633036800,
         "updated_at": 1633036800,
-        "extras": {"key": "value"}
+        "extras": {"key": "value"},
     }
 
 
-@patch.object(TaskTable, 'get_task_by_id')
+@patch.object(TaskTable, "get_task_by_id")
 def test_get_task_by_id_not_found(mock_get_task_by_id):
     # Simuler que la tâche n'est pas trouvée
     mock_get_task_by_id.return_value = None

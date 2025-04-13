@@ -4,7 +4,7 @@ from src.schemas.task import TaskTable, TaskModel
 
 task_table = TaskTable()
 
-router = APIRouter(tags=['task'])
+router = APIRouter(tags=["task"])
 
 
 @router.get("/tasks/{task_id}", response_model=Optional[TaskModel])
@@ -16,9 +16,10 @@ async def get_task_by_id(task_id: str):
 
 
 @router.get("/tasks/user/{user_id}", response_model=List[TaskModel])
-async def get_tasks_by_user_id(user_id: str, page: int = Query(1, ge=1), page_size: int = Query(10, le=100)):
+async def get_tasks_by_user_id(
+    user_id: str, page: int = Query(1, ge=1), page_size: int = Query(10, le=100)
+):
     tasks = task_table.get_tasks_by_user_id(user_id, page, page_size)
     if tasks is None or len(tasks) == 0:
-        raise HTTPException(
-            status_code=404, detail="No tasks found for this user")
+        raise HTTPException(status_code=404, detail="No tasks found for this user")
     return tasks

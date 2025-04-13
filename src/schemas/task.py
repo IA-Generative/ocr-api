@@ -3,9 +3,9 @@ import uuid
 import time
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, DateTime, JSON, FLOAT, BigInteger
+from sqlalchemy import Column, String, JSON, FLOAT, BigInteger
 
-from src.internal.db import get_db, Base, engine
+from src.internal.db import get_db, Base
 from src.logger import logger
 
 
@@ -18,10 +18,12 @@ class Task(Base):
     user_id = Column(String, nullable=False)
     percentage = Column(FLOAT, nullable=False)
 
-    created_at = Column(
-        BigInteger, default=lambda: int(datetime.now().timestamp()))
-    updated_at = Column(BigInteger, default=lambda: int(datetime.now().timestamp()),
-                        onupdate=lambda: int(datetime.now().timestamp()))
+    created_at = Column(BigInteger, default=lambda: int(datetime.now().timestamp()))
+    updated_at = Column(
+        BigInteger,
+        default=lambda: int(datetime.now().timestamp()),
+        onupdate=lambda: int(datetime.now().timestamp()),
+    )
 
     extras = Column(JSON, nullable=True)
 
@@ -57,10 +59,7 @@ class TaskUpdateForm(BaseModel):
 
 
 class TaskTable:
-
-    def insert_new_task(
-        self, user_id: str, form_data: TaskForm
-    ) -> Optional[TaskModel]:
+    def insert_new_task(self, user_id: str, form_data: TaskForm) -> Optional[TaskModel]:
         with get_db() as db:
             knowledge = TaskModel(
                 **{
@@ -68,7 +67,7 @@ class TaskTable:
                     "id": str(uuid.uuid4()),
                     "user_id": user_id,
                     "created_at": int(time.time()),
-                    "updated_at": int(time.time())
+                    "updated_at": int(time.time()),
                 }
             )
 
@@ -122,7 +121,6 @@ class TaskTable:
                 return None
 
     def delete_task_by_id(self, task_id: str) -> Optional[TaskModel]:
-
         with get_db() as db:
             try:
                 task = db.query(Task).filter(Task.id == task_id).first()
@@ -135,12 +133,19 @@ class TaskTable:
             except Exception as e:
                 logger.error(e)
 
-    def get_tasks_by_user_id(self, user_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
+    def get_tasks_by_user_id(
+        self, user_id: str, page: int = 1, page_size: int = 10
+    ) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
         try:
             with get_db() as db:
-                tasks = db.query(Task).filter(Task.user_id == user_id).offset(
-                    offset).limit(page_size).all()
+                tasks = (
+                    db.query(Task)
+                    .filter(Task.user_id == user_id)
+                    .offset(offset)
+                    .limit(page_size)
+                    .all()
+                )
 
                 if not tasks:
                     logger.warning(f"No tasks found for user {user_id}.")
@@ -154,8 +159,7 @@ class TaskTable:
     def delete_tasks_by_user_id(self, user_id: str) -> Optional[List[TaskModel]]:
         try:
             with get_db() as db:
-                tasks_to_delete = db.query(Task).filter(
-                    Task.user_id == user_id).all()
+                tasks_to_delete = db.query(Task).filter(Task.user_id == user_id).all()
 
                 if not tasks_to_delete:
                     logger.warning(f"No tasks found for user {user_id}.")

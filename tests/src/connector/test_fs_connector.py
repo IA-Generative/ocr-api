@@ -11,11 +11,11 @@ def file_system_connector():
 
 
 def test_get_by_task_id_found(file_system_connector):
-
     user_id = "user1"
     task_id = "task1"
     folder_task = os.path.join(
-        file_system_connector._FileSystemConnector__folder, user_id, task_id)
+        file_system_connector._FileSystemConnector__folder, user_id, task_id
+    )
 
     os.makedirs(folder_task, exist_ok=True)
 
@@ -26,7 +26,6 @@ def test_get_by_task_id_found(file_system_connector):
 
 
 def test_get_by_task_id_not_found(file_system_connector):
-
     user_id = "user1"
     task_id = "task_not_found"
 
@@ -36,17 +35,18 @@ def test_get_by_task_id_not_found(file_system_connector):
 
 @patch("shutil.copy2")
 def test_save(mock_copy2, file_system_connector):
-
     user_id = "user1"
     task_id = "task1"
     file_path = "path/to/file.txt"
     folder_task = os.path.join(
-        file_system_connector._FileSystemConnector__folder, user_id, task_id)
+        file_system_connector._FileSystemConnector__folder, user_id, task_id
+    )
 
     result = file_system_connector.save(user_id, task_id, file_path)
 
-    mock_copy2.assert_called_once_with(file_path, os.path.join(
-        folder_task, os.path.basename(file_path)))
+    mock_copy2.assert_called_once_with(
+        file_path, os.path.join(folder_task, os.path.basename(file_path))
+    )
     assert result == "./tmp_test/user1/task1/file.txt"
 
 
@@ -56,7 +56,8 @@ def test_delete_by_task_id(mock_rmtree, file_system_connector):
     user_id = "user1"
     task_id = "task1"
     folder_task = os.path.join(
-        file_system_connector._FileSystemConnector__folder, user_id, task_id)
+        file_system_connector._FileSystemConnector__folder, user_id, task_id
+    )
 
     os.makedirs(folder_task, exist_ok=True)
 
@@ -65,17 +66,16 @@ def test_delete_by_task_id(mock_rmtree, file_system_connector):
     mock_rmtree.assert_called_once_with(folder_task)
     assert result is True
 
-    result = file_system_connector.delete_by_task_id(
-        user_id, "non_existent_task")
+    result = file_system_connector.delete_by_task_id(user_id, "non_existent_task")
     assert result is False
 
 
 @patch("shutil.rmtree")
 def test_delete_by_user_id(mock_rmtree, file_system_connector):
-
     user_id = "user1"
     folder_user = os.path.join(
-        file_system_connector._FileSystemConnector__folder, user_id)
+        file_system_connector._FileSystemConnector__folder, user_id
+    )
 
     os.makedirs(folder_user, exist_ok=True)
     result = file_system_connector.delete_by_user_id(user_id)
@@ -88,7 +88,7 @@ def test_delete_by_user_id(mock_rmtree, file_system_connector):
 
 @pytest.fixture(scope="session", autouse=True)
 def cleanup_tmp_test():
-    """ Teardown to remove tmp_test folder after tests """
+    """Teardown to remove tmp_test folder after tests"""
     yield
 
     tmp_folder = "./tmp_test"

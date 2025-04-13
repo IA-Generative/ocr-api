@@ -21,15 +21,15 @@ class MinioConnector(BaseFileConnector):
             file_data.seek(0)  # Revenir au début du fichier
             return file_data
         except S3Error as e:
-            raise FileNotFoundError(
-                f"{object_name} not found: {e}")
+            raise FileNotFoundError(f"{object_name} not found: {e}")
 
     def save(self, user_id: str, task_id: str, file_path: str) -> str:
         """Sauvegarde le fichier vers Minio"""
         object_name = f"{user_id}/{task_id}"
         try:
             self.client.fput_object(
-                self.bucket_name, object_name, file_path, part_size=5 * 1024 * 1024)
+                self.bucket_name, object_name, file_path, part_size=5 * 1024 * 1024
+            )
             return object_name
         except S3Error as e:
             raise Exception(f"Erreur lors de la sauvegarde du fichier : {e}")
@@ -42,18 +42,21 @@ class MinioConnector(BaseFileConnector):
             return True
         except S3Error as e:
             raise FileNotFoundError(
-                f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id}: {e}")
+                f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id}: {e}"
+            )
 
     def delete_by_user_id(self, user_id: str) -> bool:
         """Supprime tous les fichiers associés à un user_id dans Minio"""
         try:
             # Liste tous les objets avec un préfixe spécifique à l'utilisateur
             objects = self.client.list_objects(
-                self.bucket_name, prefix=f"{user_id}/", recursive=True)
+                self.bucket_name, prefix=f"{user_id}/", recursive=True
+            )
             for obj in objects:
                 self.client.remove_object(self.bucket_name, obj.object_name)
 
             return True
         except S3Error as e:
             raise Exception(
-                f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id}: {e}")
+                f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id}: {e}"
+            )

@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from uuid import uuid4
 from ocr_backend.main import app
 from ocr_backend.clients import minio_connector
-from src.schemas.task import task_table, TaskModel
+from src.schemas.task import TaskModel
 
 
 @pytest.fixture()
@@ -29,8 +29,7 @@ def test_upload_file(client, temp_file):
 
     for img_path in glob.glob("tests/data/valid/*"):
         with open(img_path, "rb") as image_file:
-            files = {"file": (img_path, image_file,
-                              "multipart/form-data")}
+            files = {"file": (img_path, image_file, "multipart/form-data")}
 
             # Effectuer l'appel à l'API pour uploader le fichier
             response = client.post(
