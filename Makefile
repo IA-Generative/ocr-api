@@ -27,7 +27,7 @@ up-env:
 	sleep 5
 	
 tests: install-test-dep up-env
-	env $(shell grep -v '^#' .env | xargs) uv run pytest tests/
+	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest tests/
 
 build-ocr-backend:
 	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .
