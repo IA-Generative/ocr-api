@@ -1,5 +1,6 @@
 IMAGE_NAME_OCR_BACKEND=ocr-api
 IMAGE_NAME_OCR_SERVICE=ocr-service
+PYTHONPATH=$(PWD)
 
 .PHONY: build test clean install-test install-test-dep linter tests build-images bump-patch
 
