@@ -17,6 +17,7 @@ from src.connector.minio_connector import MinioConnector
 from src.schemas.task import task_table, TaskModel, TaskUpdateForm, TaskStatus
 from src.logger import logger
 
+
 if __name__ == "__main__":
     minio_settings = MinioSettings()
     minio_client = minio.Minio(
@@ -47,6 +48,9 @@ if __name__ == "__main__":
         content_type: str = extras.get('content_type', "")
         return_image = extras.get("return_image", False)
         grayscale = extras.get("grayscale", False)
+        batch_size = 2
+
+        base64_images, formatted_result = [], []
         logger.debug(f"{task.id} - {task.user_id} - {filename} - {extras} ")
 
         t = time.time()
@@ -64,101 +68,116 @@ if __name__ == "__main__":
             logger.error(str(e))
             continue
 
-        if content is not None:
-            base64_images, formatted_result = [], []
-            if content_type.startswith("image/"):
-                pages = [Image.open(content).convert("RGB")]
+        if content is None:
+            extras["error"] = f"No content found for task : {task.id}"
+            task = task_table.update_task(
+                task_id=task.id,
+                form_data=TaskUpdateForm(
+                    status=TaskStatus.FAILED.value, percentage=0, extras=extras),
+            )
+            logger.error(f"No content found for task : {task.id}")
+            continue
 
-            elif ext == ".pdf":
-                t_convert = time.time()
-                pages = convert_from_bytes(content.read())
-                t_convert = time.time() - t_convert
-                logger.debug(
-                    f"{filename} convert to image nb pages {len(pages)} into {t_convert}"
-                )
+        if content_type.startswith("image/"):
+            pages = [Image.open(content).convert("RGB")]
 
+        elif content_type == "application/pdf":
+            t_convert = time.time()
+            pages = convert_from_bytes(content.read())
+            t_convert = time.time() - t_convert
+            logger.debug(
+                f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
+            )
+
+        else:
+            logger.error(f"Unsupported file type {extras}")
+            extras['error'] = f"Unsupported file type {extras}"
+            task = task_table.update_task(
+                task_id=task.id,
+                form_data=TaskUpdateForm(
+                    status=TaskStatus.FAILED.value, percentage=0, extras=extras),
+            )
+            continue
+
+        logger.debug(f" Start to process - {filename} ")
+        extras["nb_pages"] = len(pages)
+        task = task_table.update_task(
+            task_id=task.id,
+            form_data=TaskUpdateForm(
+                status=TaskStatus.IN_PROGRESS.value, percentage=0, extras=extras
+            ),
+        )
+        task.extras = task.extras if task.extras else {}
+
+        for i, page in enumerate(pages):
+            width, height = page.size
+            if max_height and int(height) > max_height:
+                page = page.resize(
+                    (int(width * max_height / height), max_height))
+            if return_image:
+                base64_images.append(image_to_base64(page))
+
+            if grayscale:
+                page = ImageOps.grayscale(page)
+
+        for i in range(0, len(pages), batch_size):
+            t_predict = time.time()
+            batch = pages[i: i + batch_size]
+            for image in batch:
+                logger.debug(f"{np.array(image).shape}")
+                # TODO : Pdf with differents size of page
+
+            # Si une seule image restante, empile avec une nouvelle dimension
+            if len(batch) == 1:
+                images = np.array(batch[0])
             else:
-                logger.error(f"Unsupported file type {extras}")
-                extras['error'] = f"Unsupported file type {extras}"
-                task = task_table.update_task(
-                    task_id=task.id,
-                    form_data=TaskUpdateForm(
-                        status=TaskStatus.FAILED.value, percentage=0, extras=extras),
-                )
-                continue
+                images = np.stack(batch, axis=0)
 
-            logger.debug(f" Start to process - {filename} ")
-            extras["nb_pages"] = len(pages)
+            logger.debug(images.shape)
+
+            partial_result = perform_ocr_async(images)
+            formatted_result.extend(partial_result)
+
+            page_range = f"{i + 1}" if len(
+                batch) == 1 else f"{i + 1}-{i + batch_size}"
+            logger.debug(
+                f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
+            )
+            percentage = len(formatted_result) / extras.get("nb_pages", 1)
+            task.extras["nb_page_proccesed"] = len(formatted_result)
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.IN_PROGRESS.value, percentage=0, extras=extras
+                    status=TaskStatus.IN_PROGRESS.value, percentage=percentage, extras=task.extras
                 ),
             )
-            extras = task.extras
+            logger.debug(task.extras)
 
-            for i, page in enumerate(pages):
-                width, height = page.size
-                if max_height and int(height) > max_height:
-                    page = page.resize(
-                        (int(width * max_height / height), max_height))
-                if return_image:
-                    base64_images.append(image_to_base64(page))
+        task.extras["results"] = formatted_result
 
-                if grayscale:
-                    page = ImageOps.grayscale(page)
-            n = 2
-            for i in range(0, len(pages), n):
-                t_predict = time.time()
-                batch = pages[i: i + n]
-                for image in batch:
-                    logger.debug(f"{np.array(image).shape}")
-                    # TODO : Pdf with differentes size of page
+        task = task_table.update_task(
+            task_id=task.id,
+            form_data=TaskUpdateForm(
+                status=TaskStatus.COMPLETED.value, percentage=percentage, extras=task.extras
+            ),
+        )
+        logger.debug(f"{task.id} - done {task.model_dump()}")
 
-                # Si une seule image restante, empile avec une nouvelle dimension
-                if len(batch) == 1:
-                    images = np.array(batch[0])
-                else:
-                    images = np.stack(batch, axis=0)
+        if base64_images:
+            task.extras["images_base64"] = base64_images
 
-                logger.debug(images.shape)
+        redis_client.set(name=f"{task.id}",
+                         value=json.dumps(task.model_dump()), ex=3000)
 
-                partial_result = perform_ocr_async(images)
-                formatted_result.extend(partial_result)
+        task = task_table.update_task(
+            task_id=task.id,
+            form_data=TaskUpdateForm(
+                status=TaskStatus.COMPLETED.value, percentage=percentage, extras=task.extras
+            ),
+        )
 
-                page_range = f"{i + 1}" if len(
-                    batch) == 1 else f"{i + 1}-{i + n}"
-                logger.debug(
-                    f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
-                )
-                percentage = len(formatted_result) / extras.get("nb_pages", 1)
-                extras["nb_page_proccesed"] = len(formatted_result)
-                task = task_table.update_task(
-                    task_id=task.id,
-                    form_data=TaskUpdateForm(
-                        status=TaskStatus.IN_PROGRESS.value, percentage=percentage, extras=extras
-                    ),
-                )
-                logger.debug(task.extras)
-            print(2 * 79 * "*")
-            logger.debug(f"{task.id} - done {task.model_dump()}")
-            print(2 * 79 * "*")
-            task.extras["results"] = formatted_result
-            task = task_table.update_task(
-                task_id=task.id,
-                form_data=TaskUpdateForm(
-                    status=TaskStatus.COMPLETED.value, percentage=percentage, extras=extras
-                ),
-            )
-
-            if base64_images:
-                task.extras["images_base64"] = base64_images
-
-            redis_client.set(name=f"{task.id}",
-                             value=json.dumps(task.model_dump()), ex=3000)
-
-            try:
-                minio_connector.delete_by_task_id(
-                    user_id=task.user_id, task_id=task.id)
-            except Exception as e:
-                logger.error(str(e))
+        try:
+            minio_connector.delete_by_task_id(
+                user_id=task.user_id, task_id=task.id)
+        except Exception as e:
+            logger.error(str(e))
