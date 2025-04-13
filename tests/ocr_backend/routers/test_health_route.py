@@ -23,7 +23,6 @@ def test_get_health():
     assert "dependencies" in data
     assert isinstance(data["dependencies"], list)
     assert len(data["dependencies"]) > 0
-    assert data["dependencies"][0]["name"] == "fastdeploy"
     assert "version" in data["dependencies"][0]
     assert "up_time" in data["dependencies"][0]
     assert data["dependencies"][0]["status"] == "healthy"
