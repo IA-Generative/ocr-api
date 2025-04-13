@@ -14,7 +14,7 @@ from src.config.redis import RedisSettings
 from src.config.minio import MinioSettings
 
 from src.connector.minio_connector import MinioConnector
-from src.schemas.task import task_table, TaskModel, TaskUpdateForm
+from src.schemas.task import task_table, TaskModel, TaskUpdateForm, TaskStatus
 from src.logger import logger
 
 if __name__ == "__main__":
@@ -44,7 +44,11 @@ if __name__ == "__main__":
         ext = extras.get("ext")
         filename = extras.get("raw_filename")
         max_height = extras.get("max_height", None)
+        content_type: str = extras.get('content_type', "")
+        return_image = extras.get("return_image", False)
+        grayscale = extras.get("grayscale", False)
         logger.debug(f"{task.id} - {task.user_id} - {filename} - {extras} ")
+
         t = time.time()
         try:
             content = minio_connector.get_by_task_id(
@@ -54,16 +58,15 @@ if __name__ == "__main__":
             extras["error"] = str(e)
             task = task_table.update_task(
                 task_id=task.id,
-                form_data=TaskUpdateForm(status="error", percentage=0, extras=extras),
+                form_data=TaskUpdateForm(
+                    status=TaskStatus.FAILED.value, percentage=0, extras=extras),
             )
             logger.error(str(e))
             continue
 
-        return_image = extras.get("return_image", False)
-        grayscale = extras.get("grayscale", False)
         if content is not None:
             base64_images, formatted_result = [], []
-            if ext in [".jpg", ".png"]:
+            if content_type.startswith("image/"):
                 pages = [Image.open(content).convert("RGB")]
 
             elif ext == ".pdf":
@@ -76,6 +79,12 @@ if __name__ == "__main__":
 
             else:
                 logger.error(f"Unsupported file type {extras}")
+                extras['error'] = f"Unsupported file type {extras}"
+                task = task_table.update_task(
+                    task_id=task.id,
+                    form_data=TaskUpdateForm(
+                        status=TaskStatus.FAILED.value, percentage=0, extras=extras),
+                )
                 continue
 
             logger.debug(f" Start to process - {filename} ")
@@ -83,7 +92,7 @@ if __name__ == "__main__":
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status="on-going", percentage=0.1, extras=extras
+                    status=TaskStatus.IN_PROGRESS.value, percentage=0, extras=extras
                 ),
             )
             extras = task.extras
@@ -91,7 +100,8 @@ if __name__ == "__main__":
             for i, page in enumerate(pages):
                 width, height = page.size
                 if max_height and int(height) > max_height:
-                    page = page.resize((int(width * max_height / height), max_height))
+                    page = page.resize(
+                        (int(width * max_height / height), max_height))
                 if return_image:
                     base64_images.append(image_to_base64(page))
 
@@ -100,7 +110,10 @@ if __name__ == "__main__":
             n = 2
             for i in range(0, len(pages), n):
                 t_predict = time.time()
-                batch = pages[i : i + n]
+                batch = pages[i: i + n]
+                for image in batch:
+                    logger.debug(f"{np.array(image).shape}")
+                    # TODO : Pdf with differentes size of page
 
                 # Si une seule image restante, empile avec une nouvelle dimension
                 if len(batch) == 1:
@@ -113,7 +126,8 @@ if __name__ == "__main__":
                 partial_result = perform_ocr_async(images)
                 formatted_result.extend(partial_result)
 
-                page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + n}"
+                page_range = f"{i + 1}" if len(
+                    batch) == 1 else f"{i + 1}-{i + n}"
                 logger.debug(
                     f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
                 )
@@ -122,7 +136,7 @@ if __name__ == "__main__":
                 task = task_table.update_task(
                     task_id=task.id,
                     form_data=TaskUpdateForm(
-                        status="on-going", percentage=percentage, extras=extras
+                        status=TaskStatus.IN_PROGRESS.value, percentage=percentage, extras=extras
                     ),
                 )
                 logger.debug(task.extras)
@@ -130,14 +144,21 @@ if __name__ == "__main__":
             logger.debug(f"{task.id} - done {task.model_dump()}")
             print(2 * 79 * "*")
             task.extras["results"] = formatted_result
+            task = task_table.update_task(
+                task_id=task.id,
+                form_data=TaskUpdateForm(
+                    status=TaskStatus.COMPLETED.value, percentage=percentage, extras=extras
+                ),
+            )
 
             if base64_images:
                 task.extras["images_base64"] = base64_images
 
-            redis_client.set(name=f"{task.id}", value=f"{task.model_dump()}", ex=3000)
+            redis_client.set(name=f"{task.id}",
+                             value=json.dumps(task.model_dump()), ex=3000)
 
             try:
-                minio_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
-
+                minio_connector.delete_by_task_id(
+                    user_id=task.user_id, task_id=task.id)
             except Exception as e:
                 logger.error(str(e))

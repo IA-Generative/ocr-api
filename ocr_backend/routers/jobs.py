@@ -15,7 +15,9 @@ router = APIRouter(tags=["Jobs"])
 @router.post(
     "/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel
 )
-async def upload_file(user_id: str, file: UploadFile = File(...)):
+async def upload_file(user_id: str, file: UploadFile = File(...), extras: dict = None):
+    if extras is None:
+        extras = {}
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name  # Le chemin du fichier temporaire
@@ -25,7 +27,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         task_data = task_table.insert_new_task(
             user_id=user_id,
             form_data=TaskForm(
-                user_id=user_id, type=TaskOperation.OCR.value, status=TaskStatus.CREATED.value, percentage=0.0
+                user_id=user_id, type=TaskOperation.OCR.value, status=TaskStatus.CREATED.value, percentage=0.0, extras=extras
             ),
         )
 
@@ -37,16 +39,19 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         _, extension = os.path.splitext(file.filename)
 
+        extras = task_data.extras
+        extras.update({
+            "file_path": saved_path,
+            "raw_filename": os.path.basename(file.filename),
+            "content_type": file.content_type,
+            "ext": extension,
+        })
+
         task_data = task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
                 status=TaskStatus.QUEUED.value,
-                extras={
-                    "file_path": saved_path,
-                    "raw_filename": os.path.basename(file.filename),
-                    "content_type": file.content_type,
-                    "ext": extension,
-                },
+                extras=extras,
             ),
         )
 
