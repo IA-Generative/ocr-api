@@ -1,6 +1,6 @@
 [project]
 name = "ocr-api"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,3 +39,14 @@ ocr-service = [
     "paddlepaddle==3.0.0",
     "pdf2image==1.17.0",
 ]
+version = [
+    "commitizen>=4.6.0",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "semver"
+version_provider = "uv"
+update_changelog_on_bump = true
+major_version_zero = true
