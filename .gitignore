@@ -7,3 +7,4 @@ recognition
 *.tar
 *.db
 tmp/
+.coverage
