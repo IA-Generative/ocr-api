@@ -22,8 +22,9 @@ async def ocr(
     max_height: Optional[int] = None,
     grayscale: Optional[bool] = True,
     return_image: Optional[bool] = True,
+    user_id: Optional[str] = "ocr-user"
 ):
-    task = await upload_file(user_id="unique", file=file, extras={
+    task = await upload_file(user_id=user_id, file=file, extras={
         "format": format,
         "max_height": max_height,
         "grayscale": grayscale,
