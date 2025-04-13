@@ -3,12 +3,7 @@ name: CI/CD Workflow
 on:
   push:
     branches:
-      - '**'  # Pour chaque push sur n'importe quelle branche
-    paths:
-      - '**/*.py'
-      - 'Dockerfile'
-      - 'Makefile'
-      - 'deployment.yaml'
+      - '**'
   pull_request:
     branches:
       - staging  # Cette action s'exécute sur des PR vers 'staging'
