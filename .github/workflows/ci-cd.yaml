@@ -35,7 +35,7 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make run-tests
+          make tests
 
   # Build et Push de l'image seulement sur la branche staging
   build-and-push:
