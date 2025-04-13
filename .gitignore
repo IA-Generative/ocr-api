@@ -6,3 +6,4 @@ recognition
 *.csv
 *.tar
 *.db
+tmp/

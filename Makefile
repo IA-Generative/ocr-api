@@ -25,9 +25,12 @@ up-env:
 	docker compose -f docker-compose-dev.yml up -d
 	@echo "Attente de 5 secondes pour laisser les conteneurs démarrer..."
 	sleep 5
+
+down-env:
+	docker compose -f docker-compose-dev.yml down || true
 	
 tests: install-test-dep up-env
-	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest tests/
+	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/
 
 build-ocr-backend:
 	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .
