@@ -1,8 +1,8 @@
 
 # OCR API
 
-
 ---
+
 
 ##  Installation
 
@@ -13,7 +13,9 @@ uv sync
 
 ### Avec Docker
 ```bash
-docker build -t ocr-api .
+make build-ocr-backend
+make build-ocr-service
+make up-env # that let you run Minio and Redis
 ```
 
 ---
@@ -23,11 +25,6 @@ docker build -t ocr-api .
 ### En local avec Python
 ```bash
 uv run uvicorn main:app --reload --host 0.0.0.0 --port 5000 --workers 2
-```
-
-### Avec Docker
-```bash
-docker run --rm -p 5000:5000 -v $PWD:/app ocr-api
 ```
 
 ### Avec Docker Compose
@@ -40,28 +37,7 @@ Accède ensuite à l'API via : [http://localhost:5000](http://localhost:5000)
 ---
 
 ## Tester l’API
-
-### Exemple avec un script Python
-```python
-import requests
-import base64
-
-with open("image_test.jpg", "rb") as image_file:
-    encoded_data = base64.b64encode(image_file.read()).decode()
-
-res = requests.post(
-    url='http://localhost:5000/',
-    json={"images": [encoded_data]}
-).json()
-
-print("-------", res['msg'])
-print(res['results'])
-```
-
-
----
-
-## Tester avec `curl`
+### Tester avec `curl`
 
 ```bash
 curl -X 'POST' \
@@ -79,4 +55,63 @@ Utilisation de `locust` :
 uv add locust --group stress-test
 uv run locust -f stress-test.py --host http://localhost:5000 \
   --headless -u 2 -r 10 --run-time 2m --csv results
+```
+
+## Diagramme execution 
+<img src= "docs/Diagrame.drawio.png" title="qsqs"></img>
+
+```mermaid
+flowchart TD
+    A[Client envoie un document image/pdf] --> B[API Python reçoit le fichier]
+    B --> C[Le fichier est sauvegardé dans MinIO]
+    C --> D[Création de la task en BDD -task_id, status = CREATED]
+    D --> E[Envoi de la task dans la queue Redis]
+    E --> F[Queue FIFO Redis]
+    F --> G[Consommateur OCR récupère une tâche - pas de doublon]
+    G --> H[Récupération du fichier depuis MinIO]
+    H --> I[OCR en cours - Mise à jour du status en BDD à chaque étape]
+    I --> J[Status de la task disponible via l'API]
+    J --> K[Retour de l’état de la task avec/sans résultats]
+
+    classDef store fill:#f9f,stroke:#333,stroke-width:1px;
+    class C,H store;
+
+    classDef queue fill:#bbf,stroke:#333,stroke-width:1px;
+    class E,F queue;
+
+    classDef api fill:#bfb,stroke:#333,stroke-width:1px;
+    class B,J,K api;
+
+    classDef db fill:#ffb,stroke:#333,stroke-width:1px;
+    class D,I db;
+
+    classDef process fill:#eef,stroke:#333,stroke-width:1px;
+    class G process;
+```
+
+
+
+### Diagram Sequence
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API
+    participant MinIO
+    participant BDD
+    participant Redis
+    participant Consommateur_OCR
+
+    Client->>API: Envoi document (image/pdf)
+    API->>MinIO: Sauvegarde du fichier
+    API->>BDD: Création task (task_id, status=CREATED)
+    API->>Redis: Push task dans la queue
+
+    Redis->>Consommateur_OCR: Délivre task (FIFO, sans doublon)
+    Consommateur_OCR->>MinIO: Récupération du fichier
+    Consommateur_OCR->>BDD: Maj status étape par étape (processing...)
+
+    Client->>API: Demande status task
+    API->>BDD: Lecture status task
+    API-->>Client: Retour état + résultats si dispo
+
 ```
