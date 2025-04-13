@@ -7,7 +7,7 @@ import traceback
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from ..clients import minio_connector, redis_client, redis_settings
 from src.logger import logger
-from src.schemas.task import task_table, TaskForm, TaskModel, TaskUpdateForm
+from src.schemas.task import task_table, TaskForm, TaskModel, TaskUpdateForm, TaskStatus, TaskOperation
 
 router = APIRouter(tags=["Jobs"])
 
@@ -25,13 +25,14 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         task_data = task_table.insert_new_task(
             user_id=user_id,
             form_data=TaskForm(
-                user_id=user_id, type="ocr", status="CREATED", percentage=0.0
+                user_id=user_id, type=TaskOperation.OCR.value, status=TaskStatus.CREATED.value, percentage=0.0
             ),
         )
 
         logger.debug(task_data.model_dump())
 
-        saved_path = minio_connector.save(user_id, task_data.id, temp_file_path)
+        saved_path = minio_connector.save(
+            user_id, task_data.id, temp_file_path)
         logger.debug(f"Save into minio - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
@@ -39,7 +40,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         task_data = task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
-                status="pending",
+                status=TaskStatus.QUEUED.value,
                 extras={
                     "file_path": saved_path,
                     "raw_filename": os.path.basename(file.filename),
@@ -64,7 +65,8 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
-                type="ocr", status="error", extras={"error": str(e)}
+                type=TaskOperation.OCR.value, status=TaskStatus.FAILED.value, extras={
+                    "error": str(e)}
             ),
         )
         raise HTTPException(

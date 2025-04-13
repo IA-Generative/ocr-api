@@ -2,6 +2,7 @@ from datetime import datetime
 import uuid
 import time
 from typing import Dict, List, Optional, Any
+from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, String, JSON, FLOAT, BigInteger
 
@@ -57,6 +58,22 @@ class TaskUpdateForm(BaseModel):
     status: Optional[str] = None
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
+
+
+class TaskStatus(str, Enum):
+    CREATED = "created"         # Tâche instanciée mais pas encore mise en file
+    QUEUED = "queued"           # En attente dans une file de traitement
+    STARTED = "started"         # A commencé à être traitée
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"     # Traitée avec succès
+    FAILED = "failed"           # Erreur fatale
+    RETRYING = "retrying"       # En cours de nouvelle tentative après échec
+    CANCELED = "canceled"       # Annulée manuellement ou par logique métier
+    TIMEOUT = "timeout"         # N’a pas pu terminer dans le temps imparti
+
+
+class TaskOperation(str, Enum):
+    OCR: str = "ocr"
 
 
 class TaskTable:

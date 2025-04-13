@@ -1,4 +1,4 @@
-from src.schemas.task import TaskTable, TaskForm, TaskUpdateForm
+from src.schemas.task import TaskTable, TaskForm, TaskUpdateForm, TaskOperation, TaskStatus
 
 
 def test_insert_new_task():
@@ -7,7 +7,7 @@ def test_insert_new_task():
     form_data = TaskForm(
         user_id="user123",
         type="classification",
-        status="queued",
+        status=TaskStatus.QUEUED.value,
         percentage=10.5,
         extras={"source": "test"},
     )
@@ -18,7 +18,7 @@ def test_insert_new_task():
     assert result is not None
     assert result.user_id == "user123"
     assert result.type == "classification"
-    assert result.status == "queued"
+    assert result.status == TaskStatus.QUEUED.value
     assert result.percentage == 10.5
     assert result.extras["source"] == "test"
     assert isinstance(result.created_at, int)
@@ -32,8 +32,8 @@ def test_update_task():
         user_id="user456",
         form_data=TaskForm(
             user_id="user456",
-            type="ocr",
-            status="queued",
+            type=TaskOperation.OCR.value,
+            status=TaskStatus.QUEUED.value,
             percentage=0.0,
             extras={"initial": True},
         ),
@@ -66,7 +66,7 @@ def test_get_task_by_id():
         form_data=TaskForm(
             user_id="user789",
             type="detection",
-            status="queued",
+            status=TaskStatus.QUEUED.value,
             percentage=0.0,
             extras={"test": True},
         ),
@@ -81,7 +81,7 @@ def test_get_task_by_id():
     assert retrieved is not None
     assert retrieved.id == task.id
     assert retrieved.type == "detection"
-    assert retrieved.status == "queued"
+    assert retrieved.status == TaskStatus.QUEUED.value
 
 
 def test_get_task_by_invalid_id():
@@ -99,7 +99,7 @@ def test_delete_task_by_id():
         form_data=TaskForm(
             user_id="user123",
             type="task_type",
-            status="queued",
+            status=TaskStatus.QUEUED.value,
             percentage=50.0,
             extras={"key": "value"},
         ),
@@ -132,7 +132,7 @@ def test_get_tasks_by_user_id_with_pagination():
             form_data=TaskForm(
                 user_id="user123",
                 type=f"task_type_{i}",
-                status="queued",
+                status=TaskStatus.QUEUED.value,
                 percentage=50.0,
                 extras={"key": f"value_{i}"},
             ),
@@ -168,7 +168,7 @@ def test_delete_tasks_by_user_id():
             form_data=TaskForm(
                 user_id="user123",
                 type=f"task_type_{i}",
-                status="queued",
+                status=TaskStatus.QUEUED.value,
                 percentage=50.0,
                 extras={"key": f"value_{i}"},
             ),

@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from uuid import uuid4
 from ocr_backend.main import app
 from ocr_backend.clients import minio_connector
-from src.schemas.task import TaskModel
+from src.schemas.task import TaskModel, TaskStatus
 
 
 @pytest.fixture()
@@ -40,7 +40,7 @@ def test_upload_file(client, temp_file):
         # Vérifier la réponse
         assert response.status_code == 201
         response_model = TaskModel(**response.json())
-        assert response_model.status == "pending"
+        assert response_model.status == TaskStatus.QUEUED.value
         assert response_model.user_id == user_id
 
         # Vérifier que le fichier est bien enregistré dans Minio

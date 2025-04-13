@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 from ocr_backend.main import app
-from src.schemas.task import TaskTable, TaskModel
+from src.schemas.task import TaskTable, TaskModel, TaskStatus
 
 
 client = TestClient(app)
@@ -15,7 +15,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         id="12345",
         user_id="user123",
         type="task_type_example",
-        status="queued",
+        status=TaskStatus.QUEUED.value,
         percentage=50.0,
         created_at=1633036800,
         updated_at=1633036800,
@@ -33,7 +33,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         "id": "12345",
         "user_id": "user123",
         "type": "task_type_example",
-        "status": "queued",
+        "status": TaskStatus.QUEUED.value,
         "percentage": 50.0,
         "created_at": 1633036800,
         "updated_at": 1633036800,
