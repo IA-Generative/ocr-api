@@ -8,3 +8,4 @@ recognition
 *.db
 tmp/
 .coverage
+models/
