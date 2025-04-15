@@ -8,4 +8,5 @@ recognition
 *.db
 tmp/
 .coverage
-models/
+text_detection/
+text_recognition/
