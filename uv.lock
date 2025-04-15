@@ -1569,6 +1569,7 @@ ocr-service = [
     { name = "paddleocr" },
     { name = "paddlepaddle" },
     { name = "pdf2image" },
+    { name = "pillow" },
     { name = "surya-ocr" },
 ]
 stress-test = [
@@ -1610,6 +1611,7 @@ ocr-service = [
     { name = "paddleocr", specifier = "==2.10.0" },
     { name = "paddlepaddle", specifier = "==3.0.0" },
     { name = "pdf2image", specifier = "==1.17.0" },
+    { name = "pillow", specifier = ">=10.4.0" },
     { name = "surya-ocr", specifier = ">=0.13.1" },
 ]
 stress-test = [{ name = "locust", specifier = ">=2.34.1" }]

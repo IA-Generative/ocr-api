@@ -39,6 +39,7 @@ ocr-service = [
     "paddleocr==2.10.0",
     "paddlepaddle==3.0.0",
     "pdf2image==1.17.0",
+    "pillow>=10.4.0",
     "surya-ocr>=0.13.1",
 ]
 version = [
