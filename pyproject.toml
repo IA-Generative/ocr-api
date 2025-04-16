@@ -34,6 +34,7 @@ ocr-backend = [
     "python-multipart==0.0.18",
 ]
 ocr-service = [
+    "celery>=5.5.1",
     "pdf2image==1.17.0",
     "pillow==10.4.0",
     "surya-ocr==0.13.1",

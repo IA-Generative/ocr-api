@@ -12,6 +12,8 @@ from ocr_service.utils.image import image_to_base64
 from ocr_service.models.base import BaseModelPrediction
 from ocr_service.configs.surya import SuryaSetting
 from ocr_service.workers.base import BaseWorker
+from ocr_service.workers.base_worker import BaseWorker as CeleryBaseWorker
+from celery import Celery
 
 import time
 
@@ -199,3 +201,11 @@ class OCRWorker(BaseWorker):
 
     def process_task(self, task: TaskModel) -> TaskModel:
         return self.process_task_ocr(task)
+
+
+class CeleryOCRWorker(CeleryBaseWorker, OCRWorker):
+    def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, celery_app: Celery,
+                 settings: SuryaSetting = SuryaSetting()):
+        CeleryBaseWorker.__init__(self, celery_app, TaskModel)
+        OCRWorker.__init__(self, minio_connector=minio_connector,
+                           ocr_model=ocr_model, settings=settings)
