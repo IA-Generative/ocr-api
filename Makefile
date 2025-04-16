@@ -2,7 +2,7 @@ IMAGE_NAME_OCR_BACKEND=ocr-api
 IMAGE_NAME_OCR_SERVICE=ocr-service
 PYTHONPATH=$(PWD)
 
-.PHONY: build test clean install-test install-test-dep linter tests build-images bump-patch
+.PHONY: build test clean install-test install-test-dep linter tests build-images bump-patch donwload-model
 
 
 
@@ -11,6 +11,9 @@ install-test:
 
 install-test-dep: install-test
 	uv sync --group test --group ocr-backend --group ocr-service
+
+donwload-model: install-test-dep
+	export PYTHONPATH=$(PWD) && uv run ocr_service/utils/download.py
 
 linter: install-test-dep
 	uv run ruff check .
@@ -29,7 +32,7 @@ up-env:
 down-env:
 	docker compose -f docker-compose-dev.yml down || true
 	
-tests: install-test-dep up-env
+tests: install-test-dep up-env donwload-model
 	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/
 
 build-ocr-backend:
