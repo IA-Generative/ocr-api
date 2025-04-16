@@ -10,7 +10,7 @@ install-test:
 	curl -LsSf https://astral.sh/uv/install.sh | sh
 
 install-test-dep: install-test
-	apt-get update && apt-get install -y poppler-utils
+	sudo apt-get update && sudo apt-get install -y poppler-utils
 	uv sync --group test --group ocr-backend --group ocr-service
 
 donwload-model: install-test-dep
