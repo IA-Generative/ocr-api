@@ -11,6 +11,7 @@ from src import __version__, __name__
 from ocr_service.utils.image import image_to_base64
 from ocr_service.models.base import BaseModelPrediction
 from ocr_service.configs.surya import SuryaSetting
+from ocr_service.workers.base import BaseWorker
 
 import time
 
@@ -23,7 +24,7 @@ class FileNotSupported(Exception):
     ...
 
 
-class OCRWorker:
+class OCRWorker(BaseWorker):
     def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, settings: SuryaSetting = SuryaSetting()):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
@@ -195,3 +196,6 @@ class OCRWorker:
             logger.warning(str(e))
 
         return task
+
+    def process_task(self, task: TaskModel) -> TaskModel:
+        return self.process_task_ocr(task)
