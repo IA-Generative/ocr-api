@@ -25,7 +25,6 @@ class SuryaOCR(BaseModelPrediction):
         result: List[List[PredictionOCR]] = []
         for page_pred in predictions:
             page_predictions: List[PredictionOCR] = []
-            confidences = []
             for text_pred in page_pred.text_lines:
                 tmp = PredictionOCR(confidence=text_pred.confidence,
                                     text=text_pred.text, text_region=text_pred.bbox)

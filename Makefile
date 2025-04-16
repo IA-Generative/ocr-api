@@ -10,7 +10,7 @@ install-test:
 	curl -LsSf https://astral.sh/uv/install.sh | sh
 
 install-test-dep: install-test
-	uv sync --group test --group ocr-backend 
+	uv sync --group test --group ocr-backend --group ocr-service
 
 linter: install-test-dep
 	uv run ruff check .
