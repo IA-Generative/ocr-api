@@ -19,7 +19,9 @@ from src.connector.minio_connector import MinioConnector
 from src.schemas.task import task_table, TaskModel, TaskUpdateForm, TaskStatus
 from src.logger import logger
 
-
+ocr_settings = SuryaSetting()
+ocr_model = SuryaOCR(checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
+                     checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER)
 minio_settings = MinioSettings()
 minio_client = minio.Minio(
     endpoint=minio_settings.MINIO_END_POINT,
@@ -35,9 +37,6 @@ redis_settings = RedisSettings()
 redis_client = redis.Redis(
     host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0
 )
-ocr_settings = SuryaSetting()
-ocr_model = SuryaOCR(checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
-                     checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER)
 
 
 def get_task() -> TaskModel:
