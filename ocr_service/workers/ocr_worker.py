@@ -19,17 +19,27 @@ class EmptyContentException(Exception):
     ...
 
 
+class FileNotSupported(Exception):
+    ...
+
+
 class OCRWorker:
     def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, settings: SuryaSetting = SuryaSetting()):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
         self.settings = settings
 
+    def set_extras(self, task: TaskModel) -> TaskModel:
+        task.extras = task.extras if task.extras is not None else {}
+        return task
+
     def get_content_file(self, task: TaskModel) -> bytes:
+        task = self.set_extras(task)
         try:
             content = self.minio_connector.get_by_task_id(
                 user_id=task.user_id, task_id=task.id
             )
+
         except Exception as e:
             task.extras["error"] = str(e)
             task = task_table.update_task(
@@ -50,8 +60,11 @@ class OCRWorker:
             logger.error(f"No content found for task : {task.id}")
             raise EmptyContentException(
                 f"No content found for task : {task.id}")
+        return content
 
     def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image]:
+        task = self.set_extras(task)
+
         content_type: str = task.extras.get('content_type', "")
         logger.debug(f'content-type : {content_type}')
         filename = task.extras.get("raw_filename")
@@ -75,11 +88,12 @@ class OCRWorker:
                 form_data=TaskUpdateForm(
                     status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
             )
-            raise Exception(f"Unsupported file type {task.extras}")
+            raise FileNotSupported(f"Unsupported file type {content_type}")
 
         return pages
 
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image]) -> TaskModel:
+        task = self.set_extras(task=task)
         formatted_result = []
         batch_size = self.settings.SURYA_DETECTION_BATCH_SIZE
         filename = task.extras.get("raw_filename")
@@ -116,16 +130,17 @@ class OCRWorker:
         return task
 
     def process_task_ocr(self, task: TaskModel) -> TaskModel:
-        extras = task.extras if task.extras else {}
-        extras["service_name"] = __name__
-        extras["version"] = __version__
-        filename = extras.get("raw_filename")
-        max_height = extras.get("max_height", None)
-        return_image = extras.get("return_image", False)
-        grayscale = extras.get("grayscale", False)
+        task = self.set_extras(task=task)
+        task.extras["service_name"] = __name__
+        task.extras["version"] = __version__
+        filename = task.extras.get("raw_filename")
+        max_height = task.extras.get("max_height", None)
+        return_image = task.extras.get("return_image", False)
+        grayscale = task.extras.get("grayscale", False)
 
         base64_images = []
-        logger.debug(f"{task.id} - {task.user_id} - {filename} - {extras} ")
+        logger.debug(
+            f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
 
         content = self.get_content_file(task=task)
         pages = self.transform_content(task=task, content=content)
@@ -151,7 +166,7 @@ class OCRWorker:
 
         if grayscale:
             for i in range(len(pages)):
-                page[i] = ImageOps.grayscale(page[i])
+                pages[i] = ImageOps.grayscale(pages[i])
 
         task = self.predict_on_pages(task=task, pages=pages)
 
