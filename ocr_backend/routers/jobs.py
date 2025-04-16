@@ -15,9 +15,8 @@ router = APIRouter(tags=["Jobs"])
 @router.post(
     "/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel
 )
-async def upload_file(user_id: str, file: UploadFile = File(...), extras: dict = None):
-    if extras is None:
-        extras = {}
+async def upload_file(user_id: str, file: UploadFile = File(...)):
+    extras = {}
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name  # Le chemin du fichier temporaire
