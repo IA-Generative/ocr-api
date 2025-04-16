@@ -39,7 +39,7 @@ build-ocr-backend:
 	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .
 
 build-ocr-service:
-	docker build -t $(IMAGE_NAME_OCR_SERVICE) -f Dockerfiles/ocr_backend/Dockerfile .
+	docker build -t $(IMAGE_NAME_OCR_SERVICE) -f Dockerfiles/ocr_service/Dockerfile .
 
 
 build-images: build-ocr-backend build-ocr-service
