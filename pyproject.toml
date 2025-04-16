@@ -34,13 +34,9 @@ ocr-backend = [
     "python-multipart==0.0.18",
 ]
 ocr-service = [
-    "fastdeploy-python==1.0.7",
-    "opencv-python-headless>=4.11.0.86",
-    "paddleocr==2.10.0",
-    "paddlepaddle==3.0.0",
     "pdf2image==1.17.0",
-    "pillow>=10.4.0",
-    "surya-ocr>=0.13.1",
+    "pillow==10.4.0",
+    "surya-ocr==0.13.1",
 ]
 version = [
     "commitizen>=4.6.0",
