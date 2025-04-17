@@ -81,7 +81,7 @@ jobs:
       - name: Update deployment.yaml & deploy
         run: |
           IMAGE_HASH=${{ github.sha }}
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}"
           IMAGE_LOWERCASE=$(echo $IMAGE | tr '[:upper:]' '[:lower:]')
 
           sed -i "s|PLACEHOLDER_FOR_IMAGE_HASH|${IMAGE_HASH}|g" deployment.yaml
