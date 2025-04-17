@@ -60,15 +60,18 @@ jobs:
         id: setup
         run: |
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "kubeconfig=${{ secrets.KUBE_CONFIG }}" >> $GITHUB_OUTPUT
+            echo 'kubeconfig<<EOF' >> $GITHUB_OUTPUT
+            echo "${{ secrets.KUBE_CONFIG }}" >> $GITHUB_OUTPUT
+            echo 'EOF' >> $GITHUB_OUTPUT
             echo "namespace=ocr" >> $GITHUB_OUTPUT
             echo "url=mirai-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_OUTPUT
           else
-            echo "kubeconfig=${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_OUTPUT
+            echo 'kubeconfig<<EOF' >> $GITHUB_OUTPUT
+            echo "${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_OUTPUT
+            echo 'EOF' >> $GITHUB_OUTPUT
             echo "namespace=ocr-staging" >> $GITHUB_OUTPUT
             echo "url=mirai-staging-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_OUTPUT
           fi
-
       - name: Set Kubernetes context
         uses: azure/k8s-set-context@v3
         with:
