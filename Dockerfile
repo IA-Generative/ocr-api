@@ -20,4 +20,4 @@ RUN tar xf det_infer.tar -C /app/src/detection --strip-components=1 \
 
 COPY . .
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "5000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "5000", "--workers", "3"]
