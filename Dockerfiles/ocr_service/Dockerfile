@@ -3,6 +3,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
+RUN apt update -qy && apt install -qy poppler-utils && apt autoremove
 ENV UV_CACHE_DIR=/app/.cache
 ENV SURYA_DETECTION_FOLDER=/app/.cache/surya/detection
 ENV SURYA_RECOGNITION_FOLDER=/app/.cache/surya/recognition

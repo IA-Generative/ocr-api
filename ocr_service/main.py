@@ -3,7 +3,7 @@ import json
 import redis
 import minio
 
-
+from celery import Celery
 from ocr_service.models.surya_ocr import SuryaOCR
 from ocr_service.configs.surya import SuryaSetting
 from ocr_service.workers.ocr_worker import OCRWorker
@@ -30,17 +30,18 @@ minio_connector = MinioConnector(
 )
 
 redis_settings = RedisSettings()
-redis_client = redis.Redis(
-    host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0
-)
-
+app = Celery('worker', broker=f'redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/')
 
 process_ocr = OCRWorker(minio_connector=minio_connector,
                         ocr_model=ocr_model, settings=ocr_settings)
-if __name__ == "__main__":
-    logger.info("Start to consume")
 
-    while True:
-        _, task_in_redis = redis_client.brpop(redis_settings.REDIS_QUEUE_NAME)
-        task = TaskModel.model_validate(json.loads(task_in_redis))
-        process_ocr.process_task(task=task)
+
+@app.task(name="worker.tasks.ocr")
+def launch_task(task_info: dict):
+    task = TaskModel.model_validate(json.loads(task_info))
+    process_ocr.process_task(task=task)
+
+
+if __name__ == "__main__":
+    logger.info("Start to consume...")
+    app.start()

@@ -3,13 +3,20 @@ import tempfile
 import shutil
 import os
 import traceback
-
+from celery import Celery
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
 from ..clients import minio_connector, redis_client, redis_settings
+from src.config.celery import CelerySettings
 from src.logger import logger
 from src.schemas.task import task_table, TaskForm, TaskModel, TaskUpdateForm, TaskStatus, TaskOperation
 
 router = APIRouter(tags=["Jobs"])
+
+
+celery_config = CelerySettings()
+
+celery_app = Celery(celery_config.CELERY_APP_NAME,
+                    broker=f'redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}//')
 
 
 @router.post(
@@ -56,9 +63,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         os.remove(temp_file_path)
 
-        redis_client.lpush(
-            redis_settings.REDIS_QUEUE_NAME, json.dumps(task_data.model_dump())
-        )
+        celery_app.send_task("worker.tasks.ocr", args=[json.dumps(task_data.model_dump())])
 
         return task_data
 
