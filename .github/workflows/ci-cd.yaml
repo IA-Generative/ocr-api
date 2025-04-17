@@ -13,7 +13,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  K8S_NAMESPACE: mirai-ocr
 
 jobs:
   publish-docker-image:
@@ -55,13 +54,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set KUBE_CONFIG_SECRET env based on branch
-        id: set-config
+      - name: Set dynamic envs based on branch
+        id: set-env
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG }}" >> $GITHUB_ENV
+            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG_MAIN }}" >> $GITHUB_ENV
+            echo "K8S_NAMESPACE=ocr" >> $GITHUB_ENV
+            echo "URL=mirai-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_ENV
           else
             echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_ENV
+            echo "K8S_NAMESPACE=ocr-staging" >> $GITHUB_ENV
+            echo "URL=mirai-staging-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_ENV
           fi
 
       - name: Set up Kubeconfig
@@ -74,25 +77,18 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ env.KUBE_CONFIG_SECRET }}
 
-      - name: Update deployment.yaml (with the image and the new image hash) & deploy 
+      - name: Update deployment.yaml & deploy
         run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            URL="mirai-ocr-api.c0.cloud-pi-native.com"
-          else
-            URL="mirai-staging-ocr-api.c0.cloud-pi-native.com"
-          fi
-
           IMAGE_HASH=${{ github.sha }}
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
           IMAGE_LOWERCASE=$(echo $IMAGE | tr '[:upper:]' '[:lower:]')
-          NAMESPACE=${{env.K8S_NAMESPACE}}
+
           sed -i "s|PLACEHOLDER_FOR_IMAGE_HASH|${IMAGE_HASH}|g" deployment.yaml
           sed -i "s|PLACEHOLDER_FOR_IMAGE|${IMAGE_LOWERCASE}|g" deployment.yaml
-          sed -i "s|PLACEHOLDER_FOR_NAMESPACE|${NAMESPACE}|g" deployment.yaml
+          sed -i "s|PLACEHOLDER_FOR_NAMESPACE|${K8S_NAMESPACE}|g" deployment.yaml
           sed -i "s|PLACEHOLDER_FOR_URL|${URL}|g" deployment.yaml
           cat ./deployment.yaml
-          kubectl apply -f ./deployment.yaml -n ${{env.K8S_NAMESPACE}}
-
+          kubectl apply -f ./deployment.yaml -n ${K8S_NAMESPACE}
   # test-deployement:
   #   needs: deploy
   #   runs-on: ubuntu-latest
