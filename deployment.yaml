@@ -2,26 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "NAME"-api
+  name: ocr-api
   namespace: "PLACEHOLDER_FOR_NAMESPACE"
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: "NAME"-api
+      app: ocr-api
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: "NAME"-api
+        app: ocr-api
       annotations:
         redeploy-hash: "PLACEHOLDER_FOR_IMAGE_HASH"
 
     spec:
       containers:
-      - name: "NAME"-api
+      - name: ocr-api
         image: "PLACEHOLDER_FOR_IMAGE"
         imagePullPolicy: Always
         ports:
@@ -38,11 +38,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "NAME"-api-service
+  name: ocr-api-service
 spec:
   type: ClusterIP
   selector:
-    app: "NAME"-api
+    app: ocr-api
   ports:
   - protocol: TCP
     port: 80
@@ -68,21 +68,21 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS, PUT, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-headers: "*"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-  name: mirai-"NAME"-api."URL"
+  name: PLACEHOLDER_FOR_URL
 spec:
   ingressClassName: public
   rules:
-  - host: mirai-"NAME"-api."URL"
+  - host: PLACEHOLDER_FOR_URL
     http:
       paths:
       - backend:
           service:
-            name: "NAME"-api-service
+            name: ocr-api-service
             port:
               number: 80
         path: /
         pathType: Prefix
   tls:
   - hosts:
-    - mirai-"NAME"-api."URL"
-    secretName: mirai-"NAME"-api."URL"-tls
+    - PLACEHOLDER_FOR_URL
+    secretName: PLACEHOLDER_FOR_URL-tls

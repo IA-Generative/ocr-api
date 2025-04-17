@@ -9,6 +9,7 @@ on:
     paths:
       - 'src/**'
       - Dockerfile
+      - deployment.yaml
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -70,12 +71,10 @@ jobs:
         run: |
           # Determine URL based on the branch
           if [ "${{ github.ref_name }}" == "main" ]; then
-            NAME="ocr"
+            URL="mirai-ocr-api.c0.cloud-pi-native.com"
           else
-            NAME="ocr-staging"
+            URL="mirai-staging-ocr-api.c0.cloud-pi-native.com"
           fi
-
-          URL="c0.cloud-pi-native.com"
 
           IMAGE_HASH=${{ github.sha }}
           IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main"
@@ -84,8 +83,7 @@ jobs:
           sed -i "s|PLACEHOLDER_FOR_IMAGE_HASH|${IMAGE_HASH}|g" deployment.yaml
           sed -i "s|PLACEHOLDER_FOR_IMAGE|${IMAGE_LOWERCASE}|g" deployment.yaml
           sed -i "s|PLACEHOLDER_FOR_NAMESPACE|${NAMESPACE}|g" deployment.yaml
-          sed -i "s|<URL>|${URL}|g" deployment.yaml
-          sed -i "s|<NAME>|${NAME}|g" deployment.yaml
+          sed -i "s|PLACEHOLDER_FOR_URL|${URL}|g" deployment.yaml
           cat ./deployment.yaml
           kubectl apply -f ./deployment.yaml -n ${{env.K8S_NAMESPACE}}
   
