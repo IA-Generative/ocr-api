@@ -36,6 +36,7 @@ ocr-backend = [
 ocr-service = [
     "pdf2image==1.17.0",
     "pillow==10.4.0",
+    "psutil>=7.0.0",
     "surya-ocr==0.13.1",
 ]
 version = [

@@ -1329,7 +1329,6 @@ dependencies = [
     { name = "minio" },
     { name = "pydantic-settings" },
     { name = "python-json-logger" },
-    { name = "redis" },
     { name = "setuptools" },
     { name = "sqlalchemy" },
     { name = "toml" },
@@ -1345,6 +1344,7 @@ ocr-backend = [
 ocr-service = [
     { name = "pdf2image" },
     { name = "pillow" },
+    { name = "psutil" },
     { name = "surya-ocr" },
 ]
 stress-test = [
@@ -1368,7 +1368,6 @@ requires-dist = [
     { name = "minio", specifier = "==7.2.15" },
     { name = "pydantic-settings", specifier = "==2.8.1" },
     { name = "python-json-logger", specifier = "==3.3.0" },
-    { name = "redis", specifier = "==5.2.1" },
     { name = "setuptools", specifier = "==78.1.0" },
     { name = "sqlalchemy", specifier = "==2.0.40" },
     { name = "toml", specifier = ">=0.10.2" },
@@ -1384,6 +1383,7 @@ ocr-backend = [
 ocr-service = [
     { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pillow", specifier = "==10.4.0" },
+    { name = "psutil", specifier = ">=7.0.0" },
     { name = "surya-ocr", specifier = "==0.13.1" },
 ]
 stress-test = [{ name = "locust", specifier = ">=2.34.1" }]
