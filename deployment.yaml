@@ -2,26 +2,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ocr-api
+  name: "NAME"-api
   namespace: "PLACEHOLDER_FOR_NAMESPACE"
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ocr-api
+      app: "NAME"-api
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ocr-api
+        app: "NAME"-api
       annotations:
         redeploy-hash: "PLACEHOLDER_FOR_IMAGE_HASH"
 
     spec:
       containers:
-      - name: ocr-api
+      - name: "NAME"-api
         image: "PLACEHOLDER_FOR_IMAGE"
         imagePullPolicy: Always
         ports:
@@ -38,11 +38,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ocr-api-service
+  name: "NAME"-api-service
 spec:
   type: ClusterIP
   selector:
-    app: ocr-api
+    app: "NAME"-api
   ports:
   - protocol: TCP
     port: 80
@@ -57,7 +57,7 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
     nginx.ingress.kubernetes.io/session-cookie-hash: sha1
     nginx.ingress.kubernetes.io/session-cookie-name: route
-    nginx.ingress.kubernetes.io/whitelist-source-range: 127.0.0.0/16,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8,91.121.239.0/28,77.158.219.0/24,92.103.164.0/24,185.24.186.0/24
+    # nginx.ingress.kubernetes.io/whitelist-source-range: 127.0.0.0/16,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8,91.121.239.0/28,77.158.219.0/24,92.103.164.0/24,185.24.186.0/24
     # Force HTTPS
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
@@ -68,21 +68,21 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, OPTIONS, PUT, DELETE"
     nginx.ingress.kubernetes.io/cors-allow-headers: "*"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-  name: mirai-ocr-api.c0.cloud-pi-native.com
+  name: mirai-"NAME"-api."URL"
 spec:
   ingressClassName: public
   rules:
-  - host: mirai-ocr-api.c0.cloud-pi-native.com
+  - host: mirai-"NAME"-api."URL"
     http:
       paths:
       - backend:
           service:
-            name: ocr-api-service
+            name: "NAME"-api-service
             port:
               number: 80
         path: /
         pathType: Prefix
   tls:
   - hosts:
-    - mirai-ocr-api.c0.cloud-pi-native.com
-    secretName: mirai-ocr-api.c0.cloud-pi-native.com-tls
+    - mirai-"NAME"-api."URL"
+    secretName: mirai-"NAME"-api."URL"-tls
