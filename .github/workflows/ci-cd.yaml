@@ -53,20 +53,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set dynamic envs based on branch
-        id: set-env
+      - name: Set up Kubeconfig, Namespace and URL
         run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG_MAIN }}" >> $GITHUB_ENV
+          mkdir -p $HOME/.kube
+
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
             echo "K8S_NAMESPACE=ocr" >> $GITHUB_ENV
             echo "URL=mirai-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_ENV
           else
-            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_ENV
+            echo "${{ secrets.KUBE_CONFIG_STAGING }}" > $HOME/.kube/config
             echo "K8S_NAMESPACE=ocr-staging" >> $GITHUB_ENV
             echo "URL=mirai-staging-ocr-api.c0.cloud-pi-native.com" >> $GITHUB_ENV
           fi
-
       - name: Set up Kubeconfig
         run: |
           mkdir -p $HOME/.kube
