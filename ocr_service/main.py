@@ -1,23 +1,18 @@
+from src.utils.usage import resource_monitor
+from src.logger import logger
+from src.schemas.task import TaskModel
+from src.connector.minio_connector import MinioConnector
+from src.config.minio import MinioSettings
+from src.config.redis import RedisSettings
+from ocr_service.workers.ocr_worker import OCRWorker
+from ocr_service.configs.surya import SuryaSetting
+from ocr_service.models.surya_ocr import SuryaOCR
+from celery import Celery
+from PIL import Image
+import minio
 import json
 
-import minio
-from PIL import Image
-from celery import Celery
-from ocr_service.models.surya_ocr import SuryaOCR
-from ocr_service.configs.surya import SuryaSetting
-from ocr_service.workers.ocr_worker import OCRWorker
-
-from src.config.redis import RedisSettings
-from src.config.minio import MinioSettings
-
-from src.connector.minio_connector import MinioConnector
-from src.schemas.task import TaskModel
-from src.logger import logger
-from src.utils.usage import resource_monitor
-
 ocr_settings = SuryaSetting()
-ocr_model = SuryaOCR(checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
-                     checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER)
 minio_settings = MinioSettings()
 minio_client = minio.Minio(
     endpoint=minio_settings.MINIO_END_POINT,
@@ -33,20 +28,14 @@ redis_settings = RedisSettings()
 app = Celery(
     'worker', broker=f'redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/')
 
-process_ocr = OCRWorker(minio_connector=minio_connector,
-                        ocr_model=ocr_model, settings=ocr_settings)
-
-warmup_test = Image.open('tests/data/valid/identite.jpg')
-logger.debug('WARMUP-TEST')
-process_ocr.ocr_model.batch_predict(images=[warmup_test], langs=[['fr']for _ in range(1)],
-                                    detection_batch_size=1,
-                                    recognition_batch_size=1)
-logger.debug('WARMUP-DONE')
-
 
 @app.task(name="worker.tasks.ocr")
-@resource_monitor(interval_sec=5, label='worker.tasks.ocr')
+# @resource_monitor(interval_sec=5, label='worker.tasks.ocr')
 def launch_task(task_info: dict):
+    ocr_model = SuryaOCR(checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
+                         checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER)
+    process_ocr = OCRWorker(minio_connector=minio_connector,
+                            ocr_model=ocr_model, settings=ocr_settings)
     task = TaskModel.model_validate(json.loads(task_info))
     process_ocr.process_task(task=task)
 

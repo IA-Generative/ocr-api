@@ -25,14 +25,17 @@ services:
       - .env
 
   ocr_service:
-    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--concurrency=3", "-E"]
+    deploy:
+      replicas: 1
+    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=threads","--concurrency=4", "-E"]
     image: ocr-service
     volumes:
     - ./example.db:/app/example.db
+    - ./ocr_service/:/app/ocr_service/
+    - ./src/:/app/src/
     build:
       context: .
       dockerfile: Dockerfiles/ocr_service/Dockerfile
-    container_name: ocr-service
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
@@ -58,6 +61,7 @@ services:
     volumes:
     - ./ocr_backend/:/app/ocr_backend/
     - ./example.db:/app/example.db
+    - ./src/:/app/src/
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379

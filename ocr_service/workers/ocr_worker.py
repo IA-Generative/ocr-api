@@ -1,4 +1,5 @@
 from typing import List
+import uuid
 from PIL import Image, ImageOps
 from pdf2image import convert_from_bytes
 import numpy as np
@@ -31,6 +32,7 @@ class OCRWorker(BaseWorker):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
         self.settings = settings
+        self.uid = str(uuid.uuid4())
 
     def set_extras(self, task: TaskModel) -> TaskModel:
         task.extras = task.extras if task.extras is not None else {}
@@ -104,9 +106,8 @@ class OCRWorker(BaseWorker):
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
             batch = pages[i: i + batch_size]
-            for image in batch:
-                logger.debug(f"{np.array(image).shape}")
-                # TODO : Pdf with differents size of page
+            logger.debug(f"{filename} for task {task.id} with instance id {self.uuid}")
+            # TODO : Pdf with differents size of page
 
             partial_result = self.ocr_model.batch_predict(images=batch, langs=[['fr']for _ in batch],
                                                           detection_batch_size=batch_size,
@@ -171,7 +172,16 @@ class OCRWorker(BaseWorker):
             for i in range(len(pages)):
                 pages[i] = ImageOps.grayscale(pages[i])
 
-        task = self.predict_on_pages(task=task, pages=pages)
+        try:
+            task = self.predict_on_pages(task=task, pages=pages)
+        except Exception as e:
+            task.extra["error"] = str(e)
+            task = task_table.update_task(
+                task_id=task.id,
+                form_data=TaskUpdateForm(
+                    status=TaskStatus.FAILED.value, percentage=task.percentage, extras=task.extras
+                ))
+            raise Exception(e)
 
         task = task_table.update_task(
             task_id=task.id,
