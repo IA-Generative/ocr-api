@@ -6,10 +6,10 @@ on:
       - 'main'
       - 'staging'
 
-    paths:
-      - 'src/**'
-      - Dockerfile
-      - deployment.yaml
+    # paths:
+    #   - 'src/**'
+    #   - Dockerfile
+    #   - deployment.yaml
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -49,27 +49,33 @@ jobs:
           push: true   # Push the built Docker image to GitHub Packages
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
   deploy:
     needs: publish-docker-image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Kubeconfig
-        env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Set KUBE_CONFIG_SECRET env based on branch
+        id: set-config
         run: |
-          mkdir $HOME/.kube
-          echo "$KUBECONFIG_CONTENT" > $HOME/.kube/config
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG }}" >> $GITHUB_ENV
+          else
+            echo "KUBE_CONFIG_SECRET=${{ secrets.KUBE_CONFIG_STAGING }}" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Kubeconfig
+        run: |
+          mkdir -p $HOME/.kube
+          echo "$KUBE_CONFIG_SECRET" > $HOME/.kube/config
 
       - uses: azure/k8s-set-context@v3
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          kubeconfig: ${{ env.KUBE_CONFIG_SECRET }}
 
       - name: Update deployment.yaml (with the image and the new image hash) & deploy 
         run: |
-          # Determine URL based on the branch
           if [ "${{ github.ref_name }}" == "main" ]; then
             URL="mirai-ocr-api.c0.cloud-pi-native.com"
           else
@@ -86,7 +92,6 @@ jobs:
           sed -i "s|PLACEHOLDER_FOR_URL|${URL}|g" deployment.yaml
           cat ./deployment.yaml
           kubectl apply -f ./deployment.yaml -n ${{env.K8S_NAMESPACE}}
-  
 
   # test-deployement:
   #   needs: deploy
