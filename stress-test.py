@@ -7,24 +7,20 @@
 
 
 from locust import HttpUser, task, between
-import uuid
+import os
 
 
-class OCRUser(HttpUser):
-    wait_time = between(
-        1, 3
-    )  # Temps d'attente entre les requêtes pour chaque utilisateur
+class UploadFileUser(HttpUser):
+    wait_time = between(1, 5)  # temps d'attente entre chaque tâche (sec)
 
     @task
-    def upload_image(self):
-        # Charger une image test depuis le disque
-        file_path = (
-            "tests/data/valid/cerfa_13750-05-1.pdf"  # Assure-toi que ce fichier existe
-        )
+    def upload_file(self):
+        user_id = "1234"
+        file_path = "tests/data/valid/cerfa_13750-05-1.pdf"
+
         with open(file_path, "rb") as f:
-            files = {"file": (f"{str(uuid.uuid4())}.pdf", f, "application/pdf")}
-            data = {
-                "grayscale": "true",
-                "return_image": "false",
+            files = {
+                "file": (os.path.basename(file_path), f, "application/pdf")
             }
-            self.client.post("/", files=files, data=data)
+
+            self.client.post(f"/jobs/{user_id}", files=files)
