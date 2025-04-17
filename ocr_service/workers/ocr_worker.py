@@ -106,7 +106,8 @@ class OCRWorker(BaseWorker):
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
             batch = pages[i: i + batch_size]
-            logger.debug(f"{filename} for task {task.id} with instance id {self.uuid}")
+            logger.debug(
+                f"{filename} for task {task.id} with instance id {self.uid}")
             # TODO : Pdf with differents size of page
 
             partial_result = self.ocr_model.batch_predict(images=batch, langs=[['fr']for _ in batch],
@@ -175,7 +176,7 @@ class OCRWorker(BaseWorker):
         try:
             task = self.predict_on_pages(task=task, pages=pages)
         except Exception as e:
-            task.extra["error"] = str(e)
+            task.extras["error"] = str(e)
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
