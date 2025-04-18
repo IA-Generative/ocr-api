@@ -8,7 +8,6 @@ from ocr_service.workers.ocr_worker import OCRWorker
 from ocr_service.configs.surya import SuryaSetting
 from ocr_service.models.surya_ocr import SuryaOCR
 from celery import Celery
-from PIL import Image
 import minio
 import json
 
@@ -28,16 +27,27 @@ redis_settings = RedisSettings()
 app = Celery(
     'worker', broker=f'redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/')
 
+ocr_model: SuryaOCR = None
+process_ocr: OCRWorker = None
 
-@app.task(name="worker.tasks.ocr")
-# @resource_monitor(interval_sec=5, label='worker.tasks.ocr')
-def launch_task(task_info: dict):
+
+def load_model():
+    global ocr_model, process_ocr
     ocr_model = SuryaOCR(checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
                          checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER)
     process_ocr = OCRWorker(minio_connector=minio_connector,
                             ocr_model=ocr_model, settings=ocr_settings)
+
+
+@app.task(name="worker.tasks.ocr")
+# @resource_monitor(interval_sec=5, label='worker.tasks.ocr')
+def launch_task(task_info: dict):
+    global ocr_model, process_ocr
+    if process_ocr is None or ocr_model is None:
+        load_model()
     task = TaskModel.model_validate(json.loads(task_info))
-    process_ocr.process_task(task=task)
+    task = process_ocr.process_task(task=task)
+    return task.model_dump()
 
 
 if __name__ == "__main__":
