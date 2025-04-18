@@ -26,12 +26,13 @@ bump-minor: install-test
 	uv run cz bump --increment minor
 
 up-env:
-	docker compose -f docker-compose-dev.yml up -d
+	touch example.db
+	docker compose up -d
 	@echo "Attente de 5 secondes pour laisser les conteneurs démarrer..."
 	sleep 5
 
 down-env:
-	docker compose -f docker-compose-dev.yml down || true
+	docker compose down || true
 	
 tests: install-test-dep up-env donwload-model
 	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/

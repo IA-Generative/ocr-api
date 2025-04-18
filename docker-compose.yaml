@@ -24,10 +24,26 @@ services:
     env_file:
       - .env
 
+  flower_ocr:
+    image: ocr-service
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: redis://redis
+      MINIO_BUCKET_NAME: test
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_END_POINT: minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      DATABASE_URL: sqlite:///./example.db
+    ports:
+      - "5555:5555"
+    command: ["uv", "run", "celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+
   ocr_service:
     deploy:
       replicas: 1
-    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=threads","--concurrency=4", "-E"]
+    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
     image: ocr-service
     volumes:
     - ./example.db:/app/example.db

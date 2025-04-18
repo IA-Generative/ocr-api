@@ -128,3 +128,8 @@ def test_predict_task_ocr_w_image(mock_minio, mock_model: SuryaOCR, dummy_task: 
         assert task.status == TaskStatus.COMPLETED.value
         mock_minio.delete_by_task_id.assert_called_once_with(
             user_id=dummy_task.user_id, task_id=dummy_task.id)
+
+
+@pytest.mark.celery(result_backend='redis://')
+def test_something():
+    ...

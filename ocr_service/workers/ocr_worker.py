@@ -1,5 +1,4 @@
 from typing import List
-import uuid
 from PIL import Image, ImageOps
 from pdf2image import convert_from_bytes
 import numpy as np
@@ -32,7 +31,6 @@ class OCRWorker(BaseWorker):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
         self.settings = settings
-        self.uid = str(uuid.uuid4())
 
     def set_extras(self, task: TaskModel) -> TaskModel:
         task.extras = task.extras if task.extras is not None else {}
@@ -106,8 +104,7 @@ class OCRWorker(BaseWorker):
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
             batch = pages[i: i + batch_size]
-            logger.debug(
-                f"{filename} for task {task.id} with instance id {self.uid}")
+            logger.debug(f"{filename} for task {task.id}")
             # TODO : Pdf with differents size of page
 
             partial_result = self.ocr_model.batch_predict(images=batch, langs=[['fr']for _ in batch],
