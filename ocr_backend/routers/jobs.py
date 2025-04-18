@@ -24,6 +24,12 @@ celery_app = Celery(celery_config.CELERY_APP_NAME,
 )
 async def upload_file(user_id: str, file: UploadFile = File(...)):
     extras = {}
+    task_data = task_table.insert_new_task(
+        user_id=user_id,
+        form_data=TaskForm(
+            user_id=user_id, type=TaskOperation.OCR.value, status=TaskStatus.CREATED.value, percentage=0.0, extras=extras
+        ),
+    )
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file_path = temp_file.name  # Le chemin du fichier temporaire
