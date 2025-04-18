@@ -148,14 +148,3 @@ def resource_monitor(interval_sec=1, label="default"):
                 return func(*args, **kwargs)
         return wrapper
     return decorator
-
-
-@resource_monitor(interval_sec=1, label="ocr_task")
-def mon_script():
-    import time
-    print("Début de tâche OCR...")
-    time.sleep(10)
-    print("Fin de tâche.")
-
-
-mon_script()
