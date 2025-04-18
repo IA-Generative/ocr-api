@@ -1485,7 +1485,7 @@ requires-dist = [
 ocr-backend = [
     { name = "fastapi", specifier = "==0.111.0" },
     { name = "httpx", specifier = "==0.25.0" },
-    { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "psycopg2-binary", specifier = "==2.9.10" },
     { name = "python-multipart", specifier = "==0.0.18" },
     { name = "uvicorn", specifier = "==0.16.0" },
 ]

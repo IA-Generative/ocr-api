@@ -35,7 +35,7 @@ services:
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: sqlite:///./example.db
+      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
     ports:
       - "5555:5555"
     command: ["uv", "run", "celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
@@ -46,7 +46,6 @@ services:
     command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
     image: ocr-service
     volumes:
-    - ./example.db:/app/example.db
     - ./ocr_service/:/app/ocr_service/
     - ./src/:/app/src/
     build:
@@ -60,7 +59,7 @@ services:
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: sqlite:///./example.db
+      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
     depends_on:
       - redis
       - minio
@@ -76,7 +75,6 @@ services:
     container_name: ocr-api
     volumes:
     - ./ocr_backend/:/app/ocr_backend/
-    - ./example.db:/app/example.db
     - ./src/:/app/src/
     environment:
       REDIS_HOST: redis
@@ -86,7 +84,7 @@ services:
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: sqlite:///./example.db
+      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
     depends_on:
       - redis
       - minio

@@ -26,7 +26,6 @@ bump-minor: install-test
 	uv run cz bump --increment minor
 
 up-env:
-	touch example.db
 	docker compose up -d
 	@echo "Attente de 5 secondes pour laisser les conteneurs démarrer..."
 	sleep 5
