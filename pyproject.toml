@@ -14,6 +14,7 @@ dependencies = [
     "sqlalchemy==2.0.40",
     "celery[redis]>=5.5.1",
     "flower>=2.0.1",
+    "psycopg2-binary==2.9.10",
 ]
 
 [dependency-groups]
@@ -34,8 +35,7 @@ ocr-backend = [
     "httpx==0.25.0",
     "fastapi==0.111.0",
     "uvicorn==0.16.0",
-    "python-multipart==0.0.18",
-    "psycopg2-binary==2.9.10",
+    "python-multipart==0.0.18"
 ]
 ocr-service = [
     "torch==2.6.0",
