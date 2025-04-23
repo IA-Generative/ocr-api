@@ -6,7 +6,6 @@ recognition
 *.csv
 *.tar
 tests/
-models/
 .pytest_cache
 .git*
 Dockerfile

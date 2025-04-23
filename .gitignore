@@ -3,7 +3,6 @@ detection
 recognition
 .pytest_cache
 *.pdf
-models
 .venv
 *.csv
 *.tar
@@ -12,3 +11,6 @@ tmp/
 .coverage
 text_detection/
 text_recognition/
+*.pdiparams
+*.info
+*.pdmodel
