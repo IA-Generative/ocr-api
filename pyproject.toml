@@ -27,7 +27,8 @@ test = [
     "pytest==8.3.5",
     "ruff>=0.11.5",
     "pytest-cov>=6.1.1",
-    "celery[pytest]>=5.5.1"
+    "celery[pytest]>=5.5.1",
+    "pillow>=10.4.0",
 ]
 ocr-backend = [
     "httpx==0.25.0",
@@ -37,11 +38,20 @@ ocr-backend = [
     "psycopg2-binary==2.9.10",
 ]
 ocr-service = [
+    "torch==2.6.0",
     "pdf2image==1.17.0",
     "pillow==10.4.0",
     "psutil>=7.0.0",
-    "surya-ocr==0.13.1",
+    "surya-ocr==0.13.1"
 ]
+ocr-service-paddle = [
+    "pdf2image==1.17.0",
+    "pillow==10.4.0",
+    "psutil>=7.0.0",
+    "paddleocr==2.10.0",
+    "paddlepaddle==3.0.0",
+]
+
 version = [
     "commitizen>=4.6.0",
 ]
@@ -53,3 +63,13 @@ version_scheme = "semver"
 version_provider = "uv"
 update_changelog_on_bump = true
 major_version_zero = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu", group = "ocr-service" }
+
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+

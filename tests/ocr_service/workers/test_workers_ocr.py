@@ -3,12 +3,12 @@ import pytest
 from unittest.mock import MagicMock
 from ocr_service.workers.ocr_worker import OCRWorker, EmptyContentException, FileNotSupported
 from src.schemas.task import TaskModel
-from ocr_service.models.surya_ocr import SuryaOCR
-from ocr_service.configs.surya import SuryaSetting
+from ocr_service.models.paddle_ocr import PaddleInferOCR
+from ocr_service.configs.paddle import PaddleSetting
 from src.schemas.task import task_table, TaskForm, TaskStatus
 
 
-settings = SuryaSetting()
+settings = PaddleSetting()
 
 
 @pytest.fixture
@@ -24,11 +24,11 @@ def mock_minio():
 
 
 @pytest.fixture
-def mock_model() -> SuryaOCR:
-    return SuryaOCR(checkpoint_detection=settings.SURYA_DETECTION_FOLDER, checkpoint_recognition=settings.SURYA_RECOGNITION_FOLDER)
+def mock_model() -> PaddleInferOCR:
+    return PaddleInferOCR(path_model=settings.PADDLE_OCR_BASE_DIR)
 
 
-def test_get_content_file_success(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_get_content_file_success(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     expected_content = b"fake-bytes-content"
     mock_minio.get_by_task_id.return_value = expected_content
 
@@ -40,7 +40,7 @@ def test_get_content_file_success(mock_minio, mock_model: SuryaOCR, dummy_task: 
         user_id=dummy_task.user_id, task_id=dummy_task.id)
 
 
-def test_get_content_file_none(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_get_content_file_none(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     mock_minio.get_by_task_id.return_value = None
 
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
@@ -51,7 +51,7 @@ def test_get_content_file_none(mock_minio, mock_model: SuryaOCR, dummy_task: Tas
     mock_minio.get_by_task_id.assert_called_once()
 
 
-def test_get_content_file_exception(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_get_content_file_exception(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     mock_minio.get_by_task_id.side_effect = Exception("Connection error")
 
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
@@ -63,13 +63,13 @@ def test_get_content_file_exception(mock_minio, mock_model: SuryaOCR, dummy_task
     mock_minio.get_by_task_id.assert_called_once()
 
 
-def test_set_task_extras(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_set_task_extras(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     actual = worker.set_extras(task=dummy_task)
     assert actual.extras is not None
 
 
-def test_transform_content_error_no_content_type(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_transform_content_error_no_content_type(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     dummy_task.extras = {}
     with open('tests/data/valid/identite.jpg', 'rb') as f:
@@ -78,7 +78,7 @@ def test_transform_content_error_no_content_type(mock_minio, mock_model: SuryaOC
             worker.transform_content(task=dummy_task, content=expected_content)
 
 
-def test_transform_content_content_type_image(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_transform_content_content_type_image(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     dummy_task.extras = {"content_type": "image/jpg"}
     with open('tests/data/valid/identite.jpg', 'rb') as f:
@@ -86,7 +86,7 @@ def test_transform_content_content_type_image(mock_minio, mock_model: SuryaOCR, 
         assert isinstance(actual[0], Image.Image)
 
 
-def test_transform_content_content_type_pdf(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_transform_content_content_type_pdf(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     dummy_task.extras = {"content_type": "application/pdf"}
     with open('tests/data/valid/cerfa_13750-05-1.pdf', 'rb') as f:
@@ -95,7 +95,7 @@ def test_transform_content_content_type_pdf(mock_minio, mock_model: SuryaOCR, du
         assert len(actual) == 1
 
 
-def test_predict_on_pages(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_predict_on_pages(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     dummy_task.extras = {"content_type": "image/jpg"}
     image = Image.open('tests/data/valid/identite.jpg')
@@ -103,7 +103,7 @@ def test_predict_on_pages(mock_minio, mock_model: SuryaOCR, dummy_task: TaskMode
     assert "results" in actual.extras
 
 
-def test_predict_task_ocr(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_predict_task_ocr(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.extras = {"content_type": "application/pdf"}
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     with open('tests/data/valid/cerfa_13750-05-1.pdf', 'rb') as f:
@@ -115,7 +115,7 @@ def test_predict_task_ocr(mock_minio, mock_model: SuryaOCR, dummy_task: TaskMode
             user_id=dummy_task.user_id, task_id=dummy_task.id)
 
 
-def test_predict_task_ocr_w_image(mock_minio, mock_model: SuryaOCR, dummy_task: TaskModel):
+def test_predict_task_ocr_w_image(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
 
     dummy_task.extras = {
         "content_type": "application/pdf", "return_image": True, "grayscale": True}
@@ -129,7 +129,3 @@ def test_predict_task_ocr_w_image(mock_minio, mock_model: SuryaOCR, dummy_task: 
         mock_minio.delete_by_task_id.assert_called_once_with(
             user_id=dummy_task.user_id, task_id=dummy_task.id)
 
-
-@pytest.mark.celery(result_backend='redis://')
-def test_something():
-    ...

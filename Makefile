@@ -11,7 +11,7 @@ install-test:
 
 install-test-dep: install-test
 	sudo apt-get update && sudo apt-get install -y poppler-utils
-	uv sync --group test --group ocr-backend --group ocr-service
+	uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle
 
 donwload-model: install-test-dep
 	export PYTHONPATH=$(PWD) && uv run ocr_service/utils/download.py
@@ -40,7 +40,8 @@ build-ocr-backend:
 	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .
 
 build-ocr-service:
-	docker build -t $(IMAGE_NAME_OCR_SERVICE) -f Dockerfiles/ocr_service/Dockerfile .
+	docker build -t $(IMAGE_NAME_OCR_SERVICE)-paddle -f Dockerfiles/ocr_service/Dockerfile.paddle .
+	docker build -t $(IMAGE_NAME_OCR_SERVICE)-surya -f Dockerfiles/ocr_service/Dockerfile .
 
 
 build-images: build-ocr-backend build-ocr-service

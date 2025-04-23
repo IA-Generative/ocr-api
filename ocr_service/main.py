@@ -8,13 +8,11 @@ from src.connector.minio_connector import MinioConnector
 from src.config.minio import MinioSettings
 from src.config.redis import RedisSettings
 from ocr_service.workers.ocr_worker import OCRWorker
-from ocr_service.configs.surya import SuryaSetting
-from ocr_service.models.surya_ocr import SuryaOCR
+
 from celery import Celery
 import minio
+AVAILABLE_MODEL = ["paddle", "surya"]
 
-
-ocr_settings = SuryaSetting()
 minio_settings = MinioSettings()
 minio_client = minio.Minio(
     endpoint=minio_settings.MINIO_END_POINT,
@@ -30,11 +28,27 @@ redis_settings = RedisSettings()
 app = Celery(
     "worker", broker=f"redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/"
 )
+model_name = os.environ.get('MODEL_NAME', "paddle")
+if model_name == "surya":
+    from ocr_service.configs.surya import SuryaSetting
+    from ocr_service.models.surya_ocr import SuryaOCR
+    ocr_settings = SuryaSetting()
+    ocr_model = SuryaOCR(
+        checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
+        checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER,
+    )
 
-ocr_model = SuryaOCR(
-    checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
-    checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER,
-)
+elif model_name == "paddle":
+    from ocr_service.configs.paddle import PaddleSetting
+    from ocr_service.models.surya_ocr import SuryaOCR
+    ocr_settings = PaddleSetting()
+    ocr_model = SuryaOCR(
+        checkpoint_detection=ocr_settings.SURYA_DETECTION_FOLDER,
+        checkpoint_recognition=ocr_settings.SURYA_RECOGNITION_FOLDER,
+    )
+
+else:
+    raise NotImplementedError(f'{args.model} is not available yet ({AVAILABLE_MODEL})')
 process_ocr = OCRWorker(
     minio_connector=minio_connector, ocr_model=ocr_model, settings=ocr_settings
 )

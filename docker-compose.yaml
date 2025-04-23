@@ -50,7 +50,7 @@ services:
     - ./src/:/app/src/
     build:
       context: .
-      dockerfile: Dockerfiles/ocr_service/Dockerfile
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379

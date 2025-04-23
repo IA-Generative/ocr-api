@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from PIL import Image, ImageOps
 from pdf2image import convert_from_bytes
 import numpy as np
@@ -11,6 +11,7 @@ from src import __version__, __name__
 from ocr_service.utils.image import image_to_base64
 from ocr_service.models.base import BaseModelPrediction
 from ocr_service.configs.surya import SuryaSetting
+from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.workers.base import BaseWorker
 from ocr_service.workers.base_worker import BaseWorker as CeleryBaseWorker
 from celery import Celery
@@ -27,7 +28,7 @@ class FileNotSupported(Exception):
 
 
 class OCRWorker(BaseWorker):
-    def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, settings: SuryaSetting = SuryaSetting()):
+    def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, settings: Union[SuryaSetting, PaddleSetting] = SuryaSetting()):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
         self.settings = settings
@@ -98,7 +99,7 @@ class OCRWorker(BaseWorker):
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image]) -> TaskModel:
         task = self.set_extras(task=task)
         formatted_result = []
-        batch_size = self.settings.SURYA_DETECTION_BATCH_SIZE
+        batch_size = self.settings.DETECTION_BATCH_SIZE
         filename = task.extras.get("raw_filename")
 
         for i in range(0, len(pages), batch_size):
@@ -109,7 +110,7 @@ class OCRWorker(BaseWorker):
 
             partial_result = self.ocr_model.batch_predict(images=batch, langs=[['fr']for _ in batch],
                                                           detection_batch_size=batch_size,
-                                                          recognition_batch_size=self.settings.SURYA_RECOGNITION_BATCH_SIZE)
+                                                          recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE)
 
             formatted_result.extend(partial_result)
 
