@@ -74,15 +74,12 @@ class TaskStatsUpdateForm(BaseModel):
 
 
 class TaskStatTable:
-    def insert_new_task(
-        self, user_id: str, form_data: TaskStatsForm
-    ) -> Optional[TaskStatsModel]:
+    def insert_new_task(self, form_data: TaskStatsForm) -> Optional[TaskStatsModel]:
         with get_db() as db:
             knowledge = TaskStatsModel(
                 **{
                     **form_data.model_dump(),
                     "id": str(uuid.uuid4()),
-                    "user_id": user_id,
                     "created_at": int(time.time()),
                     "updated_at": int(time.time()),
                 }
@@ -141,7 +138,6 @@ class TaskStatTable:
                 if hasattr(task, key):
                     setattr(task, key, value)
 
-            task.updated_at = int(time.time())
             db.commit()
             db.refresh(task)
             return TaskStatsModel.model_validate(task)
