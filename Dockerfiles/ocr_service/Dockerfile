@@ -20,5 +20,6 @@ RUN uv run /app/ocr_service/utils/download.py
 
 COPY src /app/src
 
+ENV MODEL_NAME=surya
 
-CMD ["uv", "run", "ocr_service/main.py", "--model", "surya"]
+CMD ["uv", "run", "ocr_service/main.py"]

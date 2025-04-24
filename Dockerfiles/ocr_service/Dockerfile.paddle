@@ -20,4 +20,4 @@ RUN uv run /app/ocr_service/utils/download_paddle_models.py --version PP-OCRv4 -
 COPY src /app/src
 
 
-CMD ["uv", "run", "ocr_service/main.py", "--model", "paddle"]
+CMD ["uv", "run", "ocr_service/main.py"]
