@@ -30,9 +30,17 @@ docker-build-ocr-api:
   extends:
     - .kaniko:build-push
 
-docker-build-ocr-service:
+docker-build-ocr-service-paddle:
   variables:
-    IMAGE_NAMES: ocr-service:${CI_COMMIT_REF_SLUG} ocr-service:${CI_COMMIT_SHORT_SHA} ocr-service:${CI_COMMIT_TAG}
+    IMAGE_NAMES: ocr-service-paddle:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
+    DOCKERFILE: "Dockerfiles/ocr_service/Dockerfile.paddle"
+  stage: docker-build
+  extends:
+    - .kaniko:build-push
+
+docker-build-ocr-service-surya:
+  variables:
+    IMAGE_NAMES: ocr-service-surya:${CI_COMMIT_REF_SLUG} ocr-service-surya:${CI_COMMIT_SHORT_SHA} ocr-service-surya:${CI_COMMIT_TAG}
     DOCKERFILE: "Dockerfiles/ocr_service/Dockerfile"
   stage: docker-build
   extends:
