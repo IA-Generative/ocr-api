@@ -16,3 +16,4 @@ text_recognition/
 *.pdmodel
 bin/
 .actrc
+.secrets
