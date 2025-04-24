@@ -40,9 +40,7 @@ class UploadFileUser(HttpUser):
         mime_type = self.get_mime_type(file_path)
 
         with open(file_path, "rb") as f:
-            files = {
-                "file": (os.path.basename(file_path), f, mime_type)
-            }
+            files = {"file": (os.path.basename(file_path), f, mime_type)}
             self.client.post(f"/jobs/{user_id}", files=files)
 
     @task

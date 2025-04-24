@@ -10,9 +10,9 @@ def test_predict():
 
     obj = SuryaOCR(
         checkpoint_detection=settings.SURYA_DETECTION_FOLDER,
-        checkpoint_recognition=settings.SURYA_RECOGNITION_FOLDER)
-    actuals = obj.batch_predict(images=[image, image], langs=[
-        ["fr"], ['fr', "en"]])
+        checkpoint_recognition=settings.SURYA_RECOGNITION_FOLDER,
+    )
+    actuals = obj.batch_predict(images=[image, image], langs=[["fr"], ["fr", "en"]])
 
     assert len(actuals) == 2
     for actual in actuals:

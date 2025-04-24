@@ -6,5 +6,5 @@ class RedisSettings(BaseSettings):
     REDIS_PORT: int = 6379
     REDIS_QUEUE_NAME: str = "redis-queue"
     model_config = SettingsConfigDict(
-        from_attributes=True, case_sensitive=True, env_file=".env",  extra="allow"
+        from_attributes=True, case_sensitive=True, env_file=".env", extra="allow"
     )

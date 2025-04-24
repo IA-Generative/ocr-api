@@ -19,8 +19,7 @@ class Task(Base):
     user_id = Column(String, nullable=False)
     percentage = Column(FLOAT, nullable=False)
 
-    created_at = Column(BigInteger, default=lambda: int(
-        datetime.now().timestamp()))
+    created_at = Column(BigInteger, default=lambda: int(datetime.now().timestamp()))
     updated_at = Column(
         BigInteger,
         default=lambda: int(datetime.now().timestamp()),
@@ -61,15 +60,15 @@ class TaskUpdateForm(BaseModel):
 
 
 class TaskStatus(str, Enum):
-    CREATED = "created"         # Tâche instanciée mais pas encore mise en file
-    QUEUED = "queued"           # En attente dans une file de traitement
-    STARTED = "started"         # A commencé à être traitée
+    CREATED = "created"  # Tâche instanciée mais pas encore mise en file
+    QUEUED = "queued"  # En attente dans une file de traitement
+    STARTED = "started"  # A commencé à être traitée
     IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"     # Traitée avec succès
-    FAILED = "failed"           # Erreur fatale
-    RETRYING = "retrying"       # En cours de nouvelle tentative après échec
-    CANCELED = "canceled"       # Annulée manuellement ou par logique métier
-    TIMEOUT = "timeout"         # N’a pas pu terminer dans le temps imparti
+    COMPLETED = "completed"  # Traitée avec succès
+    FAILED = "failed"  # Erreur fatale
+    RETRYING = "retrying"  # En cours de nouvelle tentative après échec
+    CANCELED = "canceled"  # Annulée manuellement ou par logique métier
+    TIMEOUT = "timeout"  # N’a pas pu terminer dans le temps imparti
 
 
 class TaskOperation(str, Enum):
@@ -154,8 +153,7 @@ class TaskTable:
 
     def delete_tasks_by_user_id(self, user_id: str) -> Optional[List[TaskModel]]:
         with get_db() as db:
-            tasks_to_delete = db.query(Task).filter(
-                Task.user_id == user_id).all()
+            tasks_to_delete = db.query(Task).filter(Task.user_id == user_id).all()
 
             if not tasks_to_delete:
                 logger.warning(f"No tasks found for user {user_id}.")

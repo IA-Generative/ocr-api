@@ -1,7 +1,6 @@
 from typing import List, Union
 from PIL import Image, ImageOps
 from pdf2image import convert_from_bytes
-import numpy as np
 
 from src.connector.minio_connector import MinioConnector
 from src.schemas.task import task_table, TaskModel, TaskUpdateForm, TaskStatus
@@ -19,16 +18,19 @@ from celery import Celery
 import time
 
 
-class EmptyContentException(Exception):
-    ...
+class EmptyContentException(Exception): ...
 
 
-class FileNotSupported(Exception):
-    ...
+class FileNotSupported(Exception): ...
 
 
 class OCRWorker(BaseWorker):
-    def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, settings: Union[SuryaSetting, PaddleSetting] = SuryaSetting()):
+    def __init__(
+        self,
+        minio_connector: MinioConnector,
+        ocr_model: BaseModelPrediction,
+        settings: Union[SuryaSetting, PaddleSetting] = SuryaSetting(),
+    ):
         self.minio_connector = minio_connector
         self.ocr_model = ocr_model
         self.settings = settings
@@ -49,7 +51,8 @@ class OCRWorker(BaseWorker):
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
+                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
+                ),
             )
             logger.error(str(e))
             raise Exception(e)
@@ -59,18 +62,18 @@ class OCRWorker(BaseWorker):
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
+                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
+                ),
             )
             logger.error(f"No content found for task : {task.id}")
-            raise EmptyContentException(
-                f"No content found for task : {task.id}")
+            raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
     def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image]:
         task = self.set_extras(task)
 
-        content_type: str = task.extras.get('content_type', "")
-        logger.debug(f'content-type : {content_type}')
+        content_type: str = task.extras.get("content_type", "")
+        logger.debug(f"content-type : {content_type}")
         filename = task.extras.get("raw_filename")
 
         if content_type.startswith("image/"):
@@ -86,11 +89,12 @@ class OCRWorker(BaseWorker):
 
         else:
             logger.error(f"Unsupported file type {task.extras}")
-            task.extras['error'] = f"Unsupported file type {task.extras}"
+            task.extras["error"] = f"Unsupported file type {task.extras}"
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
+                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
+                ),
             )
             raise FileNotSupported(f"Unsupported file type {content_type}")
 
@@ -104,18 +108,20 @@ class OCRWorker(BaseWorker):
 
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
-            batch = pages[i: i + batch_size]
+            batch = pages[i : i + batch_size]
             logger.debug(f"{filename} for task {task.id}")
             # TODO : Pdf with differents size of page
 
-            partial_result = self.ocr_model.batch_predict(images=batch, langs=[['fr']for _ in batch],
-                                                          detection_batch_size=batch_size,
-                                                          recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE)
+            partial_result = self.ocr_model.batch_predict(
+                images=batch,
+                langs=[["fr"] for _ in batch],
+                detection_batch_size=batch_size,
+                recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE,
+            )
 
             formatted_result.extend(partial_result)
 
-            page_range = f"{i + 1}" if len(
-                batch) == 1 else f"{i + 1}-{i + batch_size}"
+            page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + batch_size}"
             logger.debug(
                 f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
             )
@@ -126,7 +132,9 @@ class OCRWorker(BaseWorker):
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.IN_PROGRESS.value, percentage=percentage, extras=task.extras
+                    status=TaskStatus.IN_PROGRESS.value,
+                    percentage=percentage,
+                    extras=task.extras,
                 ),
             )
             logger.debug(task.extras)
@@ -142,8 +150,7 @@ class OCRWorker(BaseWorker):
         grayscale = task.extras.get("grayscale", False)
 
         base64_images = []
-        logger.debug(
-            f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
+        logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
 
         content = self.get_content_file(task=task)
         pages = self.transform_content(task=task, content=content)
@@ -160,8 +167,7 @@ class OCRWorker(BaseWorker):
         for i, page in enumerate(pages):
             width, height = page.size
             if max_height and int(height) > max_height:
-                page = page.resize(
-                    (int(width * max_height / height), max_height))
+                page = page.resize((int(width * max_height / height), max_height))
 
         if return_image:
             for page in pages:
@@ -178,14 +184,19 @@ class OCRWorker(BaseWorker):
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=task.percentage, extras=task.extras
-                ))
+                    status=TaskStatus.FAILED.value,
+                    percentage=task.percentage,
+                    extras=task.extras,
+                ),
+            )
             raise Exception(e)
 
         task = task_table.update_task(
             task_id=task.id,
             form_data=TaskUpdateForm(
-                status=TaskStatus.COMPLETED.value, percentage=task.percentage, extras=task.extras
+                status=TaskStatus.COMPLETED.value,
+                percentage=task.percentage,
+                extras=task.extras,
             ),
         )
         logger.debug(f"{task.id} - done {task.model_dump()}")
@@ -196,13 +207,16 @@ class OCRWorker(BaseWorker):
         task = task_table.update_task(
             task_id=task.id,
             form_data=TaskUpdateForm(
-                status=TaskStatus.COMPLETED.value, percentage=task.percentage, extras=task.extras
+                status=TaskStatus.COMPLETED.value,
+                percentage=task.percentage,
+                extras=task.extras,
             ),
         )
 
         try:
             self.minio_connector.delete_by_task_id(
-                user_id=task.user_id, task_id=task.id)
+                user_id=task.user_id, task_id=task.id
+            )
         except Exception as e:
             logger.warning(str(e))
 
@@ -213,8 +227,17 @@ class OCRWorker(BaseWorker):
 
 
 class CeleryOCRWorker(CeleryBaseWorker, OCRWorker):
-    def __init__(self, minio_connector: MinioConnector, ocr_model: BaseModelPrediction, celery_app: Celery,
-                 settings: SuryaSetting = SuryaSetting()):
+    def __init__(
+        self,
+        minio_connector: MinioConnector,
+        ocr_model: BaseModelPrediction,
+        celery_app: Celery,
+        settings: SuryaSetting = SuryaSetting(),
+    ):
         CeleryBaseWorker.__init__(self, celery_app, TaskModel)
-        OCRWorker.__init__(self, minio_connector=minio_connector,
-                           ocr_model=ocr_model, settings=settings)
+        OCRWorker.__init__(
+            self,
+            minio_connector=minio_connector,
+            ocr_model=ocr_model,
+            settings=settings,
+        )

@@ -21,6 +21,5 @@ async def get_tasks_by_user_id(
 ):
     tasks = task_table.get_tasks_by_user_id(user_id, page, page_size)
     if tasks is None or len(tasks) == 0:
-        raise HTTPException(
-            status_code=404, detail="No tasks found for this user")
+        raise HTTPException(status_code=404, detail="No tasks found for this user")
     return tasks

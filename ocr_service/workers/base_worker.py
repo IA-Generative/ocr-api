@@ -13,8 +13,7 @@ class BaseWorker(ABC, Generic[T]):
         self._register_task()
 
     @abstractmethod
-    def process_task(self, task: T) -> T:
-        ...
+    def process_task(self, task: T) -> T: ...
 
     def _register_task(self):
         @self.celery_app.task(name=f"{self.__class__.__name__}.run")

@@ -8,10 +8,17 @@ from functools import wraps
 
 try:
     from pynvml import (
-        nvmlInit, nvmlShutdown, nvmlDeviceGetHandleByIndex,
-        nvmlDeviceGetMemoryInfo, nvmlDeviceGetUtilizationRates, nvmlSystemGetDriverVersion,
-        nvmlDeviceGetTemperature, nvmlDeviceGetCount
+        nvmlInit,
+        nvmlShutdown,
+        nvmlDeviceGetHandleByIndex,
+        nvmlDeviceGetMemoryInfo,
+        nvmlDeviceGetUtilizationRates,
+        nvmlSystemGetDriverVersion,
+        nvmlDeviceGetTemperature,
+        nvmlDeviceGetCount,
+        nvmlDeviceGetName,
     )
+
     nvmlInit()
     GPU_AVAILABLE = True
     GPU_COUNT = nvmlDeviceGetCount()  # Nombre de GPUs disponibles
@@ -19,23 +26,25 @@ try:
     GPU_HANDLE = nvmlDeviceGetHandleByIndex(0)
     gpu_name = nvmlDeviceGetName(GPU_HANDLE).decode("utf-8")
     driver_version = nvmlSystemGetDriverVersion().decode("utf-8")
-    total_gpu_memory = nvmlDeviceGetMemoryInfo(
-        GPU_HANDLE).total / 1024 ** 2  # Total VRAM en MB
+    total_gpu_memory = (
+        nvmlDeviceGetMemoryInfo(GPU_HANDLE).total / 1024**2
+    )  # Total VRAM en MB
     # On part du principe que tous les GPUs ont des CUDA cores, sinon il faudrait interroger chaque GPU
     cuda_cores = nvmlDeviceGetCount()
-except:
+except Exception as e:
     GPU_AVAILABLE = False
     GPU_HANDLE = None
     gpu_name = None
     driver_version = None
     total_gpu_memory = None
     cuda_cores = None
+    print(e)
 
 
 logger = logging.getLogger("resource_monitor")
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(message)s'))
+handler.setFormatter(logging.Formatter("%(message)s"))
 logger.addHandler(handler)
 
 
@@ -48,10 +57,12 @@ class ResourceMonitor:
         self.process = psutil.Process(os.getpid())
         self.cpu_name = ""
         self.total_cpu_cores = psutil.cpu_count(
-            logical=False)  # Nombre de cores physiques
+            logical=False
+        )  # Nombre de cores physiques
         self.total_cpu_threads = psutil.cpu_count(
-            logical=True)  # Nombre total de threads
-        self.total_ram = psutil.virtual_memory().total / 1024 ** 2  # RAM en MB
+            logical=True
+        )  # Nombre total de threads
+        self.total_ram = psutil.virtual_memory().total / 1024**2  # RAM en MB
 
         # Réseau
         self.net_io = psutil.net_io_counters()
@@ -65,29 +76,32 @@ class ResourceMonitor:
     def _log_usage(self):
         while self.running:
             cpu = self.process.cpu_percent(interval=None)
-            ram = self.process.memory_info().rss / 1024 ** 2  # Utilisation de la RAM en MB
+            ram = (
+                self.process.memory_info().rss / 1024**2
+            )  # Utilisation de la RAM en MB
 
             # Réseau
             net_io = psutil.net_io_counters()
-            net_sent = net_io.bytes_sent / 1024 ** 2  # Octets envoyés (MB)
-            net_recv = net_io.bytes_recv / 1024 ** 2  # Octets reçus (MB)
+            net_sent = net_io.bytes_sent / 1024**2  # Octets envoyés (MB)
+            net_recv = net_io.bytes_recv / 1024**2  # Octets reçus (MB)
 
             # I/O Disque
             disk_io = psutil.disk_io_counters()
-            disk_read = disk_io.read_bytes / 1024 ** 2  # Octets lus (MB)
-            disk_write = disk_io.write_bytes / 1024 ** 2  # Octets écrits (MB)
+            disk_read = disk_io.read_bytes / 1024**2  # Octets lus (MB)
+            disk_write = disk_io.write_bytes / 1024**2  # Octets écrits (MB)
 
             # Swap
-            swap_used = self.swap.used / 1024 ** 2  # Swap utilisé en MB
-            swap_total = self.swap.total / 1024 ** 2  # Swap total en MB
+            swap_used = self.swap.used / 1024**2  # Swap utilisé en MB
+            swap_total = self.swap.total / 1024**2  # Swap total en MB
 
             # Température CPU et GPU
-            cpu_temp = psutil.sensors_temperatures().get('coretemp',)  # Température CPU
+            cpu_temp = psutil.sensors_temperatures().get(
+                "coretemp",
+            )  # Température CPU
             cpu_temp = cpu_temp[0].current if cpu_temp is not None else None
             gpu_temp = None
             if GPU_AVAILABLE:
-                gpu_temp = nvmlDeviceGetTemperature(
-                    GPU_HANDLE, 0)  # Température GPU
+                gpu_temp = nvmlDeviceGetTemperature(GPU_HANDLE, 0)  # Température GPU
 
             gpu_util = None
             gpu_mem = None
@@ -95,7 +109,7 @@ class ResourceMonitor:
                 util = nvmlDeviceGetUtilizationRates(GPU_HANDLE)
                 mem = nvmlDeviceGetMemoryInfo(GPU_HANDLE)
                 gpu_util = util.gpu
-                gpu_mem = mem.used / 1024 ** 2  # VRAM utilisée en MB
+                gpu_mem = mem.used / 1024**2  # VRAM utilisée en MB
 
             log_entry = {
                 "timestamp": time.time(),
@@ -121,7 +135,7 @@ class ResourceMonitor:
                 "swap_used_mb": round(swap_used, 2),  # Swap utilisé en MB
                 "swap_total_mb": round(swap_total, 2),  # Swap total en MB
                 "cpu_temp_celsius": cpu_temp,  # Température du CPU en °C
-                "gpu_temp_celsius": gpu_temp  # Température du GPU en °C
+                "gpu_temp_celsius": gpu_temp,  # Température du GPU en °C
             }
 
             logger.info(json.dumps(log_entry))
@@ -146,5 +160,7 @@ def resource_monitor(interval_sec=1, label="default"):
         def wrapper(*args, **kwargs):
             with ResourceMonitor(interval_sec=interval_sec, label=label):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator

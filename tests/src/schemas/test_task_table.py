@@ -1,4 +1,10 @@
-from src.schemas.task import TaskTable, TaskForm, TaskUpdateForm, TaskOperation, TaskStatus
+from src.schemas.task import (
+    TaskTable,
+    TaskForm,
+    TaskUpdateForm,
+    TaskOperation,
+    TaskStatus,
+)
 
 
 def test_insert_new_task():
@@ -139,20 +145,17 @@ def test_get_tasks_by_user_id_with_pagination():
         )
 
     # Step 2: Retrieve first page with 5 tasks per page
-    tasks_page_1 = table.get_tasks_by_user_id(
-        user_id="user123", page=1, page_size=5)
+    tasks_page_1 = table.get_tasks_by_user_id(user_id="user123", page=1, page_size=5)
     assert tasks_page_1 is not None
     assert len(tasks_page_1) == 5  # First page should contain 5 tasks
 
     # Step 3: Retrieve second page with 5 tasks per page
-    tasks_page_2 = table.get_tasks_by_user_id(
-        user_id="user123", page=2, page_size=5)
+    tasks_page_2 = table.get_tasks_by_user_id(user_id="user123", page=2, page_size=5)
     assert tasks_page_2 is not None
     assert len(tasks_page_2) == 5  # Second page should also contain 5 tasks
 
     # Step 4: Retrieve third page with 5 tasks per page (which should be the last page)
-    tasks_page_3 = table.get_tasks_by_user_id(
-        user_id="user123", page=3, page_size=5)
+    tasks_page_3 = table.get_tasks_by_user_id(user_id="user123", page=3, page_size=5)
     assert tasks_page_3 is not None
 
     assert len(tasks_page_3) == 5  # Last page should also contain 5 tasks

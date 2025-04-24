@@ -98,23 +98,25 @@ def test_get_task_by_user(mock_get_task_by_user):
 
     # Assertions
     assert response.status_code == 200
-    assert response.json() == [{
-        "id": "12345",
-        "user_id": "mic",
-        "type": "task_type_example",
-        "status": TaskStatus.QUEUED.value,
-        "percentage": 50.0,
-        "created_at": 1633036800,
-        "updated_at": 1633036800,
-        "extras": {"key": "value"},
-    },
+    assert response.json() == [
         {
-        "id": "12345",
-        "user_id": "mic",
-        "type": "task_type_example",
-        "status": TaskStatus.QUEUED.value,
-        "percentage": 1,
-        "created_at": 1633036800,
-        "updated_at": 1633036800,
-        "extras": {"key": "value"},
-    }]
+            "id": "12345",
+            "user_id": "mic",
+            "type": "task_type_example",
+            "status": TaskStatus.QUEUED.value,
+            "percentage": 50.0,
+            "created_at": 1633036800,
+            "updated_at": 1633036800,
+            "extras": {"key": "value"},
+        },
+        {
+            "id": "12345",
+            "user_id": "mic",
+            "type": "task_type_example",
+            "status": TaskStatus.QUEUED.value,
+            "percentage": 1,
+            "created_at": 1633036800,
+            "updated_at": 1633036800,
+            "extras": {"key": "value"},
+        },
+    ]
