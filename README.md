@@ -57,7 +57,7 @@ uv run locust -f stress-test.py --host http://localhost:5000 \
   --headless -u 2 -r 10 --run-time 2m --csv results
 ```
 
-## Diagramme execution 
+## Diagramme execution
 <img src= "docs/Diagrame.drawio.png" title="qsqs"></img>
 
 ```mermaid

@@ -9,7 +9,7 @@ RUN apt update && apt install -y \
     ffmpeg libsm6 libxext6 curl poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-ENV DET_MODEL_DIR=/app/src/detection 
+ENV DET_MODEL_DIR=/app/src/detection
 ENV REC_MODEL_DIR=/app/src/recognition
 ENV DET_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv4/chinese/ch_PP-OCRv4_det_infer.tar
 ENV REC_MODEL_URL=https://paddleocr.bj.bcebos.com/PP-OCRv3/multilingual/latin_PP-OCRv3_rec_infer.tar

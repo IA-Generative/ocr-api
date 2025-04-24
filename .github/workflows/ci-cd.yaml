@@ -66,9 +66,9 @@ jobs:
   version-bump:
     runs-on: ubuntu-latest
     needs: run-tests
-    if: github.ref == 'refs/heads/staging'  
+    if: github.ref == 'refs/heads/staging'
     permissions:
-      contents: write  
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
       - name: Install Commitizen and standard-version
         run: |
           make bump-patch
-          
+
       - name: Push version bump and tags
         run: |
           git config --global user.name "GitHub Actions"
@@ -89,4 +89,3 @@ jobs:
           git push --follow-tags
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Utilise le token pour autoriser les pushs
-

@@ -72,4 +72,3 @@ torch = { index = "pytorch-cpu", group = "ocr-service" }
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
-

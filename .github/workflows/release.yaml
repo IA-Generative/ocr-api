@@ -20,7 +20,7 @@ jobs:
         run: |
             git config --global user.name "GitHub Actions"
             git config --global user.email "actions@github.com"
-            
+
 
       # Étape 2 : Installer uv
       - name: Install uv

@@ -32,7 +32,7 @@ up-env:
 
 down-env:
 	docker compose down || true
-	
+
 tests: install-test-dep up-env donwload-model
 	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/
 
@@ -53,4 +53,3 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
-	
