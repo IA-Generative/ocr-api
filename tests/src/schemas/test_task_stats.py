@@ -26,7 +26,6 @@ def test_up_vote():
 
 
 def test_down_vote():
-
     form = TaskStatsForm(type="type", status="queued", percentage=0.0)
     task = task_stat_table.insert_new_task(form)
 
