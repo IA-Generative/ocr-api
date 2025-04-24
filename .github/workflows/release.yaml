@@ -5,7 +5,7 @@ on:
     branches:
       - develop
       - preprod
-      - prod
+      - main
 
 jobs:
   release:
@@ -15,7 +15,7 @@ jobs:
       # Étape 1 : Récupérer le code
       - name: Checkout code
         uses: actions/checkout@v4.2.2
-        
+
       - name: Set Git Config
         run: |
             git config --global user.name "GitHub Actions"
@@ -34,18 +34,22 @@ jobs:
 
       # Étape 4 : Synchroniser les dépendances
       - name: Sync dependencies
-        run: uv sync --group version
+        run: uv tool install commitizen
 
       # Étape 5 : Générer la version et le changelog avec Commitizen
       - name: Run Commitizen bump
         run: |
-          uv run cz bump --changelog --yes
+          if [[ $GITHUB_REF == 'refs/heads/develop' ]]; then
+            cz bump --prerelease --changelog --yes
+          elif [[ $GITHUB_REF == 'refs/heads/preprod' ]]; then
+            cz bump --prerelease --tag-format "rc-{version}" --changelog --yes
+          else
+            cz bump --changelog --yes
+          fi
 
       # Étape 6 : Pousser les modifications et les tags
       - name: Push changes
         run: |
-          git add pyproject.toml CHANGELOG.md
-          git commit -m "chore(release): bump version"
           git push
           git push --tags
 
