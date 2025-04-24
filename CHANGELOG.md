@@ -1,3 +1,45 @@
+## 0.2.0 (2025-04-24)
+
+### Feat
+
+- add paddle
+- add task_stats
+- :zap: add flower monitoring queue
+- :beers: concurrency works for celery
+- :zap: add celery queue
+- add some celery for titi
+- reduce main and add abtract to wrker
+- add workers
+- use surya ocr
+- add surya ocr
+- add surya ocr
+
+### Fix
+
+- :bug: run worker with good model
+- rid off ignore folder ignore
+- don't use user_id
+- add failure process
+- use pg
+- add pg in docker compose
+- add psycopg
+- global variable and unittest
+- task_data not found
+- don't use ressource
+- cean code
+- typo
+- stress test
+- install
+- installation poppler-utils
+- correct dockerfile
+- service
+- don't use paddle ocr
+- add unittest for utils
+- hope that create directory
+- dwnload model
+- installation ocr-service
+- add pillow
+
 ## 0.1.5 (2025-04-13)
 
 ### Feat

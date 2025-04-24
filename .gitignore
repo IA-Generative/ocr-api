@@ -14,3 +14,5 @@ text_recognition/
 *.pdiparams
 *.info
 *.pdmodel
+bin/
+.actrc
