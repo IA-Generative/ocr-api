@@ -79,31 +79,31 @@ Voici un résumé professionnel des modèles OCR que tu peux intégrer dans ton 
 ## 🧠 Modèles OCR disponibles
 
 ### 🔹 PaddleOCR
-**PaddleOCR** est une suite d'outils OCR multilingues développée par Baidu, conçue pour être légère, précise et adaptée à des cas d’usage industriel.
+**PaddleOCR** est une suite d'outils OCR multilingues développée par Baidu, conçue pour être légère, précise et adaptée à des cas d’usage industriel.
 
-- **PP-OCRv3**  version optimisée du système OCR ultra-léger PP-OCR, intégrant des améliorations telles que le module LK-PAN pour la détection de texte et le réseau SVTR pour la reconnaissance, offrant une précision accrue tout en maintenant une vitesse d'inférence élevé. citeturn0academia19
+- **PP-OCRv3**  version optimisée du système OCR ultra-léger PP-OCR, intégrant des améliorations telles que le module LK-PAN pour la détection de texte et le réseau SVTR pour la reconnaissance, offrant une précision accrue tout en maintenant une vitesse d'inférence élevé.
 
 - **Fonctionnalités clés** :
-   Support de plus de 80 langues, y compris le françai.
-   Détection de texte, classification de l'orientation et reconnaissance de text.
-   Modèles optimisés pour les appareils mobiles via Paddle-Lit.
+   - Support de plus de 80 langues, y compris le français.
+   - Détection de texte, classification de l'orientation et reconnaissance de text.
+   - Modèles optimisés pour les appareils mobiles via Paddle-OCR
 
-- **Utilisation**  PaddleOCR fournit des modèles pré-entraînés pour une utilisation immédiate et permet également l'entraînement personnalisé sur des jeux de données spécifique.
+- **Utilisation** PaddleOCR fournit des modèles pré-entraînés pour une utilisation immédiate et permet également l'entraînement personnalisé sur des jeux de données spécifique.
 
 ### 🔹 Surya OC
 
-**Surya OCR** est un outil OCR open-source axé sur l'analyse de documents complexes, offrant des performances comparables à celles des services clod.
+**Surya OCR** est un outil OCR open-source axé sur l'analyse de documents complexes, offrant des performances comparables à celles des services cloud.
 
 - **Fonctionnalités clés** :
- - Support de plus de 90 langues pour l'OR.
- - Détection de lignes de texte, analyse de la mise en page (tables, images, en-têtes), détection de l'ordre de lecture et reconnaissance de tableax.
- - Reconnaissance LaTeX pour les documents scientifiqus.
+ - Support de plus de 90 langues pour l'OR.
+ - Détection de lignes de texte, analyse de la mise en page (tables, images, en-têtes), détection de l'ordre de lecture et reconnaissance de tableaux.
+ - Reconnaissance LaTeX pour les documents scientifiqus.
 
-- **Utilisation**: Surya est particulièrement adapté pour les documents structurés tels que les articles scientifiques, les formulaires et les rapports complexs.
+- **Utilisation**: Surya est particulièrement adapté pour les documents structurés tels que les articles scientifiques, les formulaires et les rapports complexes.
 
 ### 🔹 Intégration via `BaseModelPredictio`
 
-Les deux modèles peuvent être intégrés dans ton pipeline OCR en implémentant la classe abstraite `BaseModelPrediction`, garantissant une interface cohérente pour la prédiction par lt :
+Les deux modèles peuvent être intégrés dans ton pipeline OCR en implémentant la classe abstraite `BaseModelPrediction`, garantissant une interface cohérente pour la prédiction :
 
 
 ```python
@@ -121,7 +121,7 @@ class BaseModelPrediction(ABC):
 ```
 
 
-Cette structure permet de basculer facilement entre différents moteurs OCR ou d'en intégrer de nouveaux sans modifier le reste du cde.
+Cette structure permet de basculer facilement entre différents moteurs OCR ou d'en intégrer de nouveaux sans modifier le reste du code.
 
 
 
