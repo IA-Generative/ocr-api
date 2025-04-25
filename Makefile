@@ -41,7 +41,7 @@ build-ocr-backend:
 
 build-ocr-service:
 	docker build -t $(IMAGE_NAME_OCR_SERVICE)-paddle -f Dockerfiles/ocr_service/Dockerfile.paddle .
-	docker build -t $(IMAGE_NAME_OCR_SERVICE)-surya -f Dockerfiles/ocr_service/Dockerfile .
+	docker build -t $(IMAGE_NAME_OCR_SERVICE)-surya -f Dockerfiles/ocr_service/Dockerfile.surya .
 
 
 build-images: build-ocr-backend build-ocr-service
@@ -53,3 +53,6 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	find . -type f -name "*.pyo" -delete
+
+cluster:
+	kind create cluster --name ocr --config ./kind/config.yaml

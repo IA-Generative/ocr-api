@@ -25,7 +25,7 @@ services:
       - .env
 
   flower_ocr:
-    image: ocr-service
+    image: ocr-service-paddle
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: redis://redis
@@ -35,16 +35,16 @@ services:
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     ports:
       - "5555:5555"
-    command: ["uv", "run", "celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
 
   ocr_service:
     deploy:
       replicas: 1
-    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
-    image: ocr-service
+    command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
+    image: ocr-service-paddle
     volumes:
     - ./ocr_service/:/app/ocr_service/
     - ./src/:/app/src/
@@ -59,13 +59,12 @@ services:
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
       - minio
 
   ocr_backend:
-    command: ["uv", "run", "uvicorn", "ocr_backend.main:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
     image: ocr-api
     build:
       context: .
@@ -78,20 +77,21 @@ services:
     - ./src/:/app/src/
     environment:
       REDIS_HOST: redis
+      DEV_MODE: "true"
       REDIS_PORT: 6379
       CELERY_APP_NAME: default
       MINIO_BUCKET_NAME: test
       MINIO_END_POINT: minio:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: postgresql://postgres:secret@localhost:5432/example_db
+      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
       - minio
 
   db:
     image: postgres:15
-    container_name: postgres-db
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_USER: postgres

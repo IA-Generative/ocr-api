@@ -1,29 +1,16 @@
-from src.config.fs import FileSystemSettings
-from src.config.minio import MinioSettings
-from src.config.redis import RedisSettings
-from src.connector.fs import FileSystemConnector
-from src.connector.minio_connector import MinioConnector
-from minio import Minio
-from src.schemas.health import Health, HealthError
-from src import __version__
-from src.logger import logger
 from datetime import datetime
+
 import minio
 import redis
+from minio import Minio
+
+from src.config.minio import MinioSettings
+from src.config.redis import RedisSettings
+from src.connector.minio_connector import MinioConnector
+from src.schemas.health import Health, HealthError
 
 health_check = []
 up_time = datetime.now().isoformat()
-try:
-    fs_settings = FileSystemSettings()
-    fs_connector = FileSystemConnector(base_folder=fs_settings.FOLDER)
-    health = Health(
-        name="fs_connector", version=__version__, up_time=up_time, status="healthy"
-    )
-
-except Exception as e:
-    health = HealthError(name="fs_connector", error=str(e), code_status=500)
-
-health_check.append(health)
 
 try:
     minio_settings = MinioSettings()
@@ -43,12 +30,8 @@ try:
         up_time=up_time,
         status="healthy",
     )
-
 except Exception as e:
     health = HealthError(name="minio_connector", error=str(e), code_status=500)
-    fs_settings = FileSystemSettings()
-    minio_connector = FileSystemConnector(base_folder=fs_settings.FOLDER)
-    logger.error(f"Instead of minio we will use fs {e}")
 
 
 health_check.append(health)
