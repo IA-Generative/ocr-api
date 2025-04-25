@@ -30,6 +30,7 @@ test = [
     "pytest-cov>=6.1.1",
     "celery[pytest]>=5.5.1",
     "pillow>=10.4.0",
+    "requests>=2.32.3",
 ]
 ocr-backend = [
     "httpx==0.25.0",
