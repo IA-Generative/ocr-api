@@ -122,6 +122,15 @@ class BaseModelPrediction(ABC):
 
 
 Cette structure permet de basculer facilement entre différents moteurs OCR ou d'en intégrer de nouveaux sans modifier le reste du code.
+### Stress Test :
+Stress test
+```bash
+uv run locust -f stress-script/1-stress-test.py --host <URL>-u 5 -r 5 --run-time 2m
+```
+Avoir quelque stats sur les temps de process
+```bash
+uv run stress-script/2-process-stats.py
+```
 
 
 
