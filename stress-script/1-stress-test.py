@@ -9,8 +9,11 @@ from locust import HttpUser, task, between
 import os
 import random
 import mimetypes
+import json
 
 VALID_DIR = "tests/data/valid"
+LOG_FOLDER = "tests/data/logs"
+os.makedirs(LOG_FOLDER, exist_ok=True)
 
 
 class UploadFileUser(HttpUser):
@@ -41,9 +44,10 @@ class UploadFileUser(HttpUser):
 
         with open(file_path, "rb") as f:
             files = {"file": (os.path.basename(file_path), f, mime_type)}
-            self.client.post(f"/jobs/{user_id}", files=files)
-
-    @task
-    def task_user(self):
-        user_id = "1234"
-        self.client.get(f"/tasks/user/{user_id}")
+            response = self.client.post(f"/jobs/{user_id}", files=files)
+            if response.status_code == 201:
+                data_json = response.json()
+                with open(
+                    os.path.join(LOG_FOLDER, f"{data_json['id']}.json"), "w"
+                ) as f:
+                    json.dump(data_json, f, indent=2)
