@@ -43,13 +43,12 @@ if model_name == "surya":
 elif model_name == "paddle":
     from ocr_service.configs.paddle import PaddleSetting
     from ocr_service.models.paddle_ocr import PaddleInferOCR
+
     ocr_settings = PaddleSetting()
-    ocr_model = PaddleInferOCR(
-        path_model=ocr_settings.PADDLE_OCR_BASE_DIR
-    )
+    ocr_model = PaddleInferOCR(path_model=ocr_settings.PADDLE_OCR_BASE_DIR)
 
 else:
-    raise NotImplementedError(f'{model_name} is not available yet ({AVAILABLE_MODEL})')
+    raise NotImplementedError(f"{model_name} is not available yet ({AVAILABLE_MODEL})")
 process_ocr = OCRWorker(
     minio_connector=minio_connector, ocr_model=ocr_model, settings=ocr_settings
 )
