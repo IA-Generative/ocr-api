@@ -41,7 +41,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
-        ),
+        )
     )
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -49,21 +49,10 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             with open(temp_file_path, "wb") as buffer:
                 shutil.copyfileobj(file.file, buffer)
 
-        task_data = task_table.insert_new_task(
-            user_id=user_id,
-            form_data=TaskForm(
-                user_id=user_id,
-                type=TaskOperation.OCR.value,
-                status=TaskStatus.CREATED.value,
-                percentage=0.0,
-                extras=extras,
-            ),
-        )
-
         logger.debug(task_data.model_dump())
 
         saved_path = minio_connector.save(user_id, task_data.id, temp_file_path)
-        logger.debug(f"Save into minio - {saved_path}")
+        logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
 

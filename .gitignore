@@ -18,3 +18,4 @@ bin/
 .actrc
 .secrets
 tests/data/logs
+mirai-infra/

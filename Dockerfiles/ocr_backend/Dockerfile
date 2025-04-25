@@ -12,5 +12,8 @@ RUN uv sync --no-cache --group ocr-backend
 
 COPY ocr_backend /app/ocr_backend
 COPY src /app/src
-
-CMD ["uv", "run", "uvicorn", "ocr_backend.main:app", "--host", "0.0.0.0", "--port", "5000"]
+COPY scripts /app/scripts
+ENV PATH=$PATH:/app/.venv/bin/
+ENV HOST 0.0.0.0
+ENV PORT 5000
+CMD ["./scripts/run.sh"]

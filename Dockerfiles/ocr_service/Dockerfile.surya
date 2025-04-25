@@ -13,13 +13,10 @@ COPY uv.lock /app/uv.lock
 
 RUN uv sync --no-cache --group ocr-service
 
-
-COPY ocr_service /app/ocr_service
 ENV PYTHONPATH=/app
+COPY ocr_service /app/ocr_service
 RUN uv run /app/ocr_service/utils/download.py
-
 COPY src /app/src
-
 ENV MODEL_NAME=surya
-
+ENV PATH=$PATH:/app/.venv/bin/
 CMD ["uv", "run", "ocr_service/main.py"]

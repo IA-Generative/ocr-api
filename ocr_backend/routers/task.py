@@ -4,7 +4,7 @@ from src.schemas.task import TaskTable, TaskModel
 
 task_table = TaskTable()
 
-router = APIRouter(tags=["task"])
+router = APIRouter(tags=["Tasks"])
 
 
 @router.get("/tasks/{task_id}", response_model=Optional[TaskModel])

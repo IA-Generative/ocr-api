@@ -35,7 +35,7 @@ test = [
 ocr-backend = [
     "httpx==0.25.0",
     "fastapi==0.111.0",
-    "uvicorn==0.16.0",
+    "uvicorn[standard]==0.34.0",
     "python-multipart==0.0.18"
 ]
 ocr-service = [
