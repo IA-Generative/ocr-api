@@ -1,6 +1,7 @@
 import json
 import traceback
 import os
+import time
 from src.utils.usage import resource_monitor
 from src.logger import logger
 from src.schemas.task import TaskModel, task_table, TaskForm, TaskStatus
@@ -61,7 +62,12 @@ process_ocr = OCRWorker(
 def launch_task(task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
+        t = time.time()
+        logger.info({"task_id": task.id, "message": "Start"})
         task = process_ocr.process_task(task=task)
+        logger.info(
+            {"task_id": task.id, "process_time": time.time() - t, "message": "End"}
+        )
         return task.model_dump()
     except Exception as e:
         task.extras = task.extras if task.extras else {}
