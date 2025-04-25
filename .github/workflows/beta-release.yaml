@@ -1,0 +1,14 @@
+name: Release Beta
+on:
+  push:
+    branches:
+      - feature/refacto
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please@v17.0.0
+        with:
+          release-type: python
+          prerelease: true
+          target-branch: feature/refacto
