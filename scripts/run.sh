@@ -8,8 +8,8 @@ export PORT=${PORT:-8000}
 export WORKERS=${WORKERS:-2}
 export DEV_MODE=${DEV_MODE:-false}
 
-echo "Dev mode launched..."
 if [ "$DEV_MODE" = "true" ]; then
+  echo "Dev mode launched"
   uvicorn --host $HOST --port $PORT "$APP_MODULE" --reload
 else
   uvicorn --host $HOST --port $PORT "$APP_MODULE"

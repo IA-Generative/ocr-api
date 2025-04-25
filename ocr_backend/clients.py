@@ -32,6 +32,7 @@ try:
     )
 except Exception as e:
     health = HealthError(name="minio_connector", error=str(e), code_status=500)
+    raise
 
 
 health_check.append(health)
@@ -50,5 +51,6 @@ try:
 
 except Exception as e:
     health = HealthError(name="redis", error=str(e), code_status=500)
+    raise
 
 health_check.append(health)
