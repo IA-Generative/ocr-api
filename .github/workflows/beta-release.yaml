@@ -1,14 +1,26 @@
-name: Release Beta
+name: Release Management
+
 on:
   push:
     branches:
       - feature/refacto
+      - preprod
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: googleapis/release-please-action@v4
+      - uses: actions/checkout@v4
+
+      - name: Run Release Please
+        uses: googleapis/release-please@v4
         with:
           release-type: python
-          prerelease: true
-          target-branch: feature/refacto
+          prerelease: ${{ github.ref == 'refs/heads/feature/refacto' || github.ref == 'refs/heads/preprod' }}
+          default-branch: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
