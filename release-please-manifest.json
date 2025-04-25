@@ -1,7 +1,7 @@
 {
   "packages": {
     ".": {
-      "package-name": "mi-ocr",
+      "package-name": "src",
       "include-component-in-tag": false
     }
   }
