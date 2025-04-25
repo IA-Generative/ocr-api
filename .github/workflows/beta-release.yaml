@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout 
         uses: actions/checkout@v4
+      - name: Get tags
+        run: git fetch --tags origin
 
       - name: Run Release Please
         uses: googleapis/release-please-action@v4
