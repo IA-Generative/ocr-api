@@ -41,7 +41,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
-        )
+        ),
     )
     try:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
