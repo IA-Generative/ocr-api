@@ -18,18 +18,24 @@ app = Celery(
 process_ocr: OCRWorker = get_ocr_processor()
 
 
-@app.task(name="worker.tasks.ocr")
+@app.task(name="worker.tasks.ocr", bind=True)
 @resource_monitor(
     interval_sec=os.environ.get("MONITOR_RESSOURCE_EVERY", 5), label="worker.tasks.ocr"
 )
-def launch_task(task_info: dict):
+def launch_task(self, task_info: dict):
+    worker_id = self.request.hostname
     task = TaskModel.model_validate(json.loads(task_info))
     try:
         t = time.time()
-        logger.info({"task_id": task.id, "message": "Start"})
+        logger.info({"task_id": task.id, "worker_id": worker_id, "message": "Start"})
         task = process_ocr.process_task(task=task)
         logger.info(
-            {"task_id": task.id, "process_time": time.time() - t, "message": "End"}
+            {
+                "task_id": task.id,
+                "process_time": time.time() - t,
+                "message": "End",
+                "worker_id": worker_id,
+            }
         )
         return task.model_dump()
     except Exception as e:
