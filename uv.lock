@@ -1661,7 +1661,7 @@ version = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boto3", specifier = ">=1.37.36" },
+    { name = "boto3", specifier = "==1.37.36" },
     { name = "celery", extras = ["redis"], specifier = ">=5.5.1" },
     { name = "flower", specifier = ">=2.0.1" },
     { name = "httpx", specifier = "==0.25.0" },
