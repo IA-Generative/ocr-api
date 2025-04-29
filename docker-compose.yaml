@@ -55,10 +55,6 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_QUEUE_NAME: redis-queue
-      MINIO_BUCKET_NAME: test
-      MINIO_END_POINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
       DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
@@ -80,10 +76,6 @@ services:
       DEV_MODE: "true"
       REDIS_PORT: 6379
       CELERY_APP_NAME: default
-      MINIO_BUCKET_NAME: test
-      MINIO_END_POINT: minio3:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
       DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
