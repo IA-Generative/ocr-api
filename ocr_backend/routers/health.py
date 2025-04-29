@@ -3,7 +3,7 @@ from fastapi import APIRouter, status
 from src.schemas.health import Health, HealthError
 from src import __version__, __name__
 from src.logger import logger
-from ..clients import health_check
+from src.connector import s3_client_connector, get_db
 
 router = APIRouter(tags=["Health"])
 
@@ -20,11 +20,12 @@ up_time = datetime.datetime.now().isoformat()
 async def get_health():
     logger.debug("health hit")
     dependencies = []
-    dependencies.extend(health_check)
     status = "healthy"
-    for dep in dependencies:
-        if isinstance(dep, HealthError):
-            status = "unhealthy"
+
+    health_s3 = s3_client_connector.get_health()
+    dependencies.append(health_s3)
+    if isinstance(health_s3, HealthError):
+        status = "unhealthy"
 
     return Health(
         name=__name__,

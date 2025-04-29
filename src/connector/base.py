@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
+from src.schemas.health import Health
 
 
 class BaseFileConnector(ABC):
+    @abstractmethod
+    def get_health(self) -> Health: ...
+
     @abstractmethod
     def get_by_task_id(self, user_id: str, task_id: str) -> str: ...
 

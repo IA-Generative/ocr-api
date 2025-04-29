@@ -5,8 +5,9 @@ import os
 import traceback
 from celery import Celery
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
-from ..clients import minio_connector, redis_settings
 from src.config.celery import CelerySettings
+from src.config.redis import RedisSettings
+from src.connector import s3_client_connector
 from src.logger import logger
 from src.schemas.task import (
     task_table,
@@ -19,7 +20,7 @@ from src.schemas.task import (
 
 router = APIRouter(tags=["Jobs"])
 
-
+redis_settings = RedisSettings()
 celery_config = CelerySettings()
 
 celery_app = Celery(
@@ -28,9 +29,7 @@ celery_app = Celery(
 )
 
 
-@router.post(
-    "/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel
-)
+@router.post("/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
 async def upload_file(user_id: str, file: UploadFile = File(...)):
     extras = {}
     task_data = task_table.insert_new_task(
@@ -51,20 +50,18 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         logger.debug(task_data.model_dump())
 
-        saved_path = minio_connector.save(user_id, task_data.id, temp_file_path)
+        saved_path = s3_client_connector.save(user_id, task_data.id, temp_file_path)
         logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
 
         extras = task_data.extras
-        extras.update(
-            {
-                "file_path": saved_path,
-                "raw_filename": os.path.basename(file.filename),
-                "content_type": file.content_type,
-                "ext": extension,
-            }
-        )
+        extras.update({
+            "file_path": saved_path,
+            "raw_filename": os.path.basename(file.filename),
+            "content_type": file.content_type,
+            "ext": extension,
+        })
 
         task_data = task_table.update_task(
             task_id=task_data.id,
@@ -76,16 +73,12 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         os.remove(temp_file_path)
 
-        celery_app.send_task(
-            "worker.tasks.ocr", args=[json.dumps(task_data.model_dump())]
-        )
+        celery_app.send_task("worker.tasks.ocr", args=[json.dumps(task_data.model_dump())])
 
         return task_data
 
     except Exception as e:
-        logger.error(
-            f"Failed to upload file for user {user_id}, task {task_data.id}: {e} - {traceback.format_exc()}"
-        )
+        logger.error(f"Failed to upload file for user {user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
         task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(

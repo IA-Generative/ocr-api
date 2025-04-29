@@ -6,7 +6,7 @@ from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, String, JSON, FLOAT, BigInteger
 
-from src.internal.db import get_db, Base
+from src.connector import get_db, Base
 from src.logger import logger
 
 

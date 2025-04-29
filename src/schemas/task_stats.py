@@ -5,7 +5,7 @@ from typing import Dict, Optional, Any
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Column, String, JSON, FLOAT, BigInteger, Integer
 
-from src.internal.db import get_db, Base
+from src.connector import get_db, Base
 from src.logger import logger
 
 

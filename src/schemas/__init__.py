@@ -1,6 +1,6 @@
 from .task import Task
 from .task_stats import TaskStatTable
-from src.internal.db import Base, engine
+from src.connector import Base, engine
 
 __all__ = ["Task", "TaskStatTable"]
 
