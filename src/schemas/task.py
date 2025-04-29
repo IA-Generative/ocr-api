@@ -1,13 +1,16 @@
-from datetime import datetime
-import uuid
 import time
-from typing import Dict, List, Optional, Any
+import uuid
+from datetime import datetime
 from enum import Enum
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Column, String, JSON, FLOAT, BigInteger
+from typing import Any, Dict, List, Optional
 
-from src.internal.db import get_db, Base
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import FLOAT, JSON, BigInteger, Column, String
+
+from src.connector import Base, get_db
 from src.logger import logger
+from src.schemas.input import InputForm
+from src.schemas.output import OCRResult
 
 
 class Task(Base):
@@ -18,6 +21,8 @@ class Task(Base):
     status = Column(String, default="queued")
     user_id = Column(String, nullable=False)
     percentage = Column(FLOAT, nullable=False)
+    input = Column(JSON, nullable=True)
+    output = Column(JSON, nullable=True)
 
     created_at = Column(BigInteger, default=lambda: int(datetime.now().timestamp()))
     updated_at = Column(
@@ -36,6 +41,8 @@ class TaskModel(BaseModel):
     type: str
     status: str = "queued"
     percentage: Optional[float] = 0.0
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
 
     created_at: int
     updated_at: int
@@ -44,11 +51,12 @@ class TaskModel(BaseModel):
 
 class TaskForm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    user_id: str
     type: Optional[str] = None
     status: str
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
 
 
 class TaskUpdateForm(BaseModel):
@@ -57,6 +65,8 @@ class TaskUpdateForm(BaseModel):
     status: Optional[str] = None
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
 
 
 class TaskStatus(str, Enum):
@@ -102,9 +112,7 @@ class TaskTable:
                 return None
             return TaskModel.model_validate(task)
 
-    def update_task(
-        self, task_id: str, form_data: TaskUpdateForm
-    ) -> Optional[TaskModel]:
+    def update_task(self, task_id: str, form_data: TaskUpdateForm) -> Optional[TaskModel]:
         with get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
@@ -116,6 +124,12 @@ class TaskTable:
             for key, value in updates.items():
                 if hasattr(task, key):
                     setattr(task, key, value)
+
+            if form_data.input:
+                task.input = form_data.input.model_dump()
+
+            if form_data.output:
+                task.output = form_data.output.model_dump()
 
             task.updated_at = int(time.time())
             db.commit()
@@ -132,18 +146,10 @@ class TaskTable:
             db.commit()
             return TaskModel.model_validate(task)
 
-    def get_tasks_by_user_id(
-        self, user_id: str, page: int = 1, page_size: int = 10
-    ) -> Optional[List[TaskModel]]:
+    def get_tasks_by_user_id(self, user_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
         with get_db() as db:
-            tasks = (
-                db.query(Task)
-                .filter(Task.user_id == user_id)
-                .offset(offset)
-                .limit(page_size)
-                .all()
-            )
+            tasks = db.query(Task).filter(Task.user_id == user_id).offset(offset).limit(page_size).all()
 
             if not tasks:
                 logger.warning(f"No tasks found for user {user_id}.")

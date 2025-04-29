@@ -4,11 +4,8 @@ import boto3
 import pytest
 from src.connector.s3_connector import S3Connector
 from src.config.s3 import S3Settings
-from src.config.connector import ConnectorSettings
+from botocore.client import Config
 
-
-connector_settings = ConnectorSettings()
-s3_available = connector_settings.S3_AVAILABLE == "True"
 settings = S3Settings()
 
 
@@ -16,11 +13,7 @@ settings = S3Settings()
 def s3_client():
     return boto3.client(
         "s3",
-        use_ssl=False,
-        endpoint_url=settings.S3_END_POINT,
-        aws_access_key_id=settings.S3_ACCESS_KEY,
-        aws_secret_access_key=settings.S3_SECRET_KEY,
-        region_name=settings.S3_REGION,
+        config=Config(signature_version="s3v4"),
     )
 
 
@@ -31,8 +24,7 @@ def s3_connector(s3_client):
     return connector
 
 
-@pytest.mark.skipif(not s3_available, reason="S3 is not available for testing")
-def test_save_and_get_file(s3_connector):
+def test_save_and_get_file(s3_connector: S3Connector):
     user_id = "user123"
     task_id = "task456"
 
@@ -50,8 +42,7 @@ def test_save_and_get_file(s3_connector):
         os.remove(tmp_path)
 
 
-@pytest.mark.skipif(not s3_available, reason="S3 is not available for testing")
-def test_delete_by_task_id(s3_connector):
+def test_delete_by_task_id(s3_connector: S3Connector):
     user_id = "user123"
     task_id = "task456"
 
@@ -62,8 +53,7 @@ def test_delete_by_task_id(s3_connector):
         s3_connector.get_by_task_id(user_id, task_id)
 
 
-@pytest.mark.skipif(not s3_available, reason="S3 is not available for testing")
-def test_delete_by_user_id(s3_connector):
+def test_delete_by_user_id(s3_connector: S3Connector):
     user_id = "user_to_delete"
     for i in range(3):
         with tempfile.NamedTemporaryFile("w+b", delete=False) as tmp:

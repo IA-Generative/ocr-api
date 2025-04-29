@@ -1,7 +1,6 @@
 services:
   minio:
     image: minio/minio:latest
-    container_name: minio_dev
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -17,7 +16,6 @@ services:
 
   redis:
     image: redis:latest
-    container_name: redis_dev
     ports:
       - "6379:6379"
     restart: unless-stopped
@@ -28,17 +26,12 @@ services:
     image: ocr-service-paddle
     environment:
       CELERY_BROKER_URL: redis://redis
-      CELERY_RESULT_BACKEND: redis://redis
-      MINIO_BUCKET_NAME: test
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      MINIO_END_POINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
+      CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
     ports:
       - "5555:5555"
     command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    env_file:
+      - .env
 
   ocr_service:
     deploy:
@@ -51,18 +44,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
-    environment:
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_QUEUE_NAME: redis-queue
-      MINIO_BUCKET_NAME: test
-      MINIO_END_POINT: minio:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
       - minio
+    env_file:
+      - .env
 
   ocr_backend:
     image: ocr-api
@@ -76,22 +62,17 @@ services:
     - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
     environment:
-      REDIS_HOST: redis
       DEV_MODE: "true"
-      REDIS_PORT: 6379
       CELERY_APP_NAME: default
-      MINIO_BUCKET_NAME: test
-      MINIO_END_POINT: minio3:9000
-      MINIO_ACCESS_KEY: minioadmin
-      MINIO_SECRET_KEY: minioadmin
       DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
       - minio
+    env_file:
+      - .env
 
   db:
     image: postgres:15
-    container_name: postgres
     restart: always
     environment:
       POSTGRES_USER: postgres

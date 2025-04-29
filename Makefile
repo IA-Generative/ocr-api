@@ -13,8 +13,7 @@ install-test-dep: install-test
 	sudo apt-get update && sudo apt-get install -y poppler-utils
 	uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle
 
-donwload-model: install-test-dep
-	export PYTHONPATH=$(PWD) && uv run ocr_service/utils/download.py
+
 
 linter: install-test-dep
 	uv run ruff check .
@@ -33,8 +32,8 @@ up-env:
 down-env:
 	docker compose down || true
 
-tests: install-test-dep up-env donwload-model
-	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/
+tests: install-test-dep up-env
+	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src --cov-report=term-missing tests/
 
 build-ocr-backend:
 	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .

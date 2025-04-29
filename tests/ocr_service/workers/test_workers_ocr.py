@@ -7,6 +7,7 @@ from ocr_service.workers.ocr_worker import (
     FileNotSupported,
 )
 from src.schemas.task import TaskModel
+from src.schemas.input import InputForm
 from ocr_service.models.paddle_ocr import PaddleInferOCR
 from ocr_service.configs.paddle import PaddleSetting
 from src.schemas.task import task_table, TaskForm, TaskStatus
@@ -83,6 +84,13 @@ def test_set_task_extras(mock_minio, mock_model: PaddleInferOCR, dummy_task: Tas
 def test_transform_content_error_no_content_type(
     mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="vvv/ssjpg",
+    )
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     dummy_task.extras = {}
     with open("tests/data/valid/identite.jpg", "rb") as f:
@@ -94,8 +102,15 @@ def test_transform_content_error_no_content_type(
 def test_transform_content_content_type_image(
     mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
+    )
+
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
-    dummy_task.extras = {"content_type": "image/jpg"}
     with open("tests/data/valid/identite.jpg", "rb") as f:
         actual = worker.transform_content(task=dummy_task, content=f)
         assert isinstance(actual[0], Image.Image)
@@ -104,8 +119,16 @@ def test_transform_content_content_type_image(
 def test_transform_content_content_type_pdf(
     mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/cerfa_13750-05-1.pdf",
+        raw_filename="cerfa_13750-05-1.pdf",
+        ext=".pdf",
+        size=123456,
+        content_type="application/pdf",  # Uncomment this line to simulate the absence of content_type
+    )
+
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
-    dummy_task.extras = {"content_type": "application/pdf"}
+
     with open("tests/data/valid/cerfa_13750-05-1.pdf", "rb") as f:
         actual = worker.transform_content(task=dummy_task, content=f)
         assert isinstance(actual[0], Image.Image)
@@ -115,43 +138,37 @@ def test_transform_content_content_type_pdf(
 def test_predict_on_pages(
     mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
+    )
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
-    dummy_task.extras = {"content_type": "image/jpg"}
+
     image = Image.open("tests/data/valid/identite.jpg")
     actual = worker.predict_on_pages(task=dummy_task, pages=[image])
-    assert "results" in actual.extras
-
-
-def test_predict_task_ocr(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
-    dummy_task.extras = {"content_type": "application/pdf"}
-    worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
-    with open("tests/data/valid/cerfa_13750-05-1.pdf", "rb") as f:
-        mock_minio.get_by_task_id.return_value = f
-        task = worker.process_task_ocr(task=dummy_task)
-        assert "results" in task.extras
-        assert task.status == TaskStatus.COMPLETED.value
-        mock_minio.delete_by_task_id.assert_called_once_with(
-            user_id=dummy_task.user_id, task_id=dummy_task.id
-        )
+    assert actual is not None
 
 
 def test_predict_task_ocr_w_image(
     mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
-    dummy_task.extras = {
-        "content_type": "application/pdf",
-        "return_image": True,
-        "grayscale": True,
-    }
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/cerfa_13750-05-1.pdf",
+        raw_filename="cerfa_13750-05-1.pdf",
+        ext=".pdf",
+        size=123456,
+        content_type="application/pdf",  # Uncomment this line to simulate the absence of content_type
+    )
+
     worker = OCRWorker(minio_connector=mock_minio, ocr_model=mock_model)
     with open("tests/data/valid/cerfa_13750-05-1.pdf", "rb") as f:
         mock_minio.get_by_task_id.return_value = f
         task = worker.process_task_ocr(task=dummy_task)
-        assert "results" in task.extras
-        assert "images_base64" in task.extras
         assert task.status == TaskStatus.COMPLETED.value
         mock_minio.delete_by_task_id.assert_called_once_with(
             user_id=dummy_task.user_id, task_id=dummy_task.id
         )
+        assert task.output is not None

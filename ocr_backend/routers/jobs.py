@@ -3,10 +3,9 @@ import tempfile
 import shutil
 import os
 import traceback
-from celery import Celery
 from fastapi import APIRouter, File, UploadFile, HTTPException, status
-from ..clients import minio_connector, redis_settings
-from src.config.celery import CelerySettings
+from src.connector.s3_connector import s3_client_connector
+from src.connector.broker_connector import celery_app
 from src.logger import logger
 from src.schemas.task import (
     task_table,
@@ -16,16 +15,9 @@ from src.schemas.task import (
     TaskStatus,
     TaskOperation,
 )
+from src.schemas.input import InputForm
 
 router = APIRouter(tags=["Jobs"])
-
-
-celery_config = CelerySettings()
-
-celery_app = Celery(
-    celery_config.CELERY_APP_NAME,
-    broker=f"redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}//",
-)
 
 
 @router.post(
@@ -51,25 +43,25 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         logger.debug(task_data.model_dump())
 
-        saved_path = minio_connector.save(user_id, task_data.id, temp_file_path)
+        saved_path = s3_client_connector.save(user_id, task_data.id, temp_file_path)
         logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
 
         extras = task_data.extras
-        extras.update(
-            {
-                "file_path": saved_path,
-                "raw_filename": os.path.basename(file.filename),
-                "content_type": file.content_type,
-                "ext": extension,
-            }
+        input_form = InputForm(
+            storage_file_path=saved_path,
+            raw_filename=os.path.basename(file.filename),
+            content_type=file.content_type,
+            ext=extension,
+            size=file.size,
         )
 
         task_data = task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
                 status=TaskStatus.QUEUED.value,
+                input=input_form,
                 extras=extras,
             ),
         )
@@ -77,7 +69,9 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         os.remove(temp_file_path)
 
         celery_app.send_task(
-            "worker.tasks.ocr", args=[json.dumps(task_data.model_dump())]
+            "worker.tasks.ocr",
+            args=[json.dumps(task_data.model_dump())],
+            task_id=task_data.id,
         )
 
         return task_data

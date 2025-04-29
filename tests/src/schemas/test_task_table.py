@@ -1,3 +1,4 @@
+from src.schemas.input import InputForm
 from src.schemas.task import (
     TaskTable,
     TaskForm,
@@ -31,6 +32,39 @@ def test_insert_new_task():
     assert isinstance(result.updated_at, int)
 
 
+def test_insert_new_task_w_input():
+    task_table = TaskTable()
+
+    form_data = TaskForm(
+        user_id="user123",
+        type="classification",
+        status=TaskStatus.QUEUED.value,
+        input=InputForm(
+            type="image",
+            storage_file_path="https://example.com/image.jpg",
+            raw_filename="image.jpg",
+            content_type="image/jpeg",
+            ext=".jpg",
+            size=123456,
+        ),
+        percentage=10.5,
+        extras={"source": "test"},
+    )
+
+    # Appelle la méthode
+    result = task_table.insert_new_task(user_id="user123", form_data=form_data)
+
+    assert result is not None
+    assert result.user_id == "user123"
+    assert result.type == "classification"
+    assert result.status == TaskStatus.QUEUED.value
+    assert result.percentage == 10.5
+    assert result.extras["source"] == "test"
+    assert isinstance(result.created_at, int)
+    assert isinstance(result.updated_at, int)
+    assert result.input is not None
+
+
 def test_update_task():
     table = TaskTable()
 
@@ -61,6 +95,48 @@ def test_update_task():
 
     not_found_updated = table.update_task(task_id="zzz", form_data=update_form)
     assert not_found_updated is None
+
+
+def test_update_task_w_input():
+    table = TaskTable()
+    input_form = InputForm(
+        type="image",
+        storage_file_path="https://example.com/image.jpg",
+        raw_filename="image.jpg",
+        content_type="image/jpeg",
+        ext=".jpg",
+        size=123456,
+    )
+
+    new_task = table.insert_new_task(
+        user_id="user456",
+        form_data=TaskForm(
+            user_id="user456",
+            type=TaskOperation.OCR.value,
+            status=TaskStatus.QUEUED.value,
+            input=input_form,
+            percentage=0.0,
+            extras={"initial": True},
+        ),
+    )
+
+    assert new_task is not None
+
+    update_form = TaskUpdateForm(
+        status="done", percentage=100.0, extras={"updated": True}
+    )
+
+    updated = table.update_task(task_id=new_task.id, form_data=update_form)
+
+    assert updated is not None
+    assert updated.id == new_task.id
+    assert updated.status == "done"
+    assert updated.percentage == 100.0
+    assert updated.extras == {"updated": True}
+
+    not_found_updated = table.update_task(task_id="zzz", form_data=update_form)
+    assert not_found_updated is None
+    assert updated.input == input_form
 
 
 def test_get_task_by_id():
