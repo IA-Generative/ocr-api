@@ -57,6 +57,9 @@ ocr-service-paddle = [
 version = [
     "commitizen>=4.6.0",
 ]
+client = [
+    "python-magic>=0.4.27",
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
