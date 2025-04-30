@@ -16,6 +16,7 @@ dependencies = [
     "flower>=2.0.1",
     "psycopg2-binary==2.9.10",
     "boto3==1.37.36",
+    "pre-commit>=4.2.0",
 ]
 
 [dependency-groups]
@@ -52,6 +53,10 @@ ocr-service-paddle = [
     "psutil>=7.0.0",
     "paddleocr==2.10.0",
     "paddlepaddle==3.0.0",
+]
+
+migration = [
+    "alembic>=1.15.2"
 ]
 
 version = [

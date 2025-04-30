@@ -14,6 +14,7 @@ services:
     env_file:
       - .env
 
+
   redis:
     image: redis:latest
     ports:
@@ -36,23 +37,28 @@ services:
   ocr_service:
     deploy:
       replicas: 1
+    container_name: ocr-service
     command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork","--concurrency=4", "-E"]
     image: ocr-service-paddle
     volumes:
     - ./ocr_service/:/app/ocr_service/
     - ./src/:/app/src/
+    - ./tests/:/app/tests
     build:
+      target: test
       context: .
       dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
     depends_on:
       - redis
       - minio
+      - db
     env_file:
       - .env
 
   ocr_backend:
     image: ocr-api
     build:
+      target: test
       context: .
       dockerfile: Dockerfiles/ocr_backend/Dockerfile
     ports:
@@ -61,12 +67,15 @@ services:
     volumes:
     - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
+    - ./migration/:/app/migration
+    - ./tests/:/app/tests
+
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
-      DATABASE_URL: postgresql://postgres:secret@postgres:5432/example_db
     depends_on:
       - redis
+      - db
       - minio
     env_file:
       - .env
