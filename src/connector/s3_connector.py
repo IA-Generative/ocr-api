@@ -5,12 +5,12 @@ import boto3
 from botocore.exceptions import ClientError
 
 from ..config.s3 import S3Settings
-from ..schemas.health import Health, HealthError
+from ..schemas.health import Health
 from .base import BaseFileConnector
 
 
 class S3Connector(BaseFileConnector):
-    def __init__(self, s3_client: boto3.client = None, bucket_name: str = "mybucket"):
+    def __init__(self, s3_client: boto3.client = None, bucket_name: str = "mybucket"):  # type: ignore
         super().__init__()
         self.client = s3_client or boto3.client("s3")
         self.bucket_name = bucket_name
@@ -56,11 +56,17 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
-    def get_health(self):
+    def get_health(self) -> Health:
         try:
             self.client.head_bucket(Bucket=self.bucket_name)
-        except Exception as e:
-            return HealthError(name="s3", error=e, code_status=500)
+        except Exception as error:
+            return Health(
+                name="s3",
+                extras={"error": str(error)},
+                version=boto3.__version__,
+                up_time=self.up_time,
+                status="unhealthy",
+            )
         return Health(name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy")
 
     def delete_by_user_id(self, user_id: str) -> bool:
@@ -85,6 +91,6 @@ class S3Connector(BaseFileConnector):
             raise Exception(f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}")
 
 
-s3_seetings = S3Settings()
+s3_settings = S3Settings()
 s3_client = boto3.client("s3")
-s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_seetings.S3_BUCKET_NAME)
+s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
