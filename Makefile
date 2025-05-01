@@ -5,14 +5,20 @@ PYTHONPATH=$(PWD)
 .PHONY: build test install-test install-test-dep linter tests build-images bump-patch donwload-model
 
 
-install-test:
+install-uv:
 	curl -LsSf https://astral.sh/uv/install.sh | sh
 
-install-test-dep: install-test
+install-local: install-uv
+ifeq ($(shell uname), Linux)
 	sudo apt-get update && sudo apt-get install -y poppler-utils
+else ifeq ($(shell uname), Darwin)
+	brew install poppler
+else
+	@echo "Installation automatique non supportée sur cette plateforme"
+endif
 	uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle
 
-linter: install-test-dep
+linter: install-local
 	uv run ruff check .
 
 bump-patch: install-test

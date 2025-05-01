@@ -1,3 +1,34 @@
+## 0.3.1 (2025-05-01)
+
+### Feat
+
+- :sparkles: add submodule infra
+- :zap: add tests in containers
+- add first client for ocr (#20)
+- add input form
+- add output format
+- output integration
+- add output around all
+- :tada: add new arch for queueing ocr
+
+### Fix
+
+- **health**: :bug: add all deps for healthcheck
+- use right env var
+- input for task
+- same id for task
+- version
+- write integration
+- :bug: change runner type
+
+### Refactor
+
+- :lipstick: refactor s3
+- base and s3
+- clean code
+- code clean
+- :art: change minio vars
+
 ## 0.2.0 (2025-04-24)
 
 ### Feat
