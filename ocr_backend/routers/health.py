@@ -3,8 +3,10 @@ import datetime
 from fastapi import APIRouter, Response, status
 
 from src import __name__, __version__
-from src.connector import db_client_connector, redis_client_connector, s3_client_connector
+from src.connector import db_client_connector, redis_client_connector
 from src.schemas.health import Health
+
+from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Health"])
 

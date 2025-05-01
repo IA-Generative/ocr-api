@@ -1,12 +1,14 @@
-import tempfile
-import os
 import glob
+import os
+import tempfile
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
-from uuid import uuid4
+
+from ocr_backend.connectors import s3_client_connector
 from ocr_backend.main import app
 from src.schemas.task import TaskModel, TaskStatus
-from src.connector.s3_connector import s3_client_connector
 
 
 @pytest.fixture()

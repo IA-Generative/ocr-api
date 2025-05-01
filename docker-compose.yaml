@@ -30,6 +30,9 @@ services:
       CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
     ports:
       - "5555:5555"
+    volumes:
+    - ./ocr_service/:/app/ocr_service/
+    - ./src/:/app/src/
     command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
     env_file:
       - .env
@@ -51,6 +54,7 @@ services:
     depends_on:
       - redis
       - minio
+      #- migration
       - db
     env_file:
       - .env
@@ -67,9 +71,7 @@ services:
     volumes:
     - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
-    - ./migration/:/app/migration
     - ./tests/:/app/tests
-
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -77,8 +79,28 @@ services:
       - redis
       - db
       - minio
+      #- migration
     env_file:
       - .env
+
+  migration:
+    image: ocr-api
+    command:
+    - alembic
+    - upgrade
+    - head
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    container_name: ocr-migration
+    volumes:
+    - ./src/:/app/src/
+    - ./migration/:/app/migration
+    env_file:
+      - .env
+    depends_on:
+      - db
 
   db:
     image: postgres:15

@@ -1,21 +1,24 @@
 import json
-import tempfile
-import shutil
 import os
+import shutil
+import tempfile
 import traceback
-from fastapi import APIRouter, File, UploadFile, HTTPException, status
-from src.connector.s3_connector import s3_client_connector
+
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
+
 from src.connector.broker_connector import celery_app
 from src.logger import logger
+from src.schemas.input import InputForm
 from src.schemas.task import (
-    task_table,
     TaskForm,
     TaskModel,
-    TaskUpdateForm,
-    TaskStatus,
     TaskOperation,
+    TaskStatus,
+    TaskUpdateForm,
+    task_table,
 )
-from src.schemas.input import InputForm
+
+from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Jobs"])
 

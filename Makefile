@@ -78,7 +78,7 @@ clean: ## Nettoyage du dépôt
 
 tests: up ## Lance les tests unitaires
 	docker exec $(OCR_BACKEND_CONTAINER) pytest --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
-	docker exec $(OCR_SERVICE_CONTAINER) --cov=./ocr_service tests/ocr_service
+	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
@@ -89,11 +89,12 @@ build-ocr-backend: ## Lance la construction de l'image Docker backend
 build-ocr-service: ## Lance la construction de l'image Docker service
 	docker compose build ocr_service
 
-upgrade-db: ## Lance une migration de base de données
-	docker exec ocr-api alembic upgrade head
+upgrade-db: ## Applique les migrations de base de données
+	docker compose run --rm migration alembic upgrade head
 
-upgrade-revision: ## Ajoute une révision de migration de base de données
-	docker exec ocr-api alembic revision --autogenerate
+upgrade-revision: ## Crée une nouvelle révision de base de données
+	@read -p "Message de révision : " msg; \
+	docker compose run --rm migration alembic revision --autogenerate -m "$$msg"
 
 cluster: ## Crée un cluster Kind local
 	kind create cluster --name ocr --config ./kind/config.yaml
