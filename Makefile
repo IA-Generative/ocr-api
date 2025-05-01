@@ -43,7 +43,7 @@ build-ocr-backend:
 build-ocr-service:
 	docker compose build ocr_service
 
-build-images: build-ocr-backend build-ocr-service
+build: build-ocr-backend build-ocr-service
 
 upgrade-db:
 	docker exec ocr-api alembic upgrade head
