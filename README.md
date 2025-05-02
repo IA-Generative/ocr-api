@@ -9,36 +9,6 @@ Le fonctionne de l'application est décrit dans les schémas suivant :
 
 <img src= "docs/Diagrame.drawio.png" title="qsqs"></img>
 
-En termes d'ordre d'execution :
-
-```mermaid
-flowchart TD
-    A[Client envoie un document image/pdf] --> B[API Python reçoit le fichier]
-    B --> C[Le fichier est sauvegardé dans S3]
-    C --> D[Création de la task en BDD -task_id, status = CREATED]
-    D --> E[Envoi de la task dans la queue du Broker]
-    E --> F[Queue FIFO Broker]
-    F --> G[Consommateur OCR récupère une tâche - pas de doublon]
-    G --> H[Récupération du fichier depuis S3]
-    H --> I[OCR en cours - Mise à jour du status en BDD à chaque étape]
-    I --> J[Status de la task disponible via l'API]
-    J --> K[Retour de l’état de la task avec/sans résultats]
-
-    classDef store fill:#f9f,stroke:#333,stroke-width:1px;
-    class C,H store;
-
-    classDef queue fill:#bbf,stroke:#333,stroke-width:1px;
-    class E,F queue;
-
-    classDef api fill:#bfb,stroke:#333,stroke-width:1px;
-    class B,J,K api;
-
-    classDef db fill:#ffb,stroke:#333,stroke-width:1px;
-    class D,I db;
-
-    classDef process fill:#eef,stroke:#333,stroke-width:1px;
-    class G process;
-```
 
 La diagramme de séquence est le suivant :
 
@@ -148,18 +118,8 @@ uv run stress-script/2-process-stats.py
 
 - **Utilisation** PaddleOCR fournit des modèles pré-entraînés pour une utilisation immédiate et permet également l'entraînement personnalisé sur des jeux de données spécifique.
 
-### 🔹 Surya OC
 
-**Surya OCR** est un outil OCR open-source axé sur l'analyse de documents complexes, offrant des performances comparables à celles des services cloud.
-
-- **Fonctionnalités clés** :
-- Support de plus de 90 langues pour l'OR.
-- Détection de lignes de texte, analyse de la mise en page (tables, images, en-têtes), détection de l'ordre de lecture et reconnaissance de tableaux.
-- Reconnaissance LaTeX pour les documents scientifiqus.
-
-- **Utilisation**: Surya est particulièrement adapté pour les documents structurés tels que les articles scientifiques, les formulaires et les rapports complexes.
-
-### 🔹 Intégration via `BaseModelPredictio`
+### 🔹 Intégration via `BaseModelPrediction`
 
 Les deux modèles peuvent être intégrés en implémentant la classe abstraite `BaseModelPrediction`, garantissant une interface cohérente pour la prédiction :
 
