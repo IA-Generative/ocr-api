@@ -20,23 +20,23 @@ def assert_dict_almost_equal(d1: Dict[Any, Any], d2: Dict[Any, Any], tol: float 
         v2 = d2[key]
 
         if isinstance(v1, float) and isinstance(v2, float):
-            assert math.isclose(
-                v1, v2, abs_tol=tol
-            ), f"Différence sur clé '{key}': {v1} != {v2} avec tolérance {tol}"
+            assert math.isclose(v1, v2, abs_tol=tol), (
+                f"Différence sur clé '{key}': {v1} != {v2} avec tolérance {tol}"
+            )
 
         elif isinstance(v1, list) and isinstance(v2, list):
-            assert len(v1) == len(
-                v2
-            ), f"Listes de longueur différente pour clé '{key}': {len(v1)} != {len(v2)}"
+            assert len(v1) == len(v2), (
+                f"Listes de longueur différente pour clé '{key}': {len(v1)} != {len(v2)}"
+            )
             for i, (x, y) in enumerate(zip(v1, v2)):
                 if isinstance(x, float) and isinstance(y, float):
-                    assert math.isclose(
-                        x, y, abs_tol=tol
-                    ), f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y} avec tolérance {tol}"
+                    assert math.isclose(x, y, abs_tol=tol), (
+                        f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y} avec tolérance {tol}"
+                    )
                 else:
-                    assert (
-                        x == y
-                    ), f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y}"
+                    assert x == y, (
+                        f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y}"
+                    )
 
         else:
             assert v1 == v2, f"Différence sur clé '{key}': {v1} != {v2}"

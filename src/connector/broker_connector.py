@@ -39,3 +39,4 @@ class RedisConnector:
 
 redis_client = redis.Redis(host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
 redis_client_connector = RedisConnector(redis_client=redis_client)
+

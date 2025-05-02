@@ -18,14 +18,14 @@ from src.schemas.task import (
     task_table,
 )
 
+
 from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Jobs"])
 
 
-@router.post(
-    "/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel
-)
+
+@router.post("/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
 async def upload_file(user_id: str, file: UploadFile = File(...)):
     extras = {}
     task_data = task_table.insert_new_task(
@@ -80,9 +80,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         return task_data
 
     except Exception as e:
-        logger.error(
-            f"Failed to upload file for user {user_id}, task {task_data.id}: {e} - {traceback.format_exc()}"
-        )
+        logger.error(f"Failed to upload file for user {user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
         task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(

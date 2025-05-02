@@ -1,5 +1,4 @@
 import datetime
-
 from fastapi import APIRouter, Response, status
 
 from src import __name__, __version__

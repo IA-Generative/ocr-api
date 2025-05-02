@@ -2,15 +2,18 @@ import datetime
 from io import BytesIO
 
 import boto3
+import datetime
 from botocore.exceptions import ClientError
 
 from ..config.s3 import S3Settings
 from ..schemas.health import Health
 from .base import BaseFileConnector
+from ..schemas.health import Health, HealthError
+from ..config.s3 import S3Settings
 
 
 class S3Connector(BaseFileConnector):
-    def __init__(self, s3_client: boto3.client = None, bucket_name: str = "mybucket"):  # type: ignore
+    def __init__(self, s3_client: boto3.client = None, bucket_name: str = "mybucket"):
         super().__init__()
         self.client = s3_client or boto3.client("s3")
         self.bucket_name = bucket_name
@@ -52,9 +55,7 @@ class S3Connector(BaseFileConnector):
             return True
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
-                raise FileNotFoundError(
-                    f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id} : {e}"
-                )
+                raise FileNotFoundError(f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id} : {e}")
             else:
                 raise e
 
@@ -84,9 +85,7 @@ class S3Connector(BaseFileConnector):
                 for obj in page.get("Contents", []):
                     delete_us["Objects"].append(dict(Key=obj["Key"]))
                     if len(delete_us["Objects"]) >= batch_delete_size:
-                        self.client.delete_objects(
-                            Bucket=self.bucket_name, Delete=delete_us
-                        )
+                        self.client.delete_objects(Bucket=self.bucket_name, Delete=delete_us)
                         delete_us = dict(Objects=[])
 
             if delete_us["Objects"]:
