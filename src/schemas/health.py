@@ -10,3 +10,9 @@ class Health(BaseModel):
     extras: Optional[Dict[str, Any]] = None
     status: Optional[str] = None
     dependencies: Optional[List[Union["Health"]]] = None
+
+
+class HealthError(BaseModel):
+    name: str
+    error: str
+    code_status: int

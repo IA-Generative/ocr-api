@@ -15,7 +15,8 @@ dependencies = [
     "celery[redis]>=5.5.1",
     "flower>=2.0.1",
     "psycopg2-binary==2.9.10",
-    "boto3==1.37.36"
+    "boto3==1.37.36",
+    "pdf2image==1.17.0",
 ]
 
 [dependency-groups]
