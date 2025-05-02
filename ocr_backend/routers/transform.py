@@ -1,15 +1,9 @@
-import json
-import os
-import shutil
-import tempfile
-import traceback
 from typing import Union, Optional, List
 from pydantic import BaseModel
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, UploadFile
 from pdf2image import convert_from_bytes
 from PIL import Image
-
-from src.logger import logger
+import base64
 
 
 router = APIRouter(tags=["Transformer"])
