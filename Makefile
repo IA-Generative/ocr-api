@@ -92,9 +92,16 @@ build-ocr-service: ## Lance la construction de l'image Docker service
 upgrade-db: ## Applique les migrations de base de données
 	docker compose run --rm migration alembic upgrade head
 
+list-revision: ## Liste les révisions de la base de données
+	docker compose run --rm migration alembic history
 upgrade-revision: ## Crée une nouvelle révision de base de données
 	@read -p "Message de révision : " msg; \
 	docker compose run --rm migration alembic revision --autogenerate -m "$$msg"
 
 cluster: ## Crée un cluster Kind local
 	kind create cluster --name ocr --config ./kind/config.yaml
+
+load-image: ## Upload les images dans le cluster
+	docker image tag ocr-api:latest ocr-api:v1
+	docker image tag ocr-service-paddle:latest ocr-service-paddle:v1
+	kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr

@@ -8,7 +8,11 @@ nodes:
   - containerPort: 443
     hostPort: 8443
   extraMounts:
-  #- hostPath: /app
-  #  containerPath: /app
+  - hostPath: ./ocr-api
+    containerPath: /ocr-api
+  - hostPath: ./ocr-service
+    containerPath: /ocr-service
+  - hostPath: ./src
+    containerPath: /src
   - containerPath: /var/lib/kubelet/config.json
-    hostPath: /home/debian/.docker/config.json
+    hostPath: ~/.docker/config.json
