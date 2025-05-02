@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from src.schemas.health import Health
 
+from src.schemas.health import Health
+
 
 class BaseFileConnector(ABC):
     @abstractmethod

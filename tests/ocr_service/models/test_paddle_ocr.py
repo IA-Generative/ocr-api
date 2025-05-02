@@ -1,6 +1,6 @@
 from PIL import Image
 from ocr_service.models.paddle_ocr import PaddleInferOCR
-from src.schemas.prediction import PredictionOCR
+from src.schemas.output import Page
 
 
 def test_predict():
@@ -11,5 +11,4 @@ def test_predict():
 
     assert len(actuals) == 2
     for actual in actuals:
-        for instance in actual:
-            assert isinstance(instance, PredictionOCR)
+        assert isinstance(actual, Page)

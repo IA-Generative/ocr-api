@@ -1,7 +1,12 @@
+import datetime
 from io import BytesIO
+
 import boto3
 import datetime
 from botocore.exceptions import ClientError
+
+from ..config.s3 import S3Settings
+from ..schemas.health import Health
 from .base import BaseFileConnector
 from ..schemas.health import Health, HealthError
 from ..config.s3 import S3Settings
@@ -54,12 +59,20 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
-    def get_health(self):
+    def get_health(self) -> Health:
         try:
             self.client.head_bucket(Bucket=self.bucket_name)
-        except Exception as e:
-            return HealthError(name="s3", error=e, code_status=500)
-        return Health(name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy")
+        except Exception as error:
+            return Health(
+                name="s3",
+                extras={"error": str(error)},
+                version=boto3.__version__,
+                up_time=self.up_time,
+                status="unhealthy",
+            )
+        return Health(
+            name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy"
+        )
 
     def delete_by_user_id(self, user_id: str) -> bool:
         batch_delete_size: int = 1_000
@@ -80,9 +93,9 @@ class S3Connector(BaseFileConnector):
 
             return True
         except ClientError as e:
-            raise Exception(f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}")
+            raise Exception(
+                f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}"
+            )
 
 
-s3_seetings = S3Settings()
-s3_client = boto3.client("s3")
-s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_seetings.S3_BUCKET_NAME)
+s3_settings = S3Settings()

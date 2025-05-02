@@ -2,7 +2,8 @@ import os
 from typing import List
 from PIL import Image
 from ocr_service.models.base import BaseModelPrediction
-from src.schemas.prediction import PredictionOCR
+from src.schemas.output import Page
+from src.schemas.box import Bbox
 from paddleocr import PaddleOCR
 import numpy as np
 
@@ -17,23 +18,43 @@ class PaddleInferOCR(BaseModelPrediction):
             lang="fr",
         )
 
-    def batch_predict(
-        self, images: List[Image.Image], *args, **kwargs
-    ) -> List[List[PredictionOCR]]:
-        result: List[List[PredictionOCR]] = []
-        for image in images:
+    def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
+        result: List[Page] = []
+
+        for i, image in enumerate(images):
+            width_img, height_img = image.size
             predictions = self.model.ocr(np.array(image), det=True, rec=True, cls=True)
+            page_boxes: List[Bbox] = []
+
             for pred in predictions:
-                page_predictions: List[PredictionOCR] = []
                 for text_pred in pred:
                     bbox, (text, confidence) = text_pred
-                    prediction_bbox = []
-                    for xy in bbox:
-                        prediction_bbox.extend(xy)
-                    tmp = PredictionOCR(
-                        confidence=confidence, text=text, text_region=prediction_bbox
+
+                    # Convert polygon to bounding box
+                    x_coords = [point[0] for point in bbox]
+                    y_coords = [point[1] for point in bbox]
+                    x = min(x_coords)
+                    y = min(y_coords)
+                    w = max(x_coords) - x
+                    h = max(y_coords) - y
+
+                    # Normalize coordinates between 0 and 1
+                    norm_x = x / width_img
+                    norm_y = y / height_img
+                    norm_w = w / width_img
+                    norm_h = h / height_img
+
+                    box = Bbox(
+                        x=norm_x,
+                        y=norm_y,
+                        width=norm_w,
+                        height=norm_h,
+                        confidence=float(confidence),
+                        text=text,
                     )
-                    page_predictions.append(tmp)
-                result.append(page_predictions)
+                    page_boxes.append(box)
+
+            page = Page(page=i, boxes=page_boxes)
+            result.append(page)
 
         return result

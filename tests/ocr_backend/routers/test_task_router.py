@@ -19,6 +19,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         percentage=50.0,
         created_at=1633036800,
         updated_at=1633036800,
+        input=None,
         extras={"key": "value"},
     )
 
@@ -37,6 +38,8 @@ def test_get_task_by_id(mock_get_task_by_id):
         "percentage": 50.0,
         "created_at": 1633036800,
         "updated_at": 1633036800,
+        "input": None,
+        "output": None,
         "extras": {"key": "value"},
     }
 
@@ -78,6 +81,7 @@ def test_get_task_by_user(mock_get_task_by_user):
         percentage=50.0,
         created_at=1633036800,
         updated_at=1633036800,
+        input=None,
         extras={"key": "value"},
     )
 
@@ -87,6 +91,7 @@ def test_get_task_by_user(mock_get_task_by_user):
         type="task_type_example",
         status=TaskStatus.QUEUED.value,
         percentage=1,
+        input=None,
         created_at=1633036800,
         updated_at=1633036800,
         extras={"key": "value"},
@@ -108,6 +113,8 @@ def test_get_task_by_user(mock_get_task_by_user):
             "created_at": 1633036800,
             "updated_at": 1633036800,
             "extras": {"key": "value"},
+            "input": None,
+            "output": None,
         },
         {
             "id": "12345",
@@ -118,5 +125,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "created_at": 1633036800,
             "updated_at": 1633036800,
             "extras": {"key": "value"},
+            "input": None,
+            "output": None,
         },
     ]

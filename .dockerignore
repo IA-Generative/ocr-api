@@ -5,7 +5,6 @@ recognition
 .venv
 *.csv
 *.tar
-tests/
 .pytest_cache
 .git*
 Dockerfile

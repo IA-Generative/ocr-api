@@ -18,3 +18,8 @@ COPY src /app/src
 RUN uv run /app/ocr_service/utils/download_paddle_models.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
 ENV PATH=$PATH:/app/.venv/bin/
 CMD ["uv", "run", "ocr_service/main.py"]
+
+FROM paddle_model AS test
+RUN uv sync --group test --group ocr-service-paddle
+COPY tests /app/tests
+CMD ["uv", "run", "ocr_service/main.py"]

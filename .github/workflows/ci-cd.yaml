@@ -33,7 +33,7 @@ jobs:
 
       - name: Stop docker container
         run: |
-            make down-env
+          make down
 
   # Build et Push de l'image seulement sur la branche staging
   build-and-push:

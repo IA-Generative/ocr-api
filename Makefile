@@ -1,58 +1,100 @@
 IMAGE_NAME_OCR_BACKEND=ocr-api
 IMAGE_NAME_OCR_SERVICE=ocr-service
 PYTHONPATH=$(PWD)
+OCR_BACKEND_CONTAINER=ocr-api
+OCR_SERVICE_CONTAINER=ocr-service
 
-.PHONY: build test clean install-test install-test-dep linter tests build-images bump-patch donwload-model
 
+.PHONY: install-uv install-local linter bump-patch bump-minor \
+        up down tests build-ocr-backend build-ocr-service build \
+        upgrade-db upgrade-revision cluster help
 
+.DEFAULT_GOAL := help
 
-install-test:
-	curl -LsSf https://astral.sh/uv/install.sh | sh
+help:
+	@echo "Usage: make <command>"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
-install-test-dep: install-test
-	sudo apt-get update && sudo apt-get install -y poppler-utils
-	uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle
+install: install-uv ## Installation de l'environnement pour du développement local (gestionnaire de dépendances)
+	@if [ ! -d ".venv" ]; then \
+		echo "Synchronisation des dépendances..."; \
+		uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle; \
+	else \
+		echo "Dépendances déjà synchronisées (suppose .venv existant)"; \
+	fi
 
-donwload-model: install-test-dep
-	export PYTHONPATH=$(PWD) && uv run ocr_service/utils/download.py
+install-uv:
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv non trouvé, installation..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+	else \
+		echo "uv déjà installé"; \
+	fi
 
-linter: install-test-dep
+install-linux:
+	sudo apt update && sudo apt install -y poppler-utils
+
+install-mac:
+	brew install poppler
+
+install-local: ## Installation des dépendances systèmes
+ifeq ($(shell uname), Linux)
+	@$(MAKE) install-linux
+else ifeq ($(shell uname), Darwin)
+	@$(MAKE) install-mac
+else
+	@echo "Installation automatique non supportée sur cette plateforme"
+endif
+
+lint: install ## Lint le code du dépôt
 	uv run ruff check .
 
-bump-patch: install-test
+bump:
+	@echo "Usage: make bump-patch OR make bump-minor"
+
+bump-patch:
 	uv run cz bump --increment patch
 
-bump-minor: install-test
+bump-minor:
 	uv run cz bump --increment minor
 
-up-env:
+up: ## Lance l'environnement de développement en conteneurs
 	docker compose up -d
-	@echo "Attente de 5 secondes pour laisser les conteneurs démarrer..."
-	sleep 5
 
-down-env:
+down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
 
-tests: install-test-dep up-env donwload-model
-	export PYTHONPATH=$(PWD) && env $(shell grep -v '^#' .env | xargs) uv run pytest --cov=./ocr_backend --cov=./ocr_service --cov=./src tests/
+logs-api: ## Affiche les logs du conteneur de l'API
+	docker logs -f $(OCR_BACKEND_CONTAINER)
 
-build-ocr-backend:
-	docker build -t $(IMAGE_NAME_OCR_BACKEND) -f Dockerfiles/ocr_backend/Dockerfile .
+logs-service: ## Affiche les logs du conteneur de service
+	docker logs -f $(OCR_SERVICE_CONTAINER)
 
-build-ocr-service:
-	docker build -t $(IMAGE_NAME_OCR_SERVICE)-paddle -f Dockerfiles/ocr_service/Dockerfile.paddle .
-	docker build -t $(IMAGE_NAME_OCR_SERVICE)-surya -f Dockerfiles/ocr_service/Dockerfile.surya .
+clean: ## Nettoyage du dépôt
+	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	$(MAKE) down
+
+tests: up ## Lance les tests unitaires
+	docker exec $(OCR_BACKEND_CONTAINER) pytest --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
+	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service
+
+build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
 
-build-images: build-ocr-backend build-ocr-service
+build-ocr-backend: ## Lance la construction de l'image Docker backend
+	docker compose build ocr_backend
 
-clean:
-	rm -rf tmp || true
-	# docker rmi $(IMAGE_NAME_OCR_BACKEND) || true
-	# docker rmi $(IMAGE_NAME_OCR_SERVICE) || true
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name "*.pyo" -delete
+build-ocr-service: ## Lance la construction de l'image Docker service
+	docker compose build ocr_service
 
-cluster:
+upgrade-db: ## Applique les migrations de base de données
+	docker compose run --rm migration alembic upgrade head
+
+upgrade-revision: ## Crée une nouvelle révision de base de données
+	@read -p "Message de révision : " msg; \
+	docker compose run --rm migration alembic revision --autogenerate -m "$$msg"
+
+cluster: ## Crée un cluster Kind local
 	kind create cluster --name ocr --config ./kind/config.yaml
