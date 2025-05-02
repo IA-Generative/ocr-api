@@ -18,3 +18,4 @@ bin/
 .actrc
 .secrets
 mirai-infra/
+.vscode/

@@ -1,11 +1,13 @@
-import tempfile
-import os
 import glob
+import os
+import tempfile
+from uuid import uuid4
+
 import pytest
 from fastapi.testclient import TestClient
-from uuid import uuid4
+
+from ocr_backend.connectors import s3_client_connector
 from ocr_backend.main import app
-from ocr_backend.clients import minio_connector
 from src.schemas.task import TaskModel, TaskStatus
 
 
@@ -45,5 +47,5 @@ def test_upload_file(client, temp_file):
 
         # Vérifier que le fichier est bien enregistré dans Minio
         task_id = response_model.id
-        file_from_minio = minio_connector.get_by_task_id(user_id, task_id)
+        file_from_minio = s3_client_connector.get_by_task_id(user_id, task_id)
         assert isinstance(file_from_minio.read(), bytes)

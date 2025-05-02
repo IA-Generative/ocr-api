@@ -1,5 +1,13 @@
-from .broker_connector import redis_client
-from .s3_connector import s3_client_connector
-from .db_connector import get_db, Base, engine
+from .broker_connector import redis_client_connector
+from .db_connector import Base, db_client_connector, engine, get_db
+from .s3_connector import S3Connector, s3_settings
 
-__all__ = ["redis_client", "s3_client_connector", "get_db", "Base", "engine"]
+__all__ = [
+    "get_db",
+    "Base",
+    "engine",
+    "redis_client_connector",
+    "S3Connector",
+    "s3_settings",
+    "db_client_connector",
+]

@@ -1,7 +1,8 @@
-from .task import Task
-from .task_stats import TaskStatTable
 from src.connector import Base, engine
 
-__all__ = ["Task", "TaskStatTable"]
+from .task import Task
+from .task_stats import TaskStatTable
 
-Base.metadata.create_all(engine)
+__all__ = ["Task", "TaskStatTable", "Base", "engine"]
+
+# Base.metadata.create_all(engine)
