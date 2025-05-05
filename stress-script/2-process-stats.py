@@ -2,10 +2,12 @@ import os
 from glob import glob
 import json
 import requests
+from src.schemas.task import TaskModel, TaskStatus
 
 URL = os.environ.get("STRESS_HOST")
 LOG_FOLDER = "tests/data/logs"
-stop = ["completed", "failed", "canceled", "timeout"]
+stop = [TaskStatus.COMPLETED.value, TaskStatus.FAILED.value, 
+        TaskStatus.CANCELED.value, TaskStatus.TIMEOUT.value]
 
 stats = {}
 if __name__ == "__main__":
@@ -26,11 +28,15 @@ if __name__ == "__main__":
             response = requests.get(f"{URL}/tasks/{task_id}")
             if response.status_code == 200:
                 json_response = response.json()
-                status = json_response["status"]
+                task = TaskModel.model_validate(json_response)
+                status = task.status
                 if status in stop:
                     if status not in stats:
-                        stats[status] = {"time": 0, "n_values": 0}
-                    t = json_response["updated_at"] - json_response["created_at"]
+                        stats[status] = {"time": 0, "n_values": 0, 'time_process': 0}
+                        
+                    if status == TaskStatus.COMPLETED.value:
+                        stats[status]['time_process'] += task.output.updated_at - task.output.created_at
+                    t = task.updated_at - task.created_at
                     stats[status]["time"] += t
                     stats[status]["n_values"] += 1
                     indices_to_del.append(i)
