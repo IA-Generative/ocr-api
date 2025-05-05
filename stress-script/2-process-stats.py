@@ -3,7 +3,7 @@ from glob import glob
 import json
 import requests
 
-URL = os.environ["URL_OCR"]
+URL = os.environ.get("STRESS_HOST")
 LOG_FOLDER = "tests/data/logs"
 stop = ["completed", "failed", "canceled", "timeout"]
 

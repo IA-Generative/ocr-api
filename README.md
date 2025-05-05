@@ -121,16 +121,16 @@ curl -X 'POST' \
 
 #### Test de charge (stress test)
 
-Utilisation de `locust` :
+Utilisation de `locust` (par défaut sur `http://localhost:5000`):
 
 ```bash
-uv run locust -f stress-script/1-stress-test.py --host <URL>-u 5 -r 5 --run-time 2m
+make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-test
 ```
 
-Avoir quelque stats sur les temps de process
+Avoir quelque statistiques sur les temps de process
 
 ```bash
-uv run stress-script/2-process-stats.py
+make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-stats 
 ```
 
 ## 🧠 Modèles OCR disponibles
@@ -159,7 +159,7 @@ uv run stress-script/2-process-stats.py
 
 - **Utilisation**: Surya est particulièrement adapté pour les documents structurés tels que les articles scientifiques, les formulaires et les rapports complexes.
 
-### 🔹 Intégration via `BaseModelPredictio`
+### 🔹 Intégration via `BaseModelPrediction`
 
 Les deux modèles peuvent être intégrés en implémentant la classe abstraite `BaseModelPrediction`, garantissant une interface cohérente pour la prédiction :
 

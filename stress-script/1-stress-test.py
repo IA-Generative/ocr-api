@@ -10,6 +10,7 @@ import os
 import random
 import mimetypes
 import json
+import os
 
 VALID_DIR = "tests/data/valid"
 LOG_FOLDER = "tests/data/logs"
@@ -19,11 +20,16 @@ os.makedirs(LOG_FOLDER, exist_ok=True)
 class UploadFileUser(HttpUser):
     wait_time = between(1, 5)
 
+    def on_start(self):
+        self.client.proxies = {
+            "http": os.environ.get("http_proxy"),
+            "https": os.environ.get("https_proxy"),
+            "no": os.environ.get("no_proxy"),
+        }
+
     def get_random_file(self):
         files = [
-            os.path.join(VALID_DIR, f)
-            for f in os.listdir(VALID_DIR)
-            if os.path.isfile(os.path.join(VALID_DIR, f))
+            os.path.join(VALID_DIR, f) for f in os.listdir(VALID_DIR) if os.path.isfile(os.path.join(VALID_DIR, f))
         ]
         return random.choice(files) if files else None
 
@@ -47,7 +53,5 @@ class UploadFileUser(HttpUser):
             response = self.client.post(f"/jobs/{user_id}", files=files)
             if response.status_code == 201:
                 data_json = response.json()
-                with open(
-                    os.path.join(LOG_FOLDER, f"{data_json['id']}.json"), "w"
-                ) as f:
+                with open(os.path.join(LOG_FOLDER, f"{data_json['id']}.json"), "w") as f:
                     json.dump(data_json, f, indent=2)

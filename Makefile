@@ -3,6 +3,7 @@ IMAGE_NAME_OCR_SERVICE=ocr-service
 PYTHONPATH=$(PWD)
 OCR_BACKEND_CONTAINER=ocr-api
 OCR_SERVICE_CONTAINER=ocr-service
+STRESS_HOST=http://localhost:5000
 
 
 .PHONY: install-uv install-local linter bump-patch bump-minor \
@@ -105,3 +106,9 @@ load-image: ## Upload les images dans le cluster
 	docker image tag ocr-api:latest ocr-api:v1
 	docker image tag ocr-service-paddle:latest ocr-service-paddle:v1
 	kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr
+
+stress-test: install-uv ## Lance un test de charge
+	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST) -u 5 -r 5 --run-time 2m
+
+stress-stats: install-uv ## Affiche les statistiques du test de charge
+	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
