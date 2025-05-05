@@ -40,9 +40,12 @@ if __name__ == "__main__":
                     stats[status]["time"] += t
                     stats[status]["n_values"] += 1
                     indices_to_del.append(i)
+                    time_process=stats[status]['time_process']
+                    time_f = stats[status]['time']
+                    n_values = stats[status].get('n_values', 1)
                     for status in stats:
                         print(
-                            f"{status} (#{stats[status].get('n_values')}) : {stats[status]['time'] / stats[status].get('n_values', 1)}s"
+                            f"{status} (#{n_values}) : {time_f /n_values}s - time_process: {time_process/n_values}"
                         )
 
         indices_to_del.sort(reverse=True)
