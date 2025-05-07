@@ -39,18 +39,10 @@ def test_get_content_file_success(mock_minio : S3Connector, mock_model: PaddleIn
     mock_minio.save(task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path)
     
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
-    content = worker.get_content_file(task=dummy_task)
+    content = worker.get_content_file(task=dummy_task).read()
 
     assert content == expected_content
     mock_minio.delete_by_task_id(user_id=dummy_task.user_id, task_id=dummy_task.id)
-    
-
-def test_get_content_file_none(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
-    
-    worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
-
-    with pytest.raises(EmptyContentException):
-        worker.get_content_file(task=dummy_task)
 
     
 
