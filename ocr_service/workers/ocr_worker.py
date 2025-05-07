@@ -8,11 +8,11 @@ from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.base import BaseModelPrediction
 from ocr_service.workers.base import BaseWorker
 from src import __name__, __version__
-from src.connector.base import BaseFileConnector
+from src.connector.s3_connector import S3Connector
 from src.logger import logger
 from src.schemas.output import OCRResult, Page
 from src.schemas.task import TaskModel, TaskStatus, TaskUpdateForm, task_table
-
+from io import BytesIO
 
 class EmptyContentException(Exception): ...
 
@@ -23,7 +23,7 @@ class FileNotSupported(Exception): ...
 class OCRWorker(BaseWorker):
     def __init__(
         self,
-        file_connector: BaseFileConnector,
+        file_connector: S3Connector,
         ocr_model: BaseModelPrediction,
         settings: PaddleSetting = PaddleSetting(),
     ):
@@ -91,19 +91,32 @@ class OCRWorker(BaseWorker):
         formatted_result: List[Page] = []
         batch_size = self.settings.DETECTION_BATCH_SIZE
         filename = task.extras.get("raw_filename")
-
+        client_s3 = self.file_connector.client 
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
             batch = pages[i : i + batch_size]
             logger.debug(f"{filename} for task {task.id}")
             # TODO : Pdf with differents size of page
 
-            partial_result = self.ocr_model.batch_predict(
+            partial_result: List[Page] = self.ocr_model.batch_predict(
                 images=batch,
                 langs=[["fr"] for _ in batch],
                 detection_batch_size=batch_size,
                 recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE,
             )
+            for j, image in enumerate(batch):
+                buffer = BytesIO()
+                image.save(buffer, format="JPEG")
+                buffer.seek(0)
+                key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
+                client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
+                logger.debug(f"Uploaded page {i + j} to {key}")
+                signed_url = client_s3.generate_presigned_url(
+                    ClientMethod='get_object',
+                    Params={'Bucket': self.file_connector.bucket_name, 'Key': key},
+                    ExpiresIn=3600  # 1h
+                )
+                partial_result[j].page_url = signed_url
 
             formatted_result.extend(partial_result)
 

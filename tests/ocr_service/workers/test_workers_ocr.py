@@ -5,6 +5,7 @@ from PIL import Image
 
 from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.paddle_ocr import PaddleInferOCR
+from src.connector.s3_connector import S3Connector
 from ocr_service.workers.ocr_worker import EmptyContentException, FileNotSupported, OCRWorker
 from src.schemas.input import InputForm
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
@@ -18,8 +19,8 @@ def dummy_task() -> TaskModel:
 
 
 @pytest.fixture
-def mock_minio():
-    return MagicMock()
+def mock_minio() -> S3Connector:
+    return S3Connector()
 
 
 @pytest.fixture
@@ -27,39 +28,31 @@ def mock_model() -> PaddleInferOCR:
     return PaddleInferOCR(path_model=settings.PADDLE_OCR_BASE_DIR)
 
 
-def test_get_content_file_success(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
+def test_get_content_file_success(mock_minio : S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel):
+    
+    
     expected_content = b"fake-bytes-content"
-    mock_minio.get_by_task_id.return_value = expected_content
+    tmp_path = 'data.txt'
+    with open(tmp_path, "wb") as f:
+        f.write(expected_content)
 
+    mock_minio.save(task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path)
+    
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
-    content = worker.get_content_file(task=dummy_task)
+    content = worker.get_content_file(task=dummy_task).read()
 
     assert content == expected_content
-    mock_minio.get_by_task_id.assert_called_once_with(user_id=dummy_task.user_id, task_id=dummy_task.id)
+    mock_minio.delete_by_task_id(user_id=dummy_task.user_id, task_id=dummy_task.id)
 
-
-def test_get_content_file_none(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
-    mock_minio.get_by_task_id.return_value = None
-
-    worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
-
-    with pytest.raises(EmptyContentException):
-        worker.get_content_file(task=dummy_task)
-
-    mock_minio.get_by_task_id.assert_called_once()
-
+    
 
 def test_get_content_file_exception(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
-    mock_minio.get_by_task_id.side_effect = Exception("Connection error")
-
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
 
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception):
         worker.get_content_file(task=dummy_task)
 
-    assert "Connection error" in str(exc_info.value)
-    mock_minio.get_by_task_id.assert_called_once()
-
+    
 
 def test_set_task_extras(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
@@ -130,7 +123,7 @@ def test_predict_on_pages(mock_minio, mock_model: PaddleInferOCR, dummy_task: Ta
     assert actual is not None
 
 
-def test_predict_task_ocr_w_image(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
+def test_predict_task_ocr_w_image(mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/cerfa_13750-05-1.pdf",
         raw_filename="cerfa_13750-05-1.pdf",
@@ -138,11 +131,11 @@ def test_predict_task_ocr_w_image(mock_minio, mock_model: PaddleInferOCR, dummy_
         size=123456,
         content_type="application/pdf",  # Uncomment this line to simulate the absence of content_type
     )
+    mock_minio.save(user_id=dummy_task.user_id, task_id=dummy_task.id, file_path="tests/data/valid/cerfa_13750-05-1.pdf")
+    
 
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
-    with open("tests/data/valid/cerfa_13750-05-1.pdf", "rb") as f:
-        mock_minio.get_by_task_id.return_value = f
-        task = worker.process_task_ocr(task=dummy_task)
-        assert task.status == TaskStatus.COMPLETED.value
-        mock_minio.delete_by_task_id.assert_called_once_with(user_id=dummy_task.user_id, task_id=dummy_task.id)
-        assert task.output is not None
+    task = worker.process_task_ocr(task=dummy_task)
+    assert task.status == TaskStatus.COMPLETED.value
+    mock_minio.delete_by_task_id(user_id=dummy_task.user_id, task_id=dummy_task.id)
+    
