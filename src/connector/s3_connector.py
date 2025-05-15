@@ -1,5 +1,5 @@
+import tempfile
 import datetime
-from io import BytesIO
 
 import boto3
 from botocore.exceptions import ClientError
@@ -25,13 +25,16 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
-    def get_by_task_id(self, user_id: str, task_id: str) -> BytesIO:
+    def get_by_task_id(self, user_id: str, task_id: str) -> str:
         object_key = f"{user_id}/{task_id}"
         try:
             response = self.client.get_object(Bucket=self.bucket_name, Key=object_key)
-            file_data = BytesIO(response["Body"].read())
-            file_data.seek(0)
-            return file_data
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            with tmp_file as f:
+                for chunk in response["Body"].iter_chunks(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            return tmp_file.name
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 raise FileNotFoundError(f"{object_key} non trouvé : {e}")
