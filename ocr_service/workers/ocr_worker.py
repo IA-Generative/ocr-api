@@ -1,12 +1,12 @@
 import time
 from typing import List
 
-from pdf2image import convert_from_path
 from PIL import Image, ImageOps
 
 from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.base import BaseModelPrediction
 from ocr_service.workers.base import BaseWorker
+from ocr_service.utils.lazy_pdf import LazyPdfImageList
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
@@ -78,8 +78,10 @@ class OCRWorker(BaseWorker):
 
         elif content_type == "application/pdf":
             t_convert = time.time()
+            logger.debug(f"{task.id} - {filename} convert to image")
+            logger.info(79 * "*")
 
-            pages = convert_from_path(content)
+            pages = LazyPdfImageList(content)
             t_convert = time.time() - t_convert
             logger.debug(
                 f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
@@ -187,6 +189,7 @@ class OCRWorker(BaseWorker):
         logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
 
         content = self.get_content_file(task=task)
+        logger.debug(f"{task.id} - {content}")
         pages = self.transform_content(task=task, content=content)
         logger.debug(f" Start to process - {filename} ")
 
