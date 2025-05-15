@@ -1,7 +1,7 @@
 import time
 from typing import List
 
-from PIL import Image, ImageOps
+from PIL import Image
 
 from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.base import BaseModelPrediction
@@ -39,9 +39,11 @@ class OCRWorker(BaseWorker):
     def get_content_file(self, task: TaskModel) -> str:
         task = self.set_output(task=task)
         try:
+            logger.info(f"{task.id} load file ")
             content = self.file_connector.get_by_task_id(
                 user_id=task.user_id, task_id=task.id
             )
+            logger.info(f"{task.id} loaded")
 
         except Exception as e:
             task.extras["error"] = str(e)
@@ -183,15 +185,15 @@ class OCRWorker(BaseWorker):
 
         filename = task.input.raw_filename
 
-        max_height = task.extras.get("max_height", None)
-        grayscale = task.extras.get("grayscale", False)
+        # max_height = task.extras.get("max_height", None)
+        # grayscale = task.extras.get("grayscale", False)
 
         logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
 
         content = self.get_content_file(task=task)
         logger.debug(f"{task.id} - {content}")
         pages = self.transform_content(task=task, content=content)
-        logger.debug(f" Start to process - {filename} ")
+        logger.debug(f" Start to process - {filename} - {len(pages)}")
 
         task.output.total_pages = len(pages)
         task.output.updated_at = int(time.time())
@@ -205,14 +207,14 @@ class OCRWorker(BaseWorker):
             ),
         )
 
-        for i, page in enumerate(pages):
-            width, height = page.size
-            if max_height and int(height) > max_height:
-                page = page.resize((int(width * max_height / height), max_height))
+        # for i, page in enumerate(pages):
+        #     width, height = page.size
+        #     if max_height and int(height) > max_height:
+        #         page = page.resize((int(width * max_height / height), max_height))
 
-        if grayscale:
-            for i in range(len(pages)):
-                pages[i] = ImageOps.grayscale(pages[i])
+        # if grayscale:
+        #     for i in range(len(pages)):
+        #         pages[i] = ImageOps.grayscale(pages[i])
 
         try:
             task = self.predict_on_pages(task=task, pages=pages)
