@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 import pytest
 from PIL import Image
 
@@ -7,7 +5,6 @@ from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.paddle_ocr import PaddleInferOCR
 from src.connector.s3_connector import S3Connector
 from ocr_service.workers.ocr_worker import (
-    EmptyContentException,
     FileNotSupported,
     OCRWorker,
 )
@@ -37,7 +34,6 @@ def mock_model() -> PaddleInferOCR:
 def test_get_content_file_success(
     mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel
 ):
-
     expected_content = b"fake-bytes-content"
     tmp_path = "data.txt"
     with open(tmp_path, "wb") as f:

@@ -112,7 +112,9 @@ class TaskTable:
                 return None
             return TaskModel.model_validate(task)
 
-    def update_task(self, task_id: str, form_data: TaskUpdateForm) -> Optional[TaskModel]:
+    def update_task(
+        self, task_id: str, form_data: TaskUpdateForm
+    ) -> Optional[TaskModel]:
         with get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
@@ -146,10 +148,18 @@ class TaskTable:
             db.commit()
             return TaskModel.model_validate(task)
 
-    def get_tasks_by_user_id(self, user_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
+    def get_tasks_by_user_id(
+        self, user_id: str, page: int = 1, page_size: int = 10
+    ) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
         with get_db() as db:
-            tasks = db.query(Task).filter(Task.user_id == user_id).offset(offset).limit(page_size).all()
+            tasks = (
+                db.query(Task)
+                .filter(Task.user_id == user_id)
+                .offset(offset)
+                .limit(page_size)
+                .all()
+            )
 
             if not tasks:
                 logger.warning(f"No tasks found for user {user_id}.")

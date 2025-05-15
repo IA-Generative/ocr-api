@@ -19,7 +19,10 @@ celery_app = Celery(
 class RedisConnector:
     def __init__(self, redis_client: redis.Redis = None):  # type: ignore
         self.client = redis_client or redis.Redis(
-            host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0, socket_connect_timeout=2
+            host=redis_settings.REDIS_HOST,
+            port=redis_settings.REDIS_PORT,
+            db=0,
+            socket_connect_timeout=2,
         )
         self.up_time = datetime.now().isoformat()
 
@@ -34,9 +37,15 @@ class RedisConnector:
                 up_time=self.up_time,
                 status="unhealthy",
             )
-        return Health(name="redis", version=redis.__version__, up_time=self.up_time, status="healthy")
+        return Health(
+            name="redis",
+            version=redis.__version__,
+            up_time=self.up_time,
+            status="healthy",
+        )
 
 
-redis_client = redis.Redis(host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
+redis_client = redis.Redis(
+    host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0
+)
 redis_client_connector = RedisConnector(redis_client=redis_client)
-

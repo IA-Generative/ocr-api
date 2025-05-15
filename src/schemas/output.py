@@ -6,7 +6,7 @@ from src.schemas.box import Bbox
 class Page(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     page: int
-    page_url : Optional[str] = None
+    page_url: Optional[str] = None
     boxes: List[Bbox]
 
 
