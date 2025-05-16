@@ -1,15 +1,17 @@
-from typing import List
+import os
+from typing import List, Sequence
 import datetime
 from itertools import islice
-from sqlalchemy import select, and_
-from src.connector.s3_connector import S3Connector
-from src.schemas.task import Task, TaskStatus, TaskModel
+
+import boto3
+
+from src.schemas import Task
+from src.schemas.task import TaskStatus, TaskModel
 from src.connector.db_connector import get_db
+from sqlalchemy import and_
 
 # --- CONFIGURATION ---
 DAYS_TO_KEEP = 7
-BATCH_SIZE = 500
-DRY_RUN = False
 
 # --- STATUTS SUPPRIMABLES ---
 STATUTS_SUPPRIMABLES = {
@@ -19,18 +21,27 @@ STATUTS_SUPPRIMABLES = {
     TaskStatus.COMPLETED.value,
 }
 
-
 # --- S3 CONNECTOR ---
-s3 = S3Connector()
+s3_client = boto3.client("s3")
+bucket_name = os.environ["S3_BUCKET_NAME"]
 
 
 # --- UTILS ---
-def get_cutoff_timestamp(days: int) -> int:
+def get_cutoff_timestamp(
+    days: int, hours: int = 0, minutes: int = 0, seconds: int = 0
+) -> int:
     """Renvoie le timestamp UNIX pour aujourd'hui - N jours (en UTC)."""
-    return int((datetime.datetime.now() - datetime.timedelta(days=days)).timestamp())
+    return int(
+        (
+            datetime.datetime.now()
+            - datetime.timedelta(
+                days=days, hours=hours, minutes=minutes, seconds=seconds
+            )
+        ).timestamp()
+    )
 
 
-def chunked(iterable, size):
+def chunked(iterable: Sequence, size: int) -> Sequence:
     """Découpe un iterable en chunks."""
     it = iter(iterable)
     return iter(lambda: list(islice(it, size)), [])
@@ -39,16 +50,23 @@ def chunked(iterable, size):
 def fetch_eligible_tasks(cutoff_ts: int) -> List[TaskModel]:
     """Récupère les tâches à supprimer."""
     with get_db() as db:
-        query = select(Task.id, Task.s3_key).where(
-            and_(Task.updated_at <= cutoff_ts, Task.status.in_(STATUTS_SUPPRIMABLES))
+        tasks = (
+            db.query(Task)
+            .filter(
+                and_(
+                    Task.status.in_(STATUTS_SUPPRIMABLES), Task.created_at <= cutoff_ts
+                )
+            )
+            .all()
         )
-        return db.execute(query).fetchall()
+
+        return [TaskModel.model_validate(task) for task in tasks]
 
 
 def delete_s3_objects(keys: list[str]) -> tuple[set, list]:
     """Supprime les objets S3 et renvoie (deleted_keys, errors)."""
-    response = s3.client.delete_objects(
-        Bucket=s3.bucket_name,
+    response = s3_client.delete_objects(
+        Bucket=bucket_name,
         Delete={"Objects": [{"Key": k} for k in keys], "Quiet": False},
     )
     deleted = set(obj["Key"] for obj in response.get("Deleted", []))
@@ -56,78 +74,54 @@ def delete_s3_objects(keys: list[str]) -> tuple[set, list]:
     return deleted, errors
 
 
-def process_batch(batch, dry_run: bool, report: dict):
-    ids = [row[0] for row in batch]
-    keys = [row[1] for row in batch]
+def process_batch(batch: List[TaskModel], dry_run: bool):
+    ids = []
+    keys = []
+    for task in batch:
+        ids.append(task.id)
+        if task.input and task.input.storage_file_path:
+            keys.append(task.input.storage_file_path)
 
     if dry_run:
-        for id, key in zip(ids, keys):
-            print(f"[DRY RUN] ID: {id}, Key: {key}")
-            report["dry_run"].append((id, key))
+        for id in ids:
+            print(f"[DRY RUN] ID: {id}")
         return
 
     # Suppression S3
-    try:
-        deleted_keys, s3_errors = delete_s3_objects(keys)
+    if len(keys) > 0:
+        try:
+            delete_s3_objects(keys)
+            print(f"Storage : {keys} deleted")
+        except Exception:
+            print(f"Deleted error storage keys: {keys}")
 
-        for id, key in zip(ids, keys):
-            if key in deleted_keys:
-                report["deleted"].append((id, key))
-            elif any(e["Key"] == key and e["Code"] == "NoSuchKey" for e in s3_errors):
-                report["not_found"].append((id, key))
-            else:
-                msg = next(
-                    (e["Message"] for e in s3_errors if e["Key"] == key),
-                    "Erreur inconnue",
-                )
-                report["errors"].append((id, key, msg))
-    except Exception as e:
-        for id, key in zip(ids, keys):
-            report["errors"].append((id, key, f"Exception S3: {e}"))
-        return
     with get_db() as db:
         # Suppression DB
         try:
             db.query(Task).filter(Task.id.in_(ids)).delete(synchronize_session=False)
             db.commit()
+            print(f"Deleted : {ids}")
         except Exception as e:
             db.rollback()
-            for id, key in zip(ids, keys):
-                report["errors"].append((id, key, f"Exception DB: {e}"))
+            print(e)
+            print(f"Deleted error task ids : {ids}")
 
 
-def print_report(report):
-    print("\n=== RAPPORT FINAL ===")
-    print(f"✔️ Supprimés       : {len(report['deleted'])}")
-    print(f"❗ Introuvables    : {len(report['not_found'])}")
-    print(f"❌ Erreurs         : {len(report['errors'])}")
-    print(f"🧪 Dry run         : {len(report['dry_run'])}")
+def main(
+    days: int = 7,
+    batch_size: int = 5,
+    hours: int = 0,
+    minutes: int = 0,
+    seconds: int = 0,
+):
+    cutoff_ts = get_cutoff_timestamp(
+        days=days, hours=hours, minutes=minutes, seconds=seconds
+    )
+    results = fetch_eligible_tasks(cutoff_ts)
+    print(f"{len(results)} objets à traiter")
 
-    for title, entries in report.items():
-        if entries:
-            print(f"\n-- {title.upper()} --")
-            for entry in entries:
-                print(" -", entry)
-
-
-def main():
-    cutoff_ts = get_cutoff_timestamp(DAYS_TO_KEEP)
-
-    try:
-        results = fetch_eligible_tasks(cutoff_ts)
-        print(
-            f"{'DRY RUN' if DRY_RUN else 'SUPPRESSION'} : {len(results)} objets à traiter"
-        )
-
-        report = {"deleted": [], "not_found": [], "errors": [], "dry_run": []}
-
-        for batch in chunked(results, BATCH_SIZE):
-            process_batch(batch, DRY_RUN, report)
-
-        print_report(report)
-
-    finally:
-        pass
+    for batch in chunked(results, batch_size):
+        process_batch(batch, dry_run=False)
 
 
 if __name__ == "__main__":
