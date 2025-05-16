@@ -48,4 +48,5 @@ def test_upload_file(client, temp_file):
         # Vérifier que le fichier est bien enregistré dans Minio
         task_id = response_model.id
         file_from_minio = s3_client_connector.get_by_task_id(user_id, task_id)
-        assert isinstance(file_from_minio.read(), bytes)
+
+        assert os.path.exists(file_from_minio)

@@ -1,5 +1,5 @@
+import tempfile
 import datetime
-from io import BytesIO
 
 import boto3
 from botocore.exceptions import ClientError
@@ -7,6 +7,16 @@ from botocore.exceptions import ClientError
 from ..config.s3 import S3Settings
 from ..schemas.health import Health
 from .base import BaseFileConnector
+from ..logger import logger
+
+from boto3.s3.transfer import TransferConfig
+
+config = TransferConfig(
+    multipart_threshold=8 * 1024 * 1024,  # fichiers >8MB en multipart
+    max_concurrency=2,  # nombre de threads
+    multipart_chunksize=8 * 1024 * 1024,  # taille des chunks
+    use_threads=True,
+)
 
 
 class S3Connector(BaseFileConnector):
@@ -25,16 +35,25 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
-    def get_by_task_id(self, user_id: str, task_id: str) -> BytesIO:
+    def get_by_task_id(self, user_id: str, task_id: str) -> str:
         object_key = f"{user_id}/{task_id}"
         try:
-            response = self.client.get_object(Bucket=self.bucket_name, Key=object_key)
-            file_data = BytesIO(response["Body"].read())
-            file_data.seek(0)
-            return file_data
+            metadata = self.client.head_object(Bucket=self.bucket_name, Key=object_key)
+            logger.debug(f"{task_id} - {metadata['ContentLength']}")
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file_path = tmp_file.name
+            tmp_file.close()  # Important, boto3 va l’écrire
+            logger.debug(f"{task_id} - Start to save chunk")
+            self.client.download_file(
+                self.bucket_name, object_key, tmp_file_path, Config=config
+            )
+
+            return tmp_file_path
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 raise FileNotFoundError(f"{object_key} non trouvé : {e}")
+            raise e
+        except Exception as e:
             raise e
 
     def save(self, user_id: str, task_id: str, file_path: str) -> str:

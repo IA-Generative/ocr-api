@@ -6,4 +6,3 @@ class S3Settings(BaseSettings):
     model_config = SettingsConfigDict(
         from_attributes=True, case_sensitive=True, env_file=".env", extra="allow"
     )
-

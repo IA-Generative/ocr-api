@@ -130,7 +130,7 @@ make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com
 Avoir quelque statistiques sur les temps de process
 
 ```bash
-make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-stats 
+make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-stats
 ```
 
 ## 🧠 Modèles OCR disponibles

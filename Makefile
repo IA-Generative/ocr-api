@@ -63,6 +63,8 @@ bump-minor:
 
 up: ## Lance l'environnement de développement en conteneurs
 	docker compose up -d
+	sleep 2
+	make upgrade-db
 
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
