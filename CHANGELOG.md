@@ -29,6 +29,27 @@
 - code clean
 - :art: change minio vars
 
+## [1.0.0](https://github.com/IA-Generative/ocr-api/compare/v0.0.1...v1.0.0) (2025-05-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* :tada: add new arch for queueing ocr
+
+### Features
+
+* :rocket: add stress tests ([066d878](https://github.com/IA-Generative/ocr-api/commit/066d878582f997452605036d1527f8f526db9aef))
+* :sparkles: add output input form ([#19](https://github.com/IA-Generative/ocr-api/issues/19)) ([66f16ab](https://github.com/IA-Generative/ocr-api/commit/66f16ab77afcdd1f5e18d1a48fd2088fcbff9e9f))
+* :tada: add new arch for queueing ocr ([bb8f9c2](https://github.com/IA-Generative/ocr-api/commit/bb8f9c2f64454638751ebb8a53f8f7f29b9245f0))
+* add release ([#28](https://github.com/IA-Generative/ocr-api/issues/28)) ([5cf7390](https://github.com/IA-Generative/ocr-api/commit/5cf7390d24d39a96697e916a728da516eacee99f))
+* add signe url ([#24](https://github.com/IA-Generative/ocr-api/issues/24)) ([61b2bb0](https://github.com/IA-Generative/ocr-api/commit/61b2bb01d93aa4ade5f8e25d4bd0909fbe6aa0d9))
+
+
+### Bug Fixes
+
+* :bug: change runner type ([77d7c7f](https://github.com/IA-Generative/ocr-api/commit/77d7c7f7b663eac1b782dc4f35747f2d190452b1))
+* raise error ([8ce8ad6](https://github.com/IA-Generative/ocr-api/commit/8ce8ad65b2f306d86b1905fac9e7e7d10e8bfb21))
+
 ## 0.2.0 (2025-04-24)
 
 ### Feat
