@@ -1,6 +1,8 @@
 [project]
 name = "ocr-api"
-version = "0.3.1"
+
+version = "1.0.0"
+
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.10"

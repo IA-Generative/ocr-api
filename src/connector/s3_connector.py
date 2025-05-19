@@ -52,7 +52,8 @@ class S3Connector(BaseFileConnector):
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 raise FileNotFoundError(f"{object_key} non trouvé : {e}")
-            raise e
+            raise FileNotFoundError(f"{object_key} non trouvé : {e}")
+
         except Exception as e:
             raise e
 
