@@ -1,9 +1,9 @@
 services:
   minio:
     image: minio/minio:latest
-    ports:
-      - "9000:9000"
-      - "9001:9001"
+#    ports:
+#      - "9000:9000"
+#      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -24,7 +24,11 @@ services:
       - .env
 
   flower_ocr:
-    image: ocr-service-paddle
+    #image: ocr-service-paddle
+    build:
+#      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.docling
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
@@ -41,16 +45,16 @@ services:
     deploy:
       replicas: 1
     container_name: ocr-service
-    command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork", "--loglevel=info","--concurrency=1", "-E"]
+    command: ["uv", "run", "celery", "-A", "ocr_service.main", "worker", "--pool=prefork", "--loglevel=info","--concurrency=1", "-E"]
     image: ocr-service-paddle
     volumes:
     - ./ocr_service/:/app/ocr_service/
     - ./src/:/app/src/
     - ./tests/:/app/tests
     build:
-      target: test
+#      target: test
       context: .
-      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.docling
     depends_on:
       - redis
       - minio

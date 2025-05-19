@@ -1,7 +1,9 @@
 import time
 from typing import List
+import os
+from io import BytesIO
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from ocr_service.configs.paddle import PaddleSetting
 from ocr_service.models.base import BaseModelPrediction
@@ -68,7 +70,7 @@ class OCRWorker(BaseWorker):
             raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
-    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image]:
+    def transform_content(self, task: TaskModel, content: bytes) -> list[Image.Image | BytesIO]:
         task = self.set_output(task=task)
 
         content_type: str = task.input.content_type
@@ -79,15 +81,21 @@ class OCRWorker(BaseWorker):
             pages = [Image.open(content).convert("RGB")]
 
         elif content_type == "application/pdf":
-            t_convert = time.time()
-            logger.debug(f"{task.id} - {filename} convert to image")
-            logger.info(79 * "*")
+            if os.environ.get("MODEL_NAME") != "docling":
+                t_convert = time.time()
+                logger.debug(f"{task.id} - {filename} convert to image")
+                logger.info(79 * "*")
 
-            pages = LazyPdfImageList(content)
-            t_convert = time.time() - t_convert
-            logger.debug(
-                f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
-            )
+                pages = LazyPdfImageList(content)
+                t_convert = time.time() - t_convert
+                logger.debug(
+                    f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
+                )
+            else:
+                buffer = BytesIO(content.read())
+                buffer.seek(0) # position it back to begin
+                pages = [buffer]
+
 
         else:
             logger.error(f"Unsupported file type {task.extras}")
@@ -102,7 +110,7 @@ class OCRWorker(BaseWorker):
 
         return pages
 
-    def predict_on_pages(self, task: TaskModel, pages: List[Image.Image]) -> TaskModel:
+    def predict_on_pages(self, task: TaskModel, pages: list[Image.Image | BytesIO]) -> TaskModel:
         task = self.set_output(task=task, total_pages=len(pages))
         formatted_result: List[Page] = []
         batch_size = self.settings.DETECTION_BATCH_SIZE
@@ -111,7 +119,7 @@ class OCRWorker(BaseWorker):
         task.output.text = ""
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
-            batch = pages[i : i + batch_size]
+            batch = pages[i : i + batch_size] # TODO https://docs.python.org/3/library/itertools.html#itertools.batched
             logger.debug(f"{filename} for task {task.id}")
             # TODO : Pdf with differents size of page
 

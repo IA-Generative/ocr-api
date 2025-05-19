@@ -17,7 +17,7 @@ dependencies = [
     "celery[redis]>=5.5.1",
     "flower>=2.0.1",
     "psycopg2-binary==2.9.10",
-    "boto3==1.37.36"
+    "boto3==1.37.36",
 ]
 
 [dependency-groups]
@@ -72,6 +72,10 @@ version = [
 client = [
     "python-magic>=0.4.27",
 ]
+docling = [
+    "docling>=2.15.1",
+    "psutil>=7.0.0",
+]
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -80,6 +84,9 @@ version_scheme = "semver"
 version_provider = "uv"
 update_changelog_on_bump = true
 major_version_zero = true
+
+[tool.ruff]
+line-length = 150
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu", group = "ocr-service" }

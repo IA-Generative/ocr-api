@@ -24,7 +24,7 @@ Les variables sont chargées automatiquement grâce à [`pydantic-settings`](htt
 
 | Variable | Description | Default | Utilisation |
 |:---|:---|:---|:---|
-| `MODEL_NAME` | Choix du modèle OCR (`paddle` ou `surya`). | `paddle` | `ocr_service`, `OCRModelSettings` |
+| `MODEL_NAME` | Choix du modèle OCR (`paddle` ou `surya` ou `docling`). | `paddle` | `ocr_service`, `OCRModelSettings` |
 
 ---
 

@@ -10,6 +10,11 @@ class Page(BaseModel):
     page_url: Optional[str] = None
     boxes: List[Bbox]
 
+class MarkdownPage(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    page: int
+    doc_json: str
+    markdown: str
 
 class OCRResult(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -19,7 +24,7 @@ class OCRResult(BaseModel):
     updated_at: int
     version: str
     total_pages: int
-    pages: List[Page]
+    pages: List[Page | MarkdownPage]
     extras: Optional[dict] = None
     text: Optional[str] = ""
 
