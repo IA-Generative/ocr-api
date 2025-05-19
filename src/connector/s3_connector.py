@@ -56,6 +56,8 @@ class S3Connector(BaseFileConnector):
 
         except Exception as e:
             raise e
+        except Exception as e:
+            raise e
 
     def save(self, user_id: str, task_id: str, file_path: str) -> str:
         object_key = f"{user_id}/{task_id}"
