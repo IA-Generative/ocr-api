@@ -54,8 +54,7 @@ class S3Connector(BaseFileConnector):
                 raise FileNotFoundError(f"{object_key} non trouvé : {e}")
             raise FileNotFoundError(f"{object_key} non trouvé : {e}")
 
-        except Exception as e:
-            raise e
+
         except Exception as e:
             raise e
 
