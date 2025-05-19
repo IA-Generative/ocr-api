@@ -1,9 +1,122 @@
-version: '3.9'
-
 services:
-  backend:
-    image: ocr-api
-    volumes:
-      - ./:/app
+  minio:
+    image: minio/minio:latest
     ports:
-      - "5000:5000"
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data
+    restart: unless-stopped
+    env_file:
+      - .env
+
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  flower_ocr:
+    image: ocr-service-paddle
+    environment:
+      CELERY_BROKER_URL: redis://redis
+      CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
+    ports:
+      - "5555:5555"
+    volumes:
+    - ./ocr_service/:/app/ocr_service/
+    - ./src/:/app/src/
+    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    env_file:
+      - .env
+
+  ocr_service:
+    deploy:
+      replicas: 1
+    container_name: ocr-service
+    command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork", "--loglevel=info","--concurrency=1", "-E"]
+    image: ocr-service-paddle
+    volumes:
+    - ./ocr_service/:/app/ocr_service/
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
+    depends_on:
+      - redis
+      - minio
+      #- migration
+      - db
+    env_file:
+      - .env
+
+  ocr_backend:
+    image: ocr-api
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    ports:
+    - 5000:5000
+    container_name: ocr-api
+    volumes:
+    - ./ocr_backend/:/app/ocr_backend/
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+      #- migration
+    env_file:
+      - .env
+
+  migration:
+    image: ocr-api
+    command:
+    - alembic
+    - upgrade
+    - head
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    container_name: ocr-migration
+    volumes:
+    - ./src/:/app/src/
+    - ./migration/:/app/migration
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: example_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  minio_data:
+    driver: local
+
+  postgres_data:
+    driver: local
