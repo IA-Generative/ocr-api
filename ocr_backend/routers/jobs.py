@@ -70,6 +70,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             ),
         )
 
+        task_data = task_table.get_position_in_queue(task_id=task_data.id)
         os.remove(temp_file_path)
 
         celery_app.send_task(
