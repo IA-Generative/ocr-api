@@ -1,0 +1,35 @@
+FROM python:3.10-slim AS surya
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+
+RUN apt update -qy && apt install -qy poppler-utils && apt autoremove
+ENV UV_CACHE_DIR=/app/.cache
+ENV SURYA_DETECTION_FOLDER=/app/.cache/surya/detection
+ENV SURYA_RECOGNITION_FOLDER=/app/.cache/surya/recognition
+
+ENV HF_HOME=/hf_home
+RUN uv init
+RUN uv add docling
+#RUN docling-tools models download
+RUN uv run python -c "from docling.utils.model_downloader import download_models;download_models()"
+
+COPY pyproject.toml /app/pyproject.toml
+COPY uv.lock /app/uv.lock
+
+
+ENV MODEL_NAME=docling
+
+# TODO changer où on télécharge les modèles
+# https://github.com/docling-project/docling/discussions/480
+
+RUN uv sync --group docling
+
+# vérfier si doclinf est bien installé
+RUN uv run python -c "import docling"
+
+ENV PYTHONPATH=/app
+COPY ocr_service /app/ocr_service
+COPY src /app/src
+ENV PATH=$PATH:/app/.venv/bin/
+CMD ["uv", "run", "ocr_service/main.py"]

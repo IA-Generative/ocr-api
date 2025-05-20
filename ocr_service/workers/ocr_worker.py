@@ -1,6 +1,5 @@
-import time
-from typing import List
 import os
+import time
 from io import BytesIO
 
 from PIL import Image, ImageOps
@@ -12,7 +11,7 @@ from ocr_service.utils.lazy_pdf import LazyPdfImageList
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
-from src.schemas.output import OCRResult, Page
+from src.schemas.output import MarkdownPage, OCRResult, Page
 from src.schemas.task import TaskModel, TaskStatus, TaskUpdateForm, task_table
 from io import BytesIO
 
@@ -70,7 +69,7 @@ class OCRWorker(BaseWorker):
             raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
-    def transform_content(self, task: TaskModel, content: bytes) -> list[Image.Image | BytesIO]:
+    def transform_content(self, task: TaskModel, content: bytes) -> list[Image.Image] | list[BytesIO]:
         task = self.set_output(task=task)
 
         content_type: str = task.input.content_type
@@ -93,7 +92,7 @@ class OCRWorker(BaseWorker):
                 )
             else:
                 buffer = BytesIO(content.read())
-                buffer.seek(0) # position it back to begin
+                buffer.seek(0)  # position it back to begin
                 pages = [buffer]
 
 
@@ -112,43 +111,45 @@ class OCRWorker(BaseWorker):
 
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image | BytesIO]) -> TaskModel:
         task = self.set_output(task=task, total_pages=len(pages))
-        formatted_result: List[Page] = []
+        formatted_result: list[Page] | list[MarkdownPage] = []
         batch_size = self.settings.DETECTION_BATCH_SIZE
         filename = task.extras.get("raw_filename")
         client_s3 = self.file_connector.client
-        task.output.text = ""
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
-            batch = pages[i : i + batch_size] # TODO https://docs.python.org/3/library/itertools.html#itertools.batched
-            logger.debug(f"{filename} for task {task.id}")
+            batch = pages[i : i + batch_size]  # TODO https://docs.python.org/3/library/itertools.html#itertools.batched
+            logger.debug(f"{filename=} for task {task.id}")
             # TODO : Pdf with differents size of page
 
-            partial_result: List[Page] = self.ocr_model.batch_predict(
+            partial_result: list[Page] | list[MarkdownPage] = self.ocr_model.batch_predict(
                 images=batch,
                 langs=[["fr"] for _ in batch],
                 detection_batch_size=batch_size,
                 recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE,
             )
-            for j, image in enumerate(batch):
-                buffer = BytesIO()
-                image.save(buffer, format="JPEG")
-                buffer.seek(0)
-                key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
-                client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
-                logger.debug(f"Uploaded page {i + j} to {key}")
-                signed_url = client_s3.generate_presigned_url(
-                    ClientMethod="get_object",
-                    Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-                    ExpiresIn=3600,  # 1h
-                )
-                partial_result[j].page_url = signed_url
+            for j, image_or_bytes_io in enumerate(batch):
+                if isinstance(image_or_bytes_io, Image.Image):
+                    assert isinstance(partial_result[j], Page)
+
+                    buffer = BytesIO()
+                    image_or_bytes_io.save(buffer, format="JPEG")
+                    buffer.seek(0)
+                    key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
+                    client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
+                    logger.debug(f"Uploaded page {i + j} to {key}")
+                    signed_url = client_s3.generate_presigned_url(
+                        ClientMethod="get_object",
+                        Params={"Bucket": self.file_connector.bucket_name, "Key": key},
+                        ExpiresIn=3600,  # 1h
+                    )
+                    partial_result[j].page_url = signed_url
+                else:
+                    assert isinstance(partial_result[j], MarkdownPage)
 
             formatted_result.extend(partial_result)
 
             page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + batch_size}"
-            logger.debug(
-                f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
-            )
+            logger.debug(f"{filename=} time to process page {page_range} - {time.time() - t_predict:.2f}s")
             task.output.pages = formatted_result
             percentage = len(formatted_result) / task.output.total_pages
             task.output.set_text()
@@ -201,7 +202,7 @@ class OCRWorker(BaseWorker):
 
         content = self.get_content_file(task=task)
         logger.debug(f"{task.id} - {content}")
-        pages = self.transform_content(task=task, content=content)
+        pages: list[Image.Image] | list[BytesIO] = self.transform_content(task=task, content=content)
         logger.debug(f" Start to process - {filename} - {len(pages)}")
 
         task.output.total_pages = len(pages)
@@ -216,14 +217,15 @@ class OCRWorker(BaseWorker):
             ),
         )
 
-        # for i, page in enumerate(pages):
-        #     width, height = page.size
-        #     if max_height and int(height) > max_height:
-        #         page = page.resize((int(width * max_height / height), max_height))
+        # if len(pages) and isinstance(pages[0], Image.Image):
+        #     for i, page in enumerate(pages):
+        #         width, height = page.size
+        #         if max_height and int(height) > max_height:
+        #             page = page.resize((int(width * max_height / height), max_height))
 
-        # if grayscale:
-        #     for i in range(len(pages)):
-        #         pages[i] = ImageOps.grayscale(pages[i])
+        #     if grayscale:
+        #         for i in range(len(pages)):
+        #             pages[i] = ImageOps.grayscale(pages[i])
 
         try:
             task = self.predict_on_pages(task=task, pages=pages)

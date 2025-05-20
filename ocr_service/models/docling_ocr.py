@@ -52,7 +52,7 @@ class DoclingInferOCR(BaseModelPrediction):
         )
 
     def batch_predict(
-        self, images: list[Image.Image | BytesIO], *args, **kwargs
+        self, images_or_bytes_io: list[Image.Image | BytesIO], *args, **kwargs
     ) -> list[MarkdownPage]:
         result: list[DoclingDocument] = []
 
@@ -60,7 +60,7 @@ class DoclingInferOCR(BaseModelPrediction):
             DocumentStream(name="image.png", stream=image2stream(image_or_buffer))
             if isinstance(image_or_buffer, Image.Image)
             else DocumentStream(name="doc.pdf", stream=image_or_buffer)
-            for image_or_buffer in images
+            for image_or_buffer in images_or_bytes_io
         ]
 
         conv_results = self.doc_converter.convert_all(
@@ -73,7 +73,7 @@ class DoclingInferOCR(BaseModelPrediction):
             result.append(
                 MarkdownPage(
                     page=i,
-                    doc_json=json.dumps(conversion_result.export_to_dict()),
+                    doc_json=json.dumps(conversion_result.document.export_to_dict()),
                     markdown=conversion_result.document.export_to_markdown(),
                 )
             )
