@@ -29,6 +29,32 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.1](https://github.com/IA-Generative/ocr-api/compare/v1.2.0...v1.2.1) (2025-05-20)
+
+
+### Bug Fixes
+
+* donwload text ([#40](https://github.com/IA-Generative/ocr-api/issues/40)) ([55818ae](https://github.com/IA-Generative/ocr-api/commit/55818ae9384c9497e389279619016e141a4f2005))
+
+## [1.2.0](https://github.com/IA-Generative/ocr-api/compare/v1.1.0...v1.2.0) (2025-05-20)
+
+
+### Features
+
+* add route to download text ([#37](https://github.com/IA-Generative/ocr-api/issues/37)) ([764806b](https://github.com/IA-Generative/ocr-api/commit/764806b05d656eec6e128d194a5ac05f99df40d5))
+
+
+### Bug Fixes
+
+* donwload text ([#39](https://github.com/IA-Generative/ocr-api/issues/39)) ([d02c155](https://github.com/IA-Generative/ocr-api/commit/d02c155771c7de4c3cfcaffe3cfe65d8466f3b57))
+
+## [1.1.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v1.1.0) (2025-05-19)
+
+
+### Features
+
+* ❇️ add queue arch ([#21](https://github.com/IA-Generative/ocr-api/issues/21)) ([0243aaf](https://github.com/IA-Generative/ocr-api/commit/0243aafead55914213fd21d2b86255dfd29db746))
+
 ## [1.0.0](https://github.com/IA-Generative/ocr-api/compare/v0.0.1...v1.0.0) (2025-05-16)
 
 
