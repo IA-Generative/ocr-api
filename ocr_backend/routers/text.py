@@ -3,12 +3,13 @@ from fastapi.responses import PlainTextResponse
 from src.schemas.task import TaskTable
 
 task_table = TaskTable()
-
 text_router = APIRouter(tags=["Download Text"])
 
 
-@text_router.get("/text-task/{task_id}", response_model=PlainTextResponse)
-async def download_text_content(task_id: str):
+@text_router.get(
+    "/text-task/{task_id}", response_class=PlainTextResponse, response_model=None
+)
+async def download_text_content(task_id: str) -> PlainTextResponse:
     task = task_table.get_task_by_id(task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
