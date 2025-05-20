@@ -110,7 +110,7 @@ load-image: ## Upload les images dans le cluster
 	kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr
 
 stress-test: install-uv ## Lance un test de charge
-	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST) -u 5 -r 5 --run-time 2m
+	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST)
 
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
