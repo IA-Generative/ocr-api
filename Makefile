@@ -93,6 +93,10 @@ build-ocr-service: ## Lance la construction de l'image Docker service
 upgrade-db: ## Applique les migrations de base de données
 	docker compose run --rm migration alembic upgrade head
 
+stamp-db: ## Change le pointeur alembic à une révision particulière
+	@read -p "id de la révision : " revision; \
+	docker compose run --rm migration alembic stamp $$revision
+
 list-revision: ## Liste les révisions de la base de données
 	docker compose run --rm migration alembic history
 upgrade-revision: ## Crée une nouvelle révision de base de données

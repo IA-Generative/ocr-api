@@ -57,7 +57,6 @@ class TaskForm(BaseModel):
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
     output: Optional[OCRResult] = None
-    position: Optional[int] = None
 
 
 class TaskUpdateForm(BaseModel):
@@ -68,7 +67,7 @@ class TaskUpdateForm(BaseModel):
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
     output: Optional[OCRResult] = None
-    position: Optional[int] = None
+
 
 
 class TaskStatus(str, Enum):
@@ -108,7 +107,7 @@ class TaskTable:
 
     def get_task_by_id(self, task_id: str) -> Optional[TaskModel]:
         with get_db() as db:
-            task = task_table.get_position_in_queue(task_id=task_id)
+            task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
                 return None
@@ -183,7 +182,7 @@ class TaskTable:
 
             return [TaskModel.model_validate(task) for task in tasks_to_delete]
 
-    def get_position_in_queue(self, task_id: str) -> TaskModel:
+    def get_position_in_queue(self, task_id: str) -> int | None:
         with get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
@@ -193,13 +192,12 @@ class TaskTable:
                 return None
 
             position = (
-                db.query(func.count(Task.id)) # noqa
+                db.query(func.count(Task.id))  # noqa
                 .filter(Task.status == TaskStatus.QUEUED, Task.created_at < task.created_at)
                 .scalar()
             )
 
-            task.position = position
-            return TaskModel.model_validate(task)
+            return position
 
 
 task_table = TaskTable()

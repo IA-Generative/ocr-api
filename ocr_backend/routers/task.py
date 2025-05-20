@@ -10,6 +10,7 @@ router = APIRouter(tags=["Tasks"])
 @router.get("/tasks/{task_id}", response_model=Optional[TaskModel])
 async def get_task_by_id(task_id: str):
     task = task_table.get_task_by_id(task_id)
+    task.position = task_table.get_position_in_queue(task_id=task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     return task

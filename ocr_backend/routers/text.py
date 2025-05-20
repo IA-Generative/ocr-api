@@ -3,7 +3,7 @@ from fastapi.responses import PlainTextResponse
 from src.schemas.task import TaskTable
 
 task_table = TaskTable()
-text_router = APIRouter(tags=["Download Text"])
+text_router = APIRouter(tags=["Text"])
 
 
 @text_router.get(
