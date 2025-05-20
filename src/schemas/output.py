@@ -1,6 +1,7 @@
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 from src.schemas.box import Bbox
+from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
 
 
 class Page(BaseModel):
@@ -20,3 +21,23 @@ class OCRResult(BaseModel):
     total_pages: int
     pages: List[Page]
     extras: Optional[dict] = None
+    text: Optional[str] = ""
+
+    def set_text(self, delta_y: float = 0.005):
+        self.text = ""
+        pages_content_per_page = []
+
+        for i, page in enumerate(self.pages):
+            page_lines_content = [f"{20*'-'} Page: {i+1} {20*'-'}"]
+
+            sorted_bboxes = sort_bboxes_reading_order(
+                bboxes=page.boxes, delta_y=delta_y
+            )
+            for line_sorted_boxes in sorted_bboxes:
+                text_line = get_text_from_list_bboxes(line_sorted_boxes)
+                page_lines_content.append(text_line)
+
+            page_content = "\n".join(page_lines_content)
+            pages_content_per_page.append(page_content)
+
+        self.text = "\n".join(pages_content_per_page)
