@@ -29,6 +29,18 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.0](https://github.com/IA-Generative/ocr-api/compare/v1.1.0...v1.2.0) (2025-05-20)
+
+
+### Features
+
+* add route to download text ([#37](https://github.com/IA-Generative/ocr-api/issues/37)) ([764806b](https://github.com/IA-Generative/ocr-api/commit/764806b05d656eec6e128d194a5ac05f99df40d5))
+
+
+### Bug Fixes
+
+* donwload text ([#39](https://github.com/IA-Generative/ocr-api/issues/39)) ([d02c155](https://github.com/IA-Generative/ocr-api/commit/d02c155771c7de4c3cfcaffe3cfe65d8466f3b57))
+
 ## [1.1.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v1.1.0) (2025-05-19)
 
 
