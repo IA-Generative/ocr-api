@@ -108,6 +108,7 @@ class OCRWorker(BaseWorker):
         batch_size = self.settings.DETECTION_BATCH_SIZE
         filename = task.extras.get("raw_filename")
         client_s3 = self.file_connector.client
+        task.output.text = ""
         for i in range(0, len(pages), batch_size):
             t_predict = time.time()
             batch = pages[i : i + batch_size]
@@ -142,7 +143,7 @@ class OCRWorker(BaseWorker):
             )
             task.output.pages = formatted_result
             percentage = len(formatted_result) / task.output.total_pages
-
+            task.output.set_text()
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
