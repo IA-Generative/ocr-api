@@ -1,4 +1,4 @@
-FROM python:3.10-slim AS surya
+FROM python:3.10-slim AS docling
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
@@ -32,4 +32,9 @@ ENV PYTHONPATH=/app
 COPY ocr_service /app/ocr_service
 COPY src /app/src
 ENV PATH=$PATH:/app/.venv/bin/
+CMD ["uv", "run", "ocr_service/main.py"]
+
+FROM docling AS test
+RUN uv sync --no-cache --group test
+COPY tests /app/tests
 CMD ["uv", "run", "ocr_service/main.py"]
