@@ -5,7 +5,6 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
-from ocr_service.configs.paddle import PaddleSetting
 from src.connector.s3_connector import S3Connector
 from ocr_service.workers.ocr_worker import EmptyContentException, FileNotSupported, OCRWorker
 from src.schemas.input import InputForm
@@ -14,8 +13,6 @@ from ocr_service.models.base import BaseModelPrediction
 from src.schemas.output import MarkdownPage
 from ocr_service.models.docling_ocr import DoclingInferOCR
 
-
-settings = PaddleSetting()
 
 
 @pytest.fixture
