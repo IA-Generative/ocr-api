@@ -23,7 +23,9 @@ ENV MODEL_NAME=docling
 # TODO changer où on télécharge les modèles
 # https://github.com/docling-project/docling/discussions/480
 
-RUN uv sync --group docling
+#RUN uv sync --group docling
+
+RUN uv add httpx psutil python-json-logger setuptools toml minio pydantic-settings sqlalchemy celery[redis] flower psycopg2-binary boto3
 
 # vérfier si doclinf est bien installé
 RUN uv run python -c "import docling"
@@ -35,6 +37,7 @@ ENV PATH=$PATH:/app/.venv/bin/
 CMD ["uv", "run", "ocr_service/main.py"]
 
 FROM docling AS test
-RUN uv sync --no-cache --group test
+#RUN uv sync --no-cache --group test --group docling
+RUN uv add httpx pytest-asyncio pytest ruff pytest-cov celery[pytest] pillow requests
 COPY tests /app/tests
 CMD ["uv", "run", "ocr_service/main.py"]
