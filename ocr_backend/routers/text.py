@@ -5,7 +5,6 @@ from src.schemas.task import task_table
 
 text_router = APIRouter(tags=["Text"])
 
-
 @text_router.get(
     "/text-task/{task_id}", response_class=PlainTextResponse, response_model=None
 )
