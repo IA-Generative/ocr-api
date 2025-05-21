@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
-from src.schemas.task import TaskTable, TaskModel
-
-task_table = TaskTable()
+from src.schemas.task import TaskModel, task_table
 
 router = APIRouter(tags=["Tasks"])
 

@@ -87,8 +87,12 @@ class TaskOperation(str, Enum):
 
 
 class TaskTable:
+
+    def __init__(self, get_db):
+        self.get_db = get_db
+
     def insert_new_task(self, user_id: str, form_data: TaskForm) -> Optional[TaskModel]:
-        with get_db() as db:
+        with self.get_db() as db:
             knowledge = TaskModel(
                 **{
                     **form_data.model_dump(),
@@ -106,7 +110,7 @@ class TaskTable:
             return TaskModel.model_validate(result)
 
     def get_task_by_id(self, task_id: str) -> Optional[TaskModel]:
-        with get_db() as db:
+        with self.get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
@@ -116,7 +120,7 @@ class TaskTable:
     def update_task(
         self, task_id: str, form_data: TaskUpdateForm
     ) -> Optional[TaskModel]:
-        with get_db() as db:
+        with self.get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
@@ -140,7 +144,7 @@ class TaskTable:
             return TaskModel.model_validate(task)
 
     def delete_task_by_id(self, task_id: str) -> Optional[TaskModel]:
-        with get_db() as db:
+        with self.get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
@@ -153,7 +157,7 @@ class TaskTable:
         self, user_id: str, page: int = 1, page_size: int = 10
     ) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
-        with get_db() as db:
+        with self.get_db() as db:
             tasks = (
                 db.query(Task)
                 .filter(Task.user_id == user_id)
@@ -169,7 +173,7 @@ class TaskTable:
             return [TaskModel.model_validate(task) for task in tasks]
 
     def delete_tasks_by_user_id(self, user_id: str) -> Optional[List[TaskModel]]:
-        with get_db() as db:
+        with self.get_db() as db:
             tasks_to_delete = db.query(Task).filter(Task.user_id == user_id).all()
 
             if not tasks_to_delete:
@@ -184,7 +188,7 @@ class TaskTable:
 
     def get_position_in_queue(self, task_id: str) -> int | None:
         if task_id:
-            with get_db() as db:
+            with self.get_db() as db:
                 task = db.query(Task).filter(Task.id == task_id).first()
                 if not task:
                     return None
@@ -201,4 +205,4 @@ class TaskTable:
                 return position
 
 
-task_table = TaskTable()
+task_table = TaskTable(get_db)

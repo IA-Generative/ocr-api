@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
-from src.schemas.task import TaskTable
+from src.schemas.task import task_table
 
-task_table = TaskTable()
+
 text_router = APIRouter(tags=["Text"])
 
 
