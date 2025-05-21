@@ -35,9 +35,7 @@ if __name__ == "__main__":
                     stats[status]["n_values"] += 1
                     indices_to_del.append(i)
                     for status in stats:
-                        print(
-                            f"{status} (#{stats[status].get('n_values')}) : {stats[status]['time'] / stats[status].get('n_values', 1)}s"
-                        )
+                        print(f"{status} (#{stats[status].get('n_values')}) : {t}s")
 
         indices_to_del.sort(reverse=True)
         for index in indices_to_del:

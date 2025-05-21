@@ -40,6 +40,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         "updated_at": 1633036800,
         "input": None,
         "output": None,
+        "position": None,
         "extras": {"key": "value"},
     }
 
@@ -114,6 +115,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "updated_at": 1633036800,
             "extras": {"key": "value"},
             "input": None,
+            "position": None,
             "output": None,
         },
         {
@@ -126,6 +128,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "updated_at": 1633036800,
             "extras": {"key": "value"},
             "input": None,
+            "position": None,
             "output": None,
         },
     ]

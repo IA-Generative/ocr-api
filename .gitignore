@@ -21,3 +21,4 @@ mirai-infra/
 .vscode/
 .DS_STORE
 tests/data/logs/
+*.ipynb
