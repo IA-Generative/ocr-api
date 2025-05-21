@@ -52,7 +52,7 @@ services:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     build:
-#      target: test
+      target: test
       context: .
       dockerfile: Dockerfiles/ocr_service/Dockerfile.docling
     depends_on:

@@ -8,5 +8,5 @@ from PIL import Image
 class BaseModelPrediction(ABC):
     @abstractmethod
     def batch_predict(
-        self, images: list[Image.Image | BytesIO], *args, **kwargs
+        self, images_or_bytes_io: list[Image.Image | BytesIO], *args, **kwargs
     ) -> Any: ...

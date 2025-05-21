@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String, func
 
-from src.connector import Base, get_db
+from src.connector.db_connector import Base, get_db
 from src.logger import logger
 from src.schemas.input import InputForm
 from src.schemas.output import OCRResult

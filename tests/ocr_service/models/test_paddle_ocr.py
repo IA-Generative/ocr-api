@@ -1,9 +1,13 @@
 from PIL import Image
-from ocr_service.models.paddle_ocr import PaddleInferOCR
 from src.schemas.output import Page
-
+import os
 
 def test_predict():
+    if os.environ.get("MODEL_NAME") == "docling":
+        return
+
+    from ocr_service.models.paddle_ocr import PaddleInferOCR
+
     image = Image.open("tests/data/valid/formulaire-cerfa-complete.png")
 
     obj = PaddleInferOCR(path_model="models/")

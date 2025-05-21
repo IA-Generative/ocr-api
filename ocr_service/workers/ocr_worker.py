@@ -122,14 +122,14 @@ class OCRWorker(BaseWorker):
             # TODO : Pdf with differents size of page
 
             partial_result: list[Page] | list[MarkdownPage] = self.ocr_model.batch_predict(
-                images=batch,
+                images_or_bytes_io=batch,
                 langs=[["fr"] for _ in batch],
                 detection_batch_size=batch_size,
                 recognition_batch_size=self.settings.RECOGNITION_BATCH_SIZE,
             )
             for j, image_or_bytes_io in enumerate(batch):
-                if isinstance(image_or_bytes_io, Image.Image):
-                    assert isinstance(partial_result[j], Page)
+                if isinstance(partial_result[j], Page):
+                    assert isinstance(image_or_bytes_io, Image.Image), f"{type(image_or_bytes_io)=}"
 
                     buffer = BytesIO()
                     image_or_bytes_io.save(buffer, format="JPEG")
@@ -143,8 +143,6 @@ class OCRWorker(BaseWorker):
                         ExpiresIn=3600,  # 1h
                     )
                     partial_result[j].page_url = signed_url
-                else:
-                    assert isinstance(partial_result[j], MarkdownPage)
 
             formatted_result.extend(partial_result)
 
