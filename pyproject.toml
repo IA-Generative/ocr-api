@@ -1,7 +1,7 @@
 [project]
 name = "ocr-api"
 
-version = "1.2.1"
+version = "1.3.0"
 
 description = "Add your description here"
 readme = "README.md"
@@ -34,6 +34,7 @@ test = [
     "celery[pytest]>=5.5.1",
     "pillow>=10.4.0",
     "requests>=2.32.3",
+    "coverage>=7.8.0",
 ]
 ocr-backend = [
     "httpx==0.25.0",
@@ -61,7 +62,8 @@ migration = [
 ]
 
 dev = [
-    "pre-commit>=4.2.0"
+    "ipykernel>=6.29.5",
+    "pre-commit>=4.2.0",
 ]
 
 version = [
@@ -87,3 +89,7 @@ torch = { index = "pytorch-cpu", group = "ocr-service" }
 name = "pytorch-cpu"
 url = "https://download.pytorch.org/whl/cpu"
 explicit = true
+
+
+[tool.ruff]
+line-length = 120

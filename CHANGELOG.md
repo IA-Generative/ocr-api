@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [1.3.0](https://github.com/IA-Generative/ocr-api/compare/v1.2.1...v1.3.0) (2025-05-21)
+
+
+### Features
+
+* ❇️ add position in queue ([#42](https://github.com/IA-Generative/ocr-api/issues/42)) ([cce48e9](https://github.com/IA-Generative/ocr-api/commit/cce48e9863003416762c03a4da3bdc3c38f62e23))
+
+
 ## [1.2.1](https://github.com/IA-Generative/ocr-api/compare/v1.2.0...v1.2.1) (2025-05-20)
 
 

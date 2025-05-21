@@ -63,8 +63,6 @@ bump-minor:
 
 up: ## Lance l'environnement de développement en conteneurs
 	docker compose up -d
-	sleep 2
-	make upgrade-db
 
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
@@ -95,6 +93,10 @@ build-ocr-service: ## Lance la construction de l'image Docker service
 upgrade-db: ## Applique les migrations de base de données
 	docker compose run --rm migration alembic upgrade head
 
+stamp-db: ## Change le pointeur alembic à une révision particulière
+	@read -p "id de la révision : " revision; \
+	docker compose run --rm migration alembic stamp $$revision
+
 list-revision: ## Liste les révisions de la base de données
 	docker compose run --rm migration alembic history
 upgrade-revision: ## Crée une nouvelle révision de base de données
@@ -110,7 +112,7 @@ load-image: ## Upload les images dans le cluster
 	kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr
 
 stress-test: install-uv ## Lance un test de charge
-	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST) -u 5 -r 5 --run-time 2m
+	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST)
 
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py

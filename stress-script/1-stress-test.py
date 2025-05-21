@@ -5,21 +5,24 @@
 #     "locust",
 # ]
 
-from locust import HttpUser, task, between
+import json
+import mimetypes
 import os
 import random
-import mimetypes
-import json
 
+from locust import HttpUser, constant, task
+
+SAVE = False
 VALID_DIR = "tests/data/valid"
 LOG_FOLDER = "tests/data/logs"
 os.makedirs(LOG_FOLDER, exist_ok=True)
 
 
 class UploadFileUser(HttpUser):
-    wait_time = between(1, 5)
+    wait_time = constant(1)
 
     def on_start(self):
+        self.client.verify = False
         self.client.proxies = {
             "http": os.environ.get("http_proxy"),
             "https": os.environ.get("https_proxy"),
@@ -54,7 +57,6 @@ class UploadFileUser(HttpUser):
             response = self.client.post(f"/jobs/{user_id}", files=files)
             if response.status_code == 201:
                 data_json = response.json()
-                with open(
-                    os.path.join(LOG_FOLDER, f"{data_json['id']}.json"), "w"
-                ) as f:
-                    json.dump(data_json, f, indent=2)
+                if SAVE:
+                    with open(os.path.join(LOG_FOLDER, f"{data_json['id']}.json"), "w") as f:
+                        json.dump(data_json, f, indent=2)
