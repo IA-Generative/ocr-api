@@ -80,7 +80,7 @@ class OCRWorker(BaseWorker):
             pages = [Image.open(content).convert("RGB")]
 
         elif content_type == "application/pdf":
-            if os.environ.get("MODEL_NAME") != "docling":
+            if self.ocr_model.__name__ != "DoclingInferOCR":
                 t_convert = time.time()
                 logger.debug(f"{task.id} - {filename} convert to image")
                 logger.info(79 * "*")
