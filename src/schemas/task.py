@@ -183,21 +183,22 @@ class TaskTable:
             return [TaskModel.model_validate(task) for task in tasks_to_delete]
 
     def get_position_in_queue(self, task_id: str) -> int | None:
-        with get_db() as db:
-            task = db.query(Task).filter(Task.id == task_id).first()
-            if not task:
-                return None
+        if task_id:
+            with get_db() as db:
+                task = db.query(Task).filter(Task.id == task_id).first()
+                if not task:
+                    return None
 
-            if task.status != TaskStatus.QUEUED:
-                return None
+                if task.status != TaskStatus.QUEUED:
+                    return None
 
-            position = (
-                db.query(func.count(Task.id))  # noqa
-                .filter(Task.status == TaskStatus.QUEUED, Task.created_at < task.created_at)
-                .scalar()
-            )
+                position = (
+                    db.query(func.count(Task.id))  # noqa
+                    .filter(Task.status == TaskStatus.QUEUED, Task.created_at < task.created_at)
+                    .scalar()
+                )
 
-            return position
+                return position
 
 
 task_table = TaskTable()
