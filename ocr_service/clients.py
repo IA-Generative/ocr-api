@@ -1,17 +1,18 @@
 import os
 from ocr_service.configs.paddle import PaddleSetting
-from ocr_service.models.docling_ocr import DoclingInferOCR
 from ocr_service.workers.ocr_worker import OCRWorker
 from src.config.ocr_model import OCRModelSettings
 from src.connector.base import BaseFileConnector
 
-model_settings = OCRModelSettings()
+model_settings = OCRModelSettings(MODEL_NAME=os.environ.get("MODEL_NAME") or "docling")
 
 
 def get_ocr_processor(file_connector: BaseFileConnector) -> OCRWorker:
     ocr_settings = PaddleSetting()
-    
-    if os.environ.get("MODEL_NAME") == "docling":
+
+    if model_settings.MODEL_NAME == "docling":
+        from ocr_service.models.docling_ocr import DoclingInferOCR
+
         ocr_model = DoclingInferOCR()
     else:
         from ocr_service.models.paddle_ocr import PaddleInferOCR
