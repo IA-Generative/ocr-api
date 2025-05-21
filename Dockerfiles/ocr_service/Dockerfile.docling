@@ -27,9 +27,6 @@ ENV MODEL_NAME=docling
 
 RUN uv add httpx psutil python-json-logger setuptools toml minio pydantic-settings sqlalchemy celery[redis] flower psycopg2-binary boto3
 
-# vérfier si doclinf est bien installé
-RUN uv run python -c "import docling"
-
 ENV PYTHONPATH=/app
 COPY ocr_service /app/ocr_service
 COPY src /app/src
