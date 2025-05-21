@@ -80,7 +80,7 @@ class OCRWorker(BaseWorker):
             pages = [Image.open(content).convert("RGB")]
 
         elif content_type == "application/pdf":
-            if self.ocr_model.__name__ != "DoclingInferOCR":
+            if self.ocr_model.__class__.__name__ != "DoclingInferOCR":
                 t_convert = time.time()
                 logger.debug(f"{task.id} - {filename} convert to image")
                 logger.info(79 * "*")
@@ -91,6 +91,9 @@ class OCRWorker(BaseWorker):
                     f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
                 )
             else:
+                from ocr_service.models.docling_ocr import DoclingInferOCR
+
+                assert isinstance(self.ocr_model, DoclingInferOCR)
                 buffer = BytesIO(content.read())
                 buffer.seek(0)  # position it back to begin
                 pages = [buffer]
