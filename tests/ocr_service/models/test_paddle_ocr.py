@@ -3,8 +3,6 @@ from src.schemas.output import Page
 import os
 
 def test_predict():
-    if os.environ.get("MODEL_NAME") == "docling":
-        return
 
     from ocr_service.models.paddle_ocr import PaddleInferOCR
 

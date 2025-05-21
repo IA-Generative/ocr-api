@@ -83,7 +83,7 @@ tests: up ## Lance les tests unitaires
 
 tests-docling: up ## Lance les tests unitaires
 	#docker exec $(OCR_BACKEND_CONTAINER) pytest --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
-	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service --ignore tests/ocr_service/workers/test_workers_paddle.py
+	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service --ignore tests/ocr_service/workers/test_workers_paddle.py --ignore tests/ocr_service/models/test_paddle_ocr.py
 
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
