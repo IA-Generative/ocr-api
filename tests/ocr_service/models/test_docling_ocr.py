@@ -1,6 +1,9 @@
-from PIL import Image
-from src.schemas.output import MarkdownPage
 from io import BytesIO
+from pathlib import Path
+
+from PIL import Image
+
+from src.schemas.output import MarkdownPageWithBBox
 
 
 def test_predict():
@@ -10,7 +13,8 @@ def test_predict():
 
     obj = DoclingInferOCR()
 
-    list_md_page: list[MarkdownPage] = obj.batch_predict([image])
+    list_md_page: list[MarkdownPageWithBBox] = obj.batch_predict([image])
 
     assert len(list_md_page)
-    assert all(isinstance(md_page, MarkdownPage) for md_page in list_md_page)
+    assert all(isinstance(md_page, MarkdownPageWithBBox) for md_page in list_md_page)
+

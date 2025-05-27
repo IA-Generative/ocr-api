@@ -10,7 +10,7 @@ from ocr_service.workers.ocr_worker import EmptyContentException, FileNotSupport
 from src.schemas.input import InputForm
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
 from ocr_service.models.base import BaseModelPrediction
-from src.schemas.output import MarkdownPage
+from src.schemas.output import DoclingDocument, Page
 from ocr_service.models.docling_ocr import DoclingInferOCR
 
 
@@ -138,7 +138,7 @@ def test_predict_on_pages_pdf(mock_minio, mock_model: DoclingInferOCR, dummy_tas
         task = worker.predict_on_pages(task=dummy_task, pages=[BytesIO(f.read())])
 
     assert len(task.output.pages)
-    assert isinstance(task.output.pages[0], MarkdownPage)
+    assert isinstance(task.output.pages[0], Page) # TODO on veut un Page ou un DoclingDocument ici ?
 
 
 def test_predict_task_ocr_w_image(mock_minio: S3Connector, mock_model: DoclingInferOCR, dummy_task: TaskModel):
