@@ -22,12 +22,18 @@ read_secret:
   extends:
     - .vault:read_secret
 
-docker-build:
+docker-build-ocr-api:
   variables:
-    # WORKING_DIR: "frontend"
     IMAGE_NAMES: ocr-api:${CI_COMMIT_REF_SLUG} ocr-api:${CI_COMMIT_SHORT_SHA} ocr-api:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfile"
-    # BUILD_ARGS: --build-arg=VERSION=1.1.1
+    DOCKERFILE: "Dockerfiles/ocr_backend/Dockerfile"
+  stage: docker-build
+  extends:
+    - .kaniko:build-push
+
+docker-build-ocr-service-paddle:
+  variables:
+    IMAGE_NAMES: ocr-service-paddle:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
+    DOCKERFILE: "Dockerfiles/ocr_service/Dockerfile.paddle"
   stage: docker-build
   extends:
     - .kaniko:build-push

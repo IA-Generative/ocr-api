@@ -1,14 +1,13 @@
-
 import logging
 from uuid import uuid4
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger.json import JsonFormatter
 
 logger = logging.getLogger(str(uuid4()))
 logger.setLevel(logging.DEBUG)
 logger.handlers = []
 handler = logging.StreamHandler()
 
-formatter = jsonlogger.JsonFormatter(
+formatter = JsonFormatter(
     fmt="%(asctime)s %(levelname)s %(name)s %(pathname)s %(lineno)d %(message)s",
     rename_fields={
         "asctime": "@timestamp",
