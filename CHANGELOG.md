@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.4.0](https://github.com/IA-Generative/ocr-api/compare/v1.3.0...v1.4.0) (2025-05-28)
+
+
+### Features
+
+* purge feature ([#31](https://github.com/IA-Generative/ocr-api/issues/31)) ([c1f5c9c](https://github.com/IA-Generative/ocr-api/commit/c1f5c9ca1e6b7172b4e97f1b7452a74984242903))
+
 ## [1.3.0](https://github.com/IA-Generative/ocr-api/compare/v1.2.1...v1.3.0) (2025-05-21)
 
 
