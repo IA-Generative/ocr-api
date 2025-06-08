@@ -16,9 +16,7 @@ settings = PaddleSetting()
 
 @pytest.fixture
 def dummy_task() -> TaskModel:
-    return task_table.insert_new_task(
-        user_id="123", form_data=TaskForm(user_id="123", type="ocr", status="created")
-    )
+    return task_table.insert_new_task(user_id="123", form_data=TaskForm(user_id="123", type="ocr", status="created"))
 
 
 @pytest.fixture
@@ -28,20 +26,16 @@ def mock_minio() -> S3Connector:
 
 @pytest.fixture
 def mock_model() -> PaddleInferOCR:
-    return PaddleInferOCR(path_model=settings.PADDLE_OCR_BASE_DIR)
+    return PaddleInferOCR()
 
 
-def test_get_content_file_success(
-    mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_get_content_file_success(mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     expected_content = b"fake-bytes-content"
     tmp_path = "data.txt"
     with open(tmp_path, "wb") as f:
         f.write(expected_content)
 
-    mock_minio.save(
-        task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path
-    )
+    mock_minio.save(task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path)
 
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
     file_path = worker.get_content_file(task=dummy_task)
@@ -52,9 +46,7 @@ def test_get_content_file_success(
     mock_minio.delete_by_task_id(user_id=dummy_task.user_id, task_id=dummy_task.id)
 
 
-def test_get_content_file_exception(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_get_content_file_exception(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
 
     with pytest.raises(Exception):
@@ -67,9 +59,7 @@ def test_set_task_extras(mock_minio, mock_model: PaddleInferOCR, dummy_task: Tas
     assert actual.extras is not None
 
 
-def test_transform_content_error_no_content_type(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_transform_content_error_no_content_type(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/identite.jpg",
         raw_filename="identite.jpg",
@@ -85,9 +75,7 @@ def test_transform_content_error_no_content_type(
             worker.transform_content(task=dummy_task, content=expected_content)
 
 
-def test_transform_content_content_type_image(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_transform_content_content_type_image(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/identite.jpg",
         raw_filename="identite.jpg",
@@ -102,9 +90,7 @@ def test_transform_content_content_type_image(
         assert isinstance(actual[0], Image.Image)
 
 
-def test_transform_content_content_type_pdf(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_transform_content_content_type_pdf(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/cerfa_13750-05-1.pdf",
         raw_filename="cerfa_13750-05-1.pdf",
@@ -115,16 +101,12 @@ def test_transform_content_content_type_pdf(
 
     worker = OCRWorker(file_connector=mock_minio, ocr_model=mock_model)
 
-    actual = worker.transform_content(
-        task=dummy_task, content="tests/data/valid/cerfa_13750-05-1.pdf"
-    )
+    actual = worker.transform_content(task=dummy_task, content="tests/data/valid/cerfa_13750-05-1.pdf")
     assert isinstance(actual[0], Image.Image)
     assert len(actual) == 1
 
 
-def test_predict_on_pages(
-    mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_predict_on_pages(mock_minio, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/identite.jpg",
         raw_filename="identite.jpg",
@@ -139,9 +121,7 @@ def test_predict_on_pages(
     assert actual is not None
 
 
-def test_predict_task_ocr_w_image(
-    mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel
-):
+def test_predict_task_ocr_w_image(mock_minio: S3Connector, mock_model: PaddleInferOCR, dummy_task: TaskModel):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/cerfa_13750-05-1.pdf",
         raw_filename="cerfa_13750-05-1.pdf",

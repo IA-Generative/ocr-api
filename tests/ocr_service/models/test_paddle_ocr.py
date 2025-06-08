@@ -6,7 +6,7 @@ from src.schemas.output import Page
 def test_predict():
     image = Image.open("tests/data/valid/formulaire-cerfa-complete.png")
 
-    obj = PaddleInferOCR(path_model="models/")
+    obj = PaddleInferOCR()
     actuals = obj.batch_predict(images=[image, image])
 
     assert len(actuals) == 2

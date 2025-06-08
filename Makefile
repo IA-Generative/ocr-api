@@ -77,9 +77,13 @@ clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
 	$(MAKE) down
 
-tests: up ## Lance les tests unitaires
-	docker exec $(OCR_BACKEND_CONTAINER) pytest --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
-	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service
+tests: up tests-backend tests-service
+
+tests-beckend: ## Lance les tests unitaires
+	docker exec $(OCR_BACKEND_CONTAINER) pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
+
+tests-service:
+	docker exec $(OCR_SERVICE_CONTAINER) pytest -s --cov=./ocr_service tests/ocr_service
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
