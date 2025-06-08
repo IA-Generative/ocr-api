@@ -9,8 +9,6 @@ model_settings = OCRModelSettings()
 
 def get_ocr_processor(file_connector: BaseFileConnector) -> OCRWorker:
     ocr_settings = PaddleSetting()
-    ocr_model = PaddleInferOCR(path_model=ocr_settings.PADDLE_OCR_BASE_DIR)
+    ocr_model = PaddleInferOCR()
 
-    return OCRWorker(
-        file_connector=file_connector, ocr_model=ocr_model, settings=ocr_settings
-    )
+    return OCRWorker(file_connector=file_connector, ocr_model=ocr_model, settings=ocr_settings)
