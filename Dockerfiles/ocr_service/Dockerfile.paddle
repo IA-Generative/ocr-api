@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils && apt autoremove
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
-
+ENV PADDLE_PDX_CACHE_HOME=/app/.tmp/paddlex/
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
 
