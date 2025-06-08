@@ -6,11 +6,7 @@ PaddleOCR(
 )
 
 PaddleOCR(
-    use_doc_orientation_classify=False,
-    use_doc_unwarping=False,
-    use_textline_orientation=False,
-    ocr_version="PP-OCRv5",
-    lang="french",
+    use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=False, ocr_version="PP-OCRv5"
 )
 
 PPStructureV3()
