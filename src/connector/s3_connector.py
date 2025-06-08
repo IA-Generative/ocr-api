@@ -44,16 +44,13 @@ class S3Connector(BaseFileConnector):
             tmp_file_path = tmp_file.name
             tmp_file.close()  # Important, boto3 va l’écrire
             logger.debug(f"{task_id} - Start to save chunk")
-            self.client.download_file(
-                self.bucket_name, object_key, tmp_file_path, Config=config
-            )
+            self.client.download_file(self.bucket_name, object_key, tmp_file_path, Config=config)
 
             return tmp_file_path
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
                 raise FileNotFoundError(f"{object_key} non trouvé : {e}")
             raise FileNotFoundError(f"{object_key} non trouvé : {e}")
-
 
         except Exception as e:
             raise e
@@ -73,9 +70,7 @@ class S3Connector(BaseFileConnector):
             return True
         except ClientError as e:
             if e.response["Error"]["Code"] == "NoSuchKey":
-                raise FileNotFoundError(
-                    f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id} : {e}"
-                )
+                raise FileNotFoundError(f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id} : {e}")
             else:
                 raise e
 
@@ -90,9 +85,7 @@ class S3Connector(BaseFileConnector):
                 up_time=self.up_time,
                 status="unhealthy",
             )
-        return Health(
-            name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy"
-        )
+        return Health(name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy")
 
     def delete_by_user_id(self, user_id: str) -> bool:
         batch_delete_size: int = 1_000
@@ -105,9 +98,7 @@ class S3Connector(BaseFileConnector):
                 for obj in page.get("Contents", []):
                     delete_us["Objects"].append(dict(Key=obj["Key"]))
                     if len(delete_us["Objects"]) >= batch_delete_size:
-                        self.client.delete_objects(
-                            Bucket=self.bucket_name, Delete=delete_us
-                        )
+                        self.client.delete_objects(Bucket=self.bucket_name, Delete=delete_us)
                         delete_us = dict(Objects=[])
 
             if delete_us["Objects"]:
@@ -115,9 +106,7 @@ class S3Connector(BaseFileConnector):
 
             return True
         except ClientError as e:
-            raise Exception(
-                f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}"
-            )
+            raise Exception(f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}")
 
 
 s3_settings = S3Settings()

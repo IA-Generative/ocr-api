@@ -40,9 +40,7 @@ class TestBaseWorker(unittest.TestCase):
     def test_apply_async_calls_celery(self):
         task = DummyTask(value=4)
         self.worker.apply_async(task, countdown=10)
-        self.worker._celery_task.apply_async.assert_called_once_with(
-            args=[{"value": 4}], countdown=10
-        )
+        self.worker._celery_task.apply_async.assert_called_once_with(args=[{"value": 4}], countdown=10)
 
     def test_process_task_logic(self):
         result = self.worker.process_task(DummyTask(value=5))

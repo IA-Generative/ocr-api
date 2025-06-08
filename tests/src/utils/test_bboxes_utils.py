@@ -27,9 +27,7 @@ def test_two_lines_sorted_top_to_bottom_and_left_to_right():
 def test_boxes_with_close_y_are_grouped_in_same_line():
     boxes = [
         Bbox(x=0.1, y=0.1, width=1, height=1, confidence=1, text="1"),
-        Bbox(
-            x=0.2, y=0.1001, width=1, height=1, confidence=1, text="1"
-        ),  # very close y
+        Bbox(x=0.2, y=0.1001, width=1, height=1, confidence=1, text="1"),  # very close y
         Bbox(x=0.3, y=0.1002, width=1, height=1, confidence=1, text="1"),
     ]
     sorted_boxes = sort_bboxes_reading_order(boxes)
@@ -40,9 +38,7 @@ def test_boxes_with_close_y_are_grouped_in_same_line():
 def test_boxes_far_enough_are_in_different_lines():
     boxes = [
         Bbox(x=0.1, y=0.1, width=1, height=1, confidence=1, text="1"),
-        Bbox(
-            x=0.2, y=0.2, width=1, height=1, confidence=1, text="1"
-        ),  # delta_y = 0.1 > threshold
+        Bbox(x=0.2, y=0.2, width=1, height=1, confidence=1, text="1"),  # delta_y = 0.1 > threshold
     ]
     sorted_boxes = sort_bboxes_reading_order(boxes, delta_y=0.05)
     # Check that the order is preserved: top to bottom

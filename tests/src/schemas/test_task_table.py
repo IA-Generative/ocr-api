@@ -25,7 +25,6 @@ def db_session():
 
 @pytest.fixture
 def task_table(db_session):
-
     @contextmanager
     def fake_get_db():
         yield db_session
@@ -56,7 +55,6 @@ def test_insert_new_task(task_table):
 
 
 def test_insert_new_task_w_input(task_table):
-
     form_data = TaskForm(
         user_id="user123",
         type="classification",
@@ -88,7 +86,6 @@ def test_insert_new_task_w_input(task_table):
 
 
 def test_update_task(task_table):
-
     new_task = task_table.insert_new_task(
         user_id="user456",
         form_data=TaskForm(
@@ -102,9 +99,7 @@ def test_update_task(task_table):
 
     assert new_task is not None
 
-    update_form = TaskUpdateForm(
-        status="done", percentage=100.0, extras={"updated": True}
-    )
+    update_form = TaskUpdateForm(status="done", percentage=100.0, extras={"updated": True})
 
     updated = task_table.update_task(task_id=new_task.id, form_data=update_form)
 
@@ -142,9 +137,7 @@ def test_update_task_w_input(task_table):
 
     assert new_task is not None
 
-    update_form = TaskUpdateForm(
-        status="done", percentage=100.0, extras={"updated": True}
-    )
+    update_form = TaskUpdateForm(status="done", percentage=100.0, extras={"updated": True})
 
     updated = task_table.update_task(task_id=new_task.id, form_data=update_form)
 
@@ -160,7 +153,6 @@ def test_update_task_w_input(task_table):
 
 
 def test_get_task_by_id(task_table):
-
     # Step 1: Insert a task
     task = task_table.insert_new_task(
         user_id="user789",
@@ -191,7 +183,6 @@ def test_get_task_by_invalid_id(task_table):
 
 
 def test_delete_task_by_id(task_table):
-
     # Step 1: Create a task
     task = task_table.insert_new_task(
         user_id="user123",
@@ -222,7 +213,6 @@ def test_delete_task_by_id(task_table):
 
 
 def test_get_tasks_by_user_id_with_pagination(task_table):
-
     # Step 1: Insert 15 tasks for user123
     for i in range(15):
         task_table.insert_new_task(
@@ -254,7 +244,6 @@ def test_get_tasks_by_user_id_with_pagination(task_table):
 
 
 def test_delete_tasks_by_user_id(task_table):
-
     # Step 1: Insert 5 tasks for user123
     for i in range(5):
         task_table.insert_new_task(
@@ -276,12 +265,8 @@ def test_delete_tasks_by_user_id(task_table):
     assert len(deleted_tasks) == 5  # All tasks should be deleted
 
     # Step 4: Verify that tasks are actually deleted (should return None when trying to get them)
-    tasks_after_deletion = task_table.get_tasks_by_user_id(
-        user_id="user1234", page=1, page_size=10
-    )
-    assert (
-        tasks_after_deletion is None or len(tasks_after_deletion) == 0
-    )  # No tasks left for this user
+    tasks_after_deletion = task_table.get_tasks_by_user_id(user_id="user1234", page=1, page_size=10)
+    assert tasks_after_deletion is None or len(tasks_after_deletion) == 0  # No tasks left for this user
 
     no_deleted_tasks = task_table.delete_tasks_by_user_id("user1234")
     assert no_deleted_tasks is None

@@ -25,9 +25,7 @@ def test_fetch_eligible_tasks():
     new_task = task_table.insert_new_task(
         user_id="10", form_data=TaskForm(type="213", status=TaskStatus.CANCELED.value)
     )
-    actuals = fetch_eligible_tasks(
-        cutoff_ts=(datetime.now() + timedelta(seconds=3)).timestamp()
-    )
+    actuals = fetch_eligible_tasks(cutoff_ts=(datetime.now() + timedelta(seconds=3)).timestamp())
     find_id = False
     for task in actuals:
         assert task.status in STATUTS_SUPPRIMABLES
@@ -46,9 +44,7 @@ def test_process_batch():
 
 
 def test_main_deletion():
-    task_table.insert_new_task(
-        user_id="10", form_data=TaskForm(type="213", status=TaskStatus.COMPLETED.value)
-    )
+    task_table.insert_new_task(user_id="10", form_data=TaskForm(type="213", status=TaskStatus.COMPLETED.value))
     time.sleep(1)
     delta = get_cutoff_timestamp(days=0, seconds=1)
     tasks_to_delete = fetch_eligible_tasks(cutoff_ts=delta)

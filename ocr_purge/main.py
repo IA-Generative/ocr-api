@@ -27,16 +27,11 @@ bucket_name = os.environ["S3_BUCKET_NAME"]
 
 
 # --- UTILS ---
-def get_cutoff_timestamp(
-    days: int, hours: int = 0, minutes: int = 0, seconds: int = 0
-) -> int:
+def get_cutoff_timestamp(days: int, hours: int = 0, minutes: int = 0, seconds: int = 0) -> int:
     """Renvoie le timestamp UNIX pour aujourd'hui - N jours (en UTC)."""
     return int(
         (
-            datetime.datetime.now()
-            - datetime.timedelta(
-                days=days, hours=hours, minutes=minutes, seconds=seconds
-            )
+            datetime.datetime.now() - datetime.timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
         ).timestamp()
     )
 
@@ -50,15 +45,7 @@ def chunked(iterable: Sequence, size: int) -> Sequence:
 def fetch_eligible_tasks(cutoff_ts: int) -> List[TaskModel]:
     """Récupère les tâches à supprimer."""
     with get_db() as db:
-        tasks = (
-            db.query(Task)
-            .filter(
-                and_(
-                    Task.status.in_(STATUTS_SUPPRIMABLES), Task.created_at <= cutoff_ts
-                )
-            )
-            .all()
-        )
+        tasks = db.query(Task).filter(and_(Task.status.in_(STATUTS_SUPPRIMABLES), Task.created_at <= cutoff_ts)).all()
 
         return [TaskModel.model_validate(task) for task in tasks]
 
@@ -114,9 +101,7 @@ def main(
     minutes: int = 0,
     seconds: int = 0,
 ):
-    cutoff_ts = get_cutoff_timestamp(
-        days=days, hours=hours, minutes=minutes, seconds=seconds
-    )
+    cutoff_ts = get_cutoff_timestamp(days=days, hours=hours, minutes=minutes, seconds=seconds)
     results = fetch_eligible_tasks(cutoff_ts)
     print(f"{len(results)} objets à traiter")
 

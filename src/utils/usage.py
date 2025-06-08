@@ -26,9 +26,7 @@ try:
     GPU_HANDLE = nvmlDeviceGetHandleByIndex(0)
     gpu_name = nvmlDeviceGetName(GPU_HANDLE).decode("utf-8")
     driver_version = nvmlSystemGetDriverVersion().decode("utf-8")
-    total_gpu_memory = (
-        nvmlDeviceGetMemoryInfo(GPU_HANDLE).total / 1024**2
-    )  # Total VRAM en MB
+    total_gpu_memory = nvmlDeviceGetMemoryInfo(GPU_HANDLE).total / 1024**2  # Total VRAM en MB
     # On part du principe que tous les GPUs ont des CUDA cores, sinon il faudrait interroger chaque GPU
     cuda_cores = nvmlDeviceGetCount()
 except Exception as e:
@@ -56,12 +54,8 @@ class ResourceMonitor:
         self.label = label
         self.process = psutil.Process(os.getpid())
         self.cpu_name = ""
-        self.total_cpu_cores = psutil.cpu_count(
-            logical=False
-        )  # Nombre de cores physiques
-        self.total_cpu_threads = psutil.cpu_count(
-            logical=True
-        )  # Nombre total de threads
+        self.total_cpu_cores = psutil.cpu_count(logical=False)  # Nombre de cores physiques
+        self.total_cpu_threads = psutil.cpu_count(logical=True)  # Nombre total de threads
         self.total_ram = psutil.virtual_memory().total / 1024**2  # RAM en MB
 
         # Réseau
@@ -76,9 +70,7 @@ class ResourceMonitor:
     def _log_usage(self):
         while self.running:
             cpu = self.process.cpu_percent(interval=None)
-            ram = (
-                self.process.memory_info().rss / 1024**2
-            )  # Utilisation de la RAM en MB
+            ram = self.process.memory_info().rss / 1024**2  # Utilisation de la RAM en MB
 
             # Réseau
             net_io = psutil.net_io_counters()
