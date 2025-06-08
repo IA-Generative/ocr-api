@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List
 from PIL import Image
 
-from paddleocr import TextDetection
+from paddleocr import TextDetection, TextRecognition
 import numpy as np
 
-from src.schemas.box import BaseBox
+from src.schemas.box import BaseBox, PredictText
 
 
 class BaseTextDetection(ABC):
@@ -56,3 +56,25 @@ class PaddleTextDetection(BaseTextDetection):
             total_bboxes.append(res_bboxes)
 
         return total_bboxes
+
+
+class PaddleTextRecognition(BaseTextRecognition):
+    def __init__(
+        self,
+        model_name: str = "PP-OCRv5_server_rec",
+        device: str = "cpu",
+        batch_size: int = 3,
+    ):
+        self.model = TextRecognition(model_name=model_name, device=device)
+        self.batch_size = batch_size
+
+    def predict(self, images: list[Image.Image]) -> List[PredictText]:
+        predictions = self.model.predict(
+            [np.array(image.convert("RGB")) for image in images],
+            batch_size=self.batch_size,
+        )
+        result = []
+        for pred in predictions:
+            result.append(PredictText(text=pred["rec_text"], confidence=pred["rec_score"]))
+
+        return result

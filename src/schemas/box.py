@@ -15,6 +15,11 @@ class Bbox(BaseBox):
     text: str
 
 
+class PredictText(BaseModel):
+    text: str
+    confidence: float
+
+
 class Box(BaseModel):
     text: str
     text_region: List[List[int]]

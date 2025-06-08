@@ -1,6 +1,6 @@
 from PIL import Image
 from pathlib import Path
-from ocr_service.models.text import PaddleTextDetection
+from ocr_service.models.text import PaddleTextDetection, PaddleTextRecognition
 
 
 def test_predict_paddle_text_detections():
@@ -22,3 +22,10 @@ def test_predict_paddle_text_detections():
             box = (x1, y1, x2, y2)
             cropped_image = image.crop(box)
             cropped_image.save(folder_image / f"{i}-{j}-formulaire-cerfa-complete.png")
+
+
+def test_predict_paddle_text_recognition():
+    obj = PaddleTextRecognition()
+    image = Image.open("tests/data/valid/formulaire-cerfa-complete.png")
+    actuals = obj.predict(images=[image, image])
+    assert len(actuals) == 2
