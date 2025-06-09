@@ -1,5 +1,7 @@
 from typing import List
-from PIL import Image
+import logging
+from PIL import Image, ImageOps
+from time import perf_counter
 
 from paddleocr import PaddleOCR
 import numpy as np
@@ -7,54 +9,100 @@ import numpy as np
 from ocr_service.models.base import BaseModelPrediction
 from src.schemas.output import Page
 from src.schemas.box import Bbox
+from paddleocr import logger
+
+logger.setLevel(logging.DEBUG)
 
 
 class PaddleInferOCR(BaseModelPrediction):
-    def __init__(self, device: str = "cpu"):
+    def __init__(
+        self,
+        device: str = "cpu",
+        cpu_threads: int = 1,
+        batch_size: int = 2,
+        target_size: int = 732,
+    ):
+        self.preserve_aspect_ratio = True
+        self.target_size = target_size
         self.model: PaddleOCR = PaddleOCR(
+            text_detection_model_name="PP-OCRv5_mobile_det",
+            text_recognition_model_name="PP-OCRv5_mobile_rec",
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
-            ocr_version="PP-OCRv5",
+            # use_textline_orientation
+            # ocr_version="PP-OCRv5",
             device=device,
+            cpu_threads=max(1, cpu_threads - 1),
+            text_recognition_batch_size=8,
+            enable_mkldnn=True,
+            text_det_limit_side_len=target_size,  # Synchroniser avec la taille de redimensionnement
+            text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
+            # det_db_score_mode="fast",
         )
+        self.batch_size = batch_size
+        logger.debug("Warmup start")
+        t = perf_counter()
+        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
+        logger.debug(f"Warmup end into {perf_counter() -t}")
+        t = perf_counter()
+        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
+        logger.debug(f"Warmup end into {perf_counter() -t}")
+
+    def _resize_image(self, image: Image.Image) -> Image.Image:
+        """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
+        if self.preserve_aspect_ratio:
+            return ImageOps.contain(image, (self.target_size, self.target_size))
+        else:
+            return image.resize((self.target_size, self.target_size), Image.LANCZOS)
 
     def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
         result: List[Page] = []
+        t_resize = perf_counter()
+        resized_images = [self._resize_image(img) for img in images]
+        logger.debug(f"Resize time {perf_counter() - t_resize}")
+        converted_images = [np.array(image.convert("RGB")) for image in resized_images]
+        logger.debug(f"Nb image to predicts: {len(images)}")
+        t = perf_counter()
+        predictions = self.model.predict(converted_images)
+        logger.debug(f"Time to process {len(images)}: {perf_counter() - t}")
 
-        for i, image in enumerate(images):
+        for i, (image, pred) in enumerate(zip(images, predictions)):
             width_img, height_img = image.size
-            image = image.convert("RGB")
-            predictions = self.model.predict(np.array(image))
-            page_boxes: List[Bbox] = []
+            page = Page(page=i, boxes=[])
             # rec_text: Indicates the predicted text of the text line image.
             # rec_score: Indicates the confidence score of the predicted text for the text line image.
             # dt_polys: Predicted text detection boxes, where each box contains four vertices (x, y coordinates).
             # dt_scores: Confidence scores of the predicted text detection boxes.
 
-            for pred in predictions:
-                bboxes = pred["rec_boxes"]
-                confidences = pred["rec_scores"]
-                texts = pred["rec_texts"]
-                for bbox, confidence, text in zip(bboxes, confidences, texts):
-                    # Convert polygon to bounding box
-                    x_coords = [bbox[0], bbox[2]]
-                    y_coords = [bbox[1], bbox[3]]
-                    x = min(x_coords)
-                    y = min(y_coords)
-                    w = max(x_coords) - x
-                    h = max(y_coords) - y
+            bboxes = pred["rec_boxes"]
+            confidences = pred["rec_scores"]
+            texts = pred["rec_texts"]
+            for bbox, confidence, text in zip(bboxes, confidences, texts):
+                # Convert polygon to bounding box
+                x_coords = [bbox[0], bbox[2]]
+                y_coords = [bbox[1], bbox[3]]
+                x = min(x_coords)
+                y = min(y_coords)
+                w = max(x_coords) - x
+                h = max(y_coords) - y
 
-                    # Normalize coordinates between 0 and 1
-                    norm_x = x / width_img
-                    norm_y = y / height_img
-                    norm_w = w / width_img
-                    norm_h = h / height_img
+                # Normalize coordinates between 0 and 1
+                norm_x = x / width_img
+                norm_y = y / height_img
+                norm_w = w / width_img
+                norm_h = h / height_img
 
-                    box = Bbox(x=norm_x, y=norm_y, width=norm_w, height=norm_h, confidence=float(confidence), text=text)
-                    page_boxes.append(box)
+                box = Bbox(
+                    x=norm_x,
+                    y=norm_y,
+                    width=norm_w,
+                    height=norm_h,
+                    confidence=float(confidence),
+                    text=text,
+                )
+                page.boxes.append(box)
 
-            page = Page(page=i, boxes=page_boxes)
             result.append(page)
 
         return result

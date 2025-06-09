@@ -1,12 +1,5 @@
-import pytest
 from datetime import datetime
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from contextlib import contextmanager
-from src.schemas import Base
-from src.schemas.task import Task, TaskStatus, TaskTable
-from tests.src.schemas.test_task_table import task_table, db_session
-
+from src.schemas.task import Task, TaskStatus
 
 
 def test_task_not_found(task_table):

@@ -13,9 +13,7 @@ from src.config.s3 import S3Settings
 @pytest.fixture(scope="module")
 def storage_service() -> BaseFileConnector:
     settings = S3Settings()
-    return S3Connector(
-        s3_client=boto3.client("s3"), bucket_name=settings.S3_BUCKET_NAME
-    )
+    return S3Connector(s3_client=boto3.client("s3"), bucket_name=settings.S3_BUCKET_NAME)
 
 
 def test_task_process_paddle(storage_service: BaseFileConnector):

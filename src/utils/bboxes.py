@@ -1,9 +1,7 @@
 from src.schemas.box import Bbox
 
 
-def sort_bboxes_reading_order(
-    bboxes: list[Bbox], delta_y: float = 0.005
-) -> list[list[Bbox]]:
+def sort_bboxes_reading_order(bboxes: list[Bbox], delta_y: float = 0.005) -> list[list[Bbox]]:
     """
     Sort bounding boxes in reading order (line by line, left to right).
 

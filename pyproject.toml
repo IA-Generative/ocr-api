@@ -56,6 +56,7 @@ ocr-service-paddle = [
     "psutil>=7.0.0",
     "paddleocr==3.0.1",
     "paddlepaddle==3.0.0",
+    "pynvml>=12.0.0",
 ]
 
 migration = [

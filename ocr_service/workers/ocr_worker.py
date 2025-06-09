@@ -40,18 +40,14 @@ class OCRWorker(BaseWorker):
         task = self.set_output(task=task)
         try:
             logger.info(f"{task.id} load file ")
-            content = self.file_connector.get_by_task_id(
-                user_id=task.user_id, task_id=task.id
-            )
+            content = self.file_connector.get_by_task_id(user_id=task.user_id, task_id=task.id)
             logger.info(f"{task.id} loaded")
 
         except Exception as e:
             task.extras["error"] = str(e)
             task = task_table.update_task(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
-                ),
+                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
             )
             logger.error(str(e))
             raise
@@ -60,9 +56,7 @@ class OCRWorker(BaseWorker):
             task.extras["error"] = f"No content found for task : {task.id}"
             task = task_table.update_task(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
-                ),
+                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
             )
             logger.error(f"No content found for task : {task.id}")
             raise EmptyContentException(f"No content found for task : {task.id}")
@@ -85,18 +79,14 @@ class OCRWorker(BaseWorker):
 
             pages = LazyPdfImageList(content)
             t_convert = time.time() - t_convert
-            logger.debug(
-                f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}"
-            )
+            logger.debug(f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}")
 
         else:
             logger.error(f"Unsupported file type {task.extras}")
             task.extras["error"] = f"Unsupported file type {task.extras}"
             task = task_table.update_task(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
-                    status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
-                ),
+                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
             )
             raise FileNotSupported(f"Unsupported file type {content_type}")
 
@@ -138,9 +128,7 @@ class OCRWorker(BaseWorker):
             formatted_result.extend(partial_result)
 
             page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + batch_size}"
-            logger.debug(
-                f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s"
-            )
+            logger.debug(f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s")
             task.output.pages = formatted_result
             percentage = len(formatted_result) / task.output.total_pages
             task.output.set_text()

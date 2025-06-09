@@ -14,9 +14,7 @@ from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
 from src.utils.usage import resource_monitor
 
 s3_client = boto3.client("s3")
-s3_client_connector = S3Connector(
-    s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME
-)
+s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 
 
 process_ocr: OCRWorker = get_ocr_processor(file_connector=s3_client_connector)
