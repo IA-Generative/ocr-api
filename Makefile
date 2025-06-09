@@ -79,7 +79,7 @@ clean: ## Nettoyage du dépôt
 
 tests: up tests-backend tests-service
 
-tests-beckend: ## Lance les tests unitaires
+tests-backend: ## Lance les tests unitaires
 	docker exec $(OCR_BACKEND_CONTAINER) pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
 
 tests-service:
