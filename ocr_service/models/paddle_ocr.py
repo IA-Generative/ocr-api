@@ -1,3 +1,4 @@
+import os
 from typing import List
 import logging
 from PIL import Image, ImageOps
@@ -21,17 +22,20 @@ class PaddleInferOCR(BaseModelPrediction):
         cpu_threads: int = 1,
         batch_size: int = 2,
         target_size: int = None,
+        text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
+        text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
+        ocr_version: str = os.environ.get("PADDLE_OCR_VERSION", "PP-OCRv3"),
     ):
         self.preserve_aspect_ratio = True
         self.target_size = target_size
         self.model: PaddleOCR = PaddleOCR(
-            text_detection_model_name="PP-OCRv5_mobile_det",
-            text_recognition_model_name="PP-OCRv5_mobile_rec",
+            text_detection_model_name=text_detection_model_name,
+            text_recognition_model_name=text_recognition_model_name,
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
             # use_textline_orientation
-            # ocr_version="PP-OCRv5",
+            ocr_version=ocr_version,
             device=device,
             cpu_threads=max(1, cpu_threads - 1),
             text_recognition_batch_size=8,
