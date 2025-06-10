@@ -4,42 +4,10 @@ on:
   push:
     branches:
       - '**'
-  pull_request:
-    branches:
-      - staging  # Cette action s'exécute sur des PR vers 'staging'
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # Lancer les tests sur chaque push
-  run-tests:
-    runs-on: actions-runner-controller
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
-
-      - name: Install dependencies and run tests
-        run: |
-          make tests
-
-      - name: Stop docker container
-        run: |
-          make down
-
-  # Build et Push de l'image seulement sur la branche staging
   build-and-push:
     runs-on: actions-runner-controller
-    needs: run-tests
-    if: github.ref == 'refs/heads/staging'  # Exécuter seulement sur 'staging'
     permissions:
       contents: read
       packages: write
@@ -60,3 +28,48 @@ jobs:
       - name: Build and Push Docker image
         run: |
           make docker-build
+
+  run-tests-backend:
+    runs-on: actions-runner-controller
+    needs: build-and-push
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make tests-backend
+
+      - name: Stop docker container
+        run: |
+          make down
+
+
+  run-tests-service:
+    runs-on: actions-runner-controller
+    needs: build-and-push
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make tests-service
+
+      - name: Stop docker container
+        run: |
+          make down
