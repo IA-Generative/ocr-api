@@ -1,3 +1,4 @@
+import os
 from typing import List
 import logging
 from PIL import Image, ImageOps
@@ -20,23 +21,28 @@ class PaddleInferOCR(BaseModelPrediction):
         device: str = "cpu",
         cpu_threads: int = 1,
         batch_size: int = 2,
-        target_size: int = 732,
+        target_size: int = None,
+        text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
+        text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
+        ocr_version: str = os.environ.get("PADDLE_OCR_VERSION", "PP-OCRv3"),
+
     ):
         self.preserve_aspect_ratio = True
         self.target_size = target_size
         self.model: PaddleOCR = PaddleOCR(
-            text_detection_model_name="PP-OCRv5_mobile_det",
-            text_recognition_model_name="PP-OCRv5_mobile_rec",
+            text_detection_model_name=text_detection_model_name,
+            text_recognition_model_name=text_recognition_model_name,
+
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
             # use_textline_orientation
-            # ocr_version="PP-OCRv5",
+            ocr_version=ocr_version,
             device=device,
             cpu_threads=max(1, cpu_threads - 1),
             text_recognition_batch_size=8,
             enable_mkldnn=True,
-            text_det_limit_side_len=target_size,  # Synchroniser avec la taille de redimensionnement
+            text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
             text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
             # det_db_score_mode="fast",
         )
@@ -51,10 +57,12 @@ class PaddleInferOCR(BaseModelPrediction):
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
-        if self.preserve_aspect_ratio:
-            return ImageOps.contain(image, (self.target_size, self.target_size))
-        else:
-            return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+        if self.target_size:
+            if self.preserve_aspect_ratio:
+                return ImageOps.contain(image, (self.target_size, self.target_size))
+            else:
+                return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+        return image
 
     def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
         result: List[Page] = []

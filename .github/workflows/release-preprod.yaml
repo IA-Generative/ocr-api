@@ -33,4 +33,3 @@ jobs:
           release-type: python
           token: ${{ secrets.MY_GITHUB_TOKEN }}
           target-branch: ${{ steps.vars.outputs.target_branch }}
-          prerelease: ${{ steps.vars.outputs.prerelease }}

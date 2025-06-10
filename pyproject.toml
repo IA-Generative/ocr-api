@@ -35,6 +35,7 @@ test = [
     "pillow>=10.4.0",
     "requests>=2.32.3",
     "coverage>=7.8.0",
+    "datasets>=3.6.0",
 ]
 ocr-backend = [
     "httpx==0.25.0",
