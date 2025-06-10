@@ -79,11 +79,13 @@ clean: ## Nettoyage du dépôt
 
 tests: up tests-backend tests-service
 
-tests-backend: ## Lance les tests unitaires
+tests-backend: up
 	docker exec $(OCR_BACKEND_CONTAINER) pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
+	make down
 
-tests-service:
-	docker exec $(OCR_SERVICE_CONTAINER) pytest -s --cov=./ocr_service tests/ocr_service
+tests-service: up
+	docker exec $(OCR_SERVICE_CONTAINER) pytest -s --cov=./ocr_service --cov-report=term-missing tests/ocr_service/
+	make down
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
