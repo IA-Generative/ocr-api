@@ -8,4 +8,5 @@ PaddleOCR(
     use_doc_unwarping=False,
     use_textline_orientation=False,
     ocr_version=ocr_version,
+
 )

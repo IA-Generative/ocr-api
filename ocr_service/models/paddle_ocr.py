@@ -25,12 +25,14 @@ class PaddleInferOCR(BaseModelPrediction):
         text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
         text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
         ocr_version: str = os.environ.get("PADDLE_OCR_VERSION", "PP-OCRv3"),
+
     ):
         self.preserve_aspect_ratio = True
         self.target_size = target_size
         self.model: PaddleOCR = PaddleOCR(
             text_detection_model_name=text_detection_model_name,
             text_recognition_model_name=text_recognition_model_name,
+
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,

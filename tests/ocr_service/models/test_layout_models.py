@@ -13,7 +13,6 @@ def test_predict_paddle_layout_detections():
     assert len(actuals) == 2
     folder_image = Path("tests/data/valid/formulaire-cerfa-complete/layouts")
     folder_image.mkdir(parents=True, exist_ok=True)
-
     for layouts in actuals:
         image = draw_normalized_layout(image, layouts=layouts)
         image.save(folder_image / f"{path_image.stem}{path_image.suffix}")
