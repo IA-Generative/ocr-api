@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and Push Docker image
         run: |
-          make docker-build
+          make build
 
   run-tests-backend:
     runs-on: actions-runner-controller
