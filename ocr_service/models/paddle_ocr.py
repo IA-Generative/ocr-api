@@ -20,7 +20,7 @@ class PaddleInferOCR(BaseModelPrediction):
         device: str = "cpu",
         cpu_threads: int = 1,
         batch_size: int = 2,
-        target_size: int = 732,
+        target_size: int = None,
     ):
         self.preserve_aspect_ratio = True
         self.target_size = target_size
@@ -36,7 +36,7 @@ class PaddleInferOCR(BaseModelPrediction):
             cpu_threads=max(1, cpu_threads - 1),
             text_recognition_batch_size=8,
             enable_mkldnn=True,
-            text_det_limit_side_len=target_size,  # Synchroniser avec la taille de redimensionnement
+            text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
             text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
             # det_db_score_mode="fast",
         )
@@ -51,10 +51,12 @@ class PaddleInferOCR(BaseModelPrediction):
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
-        if self.preserve_aspect_ratio:
-            return ImageOps.contain(image, (self.target_size, self.target_size))
-        else:
-            return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+        if self.target_size:
+            if self.preserve_aspect_ratio:
+                return ImageOps.contain(image, (self.target_size, self.target_size))
+            else:
+                return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+        return image
 
     def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
         result: List[Page] = []
