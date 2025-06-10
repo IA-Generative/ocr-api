@@ -78,7 +78,7 @@ def test_predict():
 
     # https://www.revmed.ch/var/site/storage/images/7/8/5/8/6958587-1-fre-CH/pg416-1_i1200.jpg
 
-    tableau_path = Path("tests/data/valid/tebleau/tableau-climatique.jpg")
+    tableau_path = Path("tests/data/valid/tableau/tableau-climatique.jpg")
     image = Image.open(tableau_path)
     images = [image]
     actuals = obj.batch_predict(images=images)
@@ -92,7 +92,7 @@ def test_predict():
     # https://upload.wikimedia.org/wikipedia/commons/4/47/C_tableau_climatique_qui_provient_d%27une_page_Wikip%C3%A9dia_francophone_18_f%C3%A9vrier_2014.jpg
 
     tableau_path = Path(
-        "tests/data/valid/tebleau/C_tableau_climatique_qui_provient_d'une_page_Wikipédia_francophone_18_février_2014.jpg"
+        "tests/data/valid/tableau/C_tableau_climatique_qui_provient_d'une_page_Wikipédia_francophone_18_février_2014.jpg"
     )
     image = Image.open(tableau_path)
     images = [image]
