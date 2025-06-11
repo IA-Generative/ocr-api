@@ -40,6 +40,13 @@ services:
   ocr_service:
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: 2.0
+          memory: 4000M
+        reservations:
+          cpus: 2.0
+          memory: 4000M
     container_name: ocr-service
     command: ["celery", "-A", "ocr_service.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E"]
     image: ocr-service-paddle
