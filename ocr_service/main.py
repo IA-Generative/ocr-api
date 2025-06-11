@@ -17,15 +17,13 @@ s3_client = boto3.client("s3")
 s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 
 
-process_ocr: OCRWorker = get_ocr_processor(file_connector=s3_client_connector)
-
-
 @celery_app.task(name="worker.tasks.ocr", bind=True)
 @resource_monitor(
     interval_sec=int(os.environ.get("MONITOR_RESSOURCE_EVERY", 5)),
     label="worker.tasks.ocr",
 )
 def launch_task(self, task_info: dict):
+    process_ocr: OCRWorker = get_ocr_processor(file_connector=s3_client_connector)
     worker_id = self.request.hostname
     task = TaskModel.model_validate(json.loads(task_info))
     try:

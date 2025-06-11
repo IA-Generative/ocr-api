@@ -1,4 +1,3 @@
-import os
 from typing import List
 import logging
 from PIL import Image, ImageOps
@@ -19,34 +18,26 @@ class PaddleInferOCR(BaseModelPrediction):
     def __init__(
         self,
         device: str = "cpu",
-        cpu_threads: int = 1,
-        batch_size: int = 2,
-        target_size: int = None,
+        cpu_threads: int = 4,
+        batch_size: int = 1,
+        target_size: int = 960,
         text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
         text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
-        ocr_version: str = os.environ.get("PADDLE_OCR_VERSION", "PP-OCRv3"),
-
+        ocr_version: str = "PP-OCRv3",
     ):
         self.preserve_aspect_ratio = True
-        self.target_size = target_size
-        self.model: PaddleOCR = PaddleOCR(
-            text_detection_model_name=text_detection_model_name,
-            text_recognition_model_name=text_recognition_model_name,
+        self.device = device
+        self.cpu_threads = cpu_threads
+        self.text_detection_model_name = text_detection_model_name
+        self.text_recognition_model_name = text_recognition_model_name
+        self.ocr_version = ocr_version
 
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-            # use_textline_orientation
-            ocr_version=ocr_version,
-            device=device,
-            cpu_threads=max(1, cpu_threads - 1),
-            text_recognition_batch_size=8,
-            enable_mkldnn=True,
-            text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
-            text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
-            # det_db_score_mode="fast",
-        )
+        self.target_size = target_size
+        self.model: PaddleOCR = None
         self.batch_size = batch_size
+        self._counter_pred = 0
+        self._initialize_model()
+
         logger.debug("Warmup start")
         t = perf_counter()
         self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
@@ -54,6 +45,28 @@ class PaddleInferOCR(BaseModelPrediction):
         t = perf_counter()
         self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
         logger.debug(f"Warmup end into {perf_counter() -t}")
+
+    def _initialize_model(self):
+        logger.debug(f"Init model at {self._counter_pred} predictions")
+        self.model: PaddleOCR = PaddleOCR(
+            text_detection_model_name=self.text_detection_model_name,
+            text_recognition_model_name=self.text_recognition_model_name,
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+            # use_textline_orientation
+            ocr_version=self.ocr_version,
+            device=self.device,
+            cpu_threads=max(1, self.cpu_threads - 1),
+            text_det_limit_side_len=960,
+            text_det_limit_type="max",
+            # text_recognition_batch_size=8,
+            enable_mkldnn=True,
+            # text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
+            # text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
+            # det_db_score_mode="fast",
+            lang="fr",
+        )
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
@@ -112,5 +125,9 @@ class PaddleInferOCR(BaseModelPrediction):
                 page.boxes.append(box)
 
             result.append(page)
+        self._counter_pred += len(result)
+        if self._counter_pred % 2 == 0:
+            self._initialize_model()
+            self._counter_pred = 0
 
         return result
