@@ -10,3 +10,4 @@ class PaddleSetting(BaseSettings):
     RECOGNITION_BATCH_SIZE: int = 4
     OCR_VERSION: str = "PP-OCRv3"
     DEVICE: str = "cpu"
+    OCR_LANG: str | None = "fr"

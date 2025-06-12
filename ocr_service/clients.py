@@ -13,6 +13,7 @@ def get_ocr_processor(file_connector: BaseFileConnector) -> OCRWorker:
         device=ocr_settings.DEVICE,
         batch_size=ocr_settings.DETECTION_BATCH_SIZE,
         ocr_version=ocr_settings.OCR_VERSION,
+        lang=ocr_settings.OCR_LANG,
     )
 
     return OCRWorker(file_connector=file_connector, ocr_model=ocr_model, settings=ocr_settings)

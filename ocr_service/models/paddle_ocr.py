@@ -24,6 +24,7 @@ class PaddleInferOCR(BaseModelPrediction):
         text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
         text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
         ocr_version: str = "PP-OCRv3",
+        lang: str | None = None,
     ):
         self.preserve_aspect_ratio = True
         self.device = device
@@ -31,6 +32,7 @@ class PaddleInferOCR(BaseModelPrediction):
         self.text_detection_model_name = text_detection_model_name
         self.text_recognition_model_name = text_recognition_model_name
         self.ocr_version = ocr_version
+        self.lang = lang
 
         self.target_size = target_size
         self.model: PaddleOCR = None
@@ -65,7 +67,7 @@ class PaddleInferOCR(BaseModelPrediction):
             # text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
             # text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
             # det_db_score_mode="fast",
-            lang="fr",
+            lang=self.lang,
         )
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
