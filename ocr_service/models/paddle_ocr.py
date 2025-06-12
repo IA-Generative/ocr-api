@@ -59,11 +59,11 @@ class PaddleInferOCR(BaseModelPrediction):
             # use_textline_orientation
             ocr_version=self.ocr_version,
             device=self.device,
-            cpu_threads=max(1, self.cpu_threads - 1),
-            text_det_limit_side_len=960,
-            text_det_limit_type="max",
-            # text_recognition_batch_size=8,
-            enable_mkldnn=True,
+            # cpu_threads=max(1, self.cpu_threads - 1),
+            # text_det_limit_side_len=960,
+            # text_det_limit_type="max",
+            # text_recognition_batch_size=12,
+            # enable_mkldnn=True,
             # text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
             # text_det_limit_type="min",  # Redimensionner basé sur le côté le plus long
             # det_db_score_mode="fast",
@@ -128,7 +128,7 @@ class PaddleInferOCR(BaseModelPrediction):
 
             result.append(page)
         self._counter_pred += len(result)
-        if self._counter_pred % 2 == 0:
+        if self._counter_pred % 4 == 0:
             self._initialize_model()
             self._counter_pred = 0
 
