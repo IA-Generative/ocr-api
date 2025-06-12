@@ -96,7 +96,7 @@ class OCRWorker(BaseWorker):
         task = self.set_output(task=task, total_pages=len(pages))
         formatted_result: List[Page] = []
         batch_size = self.settings.DETECTION_BATCH_SIZE
-        filename = task.extras.get("raw_filename")
+        filename = task.input.raw_filename
         client_s3 = self.file_connector.client
         task.output.text = ""
         for i in range(0, len(pages), batch_size):
@@ -227,7 +227,7 @@ class OCRWorker(BaseWorker):
                 extras=task.extras,
             ),
         )
-        logger.debug(f"{task.id} - done {task.model_dump()}")
+        logger.debug(f"{task.id} - done")
 
         task = task_table.update_task(
             task_id=task.id,
