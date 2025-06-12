@@ -40,14 +40,6 @@ class PaddleInferOCR(BaseModelPrediction):
         self._counter_pred = 0
         self._initialize_model()
 
-        logger.debug("Warmup start")
-        t = perf_counter()
-        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
-        logger.debug(f"Warmup end into {perf_counter() -t}")
-        t = perf_counter()
-        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
-        logger.debug(f"Warmup end into {perf_counter() -t}")
-
     def _initialize_model(self):
         logger.debug(f"Init model at {self._counter_pred} predictions")
         self.model: PaddleOCR = PaddleOCR(
@@ -69,6 +61,13 @@ class PaddleInferOCR(BaseModelPrediction):
             # det_db_score_mode="fast",
             lang=self.lang,
         )
+        logger.debug("Warmup start")
+        t = perf_counter()
+        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
+        logger.debug(f"Warmup end into {perf_counter() -t}")
+        t = perf_counter()
+        self.model.predict(np.zeros((100, 100, 3), dtype=np.uint8))
+        logger.debug(f"Warmup end into {perf_counter() -t}")
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
