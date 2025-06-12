@@ -69,16 +69,7 @@ version = [
 client = [
     "python-magic>=0.4.27",
 ]
-ocr-service-paddle-gpu = [
-    "opencv-python-headless>=4.11.0.86",
-    "pdf2image==1.17.0",
-    "pillow==10.4.0",
-    "psutil>=7.0.0",
-    "paddleocr==3.0.1",
-    "pynvml>=12.0.0",
-    "paddlepaddle-gpu==3.0.0",
-    # "paddlepaddle-gpu==2.6.2",
-]
+
 
 [tool.commitizen]
 name = "cz_conventional_commits"

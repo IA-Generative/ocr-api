@@ -2417,15 +2417,6 @@ ocr-service-paddle = [
     { name = "psutil" },
     { name = "pynvml" },
 ]
-ocr-service-paddle-gpu = [
-    { name = "opencv-python-headless" },
-    { name = "paddleocr" },
-    { name = "paddlepaddle-gpu" },
-    { name = "pdf2image" },
-    { name = "pillow" },
-    { name = "psutil" },
-    { name = "pynvml" },
-]
 stress-test = [
     { name = "locust" },
 ]
@@ -2476,15 +2467,6 @@ ocr-service-paddle = [
     { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
     { name = "paddleocr", specifier = "==3.0.1" },
     { name = "paddlepaddle", specifier = "==3.0.0" },
-    { name = "pdf2image", specifier = "==1.17.0" },
-    { name = "pillow", specifier = "==10.4.0" },
-    { name = "psutil", specifier = ">=7.0.0" },
-    { name = "pynvml", specifier = ">=12.0.0" },
-]
-ocr-service-paddle-gpu = [
-    { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
-    { name = "paddleocr", specifier = "==3.0.1" },
-    { name = "paddlepaddle-gpu", specifier = "==2.6.2" },
     { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pillow", specifier = "==10.4.0" },
     { name = "psutil", specifier = ">=7.0.0" },
@@ -2707,30 +2689,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/2c/7a/59d9b82f500ab72e16382503cd0d42393c8d35d2a86622926d1c2b508804/paddlepaddle-3.0.0-cp313-cp313-manylinux1_x86_64.whl", hash = "sha256:8fc4865efd3656ee99424124792cb88a642151b4d591a7d6d4a5c6afdae95959", size = 192848478, upload-time = "2025-03-26T12:11:03.218Z" },
     { url = "https://files.pythonhosted.org/packages/5b/4a/a80b735e62c1dac0310f0dcdca51a29523cf863834f291866bd8991f270d/paddlepaddle-3.0.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:bbc4d573b35d24a262e02d72696e80f5b4aee41f698671af9574deeb1a83e6f7", size = 92027573, upload-time = "2025-03-26T12:11:32.206Z" },
     { url = "https://files.pythonhosted.org/packages/87/56/45594a67d2603fc3b3b334017de7ef94eca6cbd21b8f53700e51e61a490e/paddlepaddle-3.0.0-cp313-cp313-win_amd64.whl", hash = "sha256:2e1292d50f80a8577407008f7321f85c8309938c0c575927950aec3c45502c2a", size = 97053969, upload-time = "2025-03-26T12:12:00.202Z" },
-]
-
-[[package]]
-name = "paddlepaddle-gpu"
-version = "2.6.2"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "astor" },
-    { name = "decorator" },
-    { name = "httpx" },
-    { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "opt-einsum" },
-    { name = "pillow" },
-    { name = "protobuf", version = "3.20.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'win32'" },
-    { name = "protobuf", version = "6.30.2", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'win32'" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/70/d1/0ca646de695f77b0b00bf4c50393597784ed43342c16ab64f5905904b8a1/paddlepaddle_gpu-2.6.2-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:72c89a5a79766968758c96a1f87072393800f29812ad5a764b39b4dd3a55c27f", size = 758943654, upload-time = "2024-09-13T11:20:36.793Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/2e/e3e783f259921707438d1ed56e1ec10e576273cb0c9cc3fa2919d247f41b/paddlepaddle_gpu-2.6.2-cp310-cp310-win_amd64.whl", hash = "sha256:ec2d80c41e89da8b2d76ff9175a175c074396797dce145c3537b36fcc48aa45b", size = 477407829, upload-time = "2024-09-13T11:28:33.367Z" },
-    { url = "https://files.pythonhosted.org/packages/84/5c/8d3aa7503980b9c1e0dafa4bc58fdc5ecadb4424c5eec8262f3159aaef55/paddlepaddle_gpu-2.6.2-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:29694686383d935fb0966dd393f9af32a87d2d6674c8603583df5b08f9457f45", size = 758955369, upload-time = "2024-09-13T11:21:49.308Z" },
-    { url = "https://files.pythonhosted.org/packages/92/1d/269f2a5f7b1a97834552b56c58cf573ce5ba033d9a445b0deebec08cc644/paddlepaddle_gpu-2.6.2-cp311-cp311-win_amd64.whl", hash = "sha256:cc57a077bc7b8c61f022ffaf3bc98cf1a6a85dfcea05dad7fa4085ee5d006962", size = 477418419, upload-time = "2024-09-13T11:29:20.521Z" },
-    { url = "https://files.pythonhosted.org/packages/79/cc/58096f96c6506f80fb4a76fe981e66c1d932a7d4639ee4ad75112f46d584/paddlepaddle_gpu-2.6.2-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:289d9dac958bbb075a62c0a3ede821d67415e23df9bd3f94807d2a4ddc68c879", size = 758943234, upload-time = "2024-09-13T11:23:00.624Z" },
-    { url = "https://files.pythonhosted.org/packages/76/b6/309e432a9d206d53741fe5fd221b4ce0d75aecb9c56ea7e04b1376683c78/paddlepaddle_gpu-2.6.2-cp312-cp312-win_amd64.whl", hash = "sha256:3646ffed8ed3ed7fb79e8607fd67cc23a0e7e6bc8250cb11753a855cb9b74c3e", size = 477412018, upload-time = "2024-09-13T11:30:08.472Z" },
 ]
 
 [[package]]
