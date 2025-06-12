@@ -69,6 +69,7 @@ class TaskUpdateForm(BaseModel):
     output: Optional[OCRResult] = None
 
 
+
 class TaskStatus(str, Enum):
     CREATED = "created"  # Tâche instanciée mais pas encore mise en file
     QUEUED = "queued"  # En attente dans une file de traitement

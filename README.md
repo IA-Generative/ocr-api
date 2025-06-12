@@ -83,98 +83,47 @@ make
 Installation des dépendances Python depuis `pyproject.toml` :
 
 ```bash
-make install
+# with pip
+pip install -r requirements.txt
+
+# with docker
+docker build -t ocr-api .
 ```
 
-Construire et démarrer les services nécessaires :
-
+## Run
 ```bash
-make up
+# with python
+uvicorn main:app --reload --host 0.0.0.0 --port 5000
+
+# with docker
+docker run --rm -p 5000:5000 -v $PWD:/app ocr-api
+
+#With docker compose
+docker compose -f docker-compose.yaml up -d
 ```
 
-Les dossiers contenants le code source sont montés automatiquements dans les conteneurs.
 
-- Accès à l’API via : <http://localhost:5000>
-- Accès à l'interface Flower via : <http://localhost:5555>
+then open `localhost:5000`
 
-### 📏 Pratique de contribution
-
-- Usage de `pre-commit` : les commits doivent suvire les règles imposés par le pre-commit config.
-  - Conventionnal commit
-  - Lint des fichiers
-  - Pas de secrets
-- Lorsqu'un changement dans les modèles `SQLAlchemy` est effectué, il faut lancer la commande `make upgrade-revision` afin d'ajouter une révision dans la migration
-- Vérifier avant de `push`dans le remote que les tests fonctionne `make tests`
-- L'intégration d'un nouveau modèle d'OCR se fait à partir de l'interface abstraite [`BaseModelPrediction`](#-intégration-via-basemodelpredictio)
-
-### 📞 Utiliser l’API
-
-#### Tester avec `curl`
-
-```bash
-curl -X 'POST' \
-  'http://localhost:5000/?grayscale=false&return_image=false' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: multipart/form-data' \
-  -F 'file=@2109.10282v5.pdf;type=application/pdf'
-```
-
-#### Test de charge (stress test)
-
-Utilisation de `locust` (par défaut sur `http://localhost:5000`):
-
-```bash
-make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-test
-```
-
-Avoir quelque statistiques sur les temps de process
-
-```bash
-make STRESS_HOST=https://mirai-ocr-staging.sdid-app.cpin.numerique-interieur.com stress-stats
-```
-
-## 🧠 Modèles OCR disponibles
-
-### 🔹 PaddleOCR
-
-**PaddleOCR** est une suite d'outils OCR multilingues développée par Baidu, conçue pour être légère, précise et adaptée à des cas d’usage industriel.
-
-- **PP-OCRv3**  version optimisée du système OCR ultra-léger PP-OCR, intégrant des améliorations telles que le module LK-PAN pour la détection de texte et le réseau SVTR pour la reconnaissance, offrant une précision accrue tout en maintenant une vitesse d'inférence élevé.
-
-- **Fonctionnalités clés** :
-  - Support de plus de 80 langues, y compris le français.
-  - Détection de texte, classification de l'orientation et reconnaissance de text.
-  - Modèles optimisés pour les appareils mobiles via Paddle-OCR
-
-- **Utilisation** PaddleOCR fournit des modèles pré-entraînés pour une utilisation immédiate et permet également l'entraînement personnalisé sur des jeux de données spécifique.
-
-### 🔹 Surya OC
-
-**Surya OCR** est un outil OCR open-source axé sur l'analyse de documents complexes, offrant des performances comparables à celles des services cloud.
-
-- **Fonctionnalités clés** :
-- Support de plus de 90 langues pour l'OR.
-- Détection de lignes de texte, analyse de la mise en page (tables, images, en-têtes), détection de l'ordre de lecture et reconnaissance de tableaux.
-- Reconnaissance LaTeX pour les documents scientifiqus.
-
-- **Utilisation**: Surya est particulièrement adapté pour les documents structurés tels que les articles scientifiques, les formulaires et les rapports complexes.
-
-### 🔹 Intégration via `BaseModelPrediction`
-
-Les deux modèles peuvent être intégrés en implémentant la classe abstraite `BaseModelPrediction`, garantissant une interface cohérente pour la prédiction :
-
+## Test
+Use file `test.py` or write some code:
 ```python
-from abc import ABC, abstractmethod
-from typing import Union, Any
-import numpy as np
-from PIL import Image
+import requests
+import base64
 
-class BaseModelPrediction(ABC):
-    @abstractmethod
-    def batch_predict(
-        self, images: list[Union[np.ndarray, Image.Image]], *args, **kwargs
-    ) -> Any:
-        pass
+
+with open("image_test.jpg", "rb") as image_file:
+    encoded_data = base64.b64encode(image_file.read()).decode()
+
+res = requests.post(
+                    url='http://localhost:5000/',
+                    json={"images": [encoded_data]}).json()
+print("-------",res['msg'])
+print(res['results'])
+print("\n\n")
 ```
 
-Cette structure permet de basculer facilement entre différents moteurs OCR ou d'en intégrer de nouveaux sans modifier le reste du code.
+### With pytest
+```
+docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
+```
