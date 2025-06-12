@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye AS paddle_model
+FROM paddlepaddle/paddle:3.0.0 AS paddle_model
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -10,8 +10,6 @@ RUN apt-get update -qy && \
     libgl1 \
     libglib2.0-0 \
     poppler-utils \
-    libopenblas-openmp-dev \
-    liblapack-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
