@@ -7,13 +7,8 @@ RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils 
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 
-COPY pyproject.toml /app/pyproject.toml
-COPY uv.lock /app/uv.lock
-
-RUN uv sync --no-cache --group ocr-service-paddle
-RUN uv remove paddleocr --group ocr-service-paddle && uv add paddleocr==2.10.0
-RUN uv add paddlepaddle==3.0.0
-
+COPY benchmark/paddle/2.10.0/pyproject.toml  /app/
+RUN uv sync
 ENV PYTHONPATH=/app
 COPY ocr_service /app/ocr_service
 COPY src /app/src

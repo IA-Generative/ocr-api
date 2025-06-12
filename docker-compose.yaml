@@ -55,9 +55,8 @@ services:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     build:
-      target: test
       context: .
-      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
+      dockerfile: Dockerfiles/ocr_service/Dockerfile.2.10.0.paddle
     depends_on:
       - redis
       - minio

@@ -10,7 +10,7 @@ import numpy as np
 from ocr_service.models.base import BaseModelPrediction
 from src.schemas.output import Page
 from src.schemas.box import Bbox
-from paddleocr import logger
+from src.logger import logger
 
 logger.setLevel(logging.DEBUG)
 
