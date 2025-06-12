@@ -1,12 +1,10 @@
-import os
-from paddleocr import PaddleOCR
+from ocr_service.configs.paddle import PaddleSetting
+from ocr_service.models.paddle_ocr import PaddleInferOCR
 
-ocr_version = os.environ.get("PADDLE_OCR_VERSION", "PP-OCRv3")
-
-PaddleOCR(
-    use_doc_orientation_classify=False,
-    use_doc_unwarping=False,
-    use_textline_orientation=False,
-    ocr_version=ocr_version,
-
+ocr_settings = PaddleSetting()
+ocr_model = PaddleInferOCR(
+    device=ocr_settings.DEVICE,
+    batch_size=ocr_settings.DETECTION_BATCH_SIZE,
+    ocr_version=ocr_settings.OCR_VERSION,
+    lang=ocr_settings.OCR_LANG,
 )
