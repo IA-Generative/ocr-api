@@ -1,6 +1,6 @@
 from typing import List
 import logging
-from PIL import Image, ImageOps
+from PIL import Image
 from time import perf_counter
 
 from paddleocr import PaddleOCR
@@ -20,7 +20,7 @@ class PaddleInferOCR(BaseModelPrediction):
         device: str = "cpu",
         cpu_threads: int = 4,
         batch_size: int = 1,
-        target_size: int = 960,
+        target_size: tuple[int, int] = None,  # (None, 512),
         text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
         text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
         ocr_version: str = "PP-OCRv3",
@@ -71,11 +71,22 @@ class PaddleInferOCR(BaseModelPrediction):
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
+        logger.debug(f"[image size][{image.size}]")
         if self.target_size:
-            if self.preserve_aspect_ratio:
-                return ImageOps.contain(image, (self.target_size, self.target_size))
-            else:
-                return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+            if isinstance(self.target_size, tuple) and len(self.target_size) == 2:
+                target_width, target_height = self.target_size
+                if target_width and not target_height:
+                    ratio = image.height / image.width
+                    target_height = int(target_width * ratio)
+                elif target_height and not target_width:
+                    ratio = image.width / image.height
+                    target_width = int(target_height * ratio)
+                else:
+                    pass
+
+                image = image.resize((target_width, target_height), Image.LANCZOS)
+                logger.debug(f"[image size][{image.size}]")
+
         return image
 
     def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
