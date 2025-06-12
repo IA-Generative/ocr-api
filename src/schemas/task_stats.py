@@ -123,9 +123,7 @@ class TaskStatTable:
             db.refresh(task)
             return TaskStatsModel.model_validate(task)
 
-    def update_task(
-        self, task_id: str, form_data: TaskStatsForm
-    ) -> Optional[TaskStatsModel]:
+    def update_task(self, task_id: str, form_data: TaskStatsForm) -> Optional[TaskStatsModel]:
         with get_db() as db:
             task = db.query(TaskStats).filter(TaskStats.id == task_id).first()
             if not task:
