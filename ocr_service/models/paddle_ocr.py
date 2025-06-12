@@ -51,17 +51,17 @@ class PaddleInferOCR(BaseModelPrediction):
     def _initialize_model(self):
         logger.debug(f"Init model at {self._counter_pred} predictions")
         self.model: PaddleOCR = PaddleOCR(
-            text_detection_model_name=self.text_detection_model_name,
-            text_recognition_model_name=self.text_recognition_model_name,
+            # text_detection_model_name=self.text_detection_model_name,
+            # text_recognition_model_name=self.text_recognition_model_name,
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
             # use_textline_orientation
             ocr_version=self.ocr_version,
             device=self.device,
-            cpu_threads=max(1, self.cpu_threads - 1),
+            cpu_threads=self.cpu_threads,
             # text_det_limit_side_len=960,
-            # text_det_limit_type="max",
+            text_det_limit_type="max",
             # text_recognition_batch_size=12,
             enable_mkldnn=True,
             # text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
