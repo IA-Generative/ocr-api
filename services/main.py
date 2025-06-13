@@ -1,17 +1,19 @@
+import os
 import json
 import time
 import traceback
+
 
 from services.base.worker import BaseWorker
 from src.connector.broker_connector import celery_app
 from src.logger import logger
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
-from .factory import load_worker, worker_name
+from .factory import load_worker
 
-process_ocr: BaseWorker = load_worker(name=worker_name)
+process_ocr: BaseWorker = load_worker(name=os.environ["PROCESS_NAME"])
 
 
-@celery_app.task(name=worker_name, bind=True)
+@celery_app.task(name=os.environ["WORKER_NAME"], bind=True)
 def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
