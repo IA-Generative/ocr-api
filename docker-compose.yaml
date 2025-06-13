@@ -66,6 +66,36 @@ services:
     env_file:
       - .env
 
+  checkbox_service:
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: 2.0
+          memory: 4000M
+        reservations:
+          cpus: 2.0
+          memory: 4000M
+    container_name: checkbox-service
+    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E"]
+    image: checkbox-service
+    volumes:
+    - ./ocr_backend/:/app/ocr_backend/
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    - ./services/:/app/services/
+    - ./business/checkbox_service:/app/business/checkbox_service
+    build:
+      context: .
+      dockerfile: Dockerfiles/services/checkbox-detection/Dockerfile
+    depends_on:
+      - redis
+      - minio
+      - ocr_backend
+      - db
+    env_file:
+      - .env
+
   ocr_backend:
     image: ocr-api
     build:
