@@ -38,7 +38,7 @@ services:
     - --cov=./business/checkbox_service
     - --cov=./services
     - --cov-report=term-missing
-    - tests/business
+    - tests/business/checkbox_service
     - tests/services
     - -ra -v --maxfail=0
     volumes:
@@ -47,6 +47,38 @@ services:
     - ./tests/:/app/tests
     - ./services/:/app/services/
     - ./business/checkbox_service:/app/business/checkbox_service
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+      #- migration
+    env_file:
+      - .env
+
+  paddleocr2_service:
+    image: paddleocr2_service
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/services/paddleocr/2.10.0/Dockerfile
+    container_name: paddleocr2_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/paddleocr2
+    - --cov-report=term-missing
+    - tests/business/paddleocr2
+    - -ra -v --maxfail=0
+    volumes:
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    - ./services/:/app/services/
+    - ./business/paddleocr2:/app/business/paddleocr2
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
