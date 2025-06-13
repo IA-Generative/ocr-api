@@ -70,11 +70,14 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         task_data.position = task_table.get_position_in_queue(task_id=task_data.id)
         os.remove(temp_file_path)
+        # WORKER_NAME=worker.tasks.checkbox
+        # QUEUE_NAME=checkbox_model
 
         celery_app.send_task(
-            "worker.tasks.ocr",
+            "worker.tasks.checkbox",
             args=[json.dumps(task_data.model_dump())],
             task_id=task_data.id,
+            queue="checkbox_model",
         )
 
         return task_data
