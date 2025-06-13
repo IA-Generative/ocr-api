@@ -15,6 +15,11 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
         model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
 
+    if name == "paddleocr-3.0.1":
+        from business.paddleocr3.models.paddle import PaddleInferOCR
+
+        model = PaddleInferOCR()
+
     elif name == "checkbox":
         from business.checkbox_service.models.box_detection import BoxDetection
 
