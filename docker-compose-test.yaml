@@ -36,13 +36,16 @@ services:
     - pytest
     - -s
     - --cov=./business/checkbox_service
+    - --cov=./services
     - --cov-report=term-missing
     - tests/business
+    - tests/services
     - -ra -v --maxfail=0
     volumes:
     - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
     - ./tests/:/app/tests
+    - ./services/:/app/services/
     - ./business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"

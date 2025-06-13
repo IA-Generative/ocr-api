@@ -4,7 +4,7 @@ from typing import List
 from PIL import Image
 
 from services.base.model import BaseModelPrediction
-from ocr_service.utils.lazy_pdf import LazyPdfImageList
+from services.utils.lazy_pdf import LazyPdfImageList
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger

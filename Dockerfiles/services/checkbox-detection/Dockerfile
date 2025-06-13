@@ -20,7 +20,7 @@ RUN apt-get update -qy && \
 
 COPY pyproject.toml /app/pyproject.toml
 COPY uv.lock /app/uv.lock
-RUN uv sync --no-cache --group ${SERVICE_NAME}
+RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
 
 COPY ocr_backend /app/ocr_backend
 COPY src /app/src
@@ -34,4 +34,4 @@ ENV PYTHONPATH=/app/
 FROM builder AS test
 WORKDIR /app
 COPY tests tests
-RUN uv sync --no-cache --group test --group ${SERVICE_NAME}
+RUN uv sync --no-cache --group test --group ${SERVICE_NAME} --group services
