@@ -122,3 +122,7 @@ stress-test: install-uv ## Lance un test de charge
 
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
+
+test-services_checkbox:
+	docker compose -f docker-compose-test.yaml up checkbox_service
+	docker compose -f docker-compose-test.yaml down || true
