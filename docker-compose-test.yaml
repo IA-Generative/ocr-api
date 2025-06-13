@@ -54,7 +54,7 @@ services:
       - redis
       - db
       - minio
-      #- migration
+      - migration
     env_file:
       - .env
 
@@ -86,7 +86,43 @@ services:
       - redis
       - db
       - minio
-      #- migration
+      - migration
+    env_file:
+      - .env
+
+
+  ocr_backend:
+    image: ocr_backend
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    container_name: ocr_backend
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./ocr_backend
+    - --cov=./src
+    - --cov-report=term-missing
+    - tests/ocr_backend
+    - tests/src/
+    - -ra -v --maxfail=0
+    volumes:
+    - ./src/:/app/src/
+    - ./tests/src:/app/tests/src
+    - ./tests/ocr_backend:/app/tests/ocr_backend
+    - ./services/:/app/services/
+    - ./ocr_backend/:/app/ocr_backend/
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+      - migration
     env_file:
       - .env
 

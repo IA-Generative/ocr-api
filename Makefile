@@ -67,6 +67,9 @@ up: ## Lance l'environnement de développement en conteneurs
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
 
+down-test:
+	docker compose -f docker-compose-test.yaml down || true
+
 logs-api: ## Affiche les logs du conteneur de l'API
 	docker logs -f $(OCR_BACKEND_CONTAINER)
 
@@ -79,9 +82,9 @@ clean: ## Nettoyage du dépôt
 
 tests: up tests-backend tests-service
 
-tests-backend: up
-	docker exec $(OCR_BACKEND_CONTAINER) pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/  -ra -v --maxfail=0
-	make down
+tests-backend:
+	docker compose -f docker-compose-test.yaml up ocr_backend
+	make down-test
 
 tests-service: up
 	docker exec $(OCR_SERVICE_CONTAINER) pytest -s --cov=./ocr_service --cov-report=term-missing tests/ocr_service/  -ra -v --maxfail=0
@@ -123,6 +126,11 @@ stress-test: install-uv ## Lance un test de charge
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
 
-test-services_checkbox:
+test-services-checkbox:
 	docker compose -f docker-compose-test.yaml up checkbox_service
-	docker compose -f docker-compose-test.yaml down || true
+	make down-test
+
+
+test-services-paddleocr2.10.0:
+	docker compose -f docker-compose-test.yaml up paddleocr2_service
+	make down-test
