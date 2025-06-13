@@ -2519,6 +2519,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+checkboxe-service = [
+    { name = "boxdetect" },
+]
 client = [
     { name = "python-magic" },
 ]
@@ -2579,6 +2582,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+checkboxe-service = [{ name = "boxdetect", specifier = ">=1.0.2" }]
 client = [{ name = "python-magic", specifier = ">=0.4.27" }]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },

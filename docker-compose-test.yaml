@@ -1,0 +1,100 @@
+services:
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data
+    restart: unless-stopped
+    env_file:
+      - .env
+
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    env_file:
+      - .env
+
+  checkbox_service:
+    image: checkbox_service
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/services/checkbox-detection/Dockerfile
+    container_name: checkbox_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/checkbox_service
+    - --cov-report=term-missing
+    - tests/business
+    - -ra -v --maxfail=0
+    volumes:
+    - ./ocr_backend/:/app/ocr_backend/
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    - ./business/checkbox_service:/app/business/checkbox_service
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+      #- migration
+    env_file:
+      - .env
+
+  migration:
+    image: ocr-api
+    command:
+    - alembic
+    - upgrade
+    - head
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+    container_name: ocr-migration
+    volumes:
+    - ./src/:/app/src/
+    - ./migration/:/app/migration
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: example_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  minio_data:
+    driver: local
+
+  postgres_data:
+    driver: local
