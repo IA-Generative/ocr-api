@@ -13,7 +13,7 @@ from .factory import load_worker
 process_ocr: BaseWorker = load_worker(name=os.environ["PROCESS_NAME"])
 
 
-@celery_app.task(name=os.environ["WORKER_NAME"], bind=True)
+@celery_app.task(name=os.environ["WORKER_NAME"], bind=True, queue=os.environ["QUEUE_NAME"])
 def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
