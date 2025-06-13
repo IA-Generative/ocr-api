@@ -27,32 +27,33 @@ class PaddleInferOCR(BaseModelPrediction):
             page_boxes: List[Bbox] = []
 
             for pred in predictions:
-                for text_pred in pred:
-                    bbox, (text, confidence) = text_pred
+                if pred is not None:
+                    for text_pred in pred:
+                        bbox, (text, confidence) = text_pred
 
-                    # Convert polygon to bounding box
-                    x_coords = [point[0] for point in bbox]
-                    y_coords = [point[1] for point in bbox]
-                    x = min(x_coords)
-                    y = min(y_coords)
-                    w = max(x_coords) - x
-                    h = max(y_coords) - y
+                        # Convert polygon to bounding box
+                        x_coords = [point[0] for point in bbox]
+                        y_coords = [point[1] for point in bbox]
+                        x = min(x_coords)
+                        y = min(y_coords)
+                        w = max(x_coords) - x
+                        h = max(y_coords) - y
 
-                    # Normalize coordinates between 0 and 1
-                    norm_x = x / width_img
-                    norm_y = y / height_img
-                    norm_w = w / width_img
-                    norm_h = h / height_img
+                        # Normalize coordinates between 0 and 1
+                        norm_x = x / width_img
+                        norm_y = y / height_img
+                        norm_w = w / width_img
+                        norm_h = h / height_img
 
-                    box = Bbox(
-                        x=norm_x,
-                        y=norm_y,
-                        width=norm_w,
-                        height=norm_h,
-                        confidence=float(confidence),
-                        text=text,
-                    )
-                    page_boxes.append(box)
+                        box = Bbox(
+                            x=norm_x,
+                            y=norm_y,
+                            width=norm_w,
+                            height=norm_h,
+                            confidence=float(confidence),
+                            text=text,
+                        )
+                        page_boxes.append(box)
 
             page = Page(page=i, boxes=page_boxes)
             result.append(page)
