@@ -11,6 +11,10 @@ class BaseBox(BaseModel):
     confidence: float
 
 
+class Checkbox(BaseBox):
+    is_checked: bool
+
+
 class Bbox(BaseBox):
     text: str
 
