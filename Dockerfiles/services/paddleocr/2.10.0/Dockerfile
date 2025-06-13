@@ -10,9 +10,13 @@ ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 COPY benchmark/paddle/2.10.0/pyproject.toml  /app/
 RUN uv sync
 ENV PYTHONPATH=/app
-COPY ocr_service /app/ocr_service
+COPY business/__init__.py /app/business/__init__.py
+COPY business/paddleocr2 /app/business/paddleocr2
+RUN uv run /app/business/paddleocr2/utils/download_paddle_models.2.10.0.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
+
 COPY src /app/src
-RUN uv run /app/ocr_service/utils/download_paddle_models.2.10.0.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
+COPY services /app/services/
+
 ENV PATH=$PATH:/app/.venv/bin/
 
 FROM paddle_model AS test
