@@ -115,6 +115,22 @@ class TaskTable:
                 return None
             return TaskModel.model_validate(task)
 
+    def get_tasks_by_id(self, task_id: str) -> Optional[list[TaskModel]]:
+        with self.get_db() as db:
+            tasks = db.query(Task).filter(Task.id == task_id).all()
+            if not tasks:
+                logger.warning(f"Task with id {task_id} not found.")
+                return None
+            return [TaskModel.model_validate(task) for task in tasks]
+
+    def get_task_by_pks(self, task_id: str, task_type: str) -> Optional[TaskModel]:
+        with self.get_db() as db:
+            task = db.query(Task).filter(Task.id == task_id, Task.type == task_type).first()
+            if not task:
+                logger.warning(f"Task with id {task_id} not found.")
+                return None
+            return TaskModel.model_validate(task)
+
     def update_task(self, task_id: str, form_data: TaskUpdateForm) -> Optional[TaskModel]:
         with self.get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()

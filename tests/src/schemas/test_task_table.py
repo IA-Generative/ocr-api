@@ -177,6 +177,60 @@ def test_get_task_by_id(task_table: TaskTable):
     assert retrieved.status == TaskStatus.QUEUED.value
 
 
+def test_get_tasks_by_id(task_table: TaskTable):
+    # Step 1: Insert a task
+    task = task_table.insert_new_task(
+        user_id="user789",
+        form_data=TaskForm(
+            user_id="user789",
+            type="detection",
+            status=TaskStatus.QUEUED.value,
+            percentage=0.0,
+            extras={"test": True},
+        ),
+    )
+
+    assert task is not None
+
+    # Step 2: Retrieve it
+    retrieved = task_table.get_tasks_by_id(task.id)
+
+    # Step 3: Assertions
+    assert retrieved is not None
+    assert len(retrieved) == 1
+    assert retrieved[0].id == task.id
+    assert retrieved[0].type == "detection"
+    assert retrieved[0].status == TaskStatus.QUEUED.value
+    retrieved = task_table.get_tasks_by_id("task.id")
+    assert retrieved is None
+
+
+def test_get_tasks_by_pks(task_table: TaskTable):
+    # Step 1: Insert a task
+    task = task_table.insert_new_task(
+        user_id="user789",
+        form_data=TaskForm(
+            user_id="user789",
+            type="detection",
+            status=TaskStatus.QUEUED.value,
+            percentage=0.0,
+            extras={"test": True},
+        ),
+    )
+
+    assert task is not None
+
+    # Step 2: Retrieve it
+    retrieved = task_table.get_task_by_pks(task.id, task_type="detection")
+    # Step 3: Assertions
+    assert retrieved is not None
+    assert retrieved.id == task.id
+    assert retrieved.type == "detection"
+    assert retrieved.status == TaskStatus.QUEUED.value
+    retrieved = task_table.get_task_by_pks(task.id, task_type="detectionnot-found")
+    assert retrieved is None
+
+
 def test_get_task_by_invalid_id(task_table: TaskTable):
     result = task_table.get_task_by_id("non-existent-id")
     assert result is None
