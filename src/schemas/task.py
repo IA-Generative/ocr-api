@@ -17,7 +17,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String, primary_key=True)
-    type = Column(String, nullable=False)
+    type = Column(String, nullable=False, primary_key=True)
     status = Column(String, default="queued")
     user_id = Column(String, nullable=False)
     percentage = Column(FLOAT, nullable=False)
@@ -67,7 +67,6 @@ class TaskUpdateForm(BaseModel):
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
     output: Optional[OCRResult] = None
-
 
 
 class TaskStatus(str, Enum):
@@ -187,7 +186,10 @@ class TaskTable:
 
                 position = (
                     db.query(func.count(Task.id))  # noqa
-                    .filter(Task.status == TaskStatus.QUEUED, Task.created_at < task.created_at)
+                    .filter(
+                        Task.status == TaskStatus.QUEUED,
+                        Task.created_at < task.created_at,
+                    )
                     .scalar()
                 )
 
