@@ -12,6 +12,7 @@ RUN uv sync
 ENV PYTHONPATH=/app
 COPY business/__init__.py /app/business/__init__.py
 COPY business/paddleocr2 /app/business/paddleocr2
+COPY business/checkbox_service /app/business/checkbox_service
 RUN uv run /app/business/paddleocr2/utils/download_paddle_models.2.10.0.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
 
 COPY src /app/src
