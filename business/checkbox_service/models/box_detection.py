@@ -33,6 +33,7 @@ cfg.dilation_iterations = 0
 class BoxDetection(BaseModelPrediction):
     def __init__(self, cfg: config.PipelinesConfig = cfg):
         self.cfg = cfg
+        self.px_threshold = 0.2
 
     def batch_predict(
         self,
@@ -50,7 +51,7 @@ class BoxDetection(BaseModelPrediction):
             image = image.convert("RGB")
             img_width, img_height = image.size
             image = np.array(image)
-            checkboxes = get_checkboxes(img=image, cfg=self.cfg, verbose=False, px_threshold=0.2)
+            checkboxes = get_checkboxes(img=image, cfg=self.cfg, verbose=False, px_threshold=self.px_threshold)
             page_checkboxes: list[Checkbox] = []
 
             for checkbox in checkboxes:
@@ -71,7 +72,7 @@ class BoxDetection(BaseModelPrediction):
                         y=checkbox_model.y,
                         width=checkbox_model.width,
                         height=checkbox_model.height,
-                        confidence=0.8,
+                        confidence=self.px_threshold + 0.1,
                         text="[x]" if is_checked else "[ ]",
                     )
                 )
