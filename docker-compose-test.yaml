@@ -127,7 +127,7 @@ services:
       - .env
 
   migration:
-    image: ocr-api
+    image: ocr_backend
     command:
     - alembic
     - upgrade
