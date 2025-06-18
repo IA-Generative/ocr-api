@@ -55,15 +55,18 @@ class BoxDetection(BaseModelPrediction):
             page_checkboxes: list[Checkbox] = []
 
             for checkbox in checkboxes:
-                bbox, is_checked, _ = checkbox
+                bbox, is_checked, crop_img = checkbox
                 x, y, width, height = bbox
+                all_px_count = crop_img.shape[0] * crop_img.shape[1]
+                nonzero_px_count = np.count_nonzero(crop_img)
+
                 checkbox_model = Checkbox(
                     x=x / img_width,
                     y=y / img_height,
                     width=width / img_width,
                     height=height / img_height,
                     is_checked=is_checked,
-                    confidence=1,
+                    confidence=nonzero_px_count / all_px_count,
                 )
                 page_checkboxes.append(checkbox_model)
                 page.boxes.append(
@@ -72,7 +75,7 @@ class BoxDetection(BaseModelPrediction):
                         y=checkbox_model.y,
                         width=checkbox_model.width,
                         height=checkbox_model.height,
-                        confidence=self.px_threshold + 0.1,
+                        confidence=nonzero_px_count / all_px_count,
                         text="[x]" if is_checked else "[ ]",
                     )
                 )
