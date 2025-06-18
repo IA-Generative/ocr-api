@@ -2519,7 +2519,7 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
-checkboxe-service = [
+checkbox-service = [
     { name = "boxdetect" },
 ]
 client = [
@@ -2543,6 +2543,14 @@ ocr-service-paddle = [
     { name = "opencv-python-headless" },
     { name = "paddleocr" },
     { name = "paddlepaddle" },
+    { name = "pdf2image" },
+    { name = "pillow" },
+    { name = "psutil" },
+    { name = "pynvml" },
+]
+services = [
+    { name = "boxdetect" },
+    { name = "opencv-python-headless" },
     { name = "pdf2image" },
     { name = "pillow" },
     { name = "psutil" },
@@ -2582,7 +2590,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
-checkboxe-service = [{ name = "boxdetect", specifier = ">=1.0.2" }]
+checkbox-service = [{ name = "boxdetect", specifier = ">=1.0.2" }]
 client = [{ name = "python-magic", specifier = ">=0.4.27" }]
 dev = [
     { name = "ipykernel", specifier = ">=6.29.5" },
@@ -2600,6 +2608,14 @@ ocr-service-paddle = [
     { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
     { name = "paddleocr", specifier = "==3.0.1" },
     { name = "paddlepaddle", specifier = "==3.0.0" },
+    { name = "pdf2image", specifier = "==1.17.0" },
+    { name = "pillow", specifier = "==10.4.0" },
+    { name = "psutil", specifier = ">=7.0.0" },
+    { name = "pynvml", specifier = ">=12.0.0" },
+]
+services = [
+    { name = "boxdetect", specifier = ">=1.0.2" },
+    { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
     { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pillow", specifier = "==10.4.0" },
     { name = "psutil", specifier = ">=7.0.0" },
