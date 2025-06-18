@@ -144,7 +144,6 @@ services:
       - .env
     depends_on:
       - db
-      - ocr_backend
 
   db:
     image: postgres:15
