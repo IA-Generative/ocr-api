@@ -6,6 +6,7 @@ from src.schemas.box import Checkbox
 from boxdetect.pipelines import get_checkboxes
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
+from src.schemas.box import Bbox
 
 cfg = config.PipelinesConfig()
 
@@ -55,14 +56,23 @@ class BoxDetection(BaseModelPrediction):
             for checkbox in checkboxes:
                 bbox, is_checked, _ = checkbox
                 x, y, width, height = bbox
-                page_checkboxes.append(
-                    Checkbox(
-                        x=x / img_width,
-                        y=y / img_height,
-                        width=width / img_width,
-                        height=height / img_height,
-                        is_checked=is_checked,
-                        confidence=1,
+                checkbox_model = Checkbox(
+                    x=x / img_width,
+                    y=y / img_height,
+                    width=width / img_width,
+                    height=height / img_height,
+                    is_checked=is_checked,
+                    confidence=1,
+                )
+                page_checkboxes.append(checkbox_model)
+                page.boxes.append(
+                    Bbox(
+                        x=checkbox_model.x,
+                        y=checkbox_model.y,
+                        width=checkbox_model.width,
+                        height=checkbox_model.height,
+                        confidence=0.8,
+                        text="[x]" if is_checked else "[ ]",
                     )
                 )
 

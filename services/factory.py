@@ -32,7 +32,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
     return BaseWorker(
         name=name,
         file_connector=s3_client_connector,
-        model=model,
+        models=[model],
         batch_size=batch_size,
         worker_weight=worker_weight,
     )

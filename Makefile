@@ -80,15 +80,10 @@ clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
 	$(MAKE) down
 
-tests: up tests-backend tests-service
 
 tests-backend:
 	docker compose -f docker-compose-test.yaml up ocr_backend
 	make down-test
-
-tests-service: up
-	docker exec $(OCR_SERVICE_CONTAINER) pytest -s --cov=./ocr_service --cov-report=term-missing tests/ocr_service/  -ra -v --maxfail=0
-	make down
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
@@ -130,7 +125,10 @@ test-services-checkbox:
 	docker compose -f docker-compose-test.yaml up checkbox_service
 	make down-test
 
-
 test-services-paddleocr2.10.0:
 	docker compose -f docker-compose-test.yaml up paddleocr2_service
+	make down-test
+
+test-backend-api:
+	docker compose -f docker-compose-test.yaml up ocr_backend
 	make down-test

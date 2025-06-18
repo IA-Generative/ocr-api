@@ -33,7 +33,7 @@ def storage_service() -> BaseFileConnector:
 
 @pytest.fixture(scope="module")
 def mocked_worker(storage_service: BaseFileConnector, mocked_models: BaseModelPrediction) -> BaseWorker:
-    return BaseWorker(name="mock", file_connector=storage_service, model=mocked_models)
+    return BaseWorker(name="mock", file_connector=storage_service, models=[mocked_models])
 
 
 def test_task_process_paddle(storage_service: BaseFileConnector, mocked_worker: BaseWorker):

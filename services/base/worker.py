@@ -24,13 +24,13 @@ class BaseWorker:
         self,
         name: str,
         file_connector: S3Connector,
-        model: BaseModelPrediction,
+        models: List[BaseModelPrediction],
         batch_size: int = 2,
         worker_weight: float = 1,
     ):
         self.name = name
         self.file_connector = file_connector
-        self.model = model
+        self.models = models
         self.worker_weight = worker_weight
         self.batch_size = batch_size
 
@@ -104,8 +104,10 @@ class BaseWorker:
             t_predict = time.time()
             batch = pages[i : i + self.batch_size]
             logger.debug(f"{filename} for task {task.id}")
+            partial_result: List[Page] = task.output.pages
 
-            partial_result: List[Page] = self.model.batch_predict(images=batch, pages=task.output.pages)
+            for model in self.models:
+                partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
             for j, image in enumerate(batch):
                 buffer = BytesIO()
                 image.save(buffer, format="JPEG")
