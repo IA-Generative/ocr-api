@@ -23,83 +23,111 @@ services:
     env_file:
       - .env
 
-  flower_ocr:
-    image: ocr-service-paddle
-    environment:
-      CELERY_BROKER_URL: redis://redis
-      CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
-    ports:
-      - "5555:5555"
+  checkbox_service:
+    image: checkbox_service
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/services/checkbox-detection/Dockerfile
+    container_name: checkbox_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/checkbox_service
+    - --cov=./services
+    - --cov-report=term-missing
+    - tests/business/checkbox_service
+    - tests/services
+    - -ra -v --maxfail=0
     volumes:
-    - ./ocr_service/:/app/ocr_service/
+    - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
-    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    - ./tests/:/app/tests
+    - ./services/:/app/services/
+    - ./business/checkbox_service:/app/business/checkbox_service
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+      - migration
     env_file:
       - .env
 
-  ocr_service:
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: 2.0
-          memory: 4000M
-        reservations:
-          cpus: 2.0
-          memory: 4000M
-    container_name: ocr-service
-    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=paddle_worker@%h"]
-    image: ocr-service-paddle
+  paddleocr2_service:
+    image: paddleocr2_service
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/services/paddleocr/2.10.0/Dockerfile
+    container_name: paddleocr2_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/paddleocr2
+    - --cov-report=term-missing
+    - tests/business/paddleocr2
+    - -ra -v --maxfail=0
     volumes:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     - ./services/:/app/services/
     - ./business/paddleocr2:/app/business/paddleocr2
-    build:
-      context: .
-      dockerfile: Dockerfiles/services/paddleocr/2.10.0/Dockerfile
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
     depends_on:
       - redis
-      - minio
-      #- migration
       - db
-    environment:
-      - PROCESS_NAME=paddleocr-2.10.0
-      - WORKER_NAME=worker.tasks.ocr
-      - CELERY_APP_NAME=default
+      - minio
+      - migration
     env_file:
       - .env
 
+
   ocr_backend:
-    image: ocr-api
+    image: ocr_backend
     build:
       target: test
       context: .
       dockerfile: Dockerfiles/ocr_backend/Dockerfile
-    ports:
-    - 5000:5000
-    container_name: ocr-api
+    container_name: ocr_backend
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./ocr_backend
+    - --cov=./src
+    - --cov-report=term-missing
+    - tests/ocr_backend
+    - tests/src/
+    - -ra -v --maxfail=0
     volumes:
-    - ./ocr_backend/:/app/ocr_backend/
     - ./src/:/app/src/
-    - ./tests/:/app/tests
+    - ./tests/src:/app/tests/src
+    - ./tests/ocr_backend:/app/tests/ocr_backend
+    - ./services/:/app/services/
+    - ./ocr_backend/:/app/ocr_backend/
     environment:
-      - DEV_MODE="true"
-      - PROCESS_NAME=paddleocr-2.10.0
-      - WORKER_NAME=worker.tasks.ocr
-      - CELERY_APP_NAME=default
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
     depends_on:
       - redis
       - db
       - minio
-      #- migration
-
-
+      - migration
     env_file:
       - .env
 
   migration:
-    image: ocr-api
+    image: ocr_backend
     command:
     - alembic
     - upgrade

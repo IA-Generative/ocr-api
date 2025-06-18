@@ -39,14 +39,11 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make tests-backend
-
-      - name: Stop docker container
-        run: |
-          make down
+          make test-backend-api
 
 
-  run-tests-service:
+
+  run-tests-service-checkbox:
     runs-on: actions-runner-controller
     needs: build-and-push
     permissions:
@@ -62,8 +59,22 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make tests-service
+          make test-services-checkbox
 
-      - name: Stop docker container
+  run-tests-service-paddle:
+    runs-on: actions-runner-controller
+    needs: build-and-push
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
         run: |
-          make down
+          make test-services-paddleocr2.10.0
