@@ -48,7 +48,7 @@ services:
           cpus: 2.0
           memory: 4000M
     container_name: ocr-service
-    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=paddle_worker@%h" , "--queues=paddleocr_model"]
+    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=paddle_worker@%h"]
     image: ocr-service-paddle
     volumes:
     - ./src/:/app/src/
@@ -66,43 +66,7 @@ services:
     environment:
       - PROCESS_NAME=paddleocr-2.10.0
       - WORKER_NAME=worker.tasks.ocr
-      - CELERY_APP_NAME=ocr_paddle
-      - QUEUE_NAME=paddleocr_model
-    env_file:
-      - .env
-
-  checkbox_service:
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          cpus: 2.0
-          memory: 4000M
-        reservations:
-          cpus: 2.0
-          memory: 4000M
-    container_name: checkbox-service
-    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=checkbox_worker@%h" , "--queues=checkbox_model"]
-    image: checkbox-service
-    volumes:
-    - ./ocr_backend/:/app/ocr_backend/
-    - ./src/:/app/src/
-    - ./tests/:/app/tests
-    - ./services/:/app/services/
-    - ./business/checkbox_service:/app/business/checkbox_service
-    build:
-      context: .
-      dockerfile: Dockerfiles/services/checkbox-detection/Dockerfile
-    depends_on:
-      - redis
-      - minio
-      - ocr_backend
-      - db
-    environment:
-      - PROCESS_NAME=checkbox
-      - WORKER_NAME=worker.tasks.checkbox
-      - QUEUE_NAME=checkbox_model
-      - CELERY_APP_NAME=checkbox
+      - CELERY_APP_NAME=default
     env_file:
       - .env
 
@@ -120,13 +84,17 @@ services:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
+      - DEV_MODE="true"
+      - PROCESS_NAME=paddleocr-2.10.0
+      - WORKER_NAME=worker.tasks.ocr
+      - CELERY_APP_NAME=default
     depends_on:
       - redis
       - db
       - minio
       #- migration
+
+
     env_file:
       - .env
 

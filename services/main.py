@@ -5,15 +5,19 @@ import traceback
 
 
 from services.base.worker import BaseWorker
-from src.connector.broker_connector import celery_app
+from src.connector.broker_connector import celery_app, celery_config
 from src.logger import logger
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
 from .factory import load_worker
 
 process_ocr: BaseWorker = load_worker(name=os.environ["PROCESS_NAME"])
 
+logger.info(
+    f'{os.environ["WORKER_NAME"]} - {os.environ["PROCESS_NAME"]} {celery_config.CELERY_APP_NAME}' + "\n" + 79 * "*"
+)
 
-@celery_app.task(name=os.environ["WORKER_NAME"], bind=True, queue=os.environ["QUEUE_NAME"])
+
+@celery_app.task(name=os.environ["WORKER_NAME"], bind=True)
 def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
