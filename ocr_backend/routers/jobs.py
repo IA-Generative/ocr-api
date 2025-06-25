@@ -6,7 +6,7 @@ import traceback
 
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
-from src.connector.broker_connector import celery_app
+from src.connector.broker_connector import celery_app, celery_config
 from src.logger import logger
 from src.schemas.input import InputForm
 from src.schemas.task import (
@@ -22,6 +22,7 @@ from src.schemas.task import (
 from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Jobs"])
+WORKER_NAME = "worker.tasks.ocr"
 
 
 @router.post("/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
@@ -71,10 +72,14 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         task_data.position = task_table.get_position_in_queue(task_id=task_data.id)
         os.remove(temp_file_path)
 
+        # QUEUE_NAME=checkbox_model
+        logger.debug(f"{task_data.id} worker name {WORKER_NAME} - {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*")
+
         celery_app.send_task(
-            "worker.tasks.ocr",
+            WORKER_NAME,
             args=[json.dumps(task_data.model_dump())],
             task_id=task_data.id,
+            # queue="ocr_queue",
         )
 
         return task_data

@@ -24,7 +24,7 @@ def db_session():
 
 
 @pytest.fixture
-def task_table(db_session):
+def task_table(db_session) -> TaskTable:
     @contextmanager
     def fake_get_db():
         yield db_session
@@ -32,7 +32,7 @@ def task_table(db_session):
     return TaskTable(get_db=fake_get_db)
 
 
-def test_insert_new_task(task_table):
+def test_insert_new_task(task_table: TaskTable):
     form_data = TaskForm(
         user_id="user123",
         type="classification",
@@ -54,7 +54,7 @@ def test_insert_new_task(task_table):
     assert isinstance(result.updated_at, int)
 
 
-def test_insert_new_task_w_input(task_table):
+def test_insert_new_task_w_input(task_table: TaskTable):
     form_data = TaskForm(
         user_id="user123",
         type="classification",
@@ -85,7 +85,7 @@ def test_insert_new_task_w_input(task_table):
     assert result.input is not None
 
 
-def test_update_task(task_table):
+def test_update_task(task_table: TaskTable):
     new_task = task_table.insert_new_task(
         user_id="user456",
         form_data=TaskForm(
@@ -113,7 +113,7 @@ def test_update_task(task_table):
     assert not_found_updated is None
 
 
-def test_update_task_w_input(task_table):
+def test_update_task_w_input(task_table: TaskTable):
     input_form = InputForm(
         type="image",
         storage_file_path="https://example.com/image.jpg",
@@ -152,7 +152,7 @@ def test_update_task_w_input(task_table):
     assert updated.input == input_form
 
 
-def test_get_task_by_id(task_table):
+def test_get_task_by_id(task_table: TaskTable):
     # Step 1: Insert a task
     task = task_table.insert_new_task(
         user_id="user789",
@@ -177,12 +177,66 @@ def test_get_task_by_id(task_table):
     assert retrieved.status == TaskStatus.QUEUED.value
 
 
-def test_get_task_by_invalid_id(task_table):
+def test_get_tasks_by_id(task_table: TaskTable):
+    # Step 1: Insert a task
+    task = task_table.insert_new_task(
+        user_id="user789",
+        form_data=TaskForm(
+            user_id="user789",
+            type="detection",
+            status=TaskStatus.QUEUED.value,
+            percentage=0.0,
+            extras={"test": True},
+        ),
+    )
+
+    assert task is not None
+
+    # Step 2: Retrieve it
+    retrieved = task_table.get_tasks_by_id(task.id)
+
+    # Step 3: Assertions
+    assert retrieved is not None
+    assert len(retrieved) == 1
+    assert retrieved[0].id == task.id
+    assert retrieved[0].type == "detection"
+    assert retrieved[0].status == TaskStatus.QUEUED.value
+    retrieved = task_table.get_tasks_by_id("task.id")
+    assert retrieved is None
+
+
+def test_get_tasks_by_pks(task_table: TaskTable):
+    # Step 1: Insert a task
+    task = task_table.insert_new_task(
+        user_id="user789",
+        form_data=TaskForm(
+            user_id="user789",
+            type="detection",
+            status=TaskStatus.QUEUED.value,
+            percentage=0.0,
+            extras={"test": True},
+        ),
+    )
+
+    assert task is not None
+
+    # Step 2: Retrieve it
+    retrieved = task_table.get_task_by_pks(task.id, task_type="detection")
+    # Step 3: Assertions
+    assert retrieved is not None
+    assert retrieved.id == task.id
+    assert retrieved.type == "detection"
+    assert retrieved.status == TaskStatus.QUEUED.value
+    retrieved = task_table.get_task_by_pks(task.id, task_type="detectionnot-found")
+    assert retrieved is None
+
+
+def test_get_task_by_invalid_id(task_table: TaskTable):
     result = task_table.get_task_by_id("non-existent-id")
     assert result is None
 
 
-def test_delete_task_by_id(task_table):
+def test_delete_task_by_id(task_table: TaskTable):
     # Step 1: Create a task
     task = task_table.insert_new_task(
         user_id="user123",
@@ -212,7 +266,7 @@ def test_delete_task_by_id(task_table):
     assert not_found_deleted_task is None
 
 
-def test_get_tasks_by_user_id_with_pagination(task_table):
+def test_get_tasks_by_user_id_with_pagination(task_table: TaskTable):
     # Step 1: Insert 15 tasks for user123
     for i in range(15):
         task_table.insert_new_task(
@@ -243,7 +297,7 @@ def test_get_tasks_by_user_id_with_pagination(task_table):
     assert len(tasks_page_3) == 5  # Last page should also contain 5 tasks
 
 
-def test_delete_tasks_by_user_id(task_table):
+def test_delete_tasks_by_user_id(task_table: TaskTable):
     # Step 1: Insert 5 tasks for user123
     for i in range(5):
         task_table.insert_new_task(

@@ -1,6 +1,7 @@
+import os
 from typing import List
 import logging
-from PIL import Image, ImageOps
+from PIL import Image
 from time import perf_counter
 
 from paddleocr import PaddleOCR
@@ -9,7 +10,7 @@ import numpy as np
 from ocr_service.models.base import BaseModelPrediction
 from src.schemas.output import Page
 from src.schemas.box import Bbox
-from paddleocr import logger
+from src.logger import logger
 
 logger.setLevel(logging.DEBUG)
 
@@ -20,7 +21,7 @@ class PaddleInferOCR(BaseModelPrediction):
         device: str = "cpu",
         cpu_threads: int = 4,
         batch_size: int = 1,
-        target_size: int = 960,
+        target_size: tuple[int, int] = None,  # (None, 512),
         text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
         text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
         ocr_version: str = "PP-OCRv3",
@@ -71,11 +72,22 @@ class PaddleInferOCR(BaseModelPrediction):
 
     def _resize_image(self, image: Image.Image) -> Image.Image:
         """Redimensionne l'image tout en préservant le ratio d'aspect si demandé"""
+        logger.debug(f"[image size][{image.size}]")
         if self.target_size:
-            if self.preserve_aspect_ratio:
-                return ImageOps.contain(image, (self.target_size, self.target_size))
-            else:
-                return image.resize((self.target_size, self.target_size), Image.LANCZOS)
+            if isinstance(self.target_size, tuple) and len(self.target_size) == 2:
+                target_width, target_height = self.target_size
+                if target_width and not target_height:
+                    ratio = image.height / image.width
+                    target_height = int(target_width * ratio)
+                elif target_height and not target_width:
+                    ratio = image.width / image.height
+                    target_width = int(target_height * ratio)
+                else:
+                    pass
+
+                image = image.resize((target_width, target_height), Image.LANCZOS)
+                logger.debug(f"[image size][{image.size}]")
+
         return image
 
     def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
@@ -130,5 +142,57 @@ class PaddleInferOCR(BaseModelPrediction):
         if self._counter_pred % 4 == 0:
             self._initialize_model()
             self._counter_pred = 0
+
+        return result
+
+
+class PaddleInferOCR2(BaseModelPrediction):
+    def __init__(self, path_model: str):
+        self.model: PaddleOCR = PaddleOCR(
+            det_model_dir=os.path.join(path_model, "detection"),
+            rec_model_dir=os.path.join(path_model, "recognition"),
+            cls_model_dir=os.path.join(path_model, "classification"),
+            use_angle_cls=False,
+            lang="fr",
+        )
+
+    def batch_predict(self, images: List[Image.Image], *args, **kwargs) -> List[Page]:
+        result: List[Page] = []
+
+        for i, image in enumerate(images):
+            width_img, height_img = image.size
+            predictions = self.model.ocr(np.array(image), det=True, rec=True, cls=True)
+            page_boxes: List[Bbox] = []
+
+            for pred in predictions:
+                for text_pred in pred:
+                    bbox, (text, confidence) = text_pred
+
+                    # Convert polygon to bounding box
+                    x_coords = [point[0] for point in bbox]
+                    y_coords = [point[1] for point in bbox]
+                    x = min(x_coords)
+                    y = min(y_coords)
+                    w = max(x_coords) - x
+                    h = max(y_coords) - y
+
+                    # Normalize coordinates between 0 and 1
+                    norm_x = x / width_img
+                    norm_y = y / height_img
+                    norm_w = w / width_img
+                    norm_h = h / height_img
+
+                    box = Bbox(
+                        x=norm_x,
+                        y=norm_y,
+                        width=norm_w,
+                        height=norm_h,
+                        confidence=float(confidence),
+                        text=text,
+                    )
+                    page_boxes.append(box)
+
+            page = Page(page=i, boxes=page_boxes)
+            result.append(page)
 
         return result
