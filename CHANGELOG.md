@@ -29,6 +29,24 @@
 - code clean
 - :art: change minio vars
 
+## [0.1.0](https://github.com/IA-Generative/ocr-api/compare/v0.0.1...v0.1.0) (2025-06-18)
+
+
+### Features
+
+* ❇️ add queue arch ([#21](https://github.com/IA-Generative/ocr-api/issues/21)) ([0243aaf](https://github.com/IA-Generative/ocr-api/commit/0243aafead55914213fd21d2b86255dfd29db746))
+* Add BoxDetection model and update configuration parameters ([#53](https://github.com/IA-Generative/ocr-api/issues/53)) ([ea8b33c](https://github.com/IA-Generative/ocr-api/commit/ea8b33c0ddfdf31a89fedba932fb2c3bba0d1cdf))
+
+
+### Bug Fixes
+
+* async routes ([#7](https://github.com/IA-Generative/ocr-api/issues/7)) ([525dddd](https://github.com/IA-Generative/ocr-api/commit/525dddd4ca418c396ced33c29953f4ac9a87f6e9))
+* Correct Dockerfile path for ocr-service-paddle build ([e3f59e8](https://github.com/IA-Generative/ocr-api/commit/e3f59e812c0d997a2b88b56f914ea4d4571b5b1f))
+* Improve checkbox confidence calculation and refactor code for readability ([262e57f](https://github.com/IA-Generative/ocr-api/commit/262e57fc25ef1918ad4f6236b86bb2c114ad68b7))
+* Refactor model initialization to move warmup logging after model creation ([20a55dd](https://github.com/IA-Generative/ocr-api/commit/20a55dd11af9f428fe310c676f9b183a5cf48628))
+* Remove unused GPU build configuration for ocr-service-paddle ([a1fc6c3](https://github.com/IA-Generative/ocr-api/commit/a1fc6c3b00e754db6f9a297d40f5ab5b03f1a027))
+* Update target_size type to tuple and enhance image resizing logic ([9b92d3f](https://github.com/IA-Generative/ocr-api/commit/9b92d3fb20610b4fbdb88506f0814b5d466eadee))
+
 ## [1.3.0](https://github.com/IA-Generative/ocr-api/compare/v1.2.1...v1.3.0) (2025-05-21)
 
 
