@@ -22,6 +22,7 @@ class PaddleInferOCR2(BaseModelPrediction):
             cls_model_dir=os.path.join(path_model, "classification"),
             use_angle_cls=False,
             lang="fr",
+            use_gpu=True if os.environ.get("USE_GPU") == 0 else False,
         )
 
     def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
