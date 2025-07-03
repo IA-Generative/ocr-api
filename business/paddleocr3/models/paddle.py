@@ -21,9 +21,9 @@ class PaddleInferOCR(BaseModelPrediction):
         cpu_threads: int = 4,
         batch_size: int = 1,
         target_size: tuple[int, int] = None,  # (None, 512),
-        text_detection_model_name: str = None,  # "PP-OCRv5_mobile_det"
-        text_recognition_model_name: str = None,  # "PP-OCRv5_mobile_rec"
-        ocr_version: str = "PP-OCRv3",
+        text_detection_model_name: str = "PP-OCRv5_mobile_det",
+        text_recognition_model_name: str = "PP-OCRv5_mobile_rec",
+        ocr_version: str = "PP-OCRv5",
         lang: str | None = None,
     ):
         self.preserve_aspect_ratio = True
@@ -91,6 +91,8 @@ class PaddleInferOCR(BaseModelPrediction):
 
     def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
         result: List[Page] = []
+        if len(pages):
+            assert len(images) == len(pages)
         t_resize = perf_counter()
         resized_images = [self._resize_image(img) for img in images]
         logger.debug(f"Resize time {perf_counter() - t_resize}")
