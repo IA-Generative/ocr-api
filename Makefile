@@ -129,6 +129,10 @@ test-services-paddleocr2.10.0:
 	docker compose -f docker-compose-test.yaml up paddleocr2_service
 	make down-test
 
+test-services-paddleocr3.0.1:
+	docker compose -f docker-compose-test.yaml up paddleocr3_service
+	make down-test
+
 test-backend-api:
 	docker compose -f docker-compose-test.yaml up ocr_backend
 	make down-test
