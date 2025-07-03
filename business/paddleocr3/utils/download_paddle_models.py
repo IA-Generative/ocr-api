@@ -1,10 +1,14 @@
-from ocr_service.configs.paddle import PaddleSetting
-from ocr_service.models.paddle_ocr import PaddleInferOCR
+from business.paddleocr3.config import PaddleSetting
+from business.paddleocr3.models.paddle import PaddleInferOCR
+from business.paddleocr3.models.formula import PaddleFormulaPredcition
+from business.paddleocr3.models.layout import PaddleLayoutDetection
 
 ocr_settings = PaddleSetting()
-ocr_model = PaddleInferOCR(
+PaddleInferOCR(
     device=ocr_settings.DEVICE,
     batch_size=ocr_settings.DETECTION_BATCH_SIZE,
     ocr_version=ocr_settings.OCR_VERSION,
     lang=ocr_settings.OCR_LANG,
 )
+PaddleLayoutDetection()
+PaddleFormulaPredcition()

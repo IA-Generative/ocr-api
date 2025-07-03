@@ -25,6 +25,20 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
         model = PaddleInferOCR()
 
+    elif name == "paddleocr-3.0.1-pipeline":
+        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.layout import PaddleLayoutDetection
+        from business.paddleocr3.models.formula import PaddleFormulaPredcition
+        from business.paddleocr3.models.pipeline import PipelineLinearPrediction
+
+        model = PipelineLinearPrediction(
+            models=[
+                PaddleInferOCR(device="cpu"),
+                PaddleLayoutDetection(device="cpu"),
+                PaddleFormulaPredcition(device="cpu"),
+            ]
+        )
+
     else:
         raise NotImplementedError("")
 
