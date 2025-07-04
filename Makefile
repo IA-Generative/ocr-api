@@ -4,7 +4,7 @@ PYTHONPATH=$(PWD)
 OCR_BACKEND_CONTAINER=ocr-api
 OCR_SERVICE_CONTAINER=ocr-service
 STRESS_HOST=http://localhost:5000
-
+HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
 .PHONY: install-uv install-local linter bump-patch bump-minor \
         up down tests build-ocr-backend build-ocr-service build \
@@ -132,6 +132,17 @@ test-services-paddleocr2.10.0:
 test-services-paddleocr3.0.1:
 	docker compose -f docker-compose-test.yaml up paddleocr3_service
 	make down-test
+
+test-services-paddleocr3.0.1-gpu:
+ifeq ($(HAS_GPU),yes)
+	@echo "✅ GPU detected. Running GPU tests..."
+	docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
+	make down-test
+else
+	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
+	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
+endif
+	
 
 test-backend-api:
 	docker compose -f docker-compose-test.yaml up ocr_backend

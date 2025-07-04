@@ -1,3 +1,4 @@
+import os 
 from PIL import Image
 from pathlib import Path
 from src.schemas.output import Page
@@ -8,13 +9,14 @@ from business.paddleocr3.models.paddle import PaddleInferOCR
 from src.utils.draw import draw_normalized_layout, draw_normalized_bboxes
 import json
 
+DEVICE = os.environ.get("DEVICE", "cpu")
 
 def test_pipeline_ocr():
     obj = PipelineLinearPrediction(
         models=[
-            PaddleInferOCR(),
-            PaddleLayoutDetection(),
-            PaddleFormulaPredcition(),
+            PaddleInferOCR(device=DEVICE),
+            PaddleLayoutDetection(device=DEVICE),
+            PaddleFormulaPredcition(device=DEVICE),
         ]
     )
     path_image = Path("tests/data/valid/Exo7-algebre-page40.jpg")

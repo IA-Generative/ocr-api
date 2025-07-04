@@ -1,11 +1,13 @@
+import os 
 import pytest
 from PIL import Image
 from src.schemas.output import Page
 from business.paddleocr3.models.layout import PaddleLayoutDetection
 
+DEVICE = os.environ.get("DEVICE", "cpu")
 
 def test_layout_inference_without_pages():
-    obj = PaddleLayoutDetection()
+    obj = PaddleLayoutDetection(device=DEVICE)
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")
     actual_pages = obj.batch_predict(images=[image])
@@ -15,7 +17,7 @@ def test_layout_inference_without_pages():
 
 
 def test_layout_inference_with_pages():
-    obj = PaddleLayoutDetection()
+    obj = PaddleLayoutDetection(device=DEVICE)
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")
     actual_pages = obj.batch_predict(images=[image], pages=[Page(page=0)])
