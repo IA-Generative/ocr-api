@@ -14,7 +14,7 @@ ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 
 COPY benchmark/paddle/2.10.0/pyproject.toml  /app/
 RUN uv sync
-RUN vu add paddlepaddle-gpu==2.6.2
+RUN uv add paddlepaddle-gpu==2.6.2
 ENV PYTHONPATH=/app
 COPY business/__init__.py /app/business/__init__.py
 COPY business/paddleocr2 /app/business/paddleocr2
