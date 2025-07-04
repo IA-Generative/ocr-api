@@ -1,3 +1,4 @@
+import os
 import boto3
 
 from services.base.worker import BaseWorker
@@ -9,6 +10,7 @@ from src.logger import logger
 s3_client = boto3.client("s3")
 s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 
+DEVICE = os.environ.get("DEVICE", "cpu")
 
 def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> BaseWorker:
     logger.info(f"---- {name} selected ----")
@@ -24,6 +26,20 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         from business.paddleocr3.models.paddle import PaddleInferOCR
 
         model = PaddleInferOCR()
+
+    elif name == "paddleocr-3.0.1-pipeline":
+        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.layout import PaddleLayoutDetection
+        from business.paddleocr3.models.formula import PaddleFormulaPredcition
+        from business.paddleocr3.models.pipeline import PipelineLinearPrediction
+
+        model = PipelineLinearPrediction(
+            models=[
+                PaddleInferOCR(device=DEVICE),
+                PaddleLayoutDetection(device=DEVICE),
+                PaddleFormulaPredcition(device=DEVICE),
+            ]
+        )
 
     else:
         raise NotImplementedError("")

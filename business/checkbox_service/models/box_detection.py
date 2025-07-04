@@ -59,7 +59,6 @@ class BoxDetection(BaseModelPrediction):
                 x, y, width, height = bbox
                 all_px_count = crop_img.shape[0] * crop_img.shape[1]
                 nonzero_px_count = np.count_nonzero(crop_img)
-
                 checkbox_model = Checkbox(
                     x=x / img_width,
                     y=y / img_height,

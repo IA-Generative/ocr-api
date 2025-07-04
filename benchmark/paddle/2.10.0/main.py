@@ -2,8 +2,12 @@ import time
 from PIL import Image
 from paddleocr import PaddleOCR
 from pathlib import Path
+import paddle
 
-model: PaddleOCR = PaddleOCR(ocr_version="PP-OCRv4", use_angle_cls=False, lang="fr", verbose=True)
+print(79 * "*")
+print(paddle)
+
+model: PaddleOCR = PaddleOCR(ocr_version="PP-OCRv4", use_angle_cls=False, lang="fr", verbose=True, use_gpu=0)
 total_time = 0
 counter_image_pred = 0
 for iter in range(10):
