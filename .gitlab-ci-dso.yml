@@ -32,7 +32,7 @@ docker-build-ocr-api:
 
 docker-build-ocr-service-paddle-2.10.0:
   variables:
-    IMAGE_NAMES: ocr-service-paddle:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
+    IMAGE_NAMES: ocr-service-paddle-2.10.0:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
     DOCKERFILE: "Dockerfiles/services/paddleocr/2.10.0/Dockerfile"
   stage: docker-build
   extends:
@@ -49,7 +49,7 @@ docker-build-ocr-service-paddle-2.10.0-gpu:
 
 docker-build-ocr-service-paddle-3.0.1:
   variables:
-    IMAGE_NAMES: ocr-service-paddle:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
+    IMAGE_NAMES: ocr-service-paddle-3.0.1:${CI_COMMIT_REF_SLUG} ocr-service-paddle-3.0.1:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-3.0.1:${CI_COMMIT_TAG}
     DOCKERFILE: "Dockerfiles/services/paddleocr/3.0.1/Dockerfile"
   stage: docker-build
   extends:
@@ -57,7 +57,7 @@ docker-build-ocr-service-paddle-3.0.1:
 
 docker-build-ocr-service-paddle-3.0.1-gpu:
   variables:
-    IMAGE_NAMES: ocr-service-paddle-gpu:${CI_COMMIT_REF_SLUG} ocr-service-paddle-gpu:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-gpu:${CI_COMMIT_TAG}
+    IMAGE_NAMES: ocr-service-paddle-gpu-3.0.1:${CI_COMMIT_REF_SLUG} ocr-service-paddle-gpu-3.0.1:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-gpu-3.0.1:${CI_COMMIT_TAG}
     DOCKERFILE: "Dockerfiles/services/paddleocr/3.0.1/Dockerfile.gpu"
   stage: docker-build
   extends:
