@@ -53,7 +53,7 @@ class PaddleInferOCR(BaseModelPrediction):
             device=self.device,
             cpu_threads=self.cpu_threads,
             # text_det_limit_side_len=960,
-            text_det_limit_type="max",
+            # text_det_limit_type="max",
             # text_recognition_batch_size=12,
             enable_mkldnn=True,
             # text_det_limit_side_len=self.target_size,  # Synchroniser avec la taille de redimensionnement
