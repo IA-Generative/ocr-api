@@ -27,7 +27,7 @@ def crop_img(img: Image.Image, coordinates: list[float], is_normalized: bool = T
     return img.crop((left, upper, right, lower))
 
 
-class PaddleFormulaPredcition(BaseModelPrediction):
+class PaddleFormulaRecognizer(BaseModelPrediction):
     def __init__(
         self,
         model_name: str = "PP-FormulaNet_plus-M",

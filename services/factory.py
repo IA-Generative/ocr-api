@@ -12,6 +12,7 @@ s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S
 
 DEVICE = os.environ.get("DEVICE", "cpu")
 
+
 def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> BaseWorker:
     logger.info(f"---- {name} selected ----")
     models = []
@@ -30,14 +31,14 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.models.paddle import PaddleInferOCR
         from business.paddleocr3.models.layout import PaddleLayoutDetection
-        from business.paddleocr3.models.formula import PaddleFormulaPredcition
+        from business.paddleocr3.models.formula import PaddleFormulaRecognizer
         from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
         model = PipelineLinearPrediction(
             models=[
                 PaddleInferOCR(device=DEVICE),
                 PaddleLayoutDetection(device=DEVICE),
-                PaddleFormulaPredcition(device=DEVICE),
+                PaddleFormulaRecognizer(device=DEVICE),
             ]
         )
 

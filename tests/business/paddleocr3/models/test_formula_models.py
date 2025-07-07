@@ -1,12 +1,13 @@
-import os 
+import os
 from PIL import Image
 from src.schemas.output import Page
-from business.paddleocr3.models.formula import PaddleFormulaPredcition
+from business.paddleocr3.models.formula import PaddleFormulaRecognizer
 
 DEVICE = os.environ.get("DEVICE", "cpu")
 
+
 def test_formula_inference_without_pages():
-    obj = PaddleFormulaPredcition(device=DEVICE)
+    obj = PaddleFormulaRecognizer(device=DEVICE)
     image_path = "tests/data/valid/formule.png"
     image = Image.open(image_path).convert("RGB")
     actual_pages = obj.batch_predict(images=[image])
