@@ -39,8 +39,6 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
         from business.paddleocr3.models.paddle import PaddleInferOCR
-        from business.paddleocr3.models.layout import PaddleLayoutDetection
-        from business.paddleocr3.models.formula import PaddleFormulaRecognizer
         from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
         ocr_settings = PaddleSetting()
@@ -50,14 +48,22 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
         )
+        models = [ocr_model]
+        if ocr_settings.USE_LAYOUT_DETECTION:
+            from business.paddleocr3.models.layout import PaddleLayoutDetection
 
-        model = PipelineLinearPrediction(
-            models=[
-                ocr_model,
-                PaddleLayoutDetection(device=DEVICE),
-                PaddleFormulaRecognizer(device=DEVICE),
-            ]
-        )
+            models.append(PaddleLayoutDetection(device=DEVICE))
+            if ocr_settings.USE_FORMULA_RECOGNITION:
+                from business.paddleocr3.models.formula import PaddleFormulaRecognizer
+
+                models.append(PaddleFormulaRecognizer(device=DEVICE))
+
+            if ocr_settings.USE_TABLE_RECOGNITION:
+                from business.paddleocr3.models.table import TablePrediction
+
+                models.append(TablePrediction(device=DEVICE))
+
+        model = PipelineLinearPrediction(models=models)
 
     else:
         raise NotImplementedError("")

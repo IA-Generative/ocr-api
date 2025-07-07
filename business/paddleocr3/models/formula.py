@@ -7,24 +7,12 @@ import time
 from src.schemas.layout import Layout
 from src.schemas.output import Page
 from services.base.model import BaseModelPrediction
+from business.paddleocr3.utils.image import crop_img
 
 from paddleocr import FormulaRecognition
 from src.logger import logger
 
 logger.setLevel(logging.DEBUG)
-
-
-def crop_img(img: Image.Image, coordinates: list[float], is_normalized: bool = True):
-    if is_normalized:
-        width_img, height_img = img.size
-        coordinates[0] = coordinates[0] * width_img
-        coordinates[2] = coordinates[2] * width_img
-        coordinates[1] = coordinates[1] * height_img
-        coordinates[3] = coordinates[3] * height_img
-
-    left, upper, right, lower = map(int, coordinates)
-
-    return img.crop((left, upper, right, lower))
 
 
 class PaddleFormulaRecognizer(BaseModelPrediction):
