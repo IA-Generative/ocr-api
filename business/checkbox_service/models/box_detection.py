@@ -1,4 +1,6 @@
 from typing import Union
+import logging
+from time import time
 import numpy as np
 from PIL import Image
 from boxdetect import config
@@ -7,6 +9,9 @@ from boxdetect.pipelines import get_checkboxes
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.schemas.box import Bbox
+from src.logger import logger
+
+logger.setLevel(logging.DEBUG)
 
 cfg = config.PipelinesConfig()
 
@@ -43,18 +48,17 @@ class BoxDetection(BaseModelPrediction):
         **kwargs,
     ) -> list[Page]:
         current_pages: list[Page] = [Page(page=i) for i in range(len(images))]
-        if not len(pages):
-            current_pages = pages
-
         if len(pages):
             assert len(pages) == len(images), "Not the same lenght"
             current_pages = pages
 
         for image, page in zip(images, current_pages):
+            t = time()
             image = image.convert("RGB")
             img_width, img_height = image.size
             image = np.array(image)
             checkboxes = get_checkboxes(img=image, cfg=self.cfg, verbose=False, px_threshold=self.px_threshold)
+            logger.debug(f"[Checkboxes] time : {time()-t:.2f}s")
             page_checkboxes: list[Checkbox] = []
 
             for checkbox in checkboxes:
