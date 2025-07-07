@@ -8,6 +8,6 @@ class PaddleSetting(BaseSettings):
     CLASSIFICATION_FOLDER: str = "classification"
     DETECTION_BATCH_SIZE: int = 2
     RECOGNITION_BATCH_SIZE: int = 4
-    OCR_VERSION: str = "PP-OCRv5"
+    OCR_VERSION: str = "PP-OCRv4"
     DEVICE: str = "cpu"
-    OCR_LANG: str | None = None
+    OCR_LANG: str | None = "en"
