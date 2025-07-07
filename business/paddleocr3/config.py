@@ -11,3 +11,6 @@ class PaddleSetting(BaseSettings):
     OCR_VERSION: str = "PP-OCRv4"
     DEVICE: str = "cpu"
     OCR_LANG: str | None = "en"
+    USE_LAYOUT_DETECTION: bool = True
+    USE_FORMULA_RECOGNITION: bool = True
+    USE_TABLE_RECOGNITION: bool = False
