@@ -24,19 +24,36 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
 
     elif name == "paddleocr-3.0.1":
+        from business.paddleocr3.config import PaddleSetting
         from business.paddleocr3.models.paddle import PaddleInferOCR
 
-        model = PaddleInferOCR()
+        ocr_settings = PaddleSetting()
+
+        model = PaddleInferOCR(
+            device=DEVICE,
+            batch_size=ocr_settings.DETECTION_BATCH_SIZE,
+            ocr_version=ocr_settings.OCR_VERSION,
+            lang=ocr_settings.OCR_LANG,
+        )
 
     elif name == "paddleocr-3.0.1-pipeline":
+        from business.paddleocr3.config import PaddleSetting
         from business.paddleocr3.models.paddle import PaddleInferOCR
         from business.paddleocr3.models.layout import PaddleLayoutDetection
         from business.paddleocr3.models.formula import PaddleFormulaRecognizer
         from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
+        ocr_settings = PaddleSetting()
+        ocr_model = PaddleInferOCR(
+            device=DEVICE,
+            batch_size=ocr_settings.DETECTION_BATCH_SIZE,
+            ocr_version=ocr_settings.OCR_VERSION,
+            lang=ocr_settings.OCR_LANG,
+        )
+
         model = PipelineLinearPrediction(
             models=[
-                PaddleInferOCR(device=DEVICE),
+                ocr_model,
                 PaddleLayoutDetection(device=DEVICE),
                 PaddleFormulaRecognizer(device=DEVICE),
             ]
