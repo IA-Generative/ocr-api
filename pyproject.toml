@@ -82,6 +82,11 @@ client = [
 checkbox_service = [
     "boxdetect>=1.0.2",
 ]
+llm = [
+    "instructor>=1.5.2",
+    "openai>=1.63.2",
+    "pydantic>=2.11.5",
+]
 
 
 [tool.commitizen]

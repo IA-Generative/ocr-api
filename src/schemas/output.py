@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from src.schemas.box import Bbox, Checkbox
 from src.schemas.layout import Layout
 from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
+from src.schemas.template import FormEntry
 
 
 class Page(BaseModel):
@@ -12,6 +13,7 @@ class Page(BaseModel):
     boxes: List[Bbox] = Field(default_factory=list, description="Detections")
     layouts: List[Layout] = Field(default_factory=list, description="Layout definition")
     checkboxes: List[Checkbox] = Field(default_factory=list, description="Checkbox definition")
+    form_entries: List[FormEntry] = Field(default_factory=list, description="Form extraction")
 
 
 class OCRResult(BaseModel):
