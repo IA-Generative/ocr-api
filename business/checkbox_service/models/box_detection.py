@@ -43,6 +43,9 @@ class BoxDetection(BaseModelPrediction):
         **kwargs,
     ) -> list[Page]:
         current_pages: list[Page] = [Page(page=i) for i in range(len(images))]
+        if not len(pages):
+            current_pages = pages
+
         if len(pages):
             assert len(pages) == len(images), "Not the same lenght"
             current_pages = pages
