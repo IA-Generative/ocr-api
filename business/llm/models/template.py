@@ -21,13 +21,16 @@ class TemplateLLMDetector(BaseLLMOCR):
 
             page_content = "\n".join(page_lines_content)
             prompt = f"""Voici le texte brut extrait par OCR. Pour chaque champ de type formulaire,
-                        extrais key, value, puis propose corrected_key et corrected_value.\n\n
+                        extrais key, value, puis propose corrected_key et corrected_value.
+                        Inclus aussi les case qui sont cocher ou pas en value et en key correspondante de la case.
+                        Dans le meme langue que le texte extrait.\n\n
                         {page_content}"""
             result: FormExtraction = self.instructor.chat.completions.create(
                 model=self.model_name,
                 response_model=FormExtraction,
                 messages=[{"role": "user", "content": prompt}],
                 max_retries=2,
+                temperature=0,
             )
             page.form_entries = result.entries
 
