@@ -22,6 +22,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         from business.paddleocr2.configs.paddle import PaddleSetting
 
         model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
+        models.append(model)
 
     elif name == "paddleocr-3.0.1":
         from business.paddleocr3.config import PaddleSetting
@@ -35,6 +36,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
         )
+        models.append(model)
 
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
@@ -64,6 +66,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
                 tmp_models.append(TablePrediction(device=DEVICE))
 
         model = PipelineLinearPrediction(models=tmp_models)
+        models.append(model)
 
     elif name == "only-llm":
         from openai import OpenAI
@@ -83,7 +86,6 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
     else:
         raise NotImplementedError("")
 
-    models.append(model)
     models.append(BoxDetection())
 
     return BaseWorker(
