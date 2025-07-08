@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import traceback
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends
 
 from src.connector.broker_connector import celery_app, celery_config
 from src.logger import logger
@@ -17,6 +17,8 @@ from src.schemas.task import (
     TaskUpdateForm,
     task_table,
 )
+from ocr_backend.core.token import RequestContext
+from ocr_backend.core.factory import TokenVerifier
 
 
 from ..connectors import s3_client_connector
@@ -25,7 +27,7 @@ router = APIRouter(tags=["Jobs"])
 WORKER_NAME = "worker.tasks.ocr"
 
 
-@router.post("/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+@router.post("/jobs/{user_id}/old", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
 async def upload_file(user_id: str, file: UploadFile = File(...)):
     extras = {}
     task_data = task_table.insert_new_task(
@@ -98,3 +100,8 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="File upload failed",
         )
+
+
+@router.post("/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+async def upload_files(file: UploadFile = File(...), ctx: RequestContext = Depends(TokenVerifier)):
+    return await upload_file(user_id=ctx.user_id, file=file)
