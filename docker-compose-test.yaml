@@ -54,7 +54,6 @@ services:
       - redis
       - db
       - minio
-      - migration
     env_file:
       - .env
 
@@ -117,7 +116,6 @@ services:
       - redis
       - db
       - minio
-      - migration
     env_file:
       - .env
 
@@ -209,7 +207,7 @@ services:
     - -s
     - --cov=./business/llm
     - --cov-report=term-missing
-    - tests/services/llm
+    - tests/business/llm
     - -ra -v --maxfail=0
     volumes:
     - ./src/:/app/src/
@@ -223,7 +221,6 @@ services:
       - redis
       - db
       - minio
-      - migration
     env_file:
       - .env
 
