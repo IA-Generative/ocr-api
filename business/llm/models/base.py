@@ -55,28 +55,28 @@ class VisionLLMOCR(BaseLLMOCR):
             pages = [Page(page=i) for i in range(len(images))]
         for image, page in zip(images, pages):
             base64_image = pil_image_to_base64(image)
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.model_name,
-                input=[
+                messages=[
                     {
                         "role": "user",
                         "content": [
-                            {"type": "input_text", "text": self.prompt},
+                            {"type": "text", "text": self.prompt},
                             {
-                                "type": "input_image",
-                                "image_url": f"data:image/jpeg;base64,{base64_image}",
+                                "type": "image_url",
+                                "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
                             },
                         ],
                     }
                 ],
+                # max_tokens=8192,
             )
-
             tmp_lay = Layout(
                 cls_id=-1,
                 label="llm",
                 score=-1,
                 coordinate=[0, 0, 1, 1],
-                content=response.output_text,
+                content=response.choices[0].message.content,
             )
             page.layouts.append(tmp_lay)
             page.boxes.append(Bbox(x=0, y=0, width=1, height=1, confidence=-1, text=tmp_lay.content))
