@@ -54,7 +54,6 @@ services:
       - redis
       - db
       - minio
-      - migration
     env_file:
       - .env
 
@@ -117,7 +116,6 @@ services:
       - redis
       - db
       - minio
-      - migration
     env_file:
       - .env
 
@@ -195,6 +193,37 @@ services:
       - migration
     env_file:
       - .env
+  llm_ocr_service:
+    image: llm_ocr_service
+    build:
+      target: test
+      context: .
+      dockerfile: Dockerfiles/services/llm/Dockerfile
+    container_name: llm_ocr_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/llm
+    - --cov-report=term-missing
+    - tests/business/llm
+    - -ra -v --maxfail=0
+    volumes:
+    - ./src/:/app/src/
+    - ./tests/:/app/tests
+    - ./services/:/app/services/
+    - ./business/llm:/app/business/llm
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+    depends_on:
+      - redis
+      - db
+      - minio
+    env_file:
+      - .env
+
 
   migration:
     command:

@@ -22,6 +22,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         from business.paddleocr2.configs.paddle import PaddleSetting
 
         model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
+        models.append(model)
 
     elif name == "paddleocr-3.0.1":
         from business.paddleocr3.config import PaddleSetting
@@ -35,6 +36,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
         )
+        models.append(model)
 
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
@@ -48,27 +50,42 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
         )
-        models = [ocr_model]
+        tmp_models = [ocr_model]
         if ocr_settings.USE_LAYOUT_DETECTION:
             from business.paddleocr3.models.layout import PaddleLayoutDetection
 
-            models.append(PaddleLayoutDetection(device=DEVICE))
+            tmp_models.append(PaddleLayoutDetection(device=DEVICE))
             if ocr_settings.USE_FORMULA_RECOGNITION:
                 from business.paddleocr3.models.formula import PaddleFormulaRecognizer
 
-                models.append(PaddleFormulaRecognizer(device=DEVICE))
+                tmp_models.append(PaddleFormulaRecognizer(device=DEVICE))
 
             if ocr_settings.USE_TABLE_RECOGNITION:
                 from business.paddleocr3.models.table import TablePrediction
 
-                models.append(TablePrediction(device=DEVICE))
+                tmp_models.append(TablePrediction(device=DEVICE))
 
-        model = PipelineLinearPrediction(models=models)
+        model = PipelineLinearPrediction(models=tmp_models)
+        models.append(model)
+
+    elif name == "only-llm":
+        from openai import OpenAI
+        from business.llm.models.base import VisionLLMOCR
+        from business.llm.models.template import TemplateLLMDetector
+        from business.llm.config import OpenAISetting
+
+        openai_settings = OpenAISetting()
+        client = OpenAI(
+            api_key=openai_settings.OPENAI_API_KEY,
+            base_url=openai_settings.OPENAI_BASE_URL,
+        )
+
+        models.append(VisionLLMOCR(client=client, model_name=openai_settings.VISION_MODEL))
+        models.append(TemplateLLMDetector(client=client, model_name=openai_settings.INSTRUCT_MODEL_NAME))
 
     else:
         raise NotImplementedError("")
 
-    models.append(model)
     models.append(BoxDetection())
 
     return BaseWorker(

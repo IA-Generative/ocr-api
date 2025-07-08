@@ -107,7 +107,12 @@ class BaseWorker:
             partial_result: List[Page] = task.output.pages
 
             for model in self.models:
+                logger.debug(f"[task-id {task.id}][model {model.__class__.__name__}]")
+                t = time.time()
                 partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
+                logger.debug(
+                    f"[task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]"
+                )
             for j, image in enumerate(batch):
                 buffer = BytesIO()
                 image.save(buffer, format="JPEG")
