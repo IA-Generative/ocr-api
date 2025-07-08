@@ -8,7 +8,7 @@ ENV UV_CACHE_DIR=/app/.cache
 
 COPY pyproject.toml uv.lock /app/
 
-RUN uv sync --no-cache --group llm
+RUN uv sync --no-cache --group llm --group services
 
 RUN uv sync
 ENV PYTHONPATH=/app
