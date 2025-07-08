@@ -10,7 +10,6 @@ COPY pyproject.toml uv.lock /app/
 
 RUN uv sync --no-cache --group llm --group services
 
-RUN uv sync
 ENV PYTHONPATH=/app
 COPY business/__init__.py /app/business/__init__.py
 COPY business/llm /app/business/llm
