@@ -16,7 +16,7 @@ logger.setLevel(logging.DEBUG)
 
 
 class TablePrediction(BaseModelPrediction):
-    def __init__(self, device: str):
+    def __init__(self, device: str = "cpu"):
         self.table_reco = TableRecognitionPipelineV2(
             device=device,
             use_ocr_model=True,
