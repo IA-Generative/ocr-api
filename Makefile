@@ -132,6 +132,9 @@ test-services-paddleocr2.10.0:
 test-services-paddleocr3.0.1:
 	docker compose -f docker-compose-test.yaml up paddleocr3_service
 	make down-test
+test-services-llm:
+	docker compose -f docker-compose-test.yaml up llm_ocr_service
+	make down-test
 
 test-services-paddleocr3.0.1-gpu:
 ifeq ($(HAS_GPU),yes)
@@ -142,7 +145,7 @@ else
 	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
 	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
 endif
-	
+
 
 test-backend-api:
 	docker compose -f docker-compose-test.yaml up ocr_backend

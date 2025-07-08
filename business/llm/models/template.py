@@ -1,8 +1,12 @@
+import logging
 import instructor
 
 from business.llm.models.base import BaseLLMOCR
 from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
 from src.schemas.template import FormExtraction
+from src.logger import logger
+
+logger.setLevel(logging.DEBUG)
 
 
 class TemplateLLMDetector(BaseLLMOCR):
@@ -35,6 +39,6 @@ class TemplateLLMDetector(BaseLLMOCR):
                 )
                 page.form_entries = result.entries
             except Exception as e:
-                print(e)
+                logger.error(f"[model {self.__class__.__name__}] {str(e)}")
 
         return pages
