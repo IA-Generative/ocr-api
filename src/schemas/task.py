@@ -17,7 +17,7 @@ class Task(Base):
     __tablename__ = "tasks"
 
     id = Column(String, primary_key=True)
-    type = Column(String, nullable=False)
+    type = Column(String, nullable=False, primary_key=True)
     status = Column(String, default="queued")
     user_id = Column(String, nullable=False)
     percentage = Column(FLOAT, nullable=False)
@@ -69,7 +69,6 @@ class TaskUpdateForm(BaseModel):
     output: Optional[OCRResult] = None
 
 
-
 class TaskStatus(str, Enum):
     CREATED = "created"  # Tâche instanciée mais pas encore mise en file
     QUEUED = "queued"  # En attente dans une file de traitement
@@ -87,7 +86,6 @@ class TaskOperation(str, Enum):
 
 
 class TaskTable:
-
     def __init__(self, get_db):
         self.get_db = get_db
 
@@ -117,9 +115,23 @@ class TaskTable:
                 return None
             return TaskModel.model_validate(task)
 
-    def update_task(
-        self, task_id: str, form_data: TaskUpdateForm
-    ) -> Optional[TaskModel]:
+    def get_tasks_by_id(self, task_id: str) -> Optional[list[TaskModel]]:
+        with self.get_db() as db:
+            tasks = db.query(Task).filter(Task.id == task_id).all()
+            if not tasks:
+                logger.warning(f"Task with id {task_id} not found.")
+                return None
+            return [TaskModel.model_validate(task) for task in tasks]
+
+    def get_task_by_pks(self, task_id: str, task_type: str) -> Optional[TaskModel]:
+        with self.get_db() as db:
+            task = db.query(Task).filter(Task.id == task_id, Task.type == task_type).first()
+            if not task:
+                logger.warning(f"Task with id {task_id} not found.")
+                return None
+            return TaskModel.model_validate(task)
+
+    def update_task(self, task_id: str, form_data: TaskUpdateForm) -> Optional[TaskModel]:
         with self.get_db() as db:
             task = db.query(Task).filter(Task.id == task_id).first()
             if not task:
@@ -153,18 +165,10 @@ class TaskTable:
             db.commit()
             return TaskModel.model_validate(task)
 
-    def get_tasks_by_user_id(
-        self, user_id: str, page: int = 1, page_size: int = 10
-    ) -> Optional[List[TaskModel]]:
+    def get_tasks_by_user_id(self, user_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
         with self.get_db() as db:
-            tasks = (
-                db.query(Task)
-                .filter(Task.user_id == user_id)
-                .offset(offset)
-                .limit(page_size)
-                .all()
-            )
+            tasks = db.query(Task).filter(Task.user_id == user_id).offset(offset).limit(page_size).all()
 
             if not tasks:
                 logger.warning(f"No tasks found for user {user_id}.")
@@ -198,7 +202,10 @@ class TaskTable:
 
                 position = (
                     db.query(func.count(Task.id))  # noqa
-                    .filter(Task.status == TaskStatus.QUEUED, Task.created_at < task.created_at)
+                    .filter(
+                        Task.status == TaskStatus.QUEUED,
+                        Task.created_at < task.created_at,
+                    )
                     .scalar()
                 )
 

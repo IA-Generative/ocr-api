@@ -31,9 +31,7 @@ class UploadFileUser(HttpUser):
 
     def get_random_file(self):
         files = [
-            os.path.join(VALID_DIR, f)
-            for f in os.listdir(VALID_DIR)
-            if os.path.isfile(os.path.join(VALID_DIR, f))
+            os.path.join(VALID_DIR, f) for f in os.listdir(VALID_DIR) if os.path.isfile(os.path.join(VALID_DIR, f))
         ]
         return random.choice(files) if files else None
 

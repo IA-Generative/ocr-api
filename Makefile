@@ -4,7 +4,7 @@ PYTHONPATH=$(PWD)
 OCR_BACKEND_CONTAINER=ocr-api
 OCR_SERVICE_CONTAINER=ocr-service
 STRESS_HOST=http://localhost:5000
-
+HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
 .PHONY: install-uv install-local linter bump-patch bump-minor \
         up down tests build-ocr-backend build-ocr-service build \
@@ -67,6 +67,9 @@ up: ## Lance l'environnement de développement en conteneurs
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
 
+down-test:
+	docker compose -f docker-compose-test.yaml down || true
+
 logs-api: ## Affiche les logs du conteneur de l'API
 	docker logs -f $(OCR_BACKEND_CONTAINER)
 
@@ -77,9 +80,10 @@ clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
 	$(MAKE) down
 
-tests: up ## Lance les tests unitaires
-	docker exec $(OCR_BACKEND_CONTAINER) pytest --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend tests/src/
-	docker exec $(OCR_SERVICE_CONTAINER) pytest --cov=./ocr_service tests/ocr_service
+
+tests-backend:
+	docker compose -f docker-compose-test.yaml up ocr_backend
+	make down-test
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
@@ -116,3 +120,33 @@ stress-test: install-uv ## Lance un test de charge
 
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
+
+test-services-checkbox:
+	docker compose -f docker-compose-test.yaml up checkbox_service
+	make down-test
+
+test-services-paddleocr2.10.0:
+	docker compose -f docker-compose-test.yaml up paddleocr2_service
+	make down-test
+
+test-services-paddleocr3.0.1:
+	docker compose -f docker-compose-test.yaml up paddleocr3_service
+	make down-test
+test-services-llm:
+	docker compose -f docker-compose-test.yaml up llm_ocr_service
+	make down-test
+
+test-services-paddleocr3.0.1-gpu:
+ifeq ($(HAS_GPU),yes)
+	@echo "✅ GPU detected. Running GPU tests..."
+	docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
+	make down-test
+else
+	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
+	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
+endif
+
+
+test-backend-api:
+	docker compose -f docker-compose-test.yaml up ocr_backend
+	make down-test

@@ -12,7 +12,7 @@ redis_settings = RedisSettings()
 
 celery_app = Celery(
     celery_config.CELERY_APP_NAME,
-    broker=f"redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/",
+    broker=f"redis://{redis_settings.REDIS_HOST}:{redis_settings.REDIS_PORT}/0",
 )
 
 
@@ -45,7 +45,5 @@ class RedisConnector:
         )
 
 
-redis_client = redis.Redis(
-    host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0
-)
+redis_client = redis.Redis(host=redis_settings.REDIS_HOST, port=redis_settings.REDIS_PORT, db=0)
 redis_client_connector = RedisConnector(redis_client=redis_client)

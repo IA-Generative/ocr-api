@@ -1,14 +1,19 @@
 from typing import List, Optional
-from pydantic import BaseModel, ConfigDict
-from src.schemas.box import Bbox
+from pydantic import BaseModel, ConfigDict, Field
+from src.schemas.box import Bbox, Checkbox
+from src.schemas.layout import Layout
 from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
+from src.schemas.template import FormEntry
 
 
 class Page(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     page: int
     page_url: Optional[str] = None
-    boxes: List[Bbox]
+    boxes: List[Bbox] = Field(default_factory=list, description="Detections")
+    layouts: List[Layout] = Field(default_factory=list, description="Layout definition")
+    checkboxes: List[Checkbox] = Field(default_factory=list, description="Checkbox definition")
+    form_entries: List[FormEntry] = Field(default_factory=list, description="Form extraction")
 
 
 class OCRResult(BaseModel):
@@ -28,11 +33,9 @@ class OCRResult(BaseModel):
         pages_content_per_page = []
 
         for i, page in enumerate(self.pages):
-            page_lines_content = [f"{20*'-'} Page: {i+1} {20*'-'}"]
+            page_lines_content = [f"{20 * '-'} Page: {i + 1} {20 * '-'}"]
 
-            sorted_bboxes = sort_bboxes_reading_order(
-                bboxes=page.boxes, delta_y=delta_y
-            )
+            sorted_bboxes = sort_bboxes_reading_order(bboxes=page.boxes, delta_y=delta_y)
             for line_sorted_boxes in sorted_bboxes:
                 text_line = get_text_from_list_bboxes(line_sorted_boxes)
                 page_lines_content.append(text_line)

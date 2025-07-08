@@ -2,14 +2,26 @@ from pydantic import BaseModel, ConfigDict
 from typing import List
 
 
-class Bbox(BaseModel):
+class BaseBox(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     x: float
     y: float
     width: float
     height: float
     confidence: float
+
+
+class Checkbox(BaseBox):
+    is_checked: bool
+
+
+class Bbox(BaseBox):
     text: str
+
+
+class PredictText(BaseModel):
+    text: str
+    confidence: float
 
 
 class Box(BaseModel):

@@ -20,30 +20,24 @@ def assert_dict_almost_equal(d1: Dict[Any, Any], d2: Dict[Any, Any], tol: float 
         v2 = d2[key]
 
         if isinstance(v1, float) and isinstance(v2, float):
-            assert math.isclose(
-                v1, v2, abs_tol=tol
-            ), f"Différence sur clé '{key}': {v1} != {v2} avec tolérance {tol}"
+            assert math.isclose(v1, v2, abs_tol=tol), f"Différence sur clé '{key}': {v1} != {v2} avec tolérance {tol}"
 
         elif isinstance(v1, list) and isinstance(v2, list):
-            assert len(v1) == len(
-                v2
-            ), f"Listes de longueur différente pour clé '{key}': {len(v1)} != {len(v2)}"
+            assert len(v1) == len(v2), f"Listes de longueur différente pour clé '{key}': {len(v1)} != {len(v2)}"
             for i, (x, y) in enumerate(zip(v1, v2)):
                 if isinstance(x, float) and isinstance(y, float):
                     assert math.isclose(
                         x, y, abs_tol=tol
                     ), f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y} avec tolérance {tol}"
                 else:
-                    assert (
-                        x == y
-                    ), f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y}"
+                    assert x == y, f"Différence dans liste à l'index {i} pour clé '{key}': {x} != {y}"
 
         else:
             assert v1 == v2, f"Différence sur clé '{key}': {v1} != {v2}"
 
 
 def test_integration_ocr_paddle_prediction():
-    model = PaddleInferOCR("models/")
+    model = PaddleInferOCR()
     filename = "tests/data/valid/identite.jpg"
     basename = os.path.basename(filename)
     base_file, _ = os.path.splitext(basename)
@@ -69,9 +63,7 @@ def test_integration_ocr_paddle_prediction():
                 int(y + height),
             ]
             points = np.array(text_region, dtype=np.int32).reshape((-1, 1, 2))
-            cv2.polylines(
-                image, [points], isClosed=True, color=(0, 255, 0), thickness=2
-            )
+            cv2.polylines(image, [points], isClosed=True, color=(0, 255, 0), thickness=2)
             text = f"{pred.text} ({pred.confidence * 100:.1f}%)"
             text_position = (int(x), int(y - 10))
             cv2.putText(
@@ -84,6 +76,10 @@ def test_integration_ocr_paddle_prediction():
                 2,
             )
         cv2.imwrite(os.path.join(output_folder, f"{basename}"), image)
+
+    # with open(os.path.join(output_folder, f"{base_file}.json"), "w") as f:
+    #     json.dump([pred.model_dump() for pred in pages_predictions], f, indent=2)
+
     with open(os.path.join(output_folder, f"{base_file}.json"), "r") as f:
         expected = json.load(f)
 
