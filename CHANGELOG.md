@@ -29,6 +29,36 @@
 - code clean
 - :art: change minio vars
 
+## [1.5.0](https://github.com/IA-Generative/ocr-api/compare/v1.4.0...v1.5.0) (2025-07-08)
+
+
+### Features
+
+* ❇️ add queue arch ([#21](https://github.com/IA-Generative/ocr-api/issues/21)) ([0243aaf](https://github.com/IA-Generative/ocr-api/commit/0243aafead55914213fd21d2b86255dfd29db746))
+* add checkbox drawing functionality and update tests with new images and JSON data ([f3e9df8](https://github.com/IA-Generative/ocr-api/commit/f3e9df8dcd928d347f342d07aaa7a8b18871f6b5))
+
+
+### Bug Fixes
+
+* add checkbox_service directory to Dockerfile ([3fadb80](https://github.com/IA-Generative/ocr-api/commit/3fadb80026abc7dd848056d0bad2ca8ad182913a))
+* add logging to BoxDetection class and improve batch_predict method performance ([43edf1c](https://github.com/IA-Generative/ocr-api/commit/43edf1cf17520790c7ff65278073c460b1199fc9))
+* async routes ([#7](https://github.com/IA-Generative/ocr-api/issues/7)) ([525dddd](https://github.com/IA-Generative/ocr-api/commit/525dddd4ca418c396ced33c29953f4ac9a87f6e9))
+* comment out text_det_limit_type and format batch_predict method signature ([195606d](https://github.com/IA-Generative/ocr-api/commit/195606d812567f749113f490de0d6173a6e90e22))
+* comment out unused GPU build configurations for paddleocr ([fbe9447](https://github.com/IA-Generative/ocr-api/commit/fbe9447d174f88bd042fc257f9360527ceffb183))
+* download using cpu ([2eb5f5b](https://github.com/IA-Generative/ocr-api/commit/2eb5f5bdbda4f4aacbc8532928124cd45f07e715))
+* format code for better readability and ensure models are appended correctly ([2ac03f4](https://github.com/IA-Generative/ocr-api/commit/2ac03f43237abefdd2c61da493edb7127629002d))
+* improve code readability by formatting and adding debug logs in BaseWorker ([7b22719](https://github.com/IA-Generative/ocr-api/commit/7b227196a3f62ebeded8c1d3366a034aabd02fe9))
+* improve readability of batch_predict method in BoxDetection class ([3d9806a](https://github.com/IA-Generative/ocr-api/commit/3d9806ad436e8709c33fbb27052ff0bbf71c9ae5))
+* Refactor model initialization to move warmup logging after model creation ([20a55dd](https://github.com/IA-Generative/ocr-api/commit/20a55dd11af9f428fe310c676f9b183a5cf48628))
+* refactor PaddleInferOCR initialization to use settings from PaddleSetting ([ea6b3d8](https://github.com/IA-Generative/ocr-api/commit/ea6b3d87a3a9da4ea3e0170a33f71b5c5a7a3241))
+* remove migration service from dependencies in multiple services ([8d31689](https://github.com/IA-Generative/ocr-api/commit/8d31689d53a028f4a2b2b90261d8e0191f00bc9a))
+* remove redundant uv sync command in Dockerfile ([3471b14](https://github.com/IA-Generative/ocr-api/commit/3471b14513868ba7efd259fb284ef0b8e91f20f4))
+* rename PaddleFormulaPredcition to PaddleFormulaRecognizer for consistency ([130c6d9](https://github.com/IA-Generative/ocr-api/commit/130c6d98bebeb2fa5604200137477aa61ee5f99d))
+* revert OCR_VERSION to PP-OCRv4 and set default OCR_LANG to 'en' ([e1df499](https://github.com/IA-Generative/ocr-api/commit/e1df499b0e4892c56decfa91b8be1aa774f9ce58))
+* update Dockerfile to include 'services' group in uv sync command ([681d174](https://github.com/IA-Generative/ocr-api/commit/681d17458aaa86e46cb33e3d6acb8bd32f25bedb))
+* update image names for paddleocr services to include version ([4221e84](https://github.com/IA-Generative/ocr-api/commit/4221e84759a486ac227b565706761c7d546d1e13))
+* use uv instead of vu ([4598d93](https://github.com/IA-Generative/ocr-api/commit/4598d93cea4680670124cd3d9816fed4c1fb1f26))
+
 ## [1.5.0](https://github.com/IA-Generative/ocr-api/compare/v1.4.0...v1.5.0) (2025-07-07)
 
 
