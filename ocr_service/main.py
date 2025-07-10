@@ -32,7 +32,7 @@ def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
         t = time.time()
-        logger.info({"task_id": task.id, "worker_id": worker_id, "message": "Start"})
+        logger.info({"task_id": task.id, "worker_id": worker_id, "user_id": task.user_id, "message": "Start"})
         task = process_ocr.process_task(task=task)
         logger.info(
             {
