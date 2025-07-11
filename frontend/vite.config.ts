@@ -1,7 +1,7 @@
 import process from 'node:process'
 import { URL, fileURLToPath } from 'node:url'
 
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import VueDevTools from 'vite-plugin-vue-devtools'
@@ -13,8 +13,18 @@ import {
   vueDsfrComponentResolver,
 } from '@gouvminint/vue-dsfr'
 
+const env = loadEnv('', process.cwd(), '')
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/',
+  server: {
+    port: Number(env.FRONT_PORT),
+    strictPort: true,
+    host: true,
+    // host: '0.0.0.0',
+    allowedHosts: true,
+  },
   plugins: [
     vue(),
     vueJsx(),
