@@ -24,7 +24,7 @@ WORKDIR /app
 
 COPY pyproject.toml uv.lock /app/
 
-RUN uv sync --no-cache --group ocr-service-paddle
+RUN uv sync --no-cache --group ocr-service-paddle --group llm
 
 ENV PYTHONPATH=/app
 COPY services /app/services
@@ -38,6 +38,6 @@ ENV PATH=$PATH:/app/.venv/bin/
 CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
-RUN uv sync --group test --group ocr-service-paddle
+RUN uv sync --group test --group ocr-service-paddle --group llm
 COPY tests /app/tests
 CMD ["uv", "run", "services/main.py"]
