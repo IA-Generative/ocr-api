@@ -26,7 +26,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
     elif name == "paddleocr-3.0.1":
         from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
 
         ocr_settings = PaddleSetting()
 
@@ -40,7 +40,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
         from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
         ocr_settings = PaddleSetting()

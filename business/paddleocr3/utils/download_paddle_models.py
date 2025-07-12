@@ -1,5 +1,5 @@
 from business.paddleocr3.config import PaddleSetting
-from business.paddleocr3.models.paddle import PaddleInferOCR
+from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
 from business.paddleocr3.models.formula import PaddleFormulaRecognizer
 from business.paddleocr3.models.layout import PaddleLayoutDetection
 from business.paddleocr3.models.table import TablePrediction

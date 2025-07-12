@@ -5,7 +5,7 @@ from src.schemas.output import Page
 from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 from business.paddleocr3.models.formula import PaddleFormulaRecognizer
 from business.paddleocr3.models.layout import PaddleLayoutDetection
-from business.paddleocr3.models.paddle import PaddleInferOCR
+from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
 from src.utils.draw import (
     draw_normalized_layout,
     draw_normalized_bboxes,
