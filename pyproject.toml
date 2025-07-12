@@ -49,8 +49,18 @@ ocr-service-paddle = [
     "pdf2image==1.17.0",
     "pillow==10.4.0",
     "psutil>=7.0.0",
-    "paddleocr==3.0.1",
-    "paddlepaddle==3.0.0",
+    "paddleocr==3.1.0",
+    "paddlepaddle==3.1.0",
+    "pynvml>=12.0.0",
+    "boxdetect>=1.0.2",
+]
+
+ocr-service-paddle-gpu = [
+    "opencv-python-headless>=4.11.0.86",
+    "pdf2image==1.17.0",
+    "pillow==10.4.0",
+    "psutil>=7.0.0",
+    "paddleocr==3.1.0",
     "pynvml>=12.0.0",
     "boxdetect>=1.0.2",
 ]
