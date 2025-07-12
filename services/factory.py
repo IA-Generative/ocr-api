@@ -2,7 +2,7 @@ import os
 import boto3
 
 from services.base.worker import BaseWorker
-from business.checkbox_service.models.box_detection import BoxDetection
+from business.checkbox_service.models.morpho import MorphoBoxDetection
 
 from src.connector import S3Connector, s3_settings
 from src.logger import logger
@@ -104,7 +104,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
     else:
         raise NotImplementedError("")
 
-    models.append(BoxDetection())
+    models.append(MorphoBoxDetection())
 
     return BaseWorker(
         name=name,
