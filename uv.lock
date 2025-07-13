@@ -226,15 +226,6 @@ wheels = [
 ]
 
 [[package]]
-name = "astor"
-version = "0.8.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/21/75b771132fee241dfe601d39ade629548a9626d1d39f333fde31bc46febe/astor-0.8.1.tar.gz", hash = "sha256:6a6effda93f4e1ce9f618779b2dd1d9d84f1e32812c23a29b3fff6fd7f63fa5e", size = 35090, upload-time = "2019-12-10T01:50:35.51Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/c3/88/97eef84f48fa04fbd6750e62dcceafba6c63c81b7ac1420856c8dcc0a3f9/astor-0.8.1-py2.py3-none-any.whl", hash = "sha256:070a54e890cefb5b3739d19f30f5a5ec840ffc9c50ffa7d23cc9fc1a38ebbfc5", size = 27488, upload-time = "2019-12-10T01:50:33.628Z" },
-]
-
-[[package]]
 name = "asttokens"
 version = "3.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -259,6 +250,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff8d63537de4f1177af4bff9f3e829baf7331f595bb24/attrs-25.3.0.tar.gz", hash = "sha256:75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b", size = 812032, upload-time = "2025-03-13T11:10:22.779Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl", hash = "sha256:427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3", size = 63815, upload-time = "2025-03-13T11:10:21.14Z" },
+]
+
+[[package]]
+name = "beautifulsoup4"
+version = "4.13.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "soupsieve" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/e4/0c4c39e18fd76d6a628d4dd8da40543d136ce2d1752bd6eeeab0791f4d6b/beautifulsoup4-4.13.4.tar.gz", hash = "sha256:dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195", size = 621067, upload-time = "2025-04-15T17:05:13.836Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/cd/30110dc0ffcf3b131156077b90e9f60ed75711223f306da4db08eff8403b/beautifulsoup4-4.13.4-py3-none-any.whl", hash = "sha256:9bbbb14bfde9d79f38b8cd5f8c7c85f4b8f2523190ebed90e950a8dea4cb1c4b", size = 187285, upload-time = "2025-04-15T17:05:12.221Z" },
 ]
 
 [[package]]
@@ -2503,7 +2507,7 @@ wheels = [
 
 [[package]]
 name = "ocr-api"
-version = "1.5.0"
+version = "1.6.0"
 source = { virtual = "." }
 dependencies = [
     { name = "boto3" },
@@ -2545,7 +2549,6 @@ ocr-backend = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 ocr-service-paddle = [
-    { name = "boxdetect" },
     { name = "opencv-python-headless" },
     { name = "paddleocr" },
     { name = "paddlepaddle" },
@@ -2554,8 +2557,15 @@ ocr-service-paddle = [
     { name = "psutil" },
     { name = "pynvml" },
 ]
+ocr-service-paddle-gpu = [
+    { name = "opencv-python-headless" },
+    { name = "paddleocr" },
+    { name = "pdf2image" },
+    { name = "pillow" },
+    { name = "psutil" },
+    { name = "pynvml" },
+]
 services = [
-    { name = "boxdetect" },
     { name = "opencv-python-headless" },
     { name = "pdf2image" },
     { name = "pillow" },
@@ -2615,17 +2625,23 @@ ocr-backend = [
     { name = "uvicorn", extras = ["standard"], specifier = "==0.34.0" },
 ]
 ocr-service-paddle = [
-    { name = "boxdetect", specifier = ">=1.0.2" },
     { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
-    { name = "paddleocr", specifier = "==3.0.1" },
-    { name = "paddlepaddle", specifier = "==3.0.0" },
+    { name = "paddleocr", specifier = "==3.1.0" },
+    { name = "paddlepaddle", specifier = "==3.1.0" },
+    { name = "pdf2image", specifier = "==1.17.0" },
+    { name = "pillow", specifier = "==10.4.0" },
+    { name = "psutil", specifier = ">=7.0.0" },
+    { name = "pynvml", specifier = ">=12.0.0" },
+]
+ocr-service-paddle-gpu = [
+    { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
+    { name = "paddleocr", specifier = "==3.1.0" },
     { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pillow", specifier = "==10.4.0" },
     { name = "psutil", specifier = ">=7.0.0" },
     { name = "pynvml", specifier = ">=12.0.0" },
 ]
 services = [
-    { name = "boxdetect", specifier = ">=1.0.2" },
     { name = "opencv-python-headless", specifier = ">=4.11.0.86" },
     { name = "pdf2image", specifier = "==1.17.0" },
     { name = "pillow", specifier = "==10.4.0" },
@@ -2821,24 +2837,23 @@ wheels = [
 
 [[package]]
 name = "paddleocr"
-version = "3.0.1"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "paddlex", extra = ["ie", "multimodal", "ocr"] },
+    { name = "paddlex", extra = ["ie", "multimodal", "ocr", "trans"] },
     { name = "pyyaml" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a6/c4/05dacc2496a83ab12bbc74379136f153973f50fd0f2ffd350744f6cd61df/paddleocr-3.0.1.tar.gz", hash = "sha256:43b0505c0423dc4dc88648f10afe25b17d9e7254f8cf670ee5b435528a0381d4", size = 2287653, upload-time = "2025-06-05T03:27:31.707Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5b/5c/6661d901271fbd989715da0b2cc92e8642bd5fbf76ce19f249f9bbdf1dab/paddleocr-3.1.0.tar.gz", hash = "sha256:c42ba6876cc1f5237e1d14cb69fc6aa45cbbe6b714ecd87cec54c097a0334f77", size = 2366338, upload-time = "2025-06-29T06:58:05.799Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e0/3a/8751375469815d36f5a9908497dab55b677e05d95f76738ac4784a59d26e/paddleocr-3.0.1-py3-none-any.whl", hash = "sha256:c0002dfe17fca06148dbb5bcfc78d1710c48e7ee1ea006c0fe0678c29c731d42", size = 63311, upload-time = "2025-06-05T03:27:30.613Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/7f/2ea116c5d1a576786280ee3fa06388cd5bdcd274deafb10064dfa2d6f4c4/paddleocr-3.1.0-py3-none-any.whl", hash = "sha256:4845b9c1734af2aced7a6fb9bf9f456c7764665a10ebc820ebcef1a5480b4236", size = 70394, upload-time = "2025-06-29T06:58:04.115Z" },
 ]
 
 [[package]]
 name = "paddlepaddle"
-version = "3.0.0"
+version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "astor" },
     { name = "decorator" },
     { name = "httpx" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -2851,37 +2866,33 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/60/1a3dc2f48dc5eb82d1258e0a0d18b9e9db0ace73f077c2984c626191af2c/paddlepaddle-3.0.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:69321d2fed61f9c4b502843d213af0919e058f8399c3fb7da4b90ff9f9e8544d", size = 94754509, upload-time = "2025-03-26T08:17:50.747Z" },
-    { url = "https://files.pythonhosted.org/packages/eb/c2/21c77d75f47398f8eb847aa85e456b19a1cca9cebb03e9c3cedce1888944/paddlepaddle-3.0.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7a8a3de6238d7588224353d7412d1869772fa88d0cc0119cb7c921bee9b1869c", size = 96916011, upload-time = "2025-03-26T08:19:44.278Z" },
-    { url = "https://files.pythonhosted.org/packages/ab/07/24565a312b58fb8e78c8c4214db0cfaee44f6dec161c00756026991633d8/paddlepaddle-3.0.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:73b1349d91a85dae81e23aee0faf1d04f244e26c688c23e387a504437066829a", size = 192817880, upload-time = "2025-03-26T08:23:25.526Z" },
-    { url = "https://files.pythonhosted.org/packages/10/e6/0e56a48490f0fc7e6f9b671adccb0ae972f73093e2257a3a0bb278174b3c/paddlepaddle-3.0.0-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:ea8841cdbea7f26dbe548d3b129dd9764f36a4338656c9b5257cac43b382a674", size = 92043392, upload-time = "2025-03-26T08:25:15.074Z" },
-    { url = "https://files.pythonhosted.org/packages/df/1f/2bd1e792fc3ce1aae11625afe238868b291370048d32939985b09274a9d1/paddlepaddle-3.0.0-cp310-cp310-win_amd64.whl", hash = "sha256:9fe8544bce8d034da5cdab1417782c7d53e1bef97533bcef5710dfdb59e87ca5", size = 97035297, upload-time = "2025-03-26T08:27:08.099Z" },
-    { url = "https://files.pythonhosted.org/packages/d6/ff/5fe8b6852d02e52c20e5b8f1dce672d38a60c22ecdde4f726f3e1625c7c6/paddlepaddle-3.0.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:f69b4ec5ec881e632bf80d8d2a0ca74f87925335dc57b14bb8971e72e2d87951", size = 94763205, upload-time = "2025-03-26T08:29:01.391Z" },
-    { url = "https://files.pythonhosted.org/packages/46/24/4e07f557384d3aee30ad924a7e06273b1226876576fd4db5b10193a71427/paddlepaddle-3.0.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:cb4a98192079cde5b5dac1109d334c12b376b97edc8682490b5f5065c8f708d9", size = 96920695, upload-time = "2025-03-26T08:30:54.827Z" },
-    { url = "https://files.pythonhosted.org/packages/8b/ff/a8685638b8ddd1af3a43f25a2b8f05263a1bec808db990177c38c6228738/paddlepaddle-3.0.0-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:cfd73da79e2eb9325bac4a3a1a7995063c7662dde724bf452659dda88e55b76f", size = 192824195, upload-time = "2025-03-26T08:34:35.525Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/1d/7229c5eb164b390ebef4c55c42980781d88c38d59cb8922474e24204a5fe/paddlepaddle-3.0.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:3ef99688f4d5113dcf0e026a0b225efa77975da04e8ca1d0666ebdb729d4a409", size = 92048781, upload-time = "2025-03-26T08:36:24.041Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/3d/5e0e1440e3ccf1becfd6bd07ec3432e9e9fe797585038c95f00a9da0962a/paddlepaddle-3.0.0-cp311-cp311-win_amd64.whl", hash = "sha256:215daf5c154855e9f4139844076853cabc86425fd127c390405895ae2b820d85", size = 97036460, upload-time = "2025-03-26T08:38:17.42Z" },
-    { url = "https://files.pythonhosted.org/packages/e2/5e/07c10c1a98fde7c7dcb299dc62c6c06b2951073734a9daa93851ba29711f/paddlepaddle-3.0.0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:dcfebfb10deb15aa33d2a2d66d5a12d9de65461d8a40d2687e2fb3221150d0ba", size = 94826038, upload-time = "2025-03-26T08:40:07.709Z" },
-    { url = "https://files.pythonhosted.org/packages/ea/83/f3435988cc4cce3764942188ec5c5f92e858012a335642e6740fcb0c3061/paddlepaddle-3.0.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:8677e8d42ff66f74fbca32ff32d8b64bbe3d56ed29a92d43dc418f0f168fcb69", size = 96946375, upload-time = "2025-03-26T08:42:00.907Z" },
-    { url = "https://files.pythonhosted.org/packages/01/1d/5dfdda57de184d8406d6757f764a1ecdf26923d78ec7c427cb55b085c4d4/paddlepaddle-3.0.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:81a7c5b10150b07521d1cd1491dca1fb76ff621b14db10e899d959f3a77935ea", size = 192856178, upload-time = "2025-03-26T08:45:42.19Z" },
-    { url = "https://files.pythonhosted.org/packages/e9/df/4254095dff1e3f87cd8a2be000e39bd1e65118ba3841466b2aeecb480c63/paddlepaddle-3.0.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:ddaa996a8b0a00dbe4269da21d65052877ec3693a22ecc07b9cada3ecd116886", size = 92026407, upload-time = "2025-03-26T08:47:30.661Z" },
-    { url = "https://files.pythonhosted.org/packages/bd/ca/850a357ea6803eeeef3ec0703f15fbbe30a6dfb0c01671bfe0527cab8662/paddlepaddle-3.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:68efccd9b64233243e48d89a20d34904e2827abc3458c7dddb9e97ef8e2209f6", size = 97056269, upload-time = "2025-03-26T08:49:24.038Z" },
-    { url = "https://files.pythonhosted.org/packages/c0/21/706cf5aa1ed7e3da092ee64fe1475a0dd7cc6ed0a907de0e87f5b55e39ce/paddlepaddle-3.0.0-cp313-cp313-macosx_10_9_x86_64.whl", hash = "sha256:52c401ffe4aae56316660a33015a6fd755cda23d3d70a28b13b73d70cbdbb8cb", size = 94826114, upload-time = "2025-03-26T12:09:28.141Z" },
-    { url = "https://files.pythonhosted.org/packages/ce/02/f6a04543770dbc2edf6368789bf025e61bf934e3b20986072882801b2e85/paddlepaddle-3.0.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:9d1051f2e208da1d439daee7c861bcb50240f09712496eb61e9ce8c618faf2f9", size = 96946877, upload-time = "2025-03-26T12:10:11.952Z" },
-    { url = "https://files.pythonhosted.org/packages/2c/7a/59d9b82f500ab72e16382503cd0d42393c8d35d2a86622926d1c2b508804/paddlepaddle-3.0.0-cp313-cp313-manylinux1_x86_64.whl", hash = "sha256:8fc4865efd3656ee99424124792cb88a642151b4d591a7d6d4a5c6afdae95959", size = 192848478, upload-time = "2025-03-26T12:11:03.218Z" },
-    { url = "https://files.pythonhosted.org/packages/5b/4a/a80b735e62c1dac0310f0dcdca51a29523cf863834f291866bd8991f270d/paddlepaddle-3.0.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:bbc4d573b35d24a262e02d72696e80f5b4aee41f698671af9574deeb1a83e6f7", size = 92027573, upload-time = "2025-03-26T12:11:32.206Z" },
-    { url = "https://files.pythonhosted.org/packages/87/56/45594a67d2603fc3b3b334017de7ef94eca6cbd21b8f53700e51e61a490e/paddlepaddle-3.0.0-cp313-cp313-win_amd64.whl", hash = "sha256:2e1292d50f80a8577407008f7321f85c8309938c0c575927950aec3c45502c2a", size = 97053969, upload-time = "2025-03-26T12:12:00.202Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/bd/5b4b922ce08b92329f88d1140f154ec43e793cdb13e53643ef8f4efc6ee2/paddlepaddle-3.1.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:a97b6af6421099dbaced3798f91a4da84e95e3a2408b14167dc2c59e0ac79752", size = 95432191, upload-time = "2025-06-29T15:25:35.502Z" },
+    { url = "https://files.pythonhosted.org/packages/77/4a/6f0c2a9f355f56c5177cb8e88287a2644f15a483882a4700389e1ddd4674/paddlepaddle-3.1.0-cp310-cp310-manylinux1_x86_64.whl", hash = "sha256:6333a0fba2f44f572cef6ba63a0f372ba6f370997664a0bdd9f2c9403e5b942c", size = 195003304, upload-time = "2025-06-29T15:38:50.425Z" },
+    { url = "https://files.pythonhosted.org/packages/72/87/dfbc434d9c9343b16a11856ca231acabc42b91669634ffb32eee9c03980d/paddlepaddle-3.1.0-cp310-cp310-manylinux2014_aarch64.whl", hash = "sha256:31a1cbc7d9291bbf418604591d3895c6be481f016d60334da1eccb4a597e2d0c", size = 93793966, upload-time = "2025-06-29T15:39:02.623Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/49/7053f52875e3ef17ffbaba4c96e5e3099f9be57fad88ea8885553beda51f/paddlepaddle-3.1.0-cp310-cp310-win_amd64.whl", hash = "sha256:4455a58a26174e3e14375498d913664af82d3e233687f9faba81770cfa21d023", size = 99763526, upload-time = "2025-06-29T15:39:14.083Z" },
+    { url = "https://files.pythonhosted.org/packages/87/0f/7a2ad2c229dd41fc3545aebad13dc37573f0ed55598118020090cd9f0bd9/paddlepaddle-3.1.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ea7b0cb8b6928d214615dcd5b191eb17a6db9fd48d6e1898b91fe991647e09dd", size = 95443521, upload-time = "2025-06-29T15:39:25.304Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/8e/e64facbda67edbd6cbada1d53cc706a79faa0e8760346bf0b5afc08cc9df/paddlepaddle-3.1.0-cp311-cp311-manylinux1_x86_64.whl", hash = "sha256:f8172bfc422410e096f67e2c27a101fde20ce75b14c7165c512009504c6cb2fa", size = 195013685, upload-time = "2025-06-29T15:39:43.333Z" },
+    { url = "https://files.pythonhosted.org/packages/86/b1/3cc954f7497ed39f835a1df3ba816e311286a6e67d78a4c9864767859176/paddlepaddle-3.1.0-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:bea8ba15940fe940fd220039c12b387056ffad38a2bbea0ef96de1accddc2979", size = 93798803, upload-time = "2025-06-29T15:39:55.052Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/89/b70fe67be768b7beb42142de225ecb1e57e6a4b4b5f0944c2d744c34b588/paddlepaddle-3.1.0-cp311-cp311-win_amd64.whl", hash = "sha256:11e0d167c381f13db3adc7fe1108ef9ac1140230ca3b9cd61a54c9c5b8831e9a", size = 99769019, upload-time = "2025-06-29T15:40:07.153Z" },
+    { url = "https://files.pythonhosted.org/packages/df/98/d9f10ffe9521cd1d85204f2f1b621e98a4295e38e5438ee211afcbee68cb/paddlepaddle-3.1.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:5383bc8df5a75e5049da97475c412cf3b51e8d5749f51d407b3102200962abc8", size = 95485865, upload-time = "2025-06-29T15:40:18.57Z" },
+    { url = "https://files.pythonhosted.org/packages/03/b8/56b6de54ad7e0995e4aa954228659d99910a03bfaae2064989fd9f1242ac/paddlepaddle-3.1.0-cp312-cp312-manylinux1_x86_64.whl", hash = "sha256:c1e461971b58d7ec7c41b90911303ba07265533de1981d5c7e0956222052f464", size = 195041460, upload-time = "2025-06-29T15:40:36.367Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/fa/4e8c6c6ba7c26110a27884a71c84474239ac5db124bfb8a03f724a114e62/paddlepaddle-3.1.0-cp312-cp312-manylinux2014_aarch64.whl", hash = "sha256:396e4ed882b4f1c8702261cc499401efcc2c9f2a9300897c14579b4bf1db9682", size = 93774796, upload-time = "2025-06-29T15:40:48.165Z" },
+    { url = "https://files.pythonhosted.org/packages/49/e5/3ad4a8f9be107e3a778eabf5573a04dc7b75f0ece83e016362ef0b57bff3/paddlepaddle-3.1.0-cp312-cp312-win_amd64.whl", hash = "sha256:3cb6d98eece900e34c05fa0428ccc32836525e72af25cc8ad10a48d4046c4639", size = 99784181, upload-time = "2025-06-29T15:40:59.674Z" },
+    { url = "https://files.pythonhosted.org/packages/24/9f/080b473f136597eb5f00ad455a9ac10432d855151ca9313a596fc35ed643/paddlepaddle-3.1.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:df6cbc49e8d61fb691589b8bb5d3f0eb0fe00b97993331b09cba77c57e6b9c13", size = 95480315, upload-time = "2025-06-29T15:41:10.719Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/fa/28f53a1bb0c5aefdb0c9e03073a1177cc0e511af4c2a77ccd6f2dfefb894/paddlepaddle-3.1.0-cp313-cp313-manylinux1_x86_64.whl", hash = "sha256:460f64c1a3b6d682ad5bf354db648055e2efaee7d1cec593bf029d6f3d85b46e", size = 195039786, upload-time = "2025-06-29T15:44:33.394Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/dc/d626f30d4aa093501439c631de4259ca6bc1f11adbbc1d8a522d827f0c03/paddlepaddle-3.1.0-cp313-cp313-manylinux2014_aarch64.whl", hash = "sha256:c9bbddd1ae57997be193bed8418b89389c051d41936defaecaf363562f5e11bf", size = 93772945, upload-time = "2025-06-29T15:44:45.992Z" },
+    { url = "https://files.pythonhosted.org/packages/85/47/7405b1472cbc121f2a22e88eb5c943ae64a1646c77490e519f99ae4b49e6/paddlepaddle-3.1.0-cp313-cp313-win_amd64.whl", hash = "sha256:adc0850621b579f87debc40369babe79348f432c17ef68dbe9aaeaa8a211c113", size = 99781322, upload-time = "2025-06-29T15:44:57.656Z" },
 ]
 
 [[package]]
 name = "paddlex"
-version = "3.0.1"
+version = "3.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "chardet" },
     { name = "colorlog" },
     { name = "filelock" },
-    { name = "gputil" },
+    { name = "huggingface-hub" },
     { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "packaging" },
@@ -2897,7 +2908,7 @@ dependencies = [
     { name = "ujson" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c6/be/f64bf6e2598408931c7db331abc47648b27be22cf6e9dcca4703f0cd62c6/paddlex-3.0.1-py3-none-any.whl", hash = "sha256:35901b82b3c0852dce107eef1ead418a55f0716b4f926a416ebb6be664d8a93f", size = 1655952, upload-time = "2025-05-30T09:43:21.816Z" },
+    { url = "https://files.pythonhosted.org/packages/90/57/637bce98fca9e238510fe2514b465c59e5f6049c39378d8ec4d82072d143/paddlex-3.1.3-py3-none-any.whl", hash = "sha256:86d752dbace266bbb3be2c871158f32a5dc43e03b5347070757bade34ed6ad1c", size = 1688519, upload-time = "2025-07-11T13:58:21.268Z" },
 ]
 
 [package.optional-dependencies]
@@ -2922,6 +2933,7 @@ ie = [
 multimodal = [
     { name = "einops" },
     { name = "ftfy" },
+    { name = "gputil" },
     { name = "jinja2" },
     { name = "opencv-contrib-python" },
     { name = "pypdfium2" },
@@ -2929,9 +2941,28 @@ multimodal = [
     { name = "tiktoken" },
 ]
 ocr = [
+    { name = "einops" },
+    { name = "ftfy" },
+    { name = "imagesize" },
+    { name = "jinja2" },
+    { name = "lxml" },
+    { name = "opencv-contrib-python" },
+    { name = "openpyxl" },
+    { name = "premailer" },
+    { name = "pyclipper" },
+    { name = "pypdfium2" },
+    { name = "regex" },
+    { name = "scikit-learn" },
+    { name = "shapely" },
+    { name = "tiktoken" },
+    { name = "tokenizers" },
+]
+trans = [
+    { name = "beautifulsoup4" },
     { name = "ftfy" },
     { name = "imagesize" },
     { name = "lxml" },
+    { name = "openai" },
     { name = "opencv-contrib-python" },
     { name = "openpyxl" },
     { name = "premailer" },
@@ -4330,6 +4361,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz", hash = "sha256:f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc", size = 20372, upload-time = "2024-02-25T23:20:04.057Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl", hash = "sha256:2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2", size = 10235, upload-time = "2024-02-25T23:20:01.196Z" },
+]
+
+[[package]]
+name = "soupsieve"
+version = "2.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/f4/4a80cd6ef364b2e8b65b15816a843c0980f7a5a2b4dc701fc574952aa19f/soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a", size = 103418, upload-time = "2025-04-20T18:50:08.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/9c/0e6afc12c269578be5c0c1c9f4b49a8d32770a080260c333ac04cc1c832d/soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4", size = 36677, upload-time = "2025-04-20T18:50:07.196Z" },
 ]
 
 [[package]]

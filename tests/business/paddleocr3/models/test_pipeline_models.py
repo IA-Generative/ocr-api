@@ -59,14 +59,14 @@ def test_pipeline_ocr():
 
 
 def test_pipeline_ocr_checkbox():
-    from business.checkbox_service.models.box_detection import BoxDetection
+    from business.checkbox_service.models.morpho import MorphoBoxDetection
 
     obj = PipelineLinearPrediction(
         models=[
             PaddleInferOCR(device=DEVICE, lang="en", ocr_version="PP-OCRv4"),
             PaddleLayoutDetection(device=DEVICE),
             PaddleFormulaRecognizer(device=DEVICE),
-            BoxDetection(),
+            MorphoBoxDetection(),
         ]
     )
     path_image = Path("tests/data/valid/formulaire-cerfa-complete.png")
