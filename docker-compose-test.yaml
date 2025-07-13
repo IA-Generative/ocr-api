@@ -131,7 +131,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: Dockerfiles/services/paddleocr/3.0.1/Dockerfile.gpu
+      dockerfile: Dockerfiles/services/paddleocr/3.1.0/Dockerfile.gpu
     container_name: paddleocr3_service_gpu
     command:
     - uv
@@ -158,6 +158,7 @@ services:
       - migration
     env_file:
       - .env
+
 
   ocr_backend:
     image: ocr_backend
