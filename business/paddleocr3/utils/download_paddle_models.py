@@ -9,6 +9,8 @@ PaddleInferOCR(
     batch_size=ocr_settings.DETECTION_BATCH_SIZE,
     ocr_version=ocr_settings.OCR_VERSION,
     lang=ocr_settings.OCR_LANG,
+    text_detection_model_name=f"{ocr_settings.OCR_VERSION}_mobile_det",
+    text_recognition_model_name=f"{ocr_settings.OCR_VERSION}_mobile_rec",
 )
 PaddleLayoutDetection()
 PaddleFormulaRecognizer()

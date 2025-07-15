@@ -36,13 +36,14 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             batch_size=ocr_settings.DETECTION_BATCH_SIZE,
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
+            text_detection_model_name=f"{ocr_settings.OCR_VERSION}_mobile_det",
+            text_recognition_model_name=f"{ocr_settings.OCR_VERSION}_mobile_rec",
         )
         models.append(model)
 
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
         from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
-        from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
         ocr_settings = PaddleSetting()
         ocr_model = PaddleInferOCR(
@@ -51,23 +52,23 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
             ocr_version=ocr_settings.OCR_VERSION,
             lang=ocr_settings.OCR_LANG,
         )
-        tmp_models = [ocr_model]
+        models.append(ocr_model)
         if ocr_settings.USE_LAYOUT_DETECTION:
             from business.paddleocr3.models.layout import PaddleLayoutDetection
 
-            tmp_models.append(PaddleLayoutDetection(device=DEVICE))
+            models.append(PaddleLayoutDetection(device=DEVICE))
             if ocr_settings.USE_FORMULA_RECOGNITION:
                 from business.paddleocr3.models.formula import PaddleFormulaRecognizer
 
-                tmp_models.append(PaddleFormulaRecognizer(device=DEVICE))
+                models.append(PaddleFormulaRecognizer(device=DEVICE))
 
             if ocr_settings.USE_TABLE_RECOGNITION:
                 from business.paddleocr3.models.table import TablePrediction
 
-                tmp_models.append(TablePrediction(device=DEVICE))
+                models.append(TablePrediction(device=DEVICE))
 
-        model = PipelineLinearPrediction(models=tmp_models)
-        models.append(model)
+        # model = PipelineLinearPrediction(models=tmp_models)
+        # models.append(model)
 
     elif name == "only-llm":
         from openai import OpenAI
