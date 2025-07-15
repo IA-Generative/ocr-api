@@ -12,12 +12,13 @@ import {
   vueDsfrAutoimportPreset,
   vueDsfrComponentResolver,
 } from '@gouvminint/vue-dsfr'
+import tailwindcss from '@tailwindcss/vite'
 
 const env = loadEnv('', process.cwd(), '')
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  // base: '/',
   server: {
     port: Number(env.FRONT_PORT),
     strictPort: true,
@@ -90,6 +91,7 @@ export default defineConfig({
         vueDsfrComponentResolver, // Autoimport des composants de VueDsfr dans les templates
       ],
     }),
+    tailwindcss(),
   ],
   base: process.env.BASE_URL || '/',
   resolve: {

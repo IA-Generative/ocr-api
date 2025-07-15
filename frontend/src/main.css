@@ -1,3 +1,22 @@
+@import "tailwindcss";
+
+/* Tailwind CSS - Config */
+@theme {
+  /* Responsive */
+  --breakpoint-xs: 320px;
+  --breakpoint-SM: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-lg: 1440px;
+
+  /* Colors */
+  --color-text-light-grey: #666666;
+  --color-text-default-grey: #3A3A3A;
+
+  /* Borders */
+  --color-border-light-grey: #DDDDDD;
+}
+
 html,
 body,
 #app {

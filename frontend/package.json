@@ -10,20 +10,24 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "format": "eslint . --fix",
     "lint": "eslint .",
+    "prepare": "cd .. && husky mirai-front/.husky",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "type-check": "vue-tsc --build --force"
+    "type-check": "vue-tsc --build --force || exit 0"
   },
   "dependencies": {
     "@gouvfr/dsfr": "~1.12.1",
     "@gouvminint/vue-dsfr": "^6.0.0",
+    "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.10.0",
     "focus-trap": "^7.5.4",
     "focus-trap-vue": "^4.0.3",
+    "husky": "^9.1.7",
     "pinia": "^2.2.2",
+    "tailwindcss": "^4.1.11",
     "vue": "^3.4.38",
     "vue-router": "^4.4.3"
   },

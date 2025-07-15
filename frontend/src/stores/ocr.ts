@@ -92,6 +92,8 @@ export const useOcrStore = defineStore('ocr', () => {
 
         status.value = task.status
 
+        console.log(status.value)
+        
         switch (task.status) {
           case 'in_progress':
             status.value = task.status

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../views/AppHome.vue'
 import AboutUs from '../views/AboutUs.vue'
+import path from 'path'
 
 const MAIN_TITLE = 'Gabarit de démarrage VueDsfr'
 
