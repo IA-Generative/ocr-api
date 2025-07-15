@@ -138,8 +138,8 @@ test-services-llm: build-container-dependencies  ## Test LLM integration
 test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
 ifeq ($(HAS_GPU),yes)
 	@echo "✅ GPU detected. Running GPU tests..."
-	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
-	docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
+	sudo docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
+	sudo docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
 	make down-test
 else
 	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
