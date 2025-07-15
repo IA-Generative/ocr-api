@@ -1,9 +1,11 @@
-import os 
+import os
 import pytest
 from PIL import Image
 from src.schemas.output import Page
-from business.paddleocr3.models.paddle import PaddleInferOCR
+from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
+
 DEVICE = os.environ.get("DEVICE", "cpu")
+
 
 def test_ocr_inference():
     obj = PaddleInferOCR(device=DEVICE)

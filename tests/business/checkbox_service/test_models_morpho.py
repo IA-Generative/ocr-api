@@ -1,11 +1,11 @@
 import pytest
 from PIL import Image
 from src.schemas.output import Page
-from business.checkbox_service.models.box_detection import BoxDetection
+from business.checkbox_service.models.morpho import MorphoBoxDetection
 
 
-def test_box_detection_inference():
-    obj = BoxDetection()
+def test_morpho_box_detection_inference():
+    obj = MorphoBoxDetection()
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")
     actual_pages = obj.batch_predict(images=[image])
@@ -13,8 +13,8 @@ def test_box_detection_inference():
     assert isinstance(actual_pages[0], Page)
 
 
-def test_size_pages_not_align():
-    obj = BoxDetection()
+def test_morpho_size_pages_not_align():
+    obj = MorphoBoxDetection()
     image_path = "tests/data/valid/identite.jpg"
     image = Image.open(image_path).convert("RGB")
     with pytest.raises(AssertionError):
