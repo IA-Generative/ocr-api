@@ -47,6 +47,7 @@ services:
     - ./tests/:/app/tests
     - ./services/:/app/services/
     - ./business/checkbox_service:/app/business/checkbox_service
+    - ./business/cache:/app/business/cache
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default

@@ -2,6 +2,7 @@ import os
 import boto3
 
 from services.base.worker import BaseWorker
+from business.cache.sql_cache import TaskCache
 from business.checkbox_service.models.morpho import MorphoBoxDetection
 
 from src.connector import S3Connector, s3_settings
@@ -112,4 +113,5 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         models=models,
         batch_size=batch_size,
         worker_weight=worker_weight,
+        cache=TaskCache(),
     )
