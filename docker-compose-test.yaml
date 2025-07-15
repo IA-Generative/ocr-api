@@ -73,15 +73,19 @@ services:
     - --cov=./business/paddleocr2
     - --cov-report=term-missing
     - tests/business/paddleocr2
+    - tests/integrations/business/paddle2
     - -ra -v --maxfail=0
     volumes:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     - ./services/:/app/services/
     - ./business/paddleocr2:/app/business/paddleocr2
+    - ./business/cache:/app/business/cache
+    - ./business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
+      PROCESS_NAME: "paddleocr-2.10.0"
     depends_on:
       - redis
       - db
