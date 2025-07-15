@@ -38,10 +38,11 @@ test = [
     "datasets>=3.6.0",
 ]
 ocr-backend = [
-    "httpx==0.25.0",
-    "fastapi==0.111.0",
-    "uvicorn[standard]==0.34.0",
-    "python-multipart==0.0.18"
+    "httpx>=0.25.0",
+    "fastapi==0.116.1",
+    "uvicorn[standard]==0.35.0",
+    "python-multipart==0.0.20",
+    "prometheus-fastapi-instrumentator>=7.1.0",
 ]
 
 ocr-service-paddle = [

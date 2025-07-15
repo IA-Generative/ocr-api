@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from .routers.task import router as task_router
 from .routers.health import router as health_router
@@ -7,7 +8,9 @@ from .routers.jobs import router as job_router
 from .routers.text import text_router
 from src import __name__, __version__
 
+
 app = FastAPI(title=__name__, version=__version__)
+Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
     CORSMiddleware,
