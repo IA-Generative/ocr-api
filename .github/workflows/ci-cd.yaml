@@ -96,7 +96,7 @@ jobs:
         run: |
           make test-services-paddleocr3.0.1
   run-tests-service-paddle3-gpu:
-    runs-on: actions-runner-controller
+    runs-on: sdid-app-hp-arc-controller
     needs: build-and-push
     permissions:
       contents: read
