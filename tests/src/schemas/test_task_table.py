@@ -324,3 +324,19 @@ def test_delete_tasks_by_user_id(task_table: TaskTable):
 
     no_deleted_tasks = task_table.delete_tasks_by_user_id("user1234")
     assert no_deleted_tasks is None
+
+
+def test_get_task_by_hash_content(task_table: TaskTable):
+    task = task_table.insert_new_task(
+        user_id="user1234",
+        form_data=TaskForm(
+            user_id="user123",
+            type="task_type_0",
+            status=TaskStatus.QUEUED.value,
+            percentage=50.0,
+            extras={"key": "value_0"},
+            content_hash="1111",
+        ),
+    )
+    found_task = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
+    assert task.content_hash == found_task.content_hash

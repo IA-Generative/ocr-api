@@ -2,7 +2,8 @@ import os
 import boto3
 
 from services.base.worker import BaseWorker
-from business.checkbox_service.models.box_detection import BoxDetection
+from business.cache.sql_cache import TaskCache
+from business.checkbox_service.models.morpho import MorphoBoxDetection
 
 from src.connector import S3Connector, s3_settings
 from src.logger import logger
@@ -26,7 +27,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
     elif name == "paddleocr-3.0.1":
         from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
 
         ocr_settings = PaddleSetting()
 
@@ -40,7 +41,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
     elif name == "paddleocr-3.0.1-pipeline":
         from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle import PaddleInferOCR
+        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
         from business.paddleocr3.models.pipeline import PipelineLinearPrediction
 
         ocr_settings = PaddleSetting()
@@ -83,10 +84,28 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         models.append(VisionLLMOCR(client=client, model_name=openai_settings.VISION_MODEL))
         models.append(TemplateLLMDetector(client=client, model_name=openai_settings.INSTRUCT_MODEL_NAME))
 
+    elif name == "mixed-classic-and-vlm":
+        from openai import OpenAI
+        from business.llm.models.template import TemplateLLMDetector
+        from business.llm.config import OpenAISetting
+
+        openai_settings = OpenAISetting()
+        client = OpenAI(
+            api_key=openai_settings.OPENAI_API_KEY,
+            base_url=openai_settings.OPENAI_BASE_URL,
+        )
+        base_worker = load_worker(
+            name="paddleocr-3.0.1-pipeline",
+            batch_size=batch_size,
+            worker_weight=worker_weight,
+        )
+        base_worker.models.append(TemplateLLMDetector(client=client, model_name=openai_settings.INSTRUCT_MODEL_NAME))
+        return base_worker
+
     else:
         raise NotImplementedError("")
 
-    models.append(BoxDetection())
+    models.append(MorphoBoxDetection())
 
     return BaseWorker(
         name=name,
@@ -94,4 +113,5 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
         models=models,
         batch_size=batch_size,
         worker_weight=worker_weight,
+        cache=TaskCache(),
     )
