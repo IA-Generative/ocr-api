@@ -32,6 +32,7 @@ class Task(Base):
     )
 
     extras = Column(JSON, nullable=True)
+    content_hash = Column(String, nullable=True, index=True, unique=False)
 
 
 class TaskModel(BaseModel):
@@ -47,6 +48,7 @@ class TaskModel(BaseModel):
     updated_at: int
     extras: Optional[Dict[str, Any]] = None
     position: Optional[int] = None
+    content_hash: Optional[str] = None
 
 
 class TaskForm(BaseModel):
@@ -57,6 +59,7 @@ class TaskForm(BaseModel):
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
     output: Optional[OCRResult] = None
+    content_hash: Optional[str] = None
 
 
 class TaskUpdateForm(BaseModel):
@@ -67,6 +70,7 @@ class TaskUpdateForm(BaseModel):
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
     output: Optional[OCRResult] = None
+    content_hash: Optional[str] = None
 
 
 class TaskStatus(str, Enum):
@@ -210,6 +214,11 @@ class TaskTable:
                 )
 
                 return position
+
+    def get_task_by_content_hash(self, content_hash_value: str) -> Optional[TaskModel]:
+        with self.get_db() as db:
+            task = db.query(Task).filter(Task.content_hash == content_hash_value).first()
+            return TaskModel.model_validate(task) if task else None
 
 
 task_table = TaskTable(get_db)

@@ -26,6 +26,7 @@ COPY ocr_backend /app/ocr_backend
 COPY src /app/src
 COPY services/ /app/services/
 COPY business/__init__.py /app/business/__init__.py
+COPY business/cache /app/business/cache
 COPY business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
 
 ENV PATH=$PATH:/app/.venv/bin/

@@ -1,9 +1,11 @@
+import hashlib
 import time
-from typing import List
+from typing import List, Optional
 
 from PIL import Image
 
 from services.base.model import BaseModelPrediction
+from services.base.cache import BaseCache
 from services.utils.lazy_pdf import LazyPdfImageList
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
@@ -19,6 +21,14 @@ class EmptyContentException(Exception): ...
 class FileNotSupported(Exception): ...
 
 
+def hash_file(file_path: str):
+    h = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        for bloc in iter(lambda: f.read(4096), b""):
+            h.update(bloc)
+    return h.hexdigest()
+
+
 class BaseWorker:
     def __init__(
         self,
@@ -27,12 +37,14 @@ class BaseWorker:
         models: List[BaseModelPrediction],
         batch_size: int = 2,
         worker_weight: float = 1,
+        cache: Optional[BaseCache] = None,
     ):
         self.name = name
         self.file_connector = file_connector
         self.models = models
         self.worker_weight = worker_weight
         self.batch_size = batch_size
+        self.cache = cache
 
     def set_extras(self, task: TaskModel) -> TaskModel:
         task.extras = task.extras if task.extras is not None else {}
@@ -161,6 +173,7 @@ class BaseWorker:
         return task
 
     def _process_task(self, task: TaskModel) -> TaskModel:
+        extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task)
 
         task = task_table.update_task(
@@ -175,11 +188,33 @@ class BaseWorker:
         )
 
         filename = task.input.raw_filename
-        logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ")
+        logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ", extra=extra_log)
         content = self.get_content_file(task=task)
-        logger.debug(f"{task.id} - {content}")
+        content_hash = hash_file(content)
+        task.content_hash = content_hash
+        logger.debug(f"{task.id} - {content}", extra=extra_log)
         pages = self.transform_content(task=task, content=content)
-        logger.debug(f" Start to process - {filename} - {len(pages)}")
+        logger.debug(f" Start to process - {filename} - {len(pages)}", extra=extra_log)
+        if self.cache:
+            logger.debug("Search into cache ", extra=extra_log)
+            if self.cache.is_in_cache(task=task):
+                cache_task = self.cache.get_task_from_cache(task=task)
+                logger.debug(
+                    f"found into cache with status {cache_task.status} ",
+                    extra=extra_log,
+                )
+                task.output.updated_at = int(time.time())
+                task = task_table.update_task(
+                    task_id=task.id,
+                    form_data=TaskUpdateForm(
+                        status=cache_task.status,
+                        percentage=cache_task.percentage,
+                        extras=cache_task.extras,
+                        output=cache_task.output,
+                        content_hash=content_hash,
+                    ),
+                )
+                return task
 
         task.output.total_pages = len(pages)
         task.output.updated_at = int(time.time())
@@ -190,6 +225,7 @@ class BaseWorker:
                 percentage=0,
                 extras=task.extras,
                 output=task.output,
+                content_hash=content_hash,
             ),
         )
 
@@ -203,6 +239,7 @@ class BaseWorker:
                     status=TaskStatus.FAILED.value,
                     percentage=task.percentage,
                     extras=task.extras,
+                    content_hash=content_hash,
                 ),
             )
             raise
@@ -213,6 +250,7 @@ class BaseWorker:
                 status=TaskStatus.COMPLETED.value,
                 percentage=task.percentage,
                 extras=task.extras,
+                content_hash=content_hash,
             ),
         )
         logger.debug(f"{task.id} - done")
@@ -223,6 +261,7 @@ class BaseWorker:
                 status=TaskStatus.COMPLETED.value,
                 percentage=task.percentage,
                 extras=task.extras,
+                content_hash=content_hash,
             ),
         )
 
