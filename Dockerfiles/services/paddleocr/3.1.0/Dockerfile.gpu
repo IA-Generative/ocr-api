@@ -10,6 +10,7 @@ RUN apt-get update -qy && \
     libgl1 \
     libglib2.0-0 \
     poppler-utils \
+    ccache \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

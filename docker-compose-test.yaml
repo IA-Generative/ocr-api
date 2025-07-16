@@ -73,15 +73,19 @@ services:
     - --cov=./business/paddleocr2
     - --cov-report=term-missing
     - tests/business/paddleocr2
+    - tests/integrations/business/paddle2
     - -ra -v --maxfail=0
     volumes:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     - ./services/:/app/services/
     - ./business/paddleocr2:/app/business/paddleocr2
+    - ./business/cache:/app/business/cache
+    - ./business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
+      PROCESS_NAME: "paddleocr-2.10.0"
     depends_on:
       - redis
       - db
@@ -104,15 +108,23 @@ services:
     - --cov=./business/paddleocr3
     - --cov-report=term-missing
     - tests/business/paddleocr3
+    - tests/integrations/business/paddle3.1.0/
     - -ra -v --maxfail=0
     volumes:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     - ./services/:/app/services/
+    - ./business/cache:/app/business/cache
     - ./business/paddleocr3:/app/business/paddleocr3
+    - ./business/llm:/app/business/llm
+    - ./business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
+      PROCESS_NAME: "paddleocr-3.0.1"
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
     depends_on:
       - redis
       - db
@@ -147,11 +159,16 @@ services:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     - ./services/:/app/services/
+    - ./business/cache:/app/business/cache
     - ./business/paddleocr3:/app/business/paddleocr3
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       DEVICE: "gpu"
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
+      PROCESS_NAME: "paddleocr-3.0.1"
     depends_on:
       - redis
       - db
