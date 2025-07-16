@@ -5,8 +5,8 @@ import useToaster from './composables/use-toaster'
 
 const toaster = useToaster()
 
-const serviceTitle = 'Service'
-const serviceDescription = 'Description du service'
+const serviceTitle = 'OCR'
+const serviceDescription = 'Reconnaître un texte scanné'
 const logoText = ['Ministère', 'de l’intérieur']
 
 const quickLinks = [

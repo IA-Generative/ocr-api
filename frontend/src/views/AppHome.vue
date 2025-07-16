@@ -79,6 +79,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+
   <div class="main-page">
     <SideBar :other-tools="myOtherTools" />
     <div class="main-page__container">
@@ -92,7 +93,7 @@ onBeforeUnmount(() => {
           >
           -->
 
-          <span>Reconnaître un texte scanné</span>
+          <span>Reconnaître un texte scanné </span>
         </h1>
       </div>
 

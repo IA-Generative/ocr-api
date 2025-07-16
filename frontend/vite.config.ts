@@ -18,7 +18,7 @@ const env = loadEnv('', process.cwd(), '')
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // base: '/',
+  base: '/',
   server: {
     port: Number(env.FRONT_PORT),
     strictPort: true,
@@ -93,7 +93,7 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-  base: process.env.BASE_URL || '/',
+  // base: process.env.BASE_URL || '/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
