@@ -115,11 +115,15 @@ class BaseWorker:
         for i in range(0, len(pages), self.batch_size):
             t_predict = time.time()
             batch = pages[i : i + self.batch_size]
-            logger.debug(f"{filename} for task {task.id}")
-            partial_result: List[Page] = task.output.pages
+            logger.debug(f"{filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]")
+            partial_result: List[Page] = []
+            if len(task.output.pages):
+                partial_result = task.output.pages[i : i + self.batch_size]
 
             for model in self.models:
-                logger.debug(f"[task-id {task.id}][model {model.__class__.__name__}]")
+                logger.debug(
+                    f"[task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]"
+                )
                 t = time.time()
                 partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
                 logger.debug(
