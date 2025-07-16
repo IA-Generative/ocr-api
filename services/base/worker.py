@@ -107,27 +107,37 @@ class BaseWorker:
         return pages
 
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image]) -> TaskModel:
+        extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task, total_pages=len(pages))
         filename = task.input.raw_filename
         client_s3 = self.file_connector.client
+        task.output.pages = [Page(page=i) for i in range(len(pages))]
+        logger.debug(
+            f"[Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
+            extra=extra_log,
+        )
 
         task.output.text = ""
         for i in range(0, len(pages), self.batch_size):
             t_predict = time.time()
             batch = pages[i : i + self.batch_size]
-            logger.debug(f"{filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]")
-            partial_result: List[Page] = []
-            if len(task.output.pages):
-                partial_result = task.output.pages[i : i + self.batch_size]
+            logger.debug(
+                f"{filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
+                extra=extra_log,
+            )
+
+            partial_result: List[Page] = task.output.pages[i : i + self.batch_size]
 
             for model in self.models:
                 logger.debug(
-                    f"[task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]"
+                    f"[task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
+                    extra=extra_log,
                 )
                 t = time.time()
                 partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
                 logger.debug(
-                    f"[task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]"
+                    f"[task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
+                    extra=extra_log,
                 )
             for j, image in enumerate(batch):
                 buffer = BytesIO()
@@ -135,7 +145,10 @@ class BaseWorker:
                 buffer.seek(0)
                 key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
                 client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
-                logger.debug(f"Uploaded page {i + j} to {key}")
+                logger.debug(
+                    f"Uploaded page {i + j} to {key}",
+                    extra=extra_log,
+                )
                 signed_url = client_s3.generate_presigned_url(
                     ClientMethod="get_object",
                     Params={"Bucket": self.file_connector.bucket_name, "Key": key},
@@ -143,23 +156,33 @@ class BaseWorker:
                 )
                 partial_result[j].page_url = signed_url
 
-            task.output.pages.extend(partial_result)
+            task.output.pages[i : i + self.batch_size] = partial_result
 
             page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + self.batch_size}"
-            logger.debug(f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s")
+            logger.debug(
+                f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s",
+                extra=extra_log,
+            )
 
-            percentage = len(task.output.pages) / task.output.total_pages
+            percentage = (i + self.batch_size) / task.output.total_pages
+            logger.debug(
+                f"[Current percentage {100*percentage:.2f}%]",
+                extra=extra_log,
+            )
             task.output.set_text()
             task = task_table.update_task(
                 task_id=task.id,
                 form_data=TaskUpdateForm(
                     status=TaskStatus.IN_PROGRESS.value,
-                    percentage=percentage * self.worker_weight + task.percentage,
+                    percentage=percentage * self.worker_weight,
                     output=task.output,
                     extras=task.extras,
                 ),
             )
-            logger.debug(task.extras)
+            logger.debug(
+                task.extras,
+                extra=extra_log,
+            )
         return task
 
     def set_output(self, task: TaskModel, total_pages: int = -1) -> TaskModel:
