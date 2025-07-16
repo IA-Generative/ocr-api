@@ -43,8 +43,8 @@ class PaddleInferOCR(BaseModelPrediction):
     def _initialize_model(self):
         logger.debug(f"Init model at {self._counter_pred} predictions")
         self.model: PaddleOCR = PaddleOCR(
-            # text_detection_model_name=self.text_detection_model_name,
-            # text_recognition_model_name=self.text_recognition_model_name,
+            text_detection_model_name=self.text_detection_model_name,
+            text_recognition_model_name=self.text_recognition_model_name,
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=False,
@@ -99,7 +99,12 @@ class PaddleInferOCR(BaseModelPrediction):
         converted_images = [np.array(image.convert("RGB")) for image in resized_images]
         logger.debug(f"Nb image to predicts: {len(images)}")
         t = perf_counter()
-        predictions = self.model.predict(converted_images)
+        predictions = self.model.predict(
+            converted_images,
+            use_doc_orientation_classify=False,
+            use_doc_unwarping=False,
+            use_textline_orientation=False,
+        )
         logger.debug(f"Time to process {len(images)} pages : {perf_counter() - t}")
 
         for i, (image, pred) in enumerate(zip(images, predictions)):
