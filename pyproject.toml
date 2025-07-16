@@ -1,7 +1,7 @@
 [project]
 name = "ocr-api"
 
-version = "1.6.0"
+version = "1.7.0"
 
 description = "Add your description here"
 readme = "README.md"
@@ -38,10 +38,11 @@ test = [
     "datasets>=3.6.0",
 ]
 ocr-backend = [
-    "httpx==0.25.0",
-    "fastapi==0.111.0",
-    "uvicorn[standard]==0.34.0",
-    "python-multipart==0.0.18"
+    "httpx>=0.25.0",
+    "fastapi==0.116.1",
+    "uvicorn[standard]==0.35.0",
+    "python-multipart==0.0.20",
+    "prometheus-fastapi-instrumentator>=7.1.0",
 ]
 
 ocr-service-paddle = [
@@ -49,10 +50,18 @@ ocr-service-paddle = [
     "pdf2image==1.17.0",
     "pillow==10.4.0",
     "psutil>=7.0.0",
-    "paddleocr==3.0.1",
-    "paddlepaddle==3.0.0",
+    "paddleocr==3.1.0",
+    "paddlepaddle==3.1.0",
     "pynvml>=12.0.0",
-    "boxdetect>=1.0.2",
+]
+
+ocr-service-paddle-gpu = [
+    "opencv-python-headless>=4.11.0.86",
+    "pdf2image==1.17.0",
+    "pillow==10.4.0",
+    "psutil>=7.0.0",
+    "paddleocr==3.1.0",
+    "pynvml>=12.0.0",
 ]
 
 services = [
@@ -61,7 +70,6 @@ services = [
     "pillow==10.4.0",
     "psutil>=7.0.0",
     "pynvml>=12.0.0",
-    "boxdetect>=1.0.2",
 ]
 
 migration = [

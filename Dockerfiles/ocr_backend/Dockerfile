@@ -21,6 +21,6 @@ CMD ["./scripts/run.sh"]
 
 FROM builder AS test
 WORKDIR /app
-COPY tests tests
 RUN uv sync --no-cache --group test --group ocr-backend --group migration
+COPY tests tests
 CMD ["./scripts/run.sh"]
