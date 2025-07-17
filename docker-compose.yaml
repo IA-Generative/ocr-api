@@ -24,18 +24,18 @@ services:
       - .env
 
   flower_ocr:
-    image: ocr-service-paddle
+    image: ocr-flower
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
     ports:
       - "5555:5555"
-    volumes:
-    - ./ocr_service/:/app/ocr_service/
-    - ./src/:/app/src/
-    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    command: ["celery", "--broker=$BROKER_URL" , "flower", "--address=0.0.0.0", "--port=5555"]
     env_file:
       - .env
+    build:
+      context: .
+      dockerfile: Dockerfiles/flower/Dockerfile
 
   ocr_service:
     deploy:
