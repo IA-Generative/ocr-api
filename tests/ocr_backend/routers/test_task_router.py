@@ -42,6 +42,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         "output": None,
         "position": None,
         "extras": {"key": "value"},
+        "content_hash": None,
     }
 
 
@@ -117,6 +118,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "input": None,
             "position": None,
             "output": None,
+            "content_hash": None,
         },
         {
             "id": "12345",
@@ -130,5 +132,6 @@ def test_get_task_by_user(mock_get_task_by_user):
             "input": None,
             "position": None,
             "output": None,
+            "content_hash": None,
         },
     ]

@@ -24,38 +24,49 @@ services:
       - .env
 
   flower_ocr:
-    image: ocr-service-paddle
+    image: ocr-flower
     environment:
       CELERY_BROKER_URL: redis://redis
       CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
     ports:
       - "5555:5555"
-    volumes:
-    - ./ocr_service/:/app/ocr_service/
-    - ./src/:/app/src/
-    command: ["celery", "-A", "ocr_service.main", "flower", "--address=0.0.0.0", "--port=5555"]
+    command: ["celery", "--broker=$BROKER_URL" , "flower", "--address=0.0.0.0", "--port=5555"]
     env_file:
       - .env
+    build:
+      context: .
+      dockerfile: Dockerfiles/flower/Dockerfile
 
   ocr_service:
     deploy:
       replicas: 1
+      resources:
+        limits:
+          cpus: 2.0
+          memory: 4000M
+        reservations:
+          cpus: 2.0
+          memory: 4000M
     container_name: ocr-service
-    command: ["celery", "-A", "ocr_service.main", "worker", "--pool=prefork", "--loglevel=info","--concurrency=1", "-E"]
+    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=paddle_worker@%h"]
     image: ocr-service-paddle
     volumes:
-    - ./ocr_service/:/app/ocr_service/
     - ./src/:/app/src/
     - ./tests/:/app/tests
+    - ./services/:/app/services/
+    - ./business/paddleocr2:/app/business/paddleocr2
     build:
-      target: test
       context: .
-      dockerfile: Dockerfiles/ocr_service/Dockerfile.paddle
+      dockerfile: Dockerfiles/services/paddleocr/2.10.0/Dockerfile
     depends_on:
       - redis
       - minio
       #- migration
       - db
+    environment:
+      - PROCESS_NAME=paddleocr-2.10.0
+      - WORKER_NAME=worker.tasks.ocr
+      - CELERY_APP_NAME=default
     env_file:
       - .env
 
@@ -73,13 +84,17 @@ services:
     - ./src/:/app/src/
     - ./tests/:/app/tests
     environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
+      - DEV_MODE="true"
+      - PROCESS_NAME=paddleocr-2.10.0
+      - WORKER_NAME=worker.tasks.ocr
+      - CELERY_APP_NAME=default
     depends_on:
       - redis
       - db
       - minio
       #- migration
+
+
     env_file:
       - .env
 

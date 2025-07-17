@@ -22,3 +22,4 @@ mirai-infra/
 .DS_STORE
 tests/data/logs/
 *.ipynb
+tests/data/valid/formulaire-cerfa-complete
