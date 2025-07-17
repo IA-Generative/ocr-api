@@ -1,22 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 import Home from '../views/AppHome.vue'
-import AboutUs from '../views/AboutUs.vue'
 import path from 'path'
 
-const MAIN_TITLE = 'Gabarit de démarrage VueDsfr'
+const MAIN_TITLE = 'MIrAI - OCR'
 
 const routes = [
   {
     path: '/',
     name: 'Home',
     component: Home,
-  },
-  {
-    path: '/a-propos',
-    name: 'About',
-    component: AboutUs,
-  },
+  }
 ]
 
 const router = createRouter({
