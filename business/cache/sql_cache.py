@@ -55,12 +55,16 @@ class TaskCache(BaseCache):
                 ExpiresIn=3600,  # 1h
             )
             page.page_url = signed_url
+            index += 1
 
         return task
 
     def get_task_from_cache(self, task: TaskModel) -> TaskModel:
         task_found = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
         if task_found:
+            task_found.input = task.input
+            task_found.id = task.id
+            task_found.user_id = task.user_id
             task_found = self.update_get_obj(task=task_found)
 
         return task_found
