@@ -1,4 +1,3 @@
-import type { IOcr } from '../interfaces/IOcr'
 /**
  *
  * @Status - Errors :
@@ -13,6 +12,7 @@ import type { IOcr } from '../interfaces/IOcr'
  *    - TIMEOUT = "timeout"  # N’a pas pu terminer dans le temps imparti
  *
  */
+import type { TaskModel } from '@/api/types'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import useToaster from '@/composables/use-toaster'
@@ -32,7 +32,7 @@ const VALID_MIME_TYPES = [
 export const useOcrStore = defineStore('ocr', () => {
   const status = ref<string | null>(null)
   const percentage = ref<number>(0)
-  const taskData = ref<IOcr | null>(null)
+  const taskData = ref<TaskModel | null>(null)
   const isPolling = ref(false)
   const error = ref<string | undefined>(undefined)
   const processingState = ref<'idle' | 'validating' | 'uploading' | 'processing'>('idle')
@@ -60,9 +60,9 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
-  async function getTask (taskId: string): Promise<IOcr> {
+  async function getTask (taskId: string): Promise<TaskModel> {
     try {
-      const { data } = await http.get<IOcr>(`/tasks/${taskId}`)
+      const { data } = await http.get<TaskModel>(`/tasks/${taskId}`)
       return data
     }
     catch (err: any) {
@@ -91,8 +91,6 @@ export const useOcrStore = defineStore('ocr', () => {
         const task = await getTask(taskId)
 
         status.value = task.status
-
-        console.log(status.value)
 
         switch (task.status) {
           case 'in_progress':
@@ -197,7 +195,7 @@ export const useOcrStore = defineStore('ocr', () => {
     }
 
     try {
-      const { data: task } = await http.post<IOcr>(
+      const { data: task } = await http.post<TaskModel>(
         `/jobs/${userId}`,
         formData,
         // options

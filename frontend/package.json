@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "clean:dist": "rimraf dist",
@@ -10,7 +10,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "format": "eslint . --fix",
     "lint": "eslint .",
-    "prepare": "cd .. && husky mirai-front/.husky",
+    "prepare": "cd .. && husky ocr-front/.husky",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
     "test:unit": "vitest run",

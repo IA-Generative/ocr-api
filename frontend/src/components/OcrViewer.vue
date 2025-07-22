@@ -2,13 +2,13 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useOcrStore } from '@/stores/ocr'
 import useToaster from '@/composables/use-toaster'
-import type { BoxItem, PageItem } from '@/interfaces/IOcr'
+import type { Bbox, Page } from '@/api/types'
 import type { CSSProperties } from 'vue'
 
 const props = defineProps<{
   data: {
     id?: string
-    pages: PageItem[]
+    pages: Page[]
   }
 }>()
 
@@ -27,7 +27,7 @@ const paginationPages = computed(() =>
 )
 
 const imageUrl = computed(() => pages[currentPage.value].page_url)
-const boxes = computed<BoxItem[]>(() => {
+const boxes = computed<Bbox[]>(() => {
   return pages[currentPage.value]?.boxes || []
 })
 const showImage = ref(true)
@@ -36,7 +36,7 @@ const imgRef = ref<HTMLImageElement | null>(null)
 const imgDimensions = ref({ width: 0, height: 0 })
 let resizeObserver: ResizeObserver
 
-function styleForBox(box: BoxItem): CSSProperties {
+function styleForBox(box: Bbox): CSSProperties {
   const W = imgDimensions.value.width
   const H = imgDimensions.value.height
   return {
