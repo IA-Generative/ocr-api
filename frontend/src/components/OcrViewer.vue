@@ -2,7 +2,10 @@
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useOcrStore } from '@/stores/ocr'
 import useToaster from '@/composables/use-toaster'
-import type { Bbox, Page } from '@/api/types'
+import type { components } from '@/api/types/api.schema'
+type Bbox = components["schemas"]["Bbox"]
+type Page = components["schemas"]["Page"]
+
 import type { CSSProperties } from 'vue'
 
 const props = defineProps<{

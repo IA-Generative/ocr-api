@@ -1,18 +1,4 @@
 services:
-  openapi_generator:
-    image: openapitools/openapi-generator-cli:latest
-    volumes:
-      - ./frontend:/local
-    working_dir: /local
-    command: >
-      generate
-      -i ${VITE_OCR_API_URL}/openapi.json
-      -g typescript-axios
-      -o /local/src/api/types
-      --additional-properties=supportsES6=true,typescriptThreePlus=true,npmName=ocr-api-client
-    env_file:
-      - .env
-
   ocr_frontend:
     container_name: ocr_frontend
     restart: always
@@ -28,5 +14,3 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    depends_on:
-      - openapi_generator
