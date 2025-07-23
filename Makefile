@@ -73,6 +73,9 @@ down: ## Eteint l'environnement de développement en conteneurs
 down-test:
 	docker compose -f docker-compose-test.yaml down || true
 
+down-frontend: ## Eteint l'environnement frontend en conteneur
+	docker compose -f docker-compose.vue.yaml down || true
+
 logs-api: ## Affiche les logs du conteneur de l'API
 	docker compose logs -f $(OCR_BACKEND_CONTAINER)
 
@@ -84,6 +87,7 @@ logs-frontend: ## Affiche les logs du conteneur de frontend
 
 clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	rm -rf frontend/node_modules frontend/.nuxt frontend/.output
 	$(MAKE) down
 
 
