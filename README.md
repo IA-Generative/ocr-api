@@ -127,3 +127,18 @@ print("\n\n")
 ```
 docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
 ```
+
+## Frontend
+
+### Installation
+
+Utilisation d'un Makefile pour exécuter les commandes ***(installation de `make` requis)***.
+
+
+```sh
+# Démarrer l'environnement de développement
+make up-frontend
+
+# Démarrer & mettre à jour les types
+make generate-openapi
+```

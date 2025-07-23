@@ -1,11 +1,13 @@
 # dev
-FROM docker.io/node:22.15.0-slim AS dev
+FROM docker.io/node:22.17.1-slim AS dev
 
 WORKDIR /app
-RUN npm install --ignore-scripts --location=global pnpm@10.11.0
+
+RUN npm install --ignore-scripts --location=global pnpm@10.13.1
 COPY ./package.json ./
 RUN pnpm install --ignore-scripts
 COPY . .
+
 CMD ["pnpm", "run", "dev"]
 
 
