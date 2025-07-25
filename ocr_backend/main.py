@@ -9,7 +9,13 @@ from .routers.text import text_router
 from src import __name__, __version__
 
 
-app = FastAPI(title=__name__, version=__version__, docs_url="/api/docs", redoc_url="/api/redocs")
+app = FastAPI(
+    title=__name__,
+    version=__version__,
+    docs_url="/api/docs",
+    redoc_url="/api/redocs",
+    openapi_url="/api/openapi.json",
+)
 Instrumentator().instrument(app).expose(app)
 
 app.add_middleware(
