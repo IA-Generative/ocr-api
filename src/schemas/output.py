@@ -34,8 +34,18 @@ class OCRResult(BaseModel):
 
         for i, page in enumerate(self.pages):
             page_lines_content = [f"{20 * '-'} Page: {i + 1} {20 * '-'}"]
+            checkboxes = [
+                Bbox(
+                    x=checkbox.x,
+                    y=checkbox.y,
+                    confidence=checkbox.confidence,
+                    height=checkbox.height,
+                    text="[x]" if checkbox.is_checked else "[ ]",
+                )
+                for checkbox in page.checkboxes
+            ]
 
-            sorted_bboxes = sort_bboxes_reading_order(bboxes=page.boxes, delta_y=delta_y)
+            sorted_bboxes = sort_bboxes_reading_order(bboxes=page.boxes + checkboxes, delta_y=delta_y)
             for line_sorted_boxes in sorted_bboxes:
                 text_line = get_text_from_list_bboxes(line_sorted_boxes)
                 page_lines_content.append(text_line)
