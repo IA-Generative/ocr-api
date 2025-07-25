@@ -1,17 +1,16 @@
 services:
-  mirai_frontend:
+  ocr_frontend:
     container_name: ocr_frontend
     restart: always
     working_dir: /app
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: ./frontend
+      dockerfile: Dockerfile
       target: dev
-    image: ocr/front:dev
     env_file:
       - .env
     ports:
-    - 8081:3000
+      - 8081:3000
     volumes:
-    - ./frontend:/app
-    - /app/node_modules
+      - ./frontend:/app
+      - /app/node_modules

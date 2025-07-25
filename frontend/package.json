@@ -1,7 +1,7 @@
 {
   "name": "frontend",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "clean:dist": "rimraf dist",
@@ -10,25 +10,26 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "format": "eslint . --fix",
     "lint": "eslint .",
-    "prepare": "cd .. && husky mirai-front/.husky",
+    "prepare": "cd .. && husky ocr-front/.husky",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "type-check": "vue-tsc --build --force || exit 0"
+    "type-check": "vue-tsc --build --force || exit 0",
+    "generate-openapi": "pnpx openapi-typescript ${VITE_OCR_API_URL}/openapi.json -o ./src/api/types/api.schema.d.ts"
   },
   "dependencies": {
     "@gouvfr/dsfr": "~1.12.1",
     "@gouvminint/vue-dsfr": "^6.3.1",
     "@tailwindcss/vite": "^4.1.11",
-    "axios": "^1.10.0",
+    "axios": "^1.11.0",
     "focus-trap": "^7.6.5",
     "focus-trap-vue": "^4.0.3",
     "husky": "^9.1.7",
     "pinia": "^2.3.1",
     "tailwindcss": "^4.1.11",
-    "vue": "^3.5.17",
+    "vue": "^3.5.18",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
@@ -39,7 +40,7 @@
     "@testing-library/vue": "^8.1.0",
     "@tsconfig/node20": "^20.1.6",
     "@types/jsdom": "^21.1.7",
-    "@types/node": "^20.19.8",
+    "@types/node": "^20.19.9",
     "@vitejs/plugin-vue": "^5.2.4",
     "@vitejs/plugin-vue-jsx": "^4.2.0",
     "@vue/test-utils": "^2.4.6",
@@ -48,6 +49,7 @@
     "eslint-plugin-playwright": "^1.8.3",
     "jsdom": "^25.0.1",
     "npm-run-all2": "^6.2.6",
+    "openapi-typescript": "^7.8.0",
     "rimraf": "^5.0.10",
     "typescript": "~5.4.5",
     "unplugin-auto-import": "^0.18.6",

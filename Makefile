@@ -2,7 +2,7 @@ IMAGE_NAME_OCR_BACKEND=ocr-api
 IMAGE_NAME_OCR_SERVICE=ocr-service
 PYTHONPATH=$(PWD)
 OCR_BACKEND_CONTAINER=ocr-api
-OCR_SERVICE_CONTAINER=ocr-service
+OCR_FRONTEND_CONTAINER=ocr-frontend
 STRESS_HOST=http://localhost:5000
 HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
@@ -64,20 +64,30 @@ bump-minor:
 up: ## Lance l'environnement de développement en conteneurs
 	docker compose up -d
 
+up-frontend: ## Lance l'environnement frontend en conteneur
+	docker compose -f docker-compose.vue.yaml up -d ocr_frontend
+
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
 
 down-test:
 	docker compose -f docker-compose-test.yaml down || true
 
+down-frontend: ## Eteint l'environnement frontend en conteneur
+	docker compose -f docker-compose.vue.yaml down || true
+
 logs-api: ## Affiche les logs du conteneur de l'API
-	docker logs -f $(OCR_BACKEND_CONTAINER)
+	docker compose logs -f $(OCR_BACKEND_CONTAINER)
 
 logs-service: ## Affiche les logs du conteneur de service
-	docker logs -f $(OCR_SERVICE_CONTAINER)
+	docker compose logs -f $(OCR_SERVICE_CONTAINER)
+
+logs-frontend: ## Affiche les logs du conteneur de frontend
+	docker compose logs -f $(OCR_FRONTEND_CONTAINER)
 
 clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	rm -rf frontend/node_modules frontend/.nuxt frontend/.output
 	$(MAKE) down
 
 
@@ -92,6 +102,9 @@ build-ocr-backend: ## Lance la construction de l'image Docker backend
 
 build-ocr-service: ## Lance la construction de l'image Docker service
 	docker compose build ocr_service
+
+build-ocr-frontend: ## Lance la construction de l'image Docker frontend
+	docker compose -f docker-compose.vue.yaml build ocr_frontend
 
 upgrade-db: ## Applique les migrations de base de données
 	docker compose run --rm migration alembic upgrade head
@@ -149,3 +162,6 @@ endif
 test-backend-api: build-container-dependencies  ## Test ocr backend
 	docker compose -f docker-compose-test.yaml up ocr_backend
 	make down-test
+
+generate-openapi: up-frontend  ## Génère la documentation OpenAPI
+	docker compose -f docker-compose.vue.yaml exec ocr_frontend pnpm run generate-openapi
