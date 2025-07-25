@@ -40,6 +40,7 @@ class OCRResult(BaseModel):
                     y=checkbox.y,
                     confidence=checkbox.confidence,
                     height=checkbox.height,
+                    width=checkbox.width,
                     text="[x]" if checkbox.is_checked else "[ ]",
                 )
                 for checkbox in page.checkboxes
