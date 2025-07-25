@@ -83,7 +83,8 @@ docker-build-ocr-flower:
 docker-build-ocr-frontend:
   variables:
     IMAGE_NAMES: ocr-frontend:${CI_COMMIT_REF_SLUG} ocr-frontend:${CI_COMMIT_SHORT_SHA} ocr-frontend:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/frontend/Dockerfile"
+    DOCKERFILE: "./frontend/Dockerfile"
+    WORKING_DIR: "./frontend"
   stage: docker-build
   extends:
     - .kaniko:build-push
