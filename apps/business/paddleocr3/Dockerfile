@@ -42,5 +42,5 @@ CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
 RUN uv sync --group test --group ocr-service-paddle --group llm
-COPY tests /app/tests
+COPY apps/tests /app/tests
 CMD ["uv", "run", "services/main.py"]
