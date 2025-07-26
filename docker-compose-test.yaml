@@ -98,7 +98,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: Dockerfiles/services/paddleocr/3.0.1/Dockerfile
+      dockerfile: apps/business/paddleocr3/Dockerfile
     container_name: paddleocr3_service
     command:
     - uv
