@@ -18,8 +18,8 @@ RUN apt-get update -qy && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pyproject.toml /app/pyproject.toml
-COPY uv.lock /app/uv.lock
+COPY apps/pyproject.toml /app/pyproject.toml
+COPY apps/uv.lock /app/uv.lock
 RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
 
 COPY ocr_backend /app/ocr_backend

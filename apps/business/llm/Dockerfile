@@ -6,7 +6,7 @@ WORKDIR /app
 RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils && apt autoremove
 ENV UV_CACHE_DIR=/app/.cache
 
-COPY pyproject.toml uv.lock /app/
+COPY apps/pyproject.toml apps/uv.lock /app/
 
 RUN uv sync --no-cache --group llm --group services
 

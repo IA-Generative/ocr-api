@@ -23,7 +23,7 @@ ENV PADDLE_OCR_VERSION=${PADDLE_OCR_VERSION}
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock /app/
+COPY apps/pyproject.toml apps/uv.lock /app/
 
 RUN uv sync --no-cache --group ocr-service-paddle --group llm
 
