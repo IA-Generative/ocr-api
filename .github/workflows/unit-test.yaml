@@ -73,7 +73,7 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make test-services-paddleocr3.0.1
+          make test-services-paddleocr3.1.0
   # run-tests-service-paddle3-gpu:
   #   runs-on: sdid-app-hp-arc-controller
   #   permissions:
