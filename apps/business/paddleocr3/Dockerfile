@@ -1,4 +1,4 @@
-FROM paddlepaddle/paddle:3.1.0-gpu-cuda12.9-cudnn9.9 AS paddle_model
+FROM paddlepaddle/paddle:3.0.0 AS paddle_model
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -24,27 +24,23 @@ ENV PADDLE_OCR_VERSION=${PADDLE_OCR_VERSION}
 WORKDIR /app
 
 COPY pyproject.toml uv.lock /app/
-RUN uv venv
-RUN uv sync --no-cache --group ocr-service-paddle-gpu
-RUN uv pip install paddlepaddle-gpu==3.1.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu129/
 
+RUN uv sync --no-cache --group ocr-service-paddle --group llm
 
 ENV PYTHONPATH=/app
-COPY services /app/services
-COPY src /app/src
-COPY business/__init__.py /app/business/__init__.py
-COPY business/paddleocr3 /app/business/paddleocr3
-COPY business/llm /app/business/llm
-COPY business/cache /app/business/cache
-COPY business/checkbox_service /app/business/checkbox_service
+COPY apps/services /app/services
+COPY apps/src /app/src
+COPY apps/business/__init__.py /app/business/__init__.py
+COPY apps/business/paddleocr3 /app/business/paddleocr3
+COPY apps/business/llm /app/business/llm
+COPY apps/business/cache /app/business/cache
+COPY apps/business/checkbox_service /app/business/checkbox_service
 
-# RUN uv run /app/business/paddleocr3/utils/download_paddle_models.py
+RUN uv run /app/business/paddleocr3/utils/download_paddle_models.py
 ENV PATH=$PATH:/app/.venv/bin/
 CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
-RUN uv sync --group test --group ocr-service-paddle-gpu
-RUN uv pip install paddlepaddle-gpu==3.1.0 -i https://www.paddlepaddle.org.cn/packages/stable/cu129/
-
+RUN uv sync --group test --group ocr-service-paddle --group llm
 COPY tests /app/tests
 CMD ["uv", "run", "services/main.py"]
