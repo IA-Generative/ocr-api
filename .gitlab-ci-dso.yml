@@ -25,7 +25,7 @@ read_secret:
 docker-build-ocr-api:
   variables:
     IMAGE_NAMES: ocr-api:${CI_COMMIT_REF_SLUG} ocr-api:${CI_COMMIT_SHORT_SHA} ocr-api:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/ocr_backend/Dockerfile"
+    DOCKERFILE: "apps/ocr_backend/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
@@ -33,7 +33,7 @@ docker-build-ocr-api:
 docker-build-ocr-service-paddle-2.10.0:
   variables:
     IMAGE_NAMES: ocr-service-paddle-2.10.0:${CI_COMMIT_REF_SLUG} ocr-service-paddle:${CI_COMMIT_SHORT_SHA} ocr-service-paddle:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/services/paddleocr/2.10.0/Dockerfile"
+    DOCKERFILE: apps/business/paddleocr2/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
@@ -41,16 +41,16 @@ docker-build-ocr-service-paddle-2.10.0:
 # docker-build-ocr-service-paddle-2.10.0-gpu:
 #   variables:
 #     IMAGE_NAMES: ocr-service-paddle-gpu:${CI_COMMIT_REF_SLUG} ocr-service-paddle-gpu:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-gpu:${CI_COMMIT_TAG}
-#     DOCKERFILE: "Dockerfiles/services/paddleocr/2.10.0/Dockerfile.gpu"
+#     DOCKERFILE: "apps/business/paddleocr2/Dockerfile.gpu"
 #   stage: docker-build
 #   extends:
 #     - .kaniko:build-push
 
 
-docker-build-ocr-service-paddle-3.0.1:
+docker-build-ocr-service-paddle-3.1.0:
   variables:
-    IMAGE_NAMES: ocr-service-paddle-3.0.1:${CI_COMMIT_REF_SLUG} ocr-service-paddle-3.0.1:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-3.0.1:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/services/paddleocr/3.0.1/Dockerfile"
+    IMAGE_NAMES: ocr-service-paddle-3.1.0:${CI_COMMIT_REF_SLUG} ocr-service-paddle-3.1.0:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-3.1.0:${CI_COMMIT_TAG}
+    DOCKERFILE: "apps/business/paddleocr3/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
@@ -66,7 +66,7 @@ docker-build-ocr-service-paddle-3.0.1:
 docker-build-ocr-service-llm:
   variables:
     IMAGE_NAMES: ocr-service-llm:${CI_COMMIT_REF_SLUG} ocr-service-llm:${CI_COMMIT_SHORT_SHA} ocr-service-llm:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/services/llm/Dockerfile"
+    DOCKERFILE: "apps/business/llm/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
@@ -75,7 +75,7 @@ docker-build-ocr-service-llm:
 docker-build-ocr-flower:
   variables:
     IMAGE_NAMES: ocr-flower:${CI_COMMIT_REF_SLUG} ocr-flower:${CI_COMMIT_SHORT_SHA} ocr-flower:${CI_COMMIT_TAG}
-    DOCKERFILE: "Dockerfiles/flower/Dockerfile"
+    DOCKERFILE: "apps/flower/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
@@ -83,8 +83,8 @@ docker-build-ocr-flower:
 docker-build-ocr-frontend:
   variables:
     IMAGE_NAMES: ocr-frontend:${CI_COMMIT_REF_SLUG} ocr-frontend:${CI_COMMIT_SHORT_SHA} ocr-frontend:${CI_COMMIT_TAG}
-    DOCKERFILE: "./frontend/Dockerfile"
-    WORKING_DIR: "./frontend"
+    DOCKERFILE: "./apps/frontend/Dockerfile"
+    WORKING_DIR: "./apps/frontend"
   stage: docker-build
   extends:
     - .kaniko:build-push

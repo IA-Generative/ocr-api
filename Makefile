@@ -141,7 +141,7 @@ test-services-paddleocr2.10.0: build-container-dependencies ## Test PaddleOCR 2.
 	docker compose -f docker-compose-test.yaml up paddleocr2_service
 	make down-test
 
-test-services-paddleocr3.0.1: build-container-dependencies ## Test PaddleOCR 3.0.1
+test-services-paddleocr3.1.0: build-container-dependencies ## Test PaddleOCR 3.1.0
 	docker compose -f docker-compose-test.yaml up paddleocr3_service
 	make down-test
 test-services-llm: build-container-dependencies  ## Test LLM integration
