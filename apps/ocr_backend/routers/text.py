@@ -8,7 +8,12 @@ from ocr_backend.core.security.factory import TokenVerifier
 text_router = APIRouter(tags=["Text"])
 
 
-@text_router.get("/text-task/{task_id}", response_class=PlainTextResponse, response_model=None)
+@text_router.get(
+    "/text-task/{task_id}",
+    response_class=PlainTextResponse,
+    response_model=None,
+    deprecated=True,
+)
 async def download_text_content(task_id: str) -> PlainTextResponse:
     task = task_table.get_task_by_id(task_id)
     if task is None:

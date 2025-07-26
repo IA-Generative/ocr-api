@@ -26,7 +26,12 @@ router = APIRouter(tags=["Jobs"])
 WORKER_NAME = "worker.tasks.ocr"
 
 
-@router.post("/jobs/{user_id}", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+@router.post(
+    "/jobs/{user_id}",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TaskModel,
+    deprecated=True,
+)
 async def upload_file(user_id: str, file: UploadFile = File(...)):
     extras = {}
     task_data = task_table.insert_new_task(
