@@ -22,7 +22,7 @@ COPY apps/pyproject.toml /app/pyproject.toml
 COPY apps/uv.lock /app/uv.lock
 RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
 
-COPY ocr_backend /app/ocr_backend
+COPY apps/ocr_backend /app/ocr_backend
 COPY apps/src /app/src
 COPY apps/services/ /app/services/
 COPY apps/business/__init__.py /app/business/__init__.py
