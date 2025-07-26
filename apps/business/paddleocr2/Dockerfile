@@ -7,17 +7,17 @@ RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils 
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 
-COPY benchmark/paddle/2.10.0/pyproject.toml  /app/
+COPY apps/benchmark/paddle/2.10.0/pyproject.toml  /app/
 RUN uv sync
 ENV PYTHONPATH=/app
-COPY business/__init__.py /app/business/__init__.py
-COPY business/paddleocr2 /app/business/paddleocr2
-COPY business/cache /app/business/cache
-COPY business/checkbox_service /app/business/checkbox_service
+COPY apps/business/__init__.py /app/business/__init__.py
+COPY apps/business/paddleocr2 /app/business/paddleocr2
+COPY apps/business/cache /app/business/cache
+COPY apps/business/checkbox_service /app/business/checkbox_service
 RUN uv run /app/business/paddleocr2/utils/download_paddle_models.2.10.0.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
 
-COPY src /app/src
-COPY services /app/services/
+COPY apps/src /app/src
+COPY apps/services /app/services/
 
 ENV PATH=$PATH:/app/.venv/bin/
 
