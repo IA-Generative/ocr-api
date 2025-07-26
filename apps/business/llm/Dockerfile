@@ -11,12 +11,12 @@ COPY pyproject.toml uv.lock /app/
 RUN uv sync --no-cache --group llm --group services
 
 ENV PYTHONPATH=/app
-COPY business/__init__.py /app/business/__init__.py
-COPY business/llm /app/business/llm
-COPY business/checkbox_service /app/business/checkbox_service
+COPY apps/business/__init__.py /app/business/__init__.py
+COPY apps/business/llm /app/business/llm
+COPY apps/business/checkbox_service /app/business/checkbox_service
 
-COPY src /app/src
-COPY services /app/services/
+COPY apps/src /app/src
+COPY apps/services /app/services/
 
 ENV PATH=$PATH:/app/.venv/bin/
 
