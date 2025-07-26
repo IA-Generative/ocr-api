@@ -28,7 +28,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: Dockerfiles/services/checkbox-detection/Dockerfile
+      dockerfile: apps/business/checkbox_service/Dockerfile
     container_name: checkbox_service
     command:
     - uv

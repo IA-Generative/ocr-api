@@ -23,16 +23,16 @@ COPY uv.lock /app/uv.lock
 RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
 
 COPY ocr_backend /app/ocr_backend
-COPY src /app/src
-COPY services/ /app/services/
-COPY business/__init__.py /app/business/__init__.py
-COPY business/cache /app/business/cache
-COPY business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
+COPY apps/src /app/src
+COPY apps/services/ /app/services/
+COPY apps/business/__init__.py /app/business/__init__.py
+COPY apps/business/cache /app/business/cache
+COPY apps/business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
 
 ENV PATH=$PATH:/app/.venv/bin/
 ENV PYTHONPATH=/app/
 
 FROM builder AS test
 WORKDIR /app
-COPY tests tests
+COPY apps/tests tests
 RUN uv sync --no-cache --group test --group ${SERVICE_NAME} --group services
