@@ -236,10 +236,10 @@ services:
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
-    depends_on:
-      - redis
-      - db
-      - minio
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
+      VISION_MODEL: ${VISION_MODEL}
     env_file:
       - .env
 

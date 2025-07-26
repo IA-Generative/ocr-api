@@ -36,9 +36,9 @@ def test_vision_extraction_only():
     obj = LLMToForm(client=client, model_name=VISION_MODEL)
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")
-    result: list[Page] = obj.batch_predict(images=[image])
+    result: list[Page] = obj.batch_predict(images=[image], pages=[Page(page=0)])
     assert len(result) == 1
     assert len(result[0].boxes) == 1
     assert result[0].boxes[0].text
-    assert result[0].form_entries != 0
+    assert len(result[0].form_entries) != 0
     assert isinstance(result[0].form_entries[0], LLMFormField)

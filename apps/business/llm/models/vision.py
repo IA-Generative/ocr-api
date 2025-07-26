@@ -104,7 +104,13 @@ class LLMToForm(BaseLLMOCR):
 
         return pages
 
-    def batch_predict(self, images: list[Image.Image], pages: list[Page], *args, **kwargs):
+    def batch_predict(self, images: list[Image.Image], pages: list[Page] = [], *args, **kwargs):
+        if len(pages):
+            if len(images) != len(pages):
+                raise NotImplementedError("Please make suze same size")
+
+        else:
+            pages = [Page(page=i + 1) for i in range(len(images))]
         if isinstance(self.openai_client, OpenAI):
             for page, image in zip(pages, images):
                 page.form_entries = self.process(image=image, batch_size=2)
