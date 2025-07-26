@@ -42,12 +42,12 @@ services:
     - tests/services
     - -ra -v --maxfail=0
     volumes:
-    - ./ocr_backend/:/app/ocr_backend/
-    - ./src/:/app/src/
-    - ./tests/:/app/tests
-    - ./services/:/app/services/
-    - ./business/checkbox_service:/app/business/checkbox_service
-    - ./business/cache:/app/business/cache
+    - ./apps/ocr_backend/:/app/ocr_backend/
+    - ./apps/src/:/app/src/
+    - ./apps/tests/:/app/tests
+    - ./apps/services/:/app/services/
+    - ./apps/business/checkbox_service:/app/business/checkbox_service
+    - ./apps/business/cache:/app/business/cache
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
