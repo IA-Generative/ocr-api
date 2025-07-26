@@ -4,12 +4,14 @@ import boto3
 from services.base.worker import BaseWorker
 from business.cache.sql_cache import TaskCache
 from business.checkbox_service.models.morpho import MorphoBoxDetection
+from src.config.ocr_model import OCRModelSettings
 
 from src.connector import S3Connector, s3_settings
 from src.logger import logger
 
 s3_client = boto3.client("s3")
 s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
+main_ocr_settings = OCRModelSettings()
 
 DEVICE = os.environ.get("DEVICE", "cpu")
 
@@ -105,6 +107,19 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Bas
 
     else:
         raise NotImplementedError("")
+
+    if main_ocr_settings.USE_VISION_LLM_EXTRACT_KIE:
+        from openai import AsyncOpenAI
+        from business.llm.config import OpenAISetting
+
+        openai_settings = OpenAISetting()
+        client = AsyncOpenAI(
+            api_key=openai_settings.OPENAI_API_KEY,
+            base_url=openai_settings.OPENAI_BASE_URL,
+        )
+        from business.llm.models.vision import LLMToForm
+
+        models.append(LLMToForm(client=client, model_name=openai_settings.VISION_MODEL))
 
     models.append(MorphoBoxDetection())
 
