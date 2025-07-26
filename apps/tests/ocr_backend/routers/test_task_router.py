@@ -26,7 +26,7 @@ def test_get_task_by_id(mock_get_task_by_id):
     mock_get_task_by_id.return_value = mock_task
 
     # Appel à l'API
-    response = client.get("/tasks/12345")
+    response = client.get("/api/tasks/12345")
 
     # Assertions
     assert response.status_code == 200
@@ -52,7 +52,7 @@ def test_get_task_by_id_not_found(mock_get_task_by_id):
     mock_get_task_by_id.return_value = None
 
     # Appel à l'API
-    response = client.get("/tasks/12345")
+    response = client.get("/api/tasks/12345")
 
     # Assertions
     assert response.status_code == 404
@@ -65,7 +65,7 @@ def test_get_task_by_user_not_found(mock_get_task_by_user):
     mock_get_task_by_user.return_value = []
 
     # Appel à l'API
-    response = client.get("/tasks/user/titi")
+    response = client.get("/api/tasks/user/titi")
 
     # Assertions
     assert response.status_code == 404
@@ -101,7 +101,7 @@ def test_get_task_by_user(mock_get_task_by_user):
 
     mock_get_task_by_user.return_value = [mock_task_1, mock_task_2]
     # Appel à l'API
-    response = client.get("/tasks/user/mic2")
+    response = client.get("/api/tasks/user/mic2")
 
     # Assertions
     assert response.status_code == 200

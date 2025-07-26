@@ -183,7 +183,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+      dockerfile: apps/ocr_backend/Dockerfile
     container_name: ocr_backend
     command:
     - uv
@@ -197,11 +197,11 @@ services:
     - tests/src/
     - -ra -v --maxfail=0
     volumes:
-    - ./src/:/app/src/
-    - ./tests/src:/app/tests/src
-    - ./tests/ocr_backend:/app/tests/ocr_backend
-    - ./services/:/app/services/
-    - ./ocr_backend/:/app/ocr_backend/
+    - ./apps/src/:/app/src/
+    - ./apps/tests/src:/app/tests/src
+    - ./apps/tests/ocr_backend:/app/tests/ocr_backend
+    - ./apps/services/:/app/services/
+    - ./apps/ocr_backend/:/app/ocr_backend/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default

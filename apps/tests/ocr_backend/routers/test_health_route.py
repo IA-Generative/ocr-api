@@ -7,7 +7,7 @@ client = TestClient(app)
 
 def test_get_health():
     # Appel à la route /health
-    response = client.get("/health")
+    response = client.get("/api/health")
 
     # Assertions
     assert response.status_code == 200

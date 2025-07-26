@@ -37,7 +37,7 @@ def test_upload_file(client, temp_file):
 
                 # Effectuer l'appel à l'API pour uploader le fichier
                 response = client.post(
-                    f"/jobs/{user_id}",
+                    f"/api/jobs/{user_id}",
                     files=files,
                 )
 
