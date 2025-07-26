@@ -252,7 +252,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: Dockerfiles/ocr_backend/Dockerfile
+      dockerfile: apps/ocr_backend/Dockerfile
     container_name: ocr-migration
     volumes:
     - ./src/:/app/src/
