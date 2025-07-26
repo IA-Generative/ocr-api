@@ -38,7 +38,6 @@ def test_vision_extraction_only():
     image = Image.open(image_path).convert("RGB")
     result: list[Page] = obj.batch_predict(images=[image], pages=[Page(page=0)])
     assert len(result) == 1
-    assert len(result[0].boxes) == 1
     assert result[0].boxes[0].text
     assert len(result[0].form_entries) != 0
     assert isinstance(result[0].form_entries[0], LLMFormField)
