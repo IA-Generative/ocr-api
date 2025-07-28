@@ -90,6 +90,9 @@ clean: ## Nettoyage du dépôt
 	rm -rf frontend/node_modules frontend/.nuxt frontend/.output
 	$(MAKE) down
 
+clean-front: ## Nettoyage du frontend
+	rm -rf apps/client/node_modules apps/client/.nuxt apps/client/.output
+	$(MAKE) down-frontend
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
@@ -141,7 +144,7 @@ test-services-paddleocr2.10.0: build-container-dependencies ## Test PaddleOCR 2.
 	docker compose -f docker-compose-test.yaml up paddleocr2_service
 	make down-test
 
-test-services-paddleocr3.0.1: build-container-dependencies ## Test PaddleOCR 3.0.1
+test-services-paddleocr3.1.0: build-container-dependencies ## Test PaddleOCR 3.1.0
 	docker compose -f docker-compose-test.yaml up paddleocr3_service
 	make down-test
 test-services-llm: build-container-dependencies  ## Test LLM integration
