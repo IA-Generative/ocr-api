@@ -18,21 +18,21 @@ RUN apt-get update -qy && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY apps/pyproject.toml /app/pyproject.toml
-COPY apps/uv.lock /app/uv.lock
+COPY apps/server/pyproject.toml /app/pyproject.toml
+COPY apps/server/uv.lock /app/uv.lock
 RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
 
-COPY apps/ocr_backend /app/ocr_backend
-COPY apps/src /app/src
-COPY apps/services/ /app/services/
-COPY apps/business/__init__.py /app/business/__init__.py
-COPY apps/business/cache /app/business/cache
-COPY apps/business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
+COPY apps/server/ocr_backend /app/ocr_backend
+COPY apps/server/src /app/src
+COPY apps/server/services/ /app/services/
+COPY apps/server/business/__init__.py /app/business/__init__.py
+COPY apps/server/business/cache /app/business/cache
+COPY apps/server/business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
 
 ENV PATH=$PATH:/app/.venv/bin/
 ENV PYTHONPATH=/app/
 
 FROM builder AS test
 WORKDIR /app
-COPY apps/tests tests
+COPY apps/server/tests tests
 RUN uv sync --no-cache --group test --group ${SERVICE_NAME} --group services

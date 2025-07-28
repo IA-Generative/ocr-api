@@ -28,7 +28,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/business/checkbox_service/Dockerfile
+      dockerfile: apps/server/business/checkbox_service/Dockerfile
     container_name: checkbox_service
     command:
     - uv
@@ -42,12 +42,12 @@ services:
     - tests/services
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/ocr_backend/:/app/ocr_backend/
-    - ./apps/src/:/app/src/
-    - ./apps/tests/:/app/tests
-    - ./apps/services/:/app/services/
-    - ./apps/business/checkbox_service:/app/business/checkbox_service
-    - ./apps/business/cache:/app/business/cache
+    - ./apps/server/ocr_backend/:/app/ocr_backend/
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
+    - ./apps/server/business/cache:/app/business/cache
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -63,7 +63,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/business/paddleocr2/Dockerfile
+      dockerfile: apps/server/business/paddleocr2/Dockerfile
     container_name: paddleocr2_service
     command:
     - uv
@@ -76,12 +76,12 @@ services:
     - tests/integrations/business/paddle2
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/tests/:/app/tests
-    - ./apps/services/:/app/services/
-    - ./apps/business/paddleocr2:/app/business/paddleocr2
-    - ./apps/business/cache:/app/business/cache
-    - ./apps/business/checkbox_service:/app/business/checkbox_service
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/paddleocr2:/app/business/paddleocr2
+    - ./apps/server/business/cache:/app/business/cache
+    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -98,7 +98,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/business/paddleocr3/Dockerfile
+      dockerfile: apps/server/business/paddleocr3/Dockerfile
     container_name: paddleocr3_service
     command:
     - uv
@@ -111,13 +111,13 @@ services:
     - tests/integrations/business/paddle3.1.0/
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/tests/:/app/tests
-    - ./apps/services/:/app/services/
-    - ./apps/business/cache:/app/business/cache
-    - ./apps/business/paddleocr3:/app/business/paddleocr3
-    - ./apps/business/llm:/app/business/llm
-    - ./apps/business/checkbox_service:/app/business/checkbox_service
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/cache:/app/business/cache
+    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
+    - ./apps/server/business/llm:/app/business/llm
+    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -156,11 +156,11 @@ services:
     - tests/business/paddleocr3
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/tests/:/app/tests
-    - ./apps/services/:/app/services/
-    - ./apps/business/cache:/app/business/cache
-    - ./apps/business/paddleocr3:/app/business/paddleocr3
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/cache:/app/business/cache
+    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -183,7 +183,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/ocr_backend/Dockerfile
+      dockerfile: apps/server/ocr_backend/Dockerfile
     container_name: ocr_backend
     command:
     - uv
@@ -197,11 +197,11 @@ services:
     - tests/src/
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/tests/src:/app/tests/src
-    - ./apps/tests/ocr_backend:/app/tests/ocr_backend
-    - ./apps/services/:/app/services/
-    - ./apps/ocr_backend/:/app/ocr_backend/
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/src:/app/tests/src
+    - ./apps/server/tests/ocr_backend:/app/tests/ocr_backend
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/ocr_backend/:/app/ocr_backend/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -217,7 +217,7 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/business/llm/Dockerfile
+      dockerfile: apps/server/business/llm/Dockerfile
     container_name: llm_ocr_service
     command:
     - uv
@@ -229,10 +229,10 @@ services:
     - tests/business/llm
     - -ra -v --maxfail=0
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/tests/:/app/tests
-    - ./apps/services/:/app/services/
-    - ./apps/business/llm:/app/business/llm
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/llm:/app/business/llm
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -252,11 +252,11 @@ services:
     build:
       target: test
       context: .
-      dockerfile: apps/ocr_backend/Dockerfile
+      dockerfile: apps/server/ocr_backend/Dockerfile
     container_name: ocr-migration
     volumes:
-    - ./apps/src/:/app/src/
-    - ./apps/migration/:/app/migration
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/migration/:/app/migration
     env_file:
       - .env
     depends_on:

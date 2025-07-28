@@ -6,17 +6,17 @@ WORKDIR /app
 RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils && apt autoremove
 ENV UV_CACHE_DIR=/app/.cache
 
-COPY apps/pyproject.toml apps/uv.lock /app/
+COPY apps/server/pyproject.toml apps/server/uv.lock /app/
 
 RUN uv sync --no-cache --group llm --group services
 
 ENV PYTHONPATH=/app
-COPY apps/business/__init__.py /app/business/__init__.py
-COPY apps/business/llm /app/business/llm
-COPY apps/business/checkbox_service /app/business/checkbox_service
+COPY apps/server/business/__init__.py /app/business/__init__.py
+COPY apps/server/business/llm /app/business/llm
+COPY apps/server/business/checkbox_service /app/business/checkbox_service
 
-COPY apps/src /app/src
-COPY apps/services /app/services/
+COPY apps/server/src /app/src
+COPY apps/server/services /app/services/
 
 ENV PATH=$PATH:/app/.venv/bin/
 

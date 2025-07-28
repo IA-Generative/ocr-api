@@ -23,18 +23,18 @@ ENV PADDLE_OCR_VERSION=${PADDLE_OCR_VERSION}
 
 WORKDIR /app
 
-COPY apps/pyproject.toml apps/uv.lock /app/
+COPY apps/server/pyproject.toml apps/server/uv.lock /app/
 
 RUN uv sync --no-cache --group ocr-service-paddle --group llm
 
 ENV PYTHONPATH=/app
-COPY apps/services /app/services
-COPY apps/src /app/src
-COPY apps/business/__init__.py /app/business/__init__.py
-COPY apps/business/paddleocr3 /app/business/paddleocr3
-COPY apps/business/llm /app/business/llm
-COPY apps/business/cache /app/business/cache
-COPY apps/business/checkbox_service /app/business/checkbox_service
+COPY apps/server/services /app/services
+COPY apps/server/src /app/src
+COPY apps/server/business/__init__.py /app/business/__init__.py
+COPY apps/server/business/paddleocr3 /app/business/paddleocr3
+COPY apps/server/business/llm /app/business/llm
+COPY apps/server/business/cache /app/business/cache
+COPY apps/server/business/checkbox_service /app/business/checkbox_service
 
 RUN uv run /app/business/paddleocr3/utils/download_paddle_models.py
 ENV PATH=$PATH:/app/.venv/bin/
@@ -42,5 +42,5 @@ CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
 RUN uv sync --group test --group ocr-service-paddle --group llm
-COPY apps/tests /app/tests
+COPY apps/server/tests /app/tests
 CMD ["uv", "run", "services/main.py"]
