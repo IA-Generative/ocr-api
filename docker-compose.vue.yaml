@@ -1,5 +1,6 @@
 services:
   ocr_frontend:
+  ocr_frontend:
     container_name: ocr_frontend
     restart: always
     working_dir: /app
@@ -10,6 +11,7 @@ services:
     env_file:
       - .env
     ports:
+      - 8081:3000
       - 8081:3000
     volumes:
       - ./apps/client:/app
