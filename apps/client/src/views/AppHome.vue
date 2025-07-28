@@ -98,11 +98,6 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
-        <div class="fr-alert fr-alert--info">
-          <p>
-            L'IA peut halluciner. <strong>Veuillez toujours confirmer les informations traitées et consulter impérativement les conditions d'utilisation ainsi que les responsabilités de l'utilisateur.</strong>
-          </p>
-        </div>
 
         <div class="page-container">
           <!-- File Upload -->
