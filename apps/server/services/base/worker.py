@@ -39,6 +39,7 @@ class BaseWorker(ABC):
         batch_size: int = 2,
         worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
+        next_worker: Optional["BaseWorker"] = None,
     ):
         self.name = name
         self.file_connector = file_connector
@@ -46,6 +47,7 @@ class BaseWorker(ABC):
         self.worker_weight = worker_weight
         self.batch_size = batch_size
         self.cache = cache
+        self.next_worker = next_worker
 
     @abstractmethod
     def is_applicable(self, task: TaskModel) -> bool: ...
@@ -309,17 +311,14 @@ class BaseWorker(ABC):
         return task
 
     def process_task(self, task: TaskModel) -> TaskModel:
-        t = time.time()
-
         current_task = self._process_task(task)
-        logger.debug(
-            f"[worker {self.name}] Processed task {current_task.id} with status {current_task.status} percentage {current_task.percentage} in {time.time() - t:.2f}s",
-            extra={"task_id": current_task.id, "status": current_task.status},
-        )
-
+        if self.next_worker and not current_task.status == TaskStatus.COMPLETED.value:
+            logger.debug(
+                f"Passing task {current_task.id} to next worker {self.next_worker.name}",
+                extra={
+                    "task_id": current_task.id,
+                    "next_worker": self.next_worker.name,
+                },
+            )
+            current_task = self.next_worker.process_task(task=current_task)
         return current_task
-
-
-class AnyFileProcessWorker(BaseWorker):
-    def is_applicable(self, task: TaskModel) -> bool:
-        return task.input.content_type.startswith("image/") or task.input.content_type == "application/pdf"

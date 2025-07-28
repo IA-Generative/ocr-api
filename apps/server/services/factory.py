@@ -1,8 +1,7 @@
 import os
 import boto3
 
-from services.base.worker import AnyFileProcessWorker
-from services.base.pipeline import Pipeline
+from services.base.worker import BaseWorker
 from business.forms.workers.pdf_worker import PDFFormsExtractorWorker
 from business.cache.sql_cache import TaskCache
 from business.checkbox_service.models.morpho import MorphoBoxDetection
@@ -124,8 +123,7 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Pip
         models.append(LLMToForm(client=client, model_name=openai_settings.VISION_MODEL))
 
     models.append(MorphoBoxDetection())
-
-    next_worker = AnyFileProcessWorker(
+    next_worker = BaseWorker(
         name=name,
         file_connector=s3_client_connector,
         models=models,
@@ -134,12 +132,11 @@ def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Pip
         cache=TaskCache(file_connector=s3_client_connector),
     )
     worker_pdf = PDFFormsExtractorWorker(
-        name=f"pdf-{name}",
+        name=name,
         file_connector=s3_client_connector,
         models=[],
         batch_size=batch_size,
         worker_weight=worker_weight,
-        cache=TaskCache(file_connector=s3_client_connector),
+        next_worker=next_worker,
     )
-
-    return Pipeline(workers=[worker_pdf, next_worker])
+    return worker_pdf
