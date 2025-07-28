@@ -243,6 +243,37 @@ services:
     env_file:
       - .env
 
+  forms_service:
+    image: forms_service
+    build:
+      target: test
+      context: .
+      dockerfile: apps/server/business/forms/Dockerfile
+    container_name: forms_service
+    command:
+    - uv
+    - run
+    - pytest
+    - -s
+    - --cov=./business/forms
+    - --cov-report=term-missing
+    - tests/business/forms
+    - -ra -v --maxfail=0
+    volumes:
+    - ./apps/server/src/:/app/src/
+    - ./apps/server/tests/:/app/tests
+    - ./apps/server/services/:/app/services/
+    - ./apps/server/business/forms:/app/business/forms
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+
+    depends_on:
+      - db
+      - minio
+      - migration
+    env_file:
+      - .env
 
   migration:
     command:
