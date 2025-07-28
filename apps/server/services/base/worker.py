@@ -38,6 +38,7 @@ class BaseWorker:
         batch_size: int = 2,
         worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
+        next_worker: Optional["BaseWorker"] = None,
     ):
         self.name = name
         self.file_connector = file_connector
@@ -45,6 +46,7 @@ class BaseWorker:
         self.worker_weight = worker_weight
         self.batch_size = batch_size
         self.cache = cache
+        self.next_worker = next_worker
 
     def set_extras(self, task: TaskModel) -> TaskModel:
         task.extras = task.extras if task.extras is not None else {}
@@ -300,4 +302,14 @@ class BaseWorker:
         return task
 
     def process_task(self, task: TaskModel) -> TaskModel:
-        return self._process_task(task)
+        current_task = self._process_task(task)
+        if self.next_worker and not current_task.status == TaskStatus.COMPLETED.value:
+            logger.debug(
+                f"Passing task {current_task.id} to next worker {self.next_worker.name}",
+                extra={
+                    "task_id": current_task.id,
+                    "next_worker": self.next_worker.name,
+                },
+            )
+            current_task = self.next_worker.process_task(task=current_task)
+        return current_task

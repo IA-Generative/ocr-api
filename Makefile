@@ -151,6 +151,10 @@ test-services-llm: build-container-dependencies  ## Test LLM integration
 	docker compose -f docker-compose-test.yaml up llm_ocr_service
 	make down-test
 
+test-services-forms: build-container-dependencies  ## Test Forms integration
+	docker compose -f docker-compose-test.yaml up forms_service
+	make down-test
+
 test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
 ifeq ($(HAS_GPU),yes)
 	@echo "✅ GPU detected. Running GPU tests..."
