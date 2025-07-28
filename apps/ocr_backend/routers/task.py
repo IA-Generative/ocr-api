@@ -7,7 +7,7 @@ from ocr_backend.core.security.factory import TokenVerifier
 router = APIRouter(tags=["Tasks"])
 
 
-@router.get("/tasks/{task_id}", response_model=Optional[TaskModel])
+@router.get("/tasks/{task_id}", response_model=Optional[TaskModel], deprecated=True)
 async def get_task_by_id(task_id: str):
     task = task_table.get_task_by_id(task_id)
     if task:
@@ -29,7 +29,7 @@ async def get_task_by_id_user(
     return task
 
 
-@router.get("/tasks/user/{user_id}", response_model=List[TaskModel])
+@router.get("/tasks/user/{user_id}", response_model=List[TaskModel], deprecated=True)
 async def get_tasks_by_user_id(user_id: str, page: int = Query(1, ge=1), page_size: int = Query(10, le=100)):
     tasks = task_table.get_tasks_by_user_id(user_id, page, page_size)
     if tasks is None or len(tasks) == 0:

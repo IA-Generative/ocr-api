@@ -17,3 +17,9 @@ class FormEntry(BaseModel):
 
 class FormExtraction(BaseModel):
     entries: List[FormEntry] = Field(..., description="Liste des champs extraits et corrigés")
+
+
+class LLMFormField(BaseModel):
+    name: Optional[str] = Field(default=None, description="Nom du champ (ex: 'nom', 'adresse').")
+    value: Optional[str] = Field(default=None, description="Valeur actuelle du champ.")
+    filled: Optional[bool]
