@@ -36,7 +36,8 @@ class PDFFormsExtractorWorker(BaseWorker):
         )
 
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
-        doc: fitz.Document = fitz.open(task.input.raw_filename)
+        tmp_filename = self.get_content_file(task=task)
+        doc: fitz.Document = fitz.open(tmp_filename)
         if not doc.is_form_pdf:
             return task
         extra_log = {"task_id": task.id, "user_id": task.user_id}
