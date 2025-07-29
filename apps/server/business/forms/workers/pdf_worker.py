@@ -97,7 +97,7 @@ class PDFFormsExtractorWorker(BaseWorker):
 
             percentage = (i + self.batch_size) / task.output.total_pages
             logger.debug(
-                f"[Current percentage {100*percentage:.2f}%]",
+                f"[Current percentage {100 * percentage:.2f}%]",
                 extra=extra_log,
             )
             task.output.set_text()
@@ -117,7 +117,8 @@ class PDFFormsExtractorWorker(BaseWorker):
         return task
 
     def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[FormEntry]]]:
-        doc: fitz.Document = fitz.open(task.input.raw_filename)
+        tmp_filename = self.get_content_file(task=task)
+        doc: fitz.Document = fitz.open(tmp_filename)
         if not doc.is_form_pdf:
             return None
 
