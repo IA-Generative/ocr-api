@@ -17,6 +17,7 @@ RUN uv run /app/business/paddleocr2/utils/download_paddle_models.2.10.0.py --ver
 COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
 COPY apps/server/business/forms /app/business/forms
+RUN uv run /app/business/paddleocr2/utils/download_paddle_models.2.10.0.py --version PP-OCRv4 --folder $PADDLE_OCR_BASE_DIR
 
 COPY apps/server/src /app/src
 COPY apps/server/services /app/services/
