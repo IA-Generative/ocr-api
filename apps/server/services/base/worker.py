@@ -311,14 +311,21 @@ class BaseWorker(ABC):
         return task
 
     def process_task(self, task: TaskModel) -> TaskModel:
+        t = time.time()
+
         current_task = self._process_task(task)
-        if self.next_worker and not current_task.status == TaskStatus.COMPLETED.value:
+        logger.debug(
+            f"[worker {self.name}] Processed task {current_task.id} with status {current_task.status} percentage {current_task.percentage} in {time.time() - t:.2f}s",
+            extra={"task_id": current_task.id, "status": current_task.status},
+        )
+        if self.next_worker and current_task.status != TaskStatus.COMPLETED.value:
             logger.debug(
-                f"Passing task {current_task.id} to next worker {self.next_worker.name}",
+                f"[worker {self.next_worker.name}] Passing task {current_task.id} to next worker {self.next_worker.name}",
                 extra={
                     "task_id": current_task.id,
                     "next_worker": self.next_worker.name,
                 },
             )
             current_task = self.next_worker.process_task(task=current_task)
+
         return current_task
