@@ -68,14 +68,16 @@ class BaseWorker:
             logger.error(str(e))
             raise
 
-        if content is None:
-            task.extras["error"] = f"No content found for task : {task.id}"
-            task = task_table.update_task(
-                task_id=task.id,
-                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
-            )
-            logger.error(f"No content found for task : {task.id}")
-            raise EmptyContentException(f"No content found for task : {task.id}")
+        # if content is None:
+        #     task.extras["error"] = f"No content found for task : {task.id}"
+        #     task = task_table.update_task(
+        #         task_id=task.id,
+        #         form_data=TaskUpdateForm(
+        #             status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
+        #         ),
+        #     )
+        #     logger.error(f"No content found for task : {task.id}")
+        #     raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
     def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image]:
@@ -98,7 +100,7 @@ class BaseWorker:
             logger.debug(f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}")
 
         else:
-            logger.error(f"Unsupported file type {task.extras}")
+            logger.error(f"[worker {self.name}] Unsupported file type {task.extras}")
             task.extras["error"] = f"Unsupported file type {task.extras}"
             task = task_table.update_task(
                 task_id=task.id,
@@ -115,7 +117,7 @@ class BaseWorker:
         client_s3 = self.file_connector.client
         task.output.pages = [Page(page=i) for i in range(len(pages))]
         logger.debug(
-            f"[Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
+            f"[worker {self.name}] [Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
             extra=extra_log,
         )
 
@@ -124,7 +126,7 @@ class BaseWorker:
             t_predict = time.time()
             batch = pages[i : i + self.batch_size]
             logger.debug(
-                f"{filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
+                f"[worker {self.name}] {filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
                 extra=extra_log,
             )
 
@@ -132,13 +134,13 @@ class BaseWorker:
 
             for model in self.models:
                 logger.debug(
-                    f"[task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
+                    f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
                     extra=extra_log,
                 )
                 t = time.time()
                 partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
                 logger.debug(
-                    f"[task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
+                    f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
                     extra=extra_log,
                 )
             for j, image in enumerate(batch):
@@ -148,7 +150,7 @@ class BaseWorker:
                 key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
                 client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
                 logger.debug(
-                    f"Uploaded page {i + j} to {key}",
+                    f"[worker {self.name}] Uploaded page {i + j} to {key}",
                     extra=extra_log,
                 )
                 signed_url = client_s3.generate_presigned_url(
@@ -166,9 +168,9 @@ class BaseWorker:
                 extra=extra_log,
             )
 
-            percentage = (i + self.batch_size) / task.output.total_pages
+            percentage = (i + len(batch)) / task.output.total_pages
             logger.debug(
-                f"[Current percentage {100*percentage:.2f}%]",
+                f"[worker {self.name}] [Current percentage {100 * percentage:.2f}%]",
                 extra=extra_log,
             )
             task.output.set_text()
@@ -223,13 +225,16 @@ class BaseWorker:
         task.content_hash = content_hash
         logger.debug(f"{task.id} - {content}", extra=extra_log)
         pages = self.transform_content(task=task, content=content)
-        logger.debug(f" Start to process - {filename} - {len(pages)}", extra=extra_log)
+        logger.debug(
+            f"[worker {self.name}] Start to process - {filename} - {len(pages)}",
+            extra=extra_log,
+        )
         if self.cache:
-            logger.debug("Search into cache ", extra=extra_log)
+            logger.debug(f"[worker {self.name}] Search into cache ", extra=extra_log)
             if self.cache.is_in_cache(task=task):
                 cache_task = self.cache.get_task_from_cache(task=task)
                 logger.debug(
-                    f"found into cache with status {cache_task.status} ",
+                    f"[worker {self.name}] found into cache with status {cache_task.status} ",
                     extra=extra_log,
                 )
                 task.output.updated_at = int(time.time())
@@ -282,7 +287,7 @@ class BaseWorker:
                 content_hash=content_hash,
             ),
         )
-        logger.debug(f"{task.id} - done")
+        logger.debug(f"[worker {self.name}] {task.id} - done")
 
         task = task_table.update_task(
             task_id=task.id,
@@ -302,14 +307,21 @@ class BaseWorker:
         return task
 
     def process_task(self, task: TaskModel) -> TaskModel:
+        t = time.time()
+
         current_task = self._process_task(task)
-        if self.next_worker and not current_task.status == TaskStatus.COMPLETED.value:
+        logger.debug(
+            f"[worker {self.name}] Processed task {current_task.id} with status {current_task.status} percentage {current_task.percentage} in {time.time() - t:.2f}s",
+            extra={"task_id": current_task.id, "status": current_task.status},
+        )
+        if self.next_worker and current_task.status != TaskStatus.COMPLETED.value:
             logger.debug(
-                f"Passing task {current_task.id} to next worker {self.next_worker.name}",
+                f"[worker {self.next_worker.name}] Passing task {current_task.id} to next worker {self.next_worker.name}",
                 extra={
                     "task_id": current_task.id,
                     "next_worker": self.next_worker.name,
                 },
             )
             current_task = self.next_worker.process_task(task=current_task)
+
         return current_task

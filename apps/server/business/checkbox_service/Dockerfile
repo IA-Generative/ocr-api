@@ -28,6 +28,7 @@ COPY apps/server/services/ /app/services/
 COPY apps/server/business/__init__.py /app/business/__init__.py
 COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/${SERVICE_NAME} /app/business/${SERVICE_NAME}
+COPY apps/server/business/forms /app/business/forms
 
 ENV PATH=$PATH:/app/.venv/bin/
 ENV PYTHONPATH=/app/
