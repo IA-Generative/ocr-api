@@ -23,3 +23,5 @@ mirai-infra/
 tests/data/logs/
 *.ipynb
 tests/data/valid/formulaire-cerfa-complete
+!apps/server/tests/data/valid/cerfa_11573-09-filled.pdf
+!apps/server/tests/data/valid/cerfa_13750-05-1.pdf
