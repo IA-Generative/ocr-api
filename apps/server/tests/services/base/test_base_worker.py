@@ -111,7 +111,11 @@ def test_transform_content_content_type_pdf(
         content_type="application/pdf",  # Uncomment this line to simulate the absence of content_type
     )
 
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = BaseWorker(
+        name="test",
+        file_connector=mock_minio,
+        models=[mock_model],
+    )
 
     actual = worker.transform_content(task=dummy_task, content="tests/data/valid/cerfa_13750-05-1.pdf")
     assert isinstance(actual[0], Image.Image)
@@ -189,3 +193,75 @@ def test_predict_get_from_hash(mock_minio: S3Connector, mock_model: MockeBaseMod
     assert update_task.percentage == cache_task.percentage
     assert update_task.status == TaskStatus.COMPLETED.value
     assert update_task.output == cache_task.output
+
+
+def test_worker_predict_on_pages_raise_exception(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
+    class MockeExceptionWorker(BaseWorker):
+        def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
+            raise Exception("Mocked exception")
+
+    worker = MockeExceptionWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
+    )
+    mock_minio.save(
+        user_id=dummy_task.user_id,
+        task_id=dummy_task.id,
+        file_path=dummy_task.input.storage_file_path,
+    )
+    with pytest.raises(Exception):
+        worker.process_task(task=dummy_task)
+
+
+def test_raise_exception_on_retrieve_content(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
+    class MockeExceptionWorker(BaseWorker):
+        def get_content_file(self, task: TaskModel) -> str:
+            raise Exception("Mocked exception")
+
+    worker = MockeExceptionWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    with pytest.raises(Exception):
+        worker.get_content_file(task=dummy_task)
+
+
+def test_worker_next(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
+    class MockeNextWorker(BaseWorker):
+        def _process_task(self, task: TaskModel) -> TaskModel:
+            return task
+
+    next_worker = BaseWorker(
+        name="next_worker",
+        file_connector=mock_minio,
+        models=[mock_model],
+        worker_weight=1,
+    )
+
+    worker = MockeNextWorker(
+        name="test",
+        file_connector=mock_minio,
+        models=[],
+        next_worker=next_worker,
+        worker_weight=1,
+    )
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
+    )
+    mock_minio.save(
+        user_id=dummy_task.user_id,
+        task_id=dummy_task.id,
+        file_path=dummy_task.input.storage_file_path,
+    )
+    actual = worker.process_task(task=dummy_task)
+
+    assert actual.percentage == 1
