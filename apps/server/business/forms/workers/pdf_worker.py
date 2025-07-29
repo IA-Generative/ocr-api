@@ -36,8 +36,19 @@ class PDFFormsExtractorWorker(BaseWorker):
         )
 
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
+        if task.input.content_type != "application/pdf":
+            logger.error(
+                f"Invalid content type {task.input.content_type} for task {task.id}. Expected application/pdf.",
+                extra={"task_id": task.id, "user_id": task.user_id},
+            )
+            return task
+        t = time.time()
         tmp_filename = self.get_content_file(task=task)
         doc: fitz.Document = fitz.open(tmp_filename)
+        logger.debug(
+            f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+            extra={"task_id": task.id, "user_id": task.user_id},
+        )
         if not doc.is_form_pdf:
             return task
         extra_log = {"task_id": task.id, "user_id": task.user_id}
@@ -118,8 +129,13 @@ class PDFFormsExtractorWorker(BaseWorker):
         return task
 
     def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[FormEntry]]]:
+        t = time.time()
         tmp_filename = self.get_content_file(task=task)
         doc: fitz.Document = fitz.open(tmp_filename)
+        logger.debug(
+            f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+            extra={"task_id": task.id, "user_id": task.user_id},
+        )
         if not doc.is_form_pdf:
             return None
 
@@ -127,6 +143,7 @@ class PDFFormsExtractorWorker(BaseWorker):
         scale = dpi / 72
         forms_bboxes: list[list[Bbox]] = []
         forms_entries: list[list[FormEntry]] = []
+        t = time.time()
         for page in doc:
             page_forms: list[FormEntry] = []
             page_bboxes: list[Bbox] = []
@@ -155,4 +172,8 @@ class PDFFormsExtractorWorker(BaseWorker):
                 )
             forms_bboxes.append(page_bboxes)
             forms_entries.append(page_forms)
+        logger.debug(
+            f"Time to process PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+            extra={"task_id": task.id, "user_id": task.user_id},
+        )
         return forms_bboxes, forms_entries
