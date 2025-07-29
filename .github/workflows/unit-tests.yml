@@ -91,6 +91,22 @@ jobs:
       - name: Install dependencies and run tests
         run: |
           make test-services-llm
+  run-test-services-forms:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make test-services-forms
   # run-tests-service-paddle3-gpu:
   #   runs-on: sdid-app-hp-arc-controller
   #   permissions:
