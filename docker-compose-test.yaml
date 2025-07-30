@@ -57,6 +57,7 @@ services:
       - redis
       - db
       - minio
+      - migration
     env_file:
       - .env
 
