@@ -20,7 +20,7 @@ RUN apt-get update -qy && \
 
 COPY apps/server/pyproject.toml /app/pyproject.toml
 COPY apps/server/uv.lock /app/uv.lock
-RUN uv sync --no-cache --group ${SERVICE_NAME} --group services
+RUN uv sync --no-cache --group ${SERVICE_NAME} --group services --group business-forms
 
 COPY apps/server/ocr_backend /app/ocr_backend
 COPY apps/server/src /app/src
@@ -36,4 +36,4 @@ ENV PYTHONPATH=/app/
 FROM builder AS test
 WORKDIR /app
 COPY apps/server/tests tests
-RUN uv sync --no-cache --group test --group ${SERVICE_NAME} --group services
+RUN uv sync --no-cache --group test --group ${SERVICE_NAME} --group services --group business-forms
