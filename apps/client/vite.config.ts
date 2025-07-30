@@ -32,9 +32,11 @@ export default defineConfig({
     VueDevTools(),
     VitePWA({
       registerType: 'autoUpdate',
+      selfDestroying: true,
       includeAssets: ['favicon.svg', 'safari-pinned-tab.svg'],
       workbox: {
-        maximumFileSizeToCacheInBytes: 3000000 // Pour le CSS du DSFR :-/
+        maximumFileSizeToCacheInBytes: 3000000,
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: 'Dummy app',
