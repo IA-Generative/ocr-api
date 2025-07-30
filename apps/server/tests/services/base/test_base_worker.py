@@ -4,7 +4,7 @@ from PIL import Image
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.connector.s3_connector import S3Connector
-from services.base.worker import FileNotSupported, BaseWorker, hash_file
+from services.base.worker import FileNotSupported, AnyFileProcessWorker, hash_file
 from src.schemas.input import InputForm
 from src.schemas.task import TaskForm, TaskModel, task_table, TaskStatus
 from src.schemas.output import OCRResult
@@ -41,7 +41,7 @@ def test_get_content_file_success(mock_minio: S3Connector, mock_model: MockeBase
 
     mock_minio.save(task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path)
 
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     file_path = worker.get_content_file(task=dummy_task)
     with open(file_path, "rb") as f:
         content = f.read()
@@ -53,14 +53,14 @@ def test_get_content_file_success(mock_minio: S3Connector, mock_model: MockeBase
 def test_get_content_file_exception(
     mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
 ):
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
 
     with pytest.raises(Exception):
         worker.get_content_file(task=dummy_task)
 
 
 def test_set_task_extras(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     actual = worker.set_extras(task=dummy_task)
     assert actual.extras is not None
 
@@ -75,7 +75,7 @@ def test_transform_content_error_no_content_type(
         size=123456,
         content_type="vvv/ssjpg",
     )
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     dummy_task.extras = {}
     with open("tests/data/valid/identite.jpg", "rb") as f:
         expected_content = f.read()
@@ -94,7 +94,7 @@ def test_transform_content_content_type_image(
         content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
     )
 
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     with open("tests/data/valid/identite.jpg", "rb") as f:
         actual = worker.transform_content(task=dummy_task, content=f)
         assert isinstance(actual[0], Image.Image)
@@ -111,7 +111,7 @@ def test_transform_content_content_type_pdf(
         content_type="application/pdf",  # Uncomment this line to simulate the absence of content_type
     )
 
-    worker = BaseWorker(
+    worker = AnyFileProcessWorker(
         name="test",
         file_connector=mock_minio,
         models=[mock_model],
@@ -130,7 +130,7 @@ def test_predict_on_pages(mock_minio: S3Connector, mock_model: MockeBaseModelPre
         size=123456,
         content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
     )
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
 
     image = Image.open("tests/data/valid/identite.jpg")
     actual = worker.predict_on_pages(task=dummy_task, pages=[image])
@@ -188,7 +188,7 @@ def test_predict_get_from_hash(mock_minio: S3Connector, mock_model: MockeBaseMod
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
-    worker = BaseWorker(name="test", file_connector=mock_minio, models=[mock_model], cache=MockCache())
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model], cache=MockCache())
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == cache_task.percentage
     assert update_task.status == TaskStatus.COMPLETED.value
@@ -198,7 +198,7 @@ def test_predict_get_from_hash(mock_minio: S3Connector, mock_model: MockeBaseMod
 def test_worker_predict_on_pages_raise_exception(
     mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
 ):
-    class MockeExceptionWorker(BaseWorker):
+    class MockeExceptionWorker(AnyFileProcessWorker):
         def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
             raise Exception("Mocked exception")
 
@@ -222,7 +222,7 @@ def test_worker_predict_on_pages_raise_exception(
 def test_raise_exception_on_retrieve_content(
     mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
 ):
-    class MockeExceptionWorker(BaseWorker):
+    class MockeExceptionWorker(AnyFileProcessWorker):
         def get_content_file(self, task: TaskModel) -> str:
             raise Exception("Mocked exception")
 
@@ -231,25 +231,9 @@ def test_raise_exception_on_retrieve_content(
         worker.get_content_file(task=dummy_task)
 
 
-def test_worker_next(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
-    class MockeNextWorker(BaseWorker):
-        def _process_task(self, task: TaskModel) -> TaskModel:
-            return task
-
-    next_worker = BaseWorker(
-        name="next_worker",
-        file_connector=mock_minio,
-        models=[mock_model],
-        worker_weight=1,
-    )
-
-    worker = MockeNextWorker(
-        name="test",
-        file_connector=mock_minio,
-        models=[],
-        next_worker=next_worker,
-        worker_weight=1,
-    )
+def test_base_worker_is_applicable(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
     dummy_task.input = InputForm(
         storage_file_path="tests/data/valid/identite.jpg",
         raw_filename="identite.jpg",
@@ -257,11 +241,14 @@ def test_worker_next(mock_minio: S3Connector, mock_model: MockeBaseModelPredicti
         size=123456,
         content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
     )
-    mock_minio.save(
-        user_id=dummy_task.user_id,
-        task_id=dummy_task.id,
-        file_path=dummy_task.input.storage_file_path,
-    )
-    actual = worker.process_task(task=dummy_task)
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    assert worker.is_applicable(task=dummy_task) is True
 
-    assert actual.percentage == 1
+    dummy_task.input.content_type = "image/jpg"
+    assert worker.is_applicable(task=dummy_task) is True
+
+    dummy_task.input.content_type = "application/pdf"
+    assert worker.is_applicable(task=dummy_task) is True
+
+    dummy_task.input.content_type = "text/plain"
+    assert worker.is_applicable(task=dummy_task) is False
