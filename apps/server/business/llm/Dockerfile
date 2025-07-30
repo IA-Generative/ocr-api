@@ -1,6 +1,7 @@
 ARG HARBOR_PROXY_URL
 
 FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.10-slim AS llm_process
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
@@ -16,12 +17,12 @@ ENV UV_CACHE_DIR=/app/.cache
 
 COPY apps/server/pyproject.toml apps/server/uv.lock /app/
 
-RUN uv sync --no-cache --group services --group business-forms
+RUN uv sync --no-cache --group llm --group services
 
 ENV PYTHONPATH=/app
 COPY apps/server/business/__init__.py /app/business/__init__.py
+COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
-COPY apps/server/business/forms /app/business/forms
 
 COPY apps/server/src /app/src
 COPY apps/server/services /app/services/

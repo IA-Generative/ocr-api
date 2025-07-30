@@ -1,6 +1,6 @@
 ARG HARBOR_PROXY_URL
 
-FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.13-slim AS builder
+FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.10-slim AS builder
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
@@ -8,8 +8,7 @@ WORKDIR /app
 
 COPY apps/server/pyproject.toml /app/pyproject.toml
 COPY apps/server/uv.lock /app/uv.lock
-RUN uv sync --no-cache --group ocr-backend --group migration \
-    && uv cache clean
+RUN uv sync --no-cache --group ocr-backend --group migration
 
 COPY apps/server/ocr_backend /app/ocr_backend
 COPY apps/server/src /app/src
