@@ -29,6 +29,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/business/checkbox_service/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: checkbox_service
     command:
     - uv
@@ -64,6 +66,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr2_service
     command:
     - uv
@@ -100,6 +104,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/business/paddleocr3/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr3_service
     command:
     - uv
@@ -146,6 +152,8 @@ services:
       target: test
       context: .
       dockerfile: Dockerfiles/services/paddleocr/3.1.0/Dockerfile.gpu
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr3_service_gpu
     command:
     - uv
@@ -185,6 +193,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr_backend
     command:
     - uv
@@ -250,6 +260,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/business/forms/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: forms_service
     command:
     - uv
@@ -285,6 +297,8 @@ services:
       target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr-migration
     volumes:
     - ./apps/server/src/:/app/src/

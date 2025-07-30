@@ -1,4 +1,6 @@
-FROM python:3.10-slim AS builder
+ARG HARBOR_PROXY_URL
+
+FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.10-slim AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
@@ -8,15 +10,15 @@ ENV SERVICE_NAME=${SERVICE_NAME}
 
 
 RUN apt-get update -qy && \
-    apt-get install -qy --no-install-recommends \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libgl1 \
-    libglib2.0-0 \
-    poppler-utils \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+	apt-get install -qy --no-install-recommends \
+	ffmpeg \
+	libgl1 \
+	libglib2.0-0 \
+	libsm6 \
+	libxext6 \
+	poppler-utils \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
 COPY apps/server/pyproject.toml /app/pyproject.toml
 COPY apps/server/uv.lock /app/uv.lock

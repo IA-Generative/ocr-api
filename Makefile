@@ -138,22 +138,22 @@ stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
 
 test-services-checkbox: build-container-dependencies ## Test checkboxes algo
-	docker compose -f docker-compose-test.yaml up checkbox_service
+	docker compose -f docker-compose-test.yaml up checkbox_service --exit-code-from checkbox_service
 	make down-test
 
 test-services-paddleocr2.10.0: build-container-dependencies ## Test PaddleOCR 2.10.0
-	docker compose -f docker-compose-test.yaml up paddleocr2_service
+	docker compose -f docker-compose-test.yaml up paddleocr2_service --exit-code-from paddleocr2_service
 	make down-test
 
 test-services-paddleocr3.1.0: build-container-dependencies ## Test PaddleOCR 3.1.0
-	docker compose -f docker-compose-test.yaml up paddleocr3_service
+	docker compose -f docker-compose-test.yaml up paddleocr3_service --exit-code-from paddleocr3_service
 	make down-test
 test-services-llm: build-container-dependencies  ## Test LLM integration
-	docker compose -f docker-compose-test.yaml up llm_ocr_service
+	docker compose -f docker-compose-test.yaml up llm_ocr_service --exit-code-from llm_ocr_service
 	make down-test
 
 test-services-forms: build-container-dependencies  ## Test Forms integration
-	docker compose -f docker-compose-test.yaml up forms_service
+	docker compose -f docker-compose-test.yaml up forms_service --exit-code-from forms_service
 	make down-test
 
 test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
