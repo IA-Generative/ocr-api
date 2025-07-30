@@ -49,7 +49,8 @@ else
 	@echo "Installation automatique non supportée sur cette plateforme"
 endif
 
-lint: install ## Lint le code du dépôt
+lint: install-uv ## Lint le code du dépôt
+	uv tool install ruff
 	uv run ruff check .
 
 bump:
