@@ -1,4 +1,7 @@
-FROM python:3.10-slim AS builder
+ARG HARBOR_PROXY_URL
+
+FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.10-slim AS builder
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app

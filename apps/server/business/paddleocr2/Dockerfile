@@ -1,9 +1,18 @@
-FROM python:3.10-slim AS paddle_model
+ARG HARBOR_PROXY_URL
+
+FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.10-slim AS paddle_model
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
-RUN apt update -qy && apt install -qy ffmpeg libsm6 libxext6 curl poppler-utils && apt autoremove
+RUN apt update -qy && apt install -qy \
+  curl \
+  ffmpeg \
+  libsm6 \
+  libxext6 \
+  poppler-utils \
+  && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 
