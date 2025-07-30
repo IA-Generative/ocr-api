@@ -12,7 +12,8 @@ from src.connector.base import BaseFileConnector
 from src.connector.s3_connector import S3Connector
 from src.config.s3 import S3Settings
 from src.schemas.output import Page
-from services.base.worker import BaseWorker
+from services.base.worker import AnyFileProcessWorker
+from services.base.pipeline import Pipeline
 from services.base.model import BaseModelPrediction
 
 
@@ -32,12 +33,12 @@ def storage_service() -> BaseFileConnector:
 
 
 @pytest.fixture(scope="module")
-def mocked_worker(storage_service: BaseFileConnector, mocked_models: BaseModelPrediction) -> BaseWorker:
-    return BaseWorker(name="mock", file_connector=storage_service, models=[mocked_models])
+def mocked_pipeline(storage_service: BaseFileConnector, mocked_models: BaseModelPrediction) -> Pipeline:
+    return Pipeline([AnyFileProcessWorker(name="mock", file_connector=storage_service, models=[mocked_models])])
 
 
-def test_task_process_paddle(storage_service: BaseFileConnector, mocked_worker: BaseWorker):
-    with patch("services.factory.load_worker", return_value=mocked_worker):
+def test_task_process_paddle(storage_service: BaseFileConnector, mocked_pipeline: Pipeline):
+    with patch("services.factory.load_worker", return_value=mocked_pipeline):
         from services.main import launch_task
 
         user_id = "test"

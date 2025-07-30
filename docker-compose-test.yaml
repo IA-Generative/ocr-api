@@ -80,6 +80,7 @@ services:
     - ./apps/server/tests/:/app/tests
     - ./apps/server/services/:/app/services/
     - ./apps/server/business/paddleocr2:/app/business/paddleocr2
+    - ./apps/server/business/forms:/app/business/forms
     - ./apps/server/business/cache:/app/business/cache
     - ./apps/server/business/checkbox_service:/app/business/checkbox_service
     environment:
