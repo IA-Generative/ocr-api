@@ -2,7 +2,10 @@
 import type { DsfrTileProps } from '@gouvminint/vue-dsfr'
 import ComminitySVG from '@/assets/pictograms/community.svg'
 import PenSVG from '@/assets/pictograms/pen.svg'
-import { USER_REVIEW_URL } from '@/utils/constants'
+// import { USER_REVIEW_URL } from '@/utils/constants'
+// import { VITE_PORTAIL_URL } from '@/utils/constants'
+import { PORTAIL_URL, TCHAP_CANAL_URL, USER_REVIEW_URL } from '@/utils/constants'
+
 import { openLink } from '@/utils/methods'
 import { RouterLink } from 'vue-router'
 
@@ -49,16 +52,27 @@ const donneMonAvisButton = {
           À savoir sur MIrAI
         </h3>
         <p class="side-bar__cgu__text">
-          Veuillez impérativement consulter les <RouterLink class="side-bar__about__text" to="/cgu">
+          Veuillez impérativement consulter les <a 
+            class="side-bar__about__text" 
+            :href="`${PORTAIL_URL}/cgu`"
+            target="_blank"
+          >
             conditions d'utilisation
-          </RouterLink> de MIrAI.
+          </a> de MIrAI.
         </p>
         <p>
-          Pour vous former et utiliser au mieux les fonctionnalités des outils de MIrAI, rendez-vous sur <RouterLink class="side-bar__about__text" to="/faq/introduction">
+          Pour vous former et utiliser au mieux les fonctionnalités des outils de MIrAI, rendez-vous sur <a 
+            class="side-bar__about__text" 
+            :href="PORTAIL_URL + '/faq/introduction'"
+            target="_blank"
+          >
             Introduction et acculturation à l'IA .
-          </RouterLink>
+          </a>
         </p>
-        <p>Une question ? RDV sur notre <a href="https://tchap.gouv.fr/#/room/%21uTmmquZyqzVNkBGvdb:agent.interieur.tchap.gouv.fr?via=agent.interieur.tchap.gouv.fr" target="_blank">canal Tchap</a>. pour échanger avec la communauté MIrAI.</p>
+        <p>Une question ? RDV sur notre <a 
+          :href="TCHAP_CANAL_URL" 
+          target="_blank"
+        >canal Tchap</a>. pour échanger avec la communauté MIrAI.</p>
       </div>
       <DsfrCallout
         :title="donneMonAvisTitle"
@@ -76,7 +90,7 @@ const donneMonAvisButton = {
         <DsfrTile
           :key="index"
           :title="tool.title"
-          :to="tool.to"
+          :to="PORTAIL_URL + tool.to"
           :icon="false"
           horizontal
           :img-src="tool.imgSrc"
