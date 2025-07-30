@@ -33,7 +33,38 @@ jobs:
         run: |
           make test-backend-api
 
+  run-tests-service-checkbox:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+      - name: Install dependencies and run tests
+        run: |
+          make test-services-checkbox
+
   run-tests-service-paddle:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make test-services-paddleocr2.10.0
+  run-tests-service-paddle3:
     runs-on: actions-runner-controller
     permissions:
       contents: read
@@ -48,24 +79,40 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make test-services-paddleocr2.10.0
-  # run-tests-service-paddle3:
-  #   runs-on: actions-runner-controller
-  #   permissions:
-  #     contents: read
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+          make test-services-paddleocr3.1.0
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: 3.x
+  run-test-services-llm:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-  #     - name: Install dependencies and run tests
-  #       run: |
-  #         make test-services-paddleocr3.1.0
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
 
+      - name: Install dependencies and run tests
+        run: |
+          make test-services-llm
+  run-test-services-forms:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make test-services-forms
   # run-tests-service-paddle3-gpu:
   #   runs-on: sdid-app-hp-arc-controller
   #   permissions:
