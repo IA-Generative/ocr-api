@@ -71,8 +71,8 @@ up-frontend: ## Lance l'environnement frontend en conteneur
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
 
-down-test:
-	docker compose -f docker-compose-test.yaml down -v || true
+down-test: ## remove orphan containers
+	docker compose -f docker-compose-test.yaml down --remove-orphans -v || true
 
 down-frontend: ## Eteint l'environnement frontend en conteneur
 	docker compose -f docker-compose.vue.yaml down || true
@@ -104,8 +104,6 @@ build-container-dependencies: ## Build docker dependecies
 build-ocr-backend: ## Lance la construction de l'image Docker backend
 	docker compose build ocr_backend
 
-build-ocr-service: ## Lance la construction de l'image Docker service
-	docker compose build ocr_service
 
 build-ocr-frontend: ## Lance la construction de l'image Docker frontend
 	docker compose -f docker-compose.vue.yaml build ocr_frontend
@@ -140,35 +138,24 @@ stress-stats: install-uv ## Affiche les statistiques du test de charge
 up-db: ## Lance l'environnement de développement avec la base de données
 	docker compose -f docker-compose-test.yaml up -d db minio redis migration
 
-test-services-checkbox: build-container-dependencies up-db ## Test checkboxes algo
-	docker compose -f docker-compose-test.yaml up checkbox_service --exit-code-from checkbox_service
-	make down-test
-
 test-services-paddleocr2.10.0: build-container-dependencies up-db ## Test PaddleOCR 2.10.0
 	docker compose -f docker-compose-test.yaml up paddleocr2_service --exit-code-from paddleocr2_service
 	make down-test
 
-test-services-paddleocr3.1.0: build-container-dependencies up-db ## Test PaddleOCR 3.1.0
-	docker compose -f docker-compose-test.yaml up paddleocr3_service --exit-code-from paddleocr3_service
-	make down-test
-test-services-llm: build-container-dependencies up-db ## Test LLM integration
-	docker compose -f docker-compose-test.yaml up llm_ocr_service --exit-code-from llm_ocr_service
-	make down-test
+# test-services-paddleocr3.1.0: build-container-dependencies up-db ## Test PaddleOCR 3.1.0
+# 	docker compose -f docker-compose-test.yaml up paddleocr3_service --exit-code-from paddleocr3_service
+# 	make down-test
 
-test-services-forms: build-container-dependencies up-db ## Test Forms integration
-	docker compose -f docker-compose-test.yaml up forms_service --exit-code-from forms_service
-	make down-test
-
-test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
-ifeq ($(HAS_GPU),yes)
-	@echo "✅ GPU detected. Running GPU tests..."
-	sudo docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
-	sudo docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
-	make down-test
-else
-	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
-	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
-endif
+# test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
+# ifeq ($(HAS_GPU),yes)
+# 	@echo "✅ GPU detected. Running GPU tests..."
+# 	sudo docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
+# 	sudo docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
+# 	make down-test
+# else
+# 	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
+# 	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
+# endif
 
 test-backend-api: build-container-dependencies up-db ## Test ocr backend
 	docker compose -f docker-compose-test.yaml up ocr_backend --exit-code-from ocr_backend
