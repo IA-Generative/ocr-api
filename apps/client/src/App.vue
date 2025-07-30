@@ -5,8 +5,8 @@ import useToaster from './composables/use-toaster'
 
 const toaster = useToaster()
 
-const serviceTitle = 'OCR'
-const serviceDescription = 'Reconnaître un texte scanné'
+const serviceTitle = 'Reconnaître un texte scanné'
+const serviceDescription = 'Extraire le texte d\'une image ou d\'un document scanné'
 const logoText = ['Ministère', 'de l’intérieur']
 
 const {
