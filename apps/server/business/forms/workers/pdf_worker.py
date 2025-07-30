@@ -23,7 +23,6 @@ class PDFFormsExtractorWorker(BaseWorker):
         batch_size=2,
         worker_weight=1,
         cache=None,
-        next_worker: BaseWorker = None,
     ):
         super().__init__(
             name,
@@ -32,14 +31,31 @@ class PDFFormsExtractorWorker(BaseWorker):
             batch_size=batch_size,
             worker_weight=worker_weight,
             cache=cache,
-            next_worker=next_worker,
         )
 
+    def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input.content_type == "application/pdf":
+            return False
+        t = time.time()
+        tmp_filename = self.get_content_file(task=task)
+        doc: fitz.Document = fitz.open(tmp_filename)
+
+        logger.debug(
+            f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+        )
+
+        return doc.is_form_pdf
+
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
+        extra_log = {
+            "task_id": task.id,
+            "user_id": task.user_id,
+            "worker_name": self.name,
+        }
         if task.input.content_type != "application/pdf":
             logger.error(
                 f"Invalid content type {task.input.content_type} for task {task.id}. Expected application/pdf.",
-                extra={"task_id": task.id, "user_id": task.user_id},
+                extra=extra_log,
             )
             return task
         t = time.time()
@@ -47,17 +63,17 @@ class PDFFormsExtractorWorker(BaseWorker):
         doc: fitz.Document = fitz.open(tmp_filename)
         logger.debug(
             f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
-            extra={"task_id": task.id, "user_id": task.user_id},
+            extra=extra_log,
         )
         if not doc.is_form_pdf:
             return task
-        extra_log = {"task_id": task.id, "user_id": task.user_id}
+
         task = self.set_output(task=task, total_pages=len(pages))
         filename = task.input.raw_filename
         client_s3 = self.file_connector.client
         task.output.pages = [Page(page=i) for i in range(len(pages))]
         logger.debug(
-            f"[Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
+            f"[worker {self.name}][Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
             extra=extra_log,
         )
 
@@ -89,7 +105,7 @@ class PDFFormsExtractorWorker(BaseWorker):
                 key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
                 client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
                 logger.debug(
-                    f"Uploaded page {i + j} to {key}",
+                    f"[worker {self.name}]Uploaded page {i + j} to {key}",
                     extra=extra_log,
                 )
                 signed_url = client_s3.generate_presigned_url(
@@ -107,9 +123,9 @@ class PDFFormsExtractorWorker(BaseWorker):
                 extra=extra_log,
             )
 
-            percentage = (i + self.batch_size) / task.output.total_pages
+            percentage = (i + len(batch)) / task.output.total_pages
             logger.debug(
-                f"[Current percentage {100 * percentage:.2f}%]",
+                f"[worker {self.name}][Current percentage {100 * percentage:.2f}%]",
                 extra=extra_log,
             )
             task.output.set_text()
@@ -133,11 +149,9 @@ class PDFFormsExtractorWorker(BaseWorker):
         tmp_filename = self.get_content_file(task=task)
         doc: fitz.Document = fitz.open(tmp_filename)
         logger.debug(
-            f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+            f"[worker {self.name}]Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
             extra={"task_id": task.id, "user_id": task.user_id},
         )
-        if not doc.is_form_pdf:
-            return None
 
         dpi = 150
         scale = dpi / 72
@@ -173,7 +187,7 @@ class PDFFormsExtractorWorker(BaseWorker):
             forms_bboxes.append(page_bboxes)
             forms_entries.append(page_forms)
         logger.debug(
-            f"Time to process PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
+            f"[worker {self.name}]Time to process PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
             extra={"task_id": task.id, "user_id": task.user_id},
         )
         return forms_bboxes, forms_entries
