@@ -88,7 +88,7 @@ const donneMonAvisButton = {
         <DsfrTile
           :key="index"
           :title="tool.title"
-          :to="PORTAIL_URL + tool.to"
+          :href="PORTAIL_URL + tool.to"
           :icon="false"
           horizontal
           :img-src="tool.imgSrc"
