@@ -29,6 +29,26 @@
 - code clean
 - :art: change minio vars
 
+## 0.1.0 (2025-07-30)
+
+
+### Features
+
+* :chart_with_upwards_trend: add matomo tracking ([2ddb484](https://github.com/IA-Generative/ocr-api/commit/2ddb4840f5da8f9dc397ff47c6eb74e005be684d))
+* :sparkles: update environment variables and improve sidebar links ([40212a2](https://github.com/IA-Generative/ocr-api/commit/40212a2626487adb88bf7812d86a63fb8855fe4b))
+* add PDF forms extraction worker and related tests ([cc28c37](https://github.com/IA-Generative/ocr-api/commit/cc28c37da4fafba41f85685cd5ad2b386709493b))
+* add workflow for testing services related to forms ([18b5611](https://github.com/IA-Generative/ocr-api/commit/18b5611498e62f175ce55b6313e52ed7ff4df7fa))
+
+
+### Bug Fixes
+
+* :rocket: don't open twice file ([adf792c](https://github.com/IA-Generative/ocr-api/commit/adf792c0af3a7d2d3322f77b76526d68c837d7e6))
+* add more log using user_id ([9b310c9](https://github.com/IA-Generative/ocr-api/commit/9b310c9a25ad8fdc73e15ffff17e3a3c82e5adb5))
+* async routes ([#7](https://github.com/IA-Generative/ocr-api/issues/7)) ([525dddd](https://github.com/IA-Generative/ocr-api/commit/525dddd4ca418c396ced33c29953f4ac9a87f6e9))
+* hot fix lock ([2e93413](https://github.com/IA-Generative/ocr-api/commit/2e93413ed1802fa711a78a549b36d522fe013273))
+* Refactor batch_predict method to improve handling of predictions and ensure non-null checks for better stability ([#55](https://github.com/IA-Generative/ocr-api/issues/55)) ([2ffdcfc](https://github.com/IA-Generative/ocr-api/commit/2ffdcfc07f2ff12b2cb399066e28a05bbd385de8))
+* update .env ([8380d30](https://github.com/IA-Generative/ocr-api/commit/8380d30cf04d5feb950500bd5d2d5825ed0c8e1d))
+
 ## [0.1.0](https://github.com/IA-Generative/ocr-api/compare/v0.0.1...v0.1.0) (2025-07-30)
 
 
