@@ -151,8 +151,7 @@ class PDFFormsExtractorWorker(BaseWorker):
 
     def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[FormEntry]]]:
         t = time.time()
-        tmp_filename = self.get_content_file(task=task)
-        doc: fitz.Document = fitz.open(tmp_filename)
+        doc: fitz.Document = self._get_cached_document(task)
         logger.debug(
             f"[worker {self.name}]Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
             extra={"task_id": task.id, "user_id": task.user_id},
