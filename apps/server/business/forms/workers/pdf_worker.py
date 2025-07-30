@@ -32,13 +32,19 @@ class PDFFormsExtractorWorker(BaseWorker):
             worker_weight=worker_weight,
             cache=cache,
         )
+        self._cached_doc: fitz.Document = None
+
+    def _get_cached_document(self, task: TaskModel) -> fitz.Document:
+        if self._cached_doc is None:
+            tmp_filename = self.get_content_file(task=task)
+            self._cached_doc = fitz.open(tmp_filename)
+        return self._cached_doc
 
     def is_applicable(self, task: TaskModel) -> bool:
         if not task.input.content_type == "application/pdf":
             return False
         t = time.time()
-        tmp_filename = self.get_content_file(task=task)
-        doc: fitz.Document = fitz.open(tmp_filename)
+        doc = self._get_cached_document(task)
 
         logger.debug(
             f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
@@ -59,8 +65,7 @@ class PDFFormsExtractorWorker(BaseWorker):
             )
             return task
         t = time.time()
-        tmp_filename = self.get_content_file(task=task)
-        doc: fitz.Document = fitz.open(tmp_filename)
+        doc: fitz.Document = self._get_cached_document(task)
         logger.debug(
             f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
             extra=extra_log,
