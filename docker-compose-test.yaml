@@ -14,50 +14,11 @@ services:
     env_file:
       - .env
 
-
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
     restart: unless-stopped
-    env_file:
-      - .env
-
-  checkbox_service:
-    image: checkbox_service
-    build:
-      target: test
-      context: .
-      dockerfile: apps/server/business/checkbox_service/Dockerfile
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: checkbox_service
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/checkbox_service
-    - --cov=./services
-    - --cov-report=term-missing
-    - tests/business/checkbox_service
-    - tests/services
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/ocr_backend/:/app/ocr_backend/
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
-    - ./apps/server/business/cache:/app/business/cache
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-    depends_on:
-      - redis
-      - db
-      - minio
-      - migration
     env_file:
       - .env
 
@@ -75,23 +36,26 @@ services:
     - run
     - pytest
     - -s
-    - --cov=./business/paddleocr2
+    - --cov=./business/
+    - --cov=./services
     - --cov-report=term-missing
-    - tests/business/paddleocr2
+    - tests/business/
     - tests/integrations/business/paddle2
-    - -ra -v --maxfail=0
+    - tests/services
+    - -ra -v --maxfail=1
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/:/app/tests
     - ./apps/server/services/:/app/services/
-    - ./apps/server/business/paddleocr2:/app/business/paddleocr2
-    - ./apps/server/business/forms:/app/business/forms
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
+    - ./apps/server/business/:/app/business/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       PROCESS_NAME: "paddleocr-2.10.0"
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
+      VISION_MODEL: ${VISION_MODEL}
     depends_on:
       - redis
       - db
@@ -99,6 +63,7 @@ services:
       - migration
     env_file:
       - .env
+
   paddleocr3_service:
     image: paddleocr3_service
     build:
@@ -187,7 +152,6 @@ services:
     env_file:
       - .env
 
-
   ocr_backend:
     image: ocr_backend
     build:
@@ -207,7 +171,7 @@ services:
     - --cov-report=term-missing
     - tests/ocr_backend
     - tests/src/
-    - -ra -v --maxfail=0
+    - -ra -v --maxfail=1
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/src:/app/tests/src
@@ -219,70 +183,6 @@ services:
       CELERY_APP_NAME: default
     depends_on:
       - redis
-      - db
-      - minio
-      - migration
-    env_file:
-      - .env
-  llm_ocr_service:
-    image: llm_ocr_service
-    build:
-      target: test
-      context: .
-      dockerfile: apps/server/business/llm/Dockerfile
-    container_name: llm_ocr_service
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/llm
-    - --cov-report=term-missing
-    - tests/business/llm
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/llm:/app/business/llm
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-      VISION_MODEL: ${VISION_MODEL}
-    env_file:
-      - .env
-
-  forms_service:
-    image: forms_service
-    build:
-      target: test
-      context: .
-      dockerfile: apps/server/business/forms/Dockerfile
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: forms_service
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/forms
-    - --cov-report=term-missing
-    - tests/business/forms
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/forms:/app/business/forms
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-
-    depends_on:
       - db
       - minio
       - migration
