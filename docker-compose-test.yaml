@@ -175,8 +175,7 @@ services:
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/src:/app/tests/src
-    - ./apps/server/tests/ocr_backend:/app/tests/ocr_backend
-    - ./apps/server/services/:/app/services/
+    - ./apps/server/tests/:/app/tests/
     - ./apps/server/ocr_backend/:/app/ocr_backend/
     environment:
       DEV_MODE: "true"

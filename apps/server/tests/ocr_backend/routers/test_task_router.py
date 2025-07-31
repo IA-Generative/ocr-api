@@ -1,8 +1,11 @@
+import pytest
+from httpx import AsyncClient
+from datetime import datetime, timedelta
+
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 from ocr_backend.main import app
 from src.schemas.task import TaskTable, TaskModel, TaskStatus
-
 
 client = TestClient(app)
 
@@ -135,3 +138,79 @@ def test_get_task_by_user(mock_get_task_by_user):
             "content_hash": None,
         },
     ]
+
+
+@patch("ocr_backend.routers.task.s3_client_connector")
+@patch.object(TaskTable, "delete_tasks_by_date_and_status")
+def test_delete_tasks_by_date_and_status_success(
+    mock_delete,
+    mock_s3,
+):
+    # Données de test
+    mock_tasks = [
+        TaskModel(
+            id="task1",
+            user_id="user456",
+            type="test",
+            status=TaskStatus.COMPLETED.value,
+            percentage=0.0,
+            created_at=int(datetime.now().timestamp()),
+            updated_at=int(datetime.now().timestamp()),
+            input=None,
+            extras={"initial": True},
+        ),
+        TaskModel(
+            id="task2",
+            user_id="user456",
+            type="test",
+            status=TaskStatus.COMPLETED.value,
+            percentage=0.0,
+            created_at=int(datetime.now().timestamp()),
+            updated_at=int(datetime.now().timestamp()),
+            input=None,
+            extras={"initial": True},
+        ),
+    ]
+    mock_delete.return_value = mock_tasks
+
+    start = datetime.now() - timedelta(minutes=10)
+    end = datetime.now()
+
+    # Patch des dépendances
+    response = client.delete(
+        "/api/v1/tasks/",
+        params={
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "status": TaskStatus.COMPLETED.value,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    for task in mock_tasks:
+        mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
+
+
+@pytest.mark.asyncio
+async def test_delete_tasks_by_date_and_status_not_found():
+    start = datetime(2024, 1, 1)
+    end = datetime(2024, 1, 3)
+
+    with patch("ocr_backend.routers.task.task_table") as mock_task_table:
+        mock_task_table.delete_tasks_by_date_and_status.return_value = []
+
+        async with AsyncClient(app=app, base_url="http://test") as ac:
+            response = await ac.delete(
+                "/api/v1/tasks/",
+                params={
+                    "start_date": start.isoformat(),
+                    "end_date": end.isoformat(),
+                    "status": TaskStatus.COMPLETED.value,
+                },
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 0
