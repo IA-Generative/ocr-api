@@ -1,9 +1,8 @@
-
 # OCR WORKFLOW
 
 ## ℹ️ Fonctionnement
 
-La diagramme de séquence est le suivant :
+Le diagramme de séquence est le suivant :
 
 ```mermaid
 sequenceDiagram
