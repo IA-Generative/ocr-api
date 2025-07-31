@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -340,3 +341,37 @@ def test_get_task_by_hash_content(task_table: TaskTable):
     )
     found_task = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
     assert task.content_hash == found_task.content_hash
+
+
+def test_delete_task_between_date(task_table: TaskTable):
+    # Step 1: Insert a task
+    for i in range(5):
+        task_table.insert_new_task(
+            user_id="user1234",
+            form_data=TaskForm(
+                user_id="user123",
+                type=f"task_type_{i}",
+                status=TaskStatus.QUEUED.value,
+                percentage=50.0,
+                extras={"key": f"value_{i}"},
+            ),
+        )
+
+    # Step 2: Delete the task by id
+    deleted_task = task_table.delete_tasks_by_date_and_status(
+        start_date=datetime.now() - timedelta(seconds=3600),
+        end_date=datetime.now(),
+        status=TaskStatus.QUEUED,
+    )
+
+    # Step 3: Assertions
+    assert deleted_task is not None
+
+    # Step 4: Delete the task by id
+    deleted_task = task_table.delete_tasks_by_date_and_status(
+        start_date=datetime.now() - timedelta(seconds=3600),
+        end_date=datetime.now(),
+        status=TaskStatus.QUEUED,
+    )
+    # Step 5: Assertions
+    assert deleted_task is None
