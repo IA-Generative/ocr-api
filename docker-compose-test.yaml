@@ -42,7 +42,7 @@ services:
     - tests/business/
     - tests/integrations/business/paddle2
     - tests/services
-    - -ra -v --maxfail=1
+    - -ra -v --maxfail=0
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/:/app/tests
@@ -171,7 +171,7 @@ services:
     - --cov-report=term-missing
     - tests/ocr_backend
     - tests/src/
-    - -ra -v --maxfail=1
+    - -ra -v --maxfail=0
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/src:/app/tests/src
