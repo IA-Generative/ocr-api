@@ -184,6 +184,12 @@ def test_delete_tasks_by_date_and_status_success(
             "end_date": end.isoformat(),
             "status": TaskStatus.COMPLETED.value,
         },
+        headers={
+            "x-user-id": "test-user-id",
+            "x-user-email": "test@example.com",
+            "x-roles": "admin,user",
+            "authorization": "Bearer test-token-abc",
+        },
     )
 
     assert response.status_code == 200
@@ -191,6 +197,22 @@ def test_delete_tasks_by_date_and_status_success(
     assert len(data) == 2
     for task in mock_tasks:
         mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
+
+    response = client.delete(
+        "/api/v1/tasks/",
+        params={
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "status": TaskStatus.COMPLETED.value,
+        },
+        headers={
+            "x-user-id": "test-user-id",
+            "x-user-email": "test@example.com",
+            "x-roles": "user",
+        },
+    )
+
+    assert response.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -208,6 +230,12 @@ async def test_delete_tasks_by_date_and_status_not_found():
                     "start_date": start.isoformat(),
                     "end_date": end.isoformat(),
                     "status": TaskStatus.COMPLETED.value,
+                },
+                headers={
+                    "x-user-id": "test-user-id",
+                    "x-user-email": "test@example.com",
+                    "x-roles": "admin,user",
+                    "authorization": "Bearer test-token-abc",
                 },
             )
 
