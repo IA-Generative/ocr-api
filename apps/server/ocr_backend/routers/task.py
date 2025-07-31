@@ -52,7 +52,17 @@ async def get_tasks_by_user(
 
 
 @router.delete("/v1/tasks/", response_model=Optional[list[TaskModel]])
-async def delete_tasks_by_date_and_status(start_date: datetime, end_date: datetime, status: TaskStatus):
+async def delete_tasks_by_date_and_status(
+    start_date: datetime,
+    end_date: datetime,
+    status: TaskStatus,
+    ctx: RequestContext = Depends(TokenVerifier),
+):
+    if not ctx.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only Admin users can delete tasks by date and status",
+        )
     results = task_table.delete_tasks_by_date_and_status(start_date=start_date, end_date=end_date, status=status)
     if not results:
         return []
