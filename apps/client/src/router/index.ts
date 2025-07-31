@@ -1,7 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-
 import Home from '../views/AppHome.vue'
-import path from 'path'
 
 const MAIN_TITLE = 'MIrAI - OCR'
 

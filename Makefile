@@ -88,7 +88,7 @@ logs-frontend: ## Affiche les logs du conteneur de frontend
 
 clean: ## Nettoyage du dépôt
 	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
-	rm -rf frontend/node_modules frontend/.nuxt frontend/.output
+	rm -rf apps/client/node_modules apps/client/.nuxt apps/client/.output
 	$(MAKE) down
 
 clean-front: ## Nettoyage du frontend

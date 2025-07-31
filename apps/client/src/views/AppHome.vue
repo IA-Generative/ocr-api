@@ -32,7 +32,9 @@ function selectFile (files: FileList | File[]) {
 }
 
 async function startOcr () {
-  if (!selectedFile.value) { return }
+  if (!selectedFile.value) {
+    return
+  }
 
   isLoading.value = true
 
@@ -74,12 +76,13 @@ const uploadLabel = 'Ajouter un fichier'
 const uploadAccept = 'image/jpeg,image/png,application/pdf'
 
 onBeforeUnmount(() => {
-  if (pdfUrl.value) { URL.revokeObjectURL(pdfUrl.value) }
+  if (pdfUrl.value) {
+    URL.revokeObjectURL(pdfUrl.value)
+  }
 })
 </script>
 
 <template>
-
   <div class="main-page">
     <SideBar :other-tools="myOtherTools" />
     <div class="main-page__container">
@@ -98,7 +101,6 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
-
         <div class="page-container">
           <!-- File Upload -->
           <div class="file-upload-container flex flex-col">
