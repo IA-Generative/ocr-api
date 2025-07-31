@@ -30,10 +30,10 @@ pip install paddlepaddle  # ou paddlepaddle-gpu si nécessaire
 
 ## Résultats / Observations
 
-* [x] Facile à installer
-* [x] Support multilingue efficace
-* [ ] Peut ralentir sur des images très larges
-* [ ] Besoin d’un bon prétraitement pour certaines images bruitées
+- [x] Facile à installer
+- [x] Support multilingue efficace
+- [ ] Peut ralentir sur des images très larges
+- [ ] Besoin d’un bon prétraitement pour certaines images bruitées
 
 ## Remarques
 
