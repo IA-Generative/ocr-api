@@ -3,9 +3,16 @@ from typing import Union
 import numpy as np
 from PIL import Image
 from src.schemas.output import Page
+from src.schemas.task import TaskModel
 
 
 class BaseModelPrediction(ABC):
+    def __init__(self):
+        self.current_task: TaskModel = None
+
+    def set_current_task(self, task: TaskModel):
+        self.current_task = task
+
     @abstractmethod
     def batch_predict(
         self,

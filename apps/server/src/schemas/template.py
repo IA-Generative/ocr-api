@@ -22,4 +22,11 @@ class FormExtraction(BaseModel):
 class LLMFormField(BaseModel):
     name: Optional[str] = Field(default=None, description="Nom du champ (ex: 'nom', 'adresse').")
     value: Optional[str] = Field(default=None, description="Valeur actuelle du champ.")
-    filled: Optional[bool]
+    type: str = Field(..., description="Type de champ.")
+    sections: Optional[List[str]] = Field(default=None, description="Sections auxquelles appartient le champ.")
+    filled: Optional[bool] = Field(default=None, description="Indique si le champ est rempli.")
+
+
+class ImageFormDetector(BaseModel):
+    is_form: bool = Field(..., description="Indique si l'image est un formulaire ou non.")
+    confidence: float = Field(..., description="Confiance de la classification (0-1).")

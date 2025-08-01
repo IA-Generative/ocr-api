@@ -16,6 +16,7 @@ COPY apps/server/src /app/src
 COPY alembic.ini /app/
 COPY apps/server/migration /app/migration
 COPY apps/server/scripts /app/scripts
+COPY apps/server/configs /app/configs
 
 ENV PATH=$PATH:/app/.venv/bin/
 ENV HOST=0.0.0.0

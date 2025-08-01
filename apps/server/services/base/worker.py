@@ -1,4 +1,3 @@
-import hashlib
 import time
 from typing import List, Optional
 from abc import ABC, abstractmethod
@@ -12,7 +11,14 @@ from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
 from src.schemas.output import OCRResult, Page
-from src.schemas.task import TaskModel, TaskStatus, TaskUpdateForm, task_table
+from src.schemas.task import (
+    TaskModel,
+    TaskStatus,
+    TaskUpdateForm,
+    TaskOperation,
+    task_table,
+)
+from src.utils.file import hash_file
 from io import BytesIO
 
 
@@ -20,14 +26,6 @@ class EmptyContentException(Exception): ...
 
 
 class FileNotSupported(Exception): ...
-
-
-def hash_file(file_path: str):
-    h = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        for bloc in iter(lambda: f.read(4096), b""):
-            h.update(bloc)
-    return h.hexdigest()
 
 
 class BaseWorker(ABC):
@@ -139,6 +137,7 @@ class BaseWorker(ABC):
                     f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
                     extra=extra_log,
                 )
+                model.set_current_task(task)
                 t = time.time()
                 partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
                 logger.debug(
@@ -191,7 +190,7 @@ class BaseWorker(ABC):
             )
         return task
 
-    def set_output(self, task: TaskModel, total_pages: int = -1) -> TaskModel:
+    def set_output(self, task: TaskModel, total_pages: int = -1, pages: list[Page] = []) -> TaskModel:
         task = self.set_extras(task=task)
         if task.output is None:
             task.output = OCRResult(
@@ -201,7 +200,7 @@ class BaseWorker(ABC):
                 created_at=int(time.time()),
                 updated_at=int(time.time()),
                 total_pages=total_pages,
-                pages=[],
+                pages=pages,
             )
         return task
 
@@ -323,3 +322,8 @@ class BaseWorker(ABC):
 class AnyFileProcessWorker(BaseWorker):
     def is_applicable(self, task: TaskModel) -> bool:
         return task.input.content_type.startswith("image/") or task.input.content_type == "application/pdf"
+
+
+class DefaultFileProcessWorker(BaseWorker):
+    def is_applicable(self, task: TaskModel) -> bool:
+        return task.type == TaskOperation.DEFAULT.value

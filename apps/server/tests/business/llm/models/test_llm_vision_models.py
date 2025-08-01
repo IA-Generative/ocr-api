@@ -41,3 +41,24 @@ def test_vision_extraction_only():
     assert result[0].boxes[0].text
     assert len(result[0].form_entries) != 0
     assert isinstance(result[0].form_entries[0], LLMFormField)
+
+
+def test_vision_extraction_only_unit(monkeypatch: pytest.MonkeyPatch):
+    client = OpenAI(
+        api_key=OPENAI_API_KEY,
+        base_url=OPENAI_BASE_URL,
+    )
+    # Patch la méthode create sur la classe appropriée
+
+    obj = LLMToForm(client=client, model_name=VISION_MODEL)
+    monkeypatch.setattr(
+        type(obj.client.chat.completions),
+        "create",
+        lambda self, *args, **kwargs: [LLMFormField(name="field_name", value="field_value", type="text")],
+    )
+    image_path = "tests/data/valid/formulaire-cerfa-complete.png"
+    image = Image.open(image_path).convert("RGB")
+    result: list[Page] = obj.batch_predict(images=[image])
+    assert len(result) == 1
+    assert len(result[0].form_entries) != 0
+    assert isinstance(result[0].form_entries[0], LLMFormField)
