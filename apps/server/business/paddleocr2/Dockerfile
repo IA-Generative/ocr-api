@@ -15,6 +15,8 @@ RUN apt update -qy && apt install -qy \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
+ENV TORCH_HOME=/app/.cache/torch/
+ENV HF_HOME=/app/.cache/huggingface/
 
 COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version  /app/
 RUN uv sync --no-cache --group business-forms \
@@ -36,6 +38,8 @@ COPY apps/server/business/__init__.py /app/business/__init__.py
 COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
 COPY apps/server/business/forms /app/business/forms
+COPY apps/server/business/features /app/business/features
+COPY apps/server/business/llm /app/business/llm
 
 # Copy common code
 COPY apps/server/src /app/src

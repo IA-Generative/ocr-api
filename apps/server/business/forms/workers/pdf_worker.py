@@ -2,7 +2,7 @@ import fitz
 from PIL import Image
 
 from src.schemas.box import Bbox
-from src.schemas.template import FormEntry
+from src.schemas.template import LLMFormField
 from services.base.worker import BaseWorker
 from src.schemas.output import Page
 from io import BytesIO
@@ -10,9 +10,16 @@ import time
 
 
 from src.logger import logger
-from src.schemas.task import TaskModel, TaskStatus, TaskUpdateForm, task_table
+from src.schemas.task import (
+    TaskModel,
+    TaskStatus,
+    TaskUpdateForm,
+    TaskOperation,
+    task_table,
+)
 
 
+# TODO: need to be refactored to simplify the worker and use the new BaseWorker
 class PDFFormsExtractorWorker(BaseWorker):
     def __init__(
         self,
@@ -47,6 +54,8 @@ class PDFFormsExtractorWorker(BaseWorker):
 
     def is_applicable(self, task: TaskModel) -> bool:
         if task.input.content_type != "application/pdf":
+            return False
+        if task.type in [TaskOperation.VLM_OCR]:
             return False
         t = time.time()
         doc = self._get_cached_document(task)
@@ -101,6 +110,10 @@ class PDFFormsExtractorWorker(BaseWorker):
             task.output.pages,
         ):
             page.boxes = bbox
+            logger.debug(
+                f"[worker {self.name}][task-id {task.id}][page {page.page}][boxes {len(bbox)}][{len(form_entry)}]",
+                extra=extra_log,
+            )
             page.form_entries = form_entry
             page.page_url = None
 
@@ -113,6 +126,17 @@ class PDFFormsExtractorWorker(BaseWorker):
                 extra=extra_log,
             )
             partial_result = task.output.pages[i : i + self.batch_size]
+            for model in self.models:
+                logger.debug(
+                    f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
+                    extra=extra_log,
+                )
+                t = time.time()
+                partial_result: list[Page] = model.batch_predict(images=batch, pages=partial_result)
+                logger.debug(
+                    f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
+                    extra=extra_log,
+                )
 
             for j, image in enumerate(batch):
                 buffer = BytesIO()
@@ -163,7 +187,7 @@ class PDFFormsExtractorWorker(BaseWorker):
         self._clear_cached_document()
         return task
 
-    def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[FormEntry]]]:
+    def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[LLMFormField]]]:
         t = time.time()
         doc: fitz.Document = self._get_cached_document(task)
         logger.debug(
@@ -174,13 +198,13 @@ class PDFFormsExtractorWorker(BaseWorker):
         # dpi = 150
         # scale = dpi / 72
         forms_bboxes: list[list[Bbox]] = []
-        forms_entries: list[list[FormEntry]] = []
+        forms_entries: list[list[LLMFormField]] = []
         t = time.time()
 
         # Parcours explicite par numéro de page pour garantir l'ordre correct
         for page_num in range(len(doc)):
             page = doc[page_num]
-            page_forms: list[FormEntry] = []
+            page_forms: list[LLMFormField] = []
             page_bboxes: list[Bbox] = []
             # pix = page.get_pixmap(dpi=dpi)
             # img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
@@ -194,7 +218,14 @@ class PDFFormsExtractorWorker(BaseWorker):
                 name = widget.field_name
                 value = widget.field_value
 
-                page_forms.append(FormEntry(key=name, value=value))
+                page_forms.append(
+                    LLMFormField(
+                        name=name,
+                        value=value,
+                        type=widget.field_type_string,
+                        filled=True,
+                    )
+                )
                 # rect = widget.rect
                 # x0, y0 = rect.x0 * scale / img.width, rect.y0 * scale / img.height
                 # x1, y1 = rect.x1 * scale / img.width, rect.y1 * scale / img.height
@@ -241,3 +272,13 @@ class PDFFormsExtractorWorker(BaseWorker):
         # Nettoyer le cache du document après traitement
         self._clear_cached_document()
         return forms_bboxes, forms_entries
+
+
+class DefaultPdfExtractor(PDFFormsExtractorWorker):
+    def __init__(self, name, file_connector, models=[], batch_size=2, worker_weight=1, cache=None):
+        super().__init__(name, file_connector, models, batch_size, worker_weight, cache)
+
+    def is_applicable(self, task: TaskModel) -> bool:
+        if task.type == TaskOperation.DEFAULT.value:
+            return super().is_applicable(task)
+        return False

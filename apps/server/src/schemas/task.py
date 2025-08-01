@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String, func
 
-from src.connector import Base, get_db
+from src.connector.db_connector import Base, get_db
 from src.logger import logger
 from src.schemas.input import InputForm
 from src.schemas.output import OCRResult
@@ -20,6 +20,7 @@ class Task(Base):
     type = Column(String, nullable=False, primary_key=True)
     status = Column(String, default="queued")
     user_id = Column(String, nullable=False)
+    group_id = Column(String, nullable=True)
     percentage = Column(FLOAT, nullable=False)
     input = Column(JSON, nullable=True)
     output = Column(JSON, nullable=True)
@@ -40,6 +41,7 @@ class TaskModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     user_id: str
+    group_id: Optional[str] = None
     type: str
     status: str = "queued"
     percentage: Optional[float] = 0.0
@@ -54,6 +56,7 @@ class TaskModel(BaseModel):
 
 class TaskForm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    group_id: Optional[str] = None
     type: Optional[str] = None
     status: str
     percentage: Optional[float] = 0.0
@@ -65,6 +68,7 @@ class TaskForm(BaseModel):
 
 class TaskUpdateForm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    group_id: Optional[str] = None
     type: Optional[str] = None
     status: Optional[str] = None
     percentage: Optional[float] = 0.0
@@ -88,6 +92,11 @@ class TaskStatus(str, Enum):
 
 class TaskOperation(str, Enum):
     OCR: str = "ocr"
+    DEFAULT: str = "default"
+    SAVE_TEMPLATE: str = "save_template"
+    FORMS: str = "forms"
+    VECTORIZE: str = "vectorize"
+    VLM_OCR: str = "vlm_ocr"
 
 
 class TaskTable:
@@ -237,6 +246,31 @@ class TaskTable:
 
             if not tasks_to_delete:
                 logger.warning(f"No tasks found between {start_date} and {end_date}.")
+                return None
+
+            for task in tasks_to_delete:
+                db.delete(task)
+            db.commit()
+
+            return [TaskModel.model_validate(task) for task in tasks_to_delete]
+
+    def get_tasks_by_group_id(self, group_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
+        offset = (page - 1) * page_size
+        with self.get_db() as db:
+            tasks = db.query(Task).filter(Task.group_id == group_id).offset(offset).limit(page_size).all()
+
+            if not tasks:
+                logger.warning(f"No tasks found for group {group_id}.")
+                return None
+
+            return [TaskModel.model_validate(task) for task in tasks]
+
+    def delete_tasks_by_group_id(self, group_id: str) -> Optional[List[TaskModel]]:
+        with self.get_db() as db:
+            tasks_to_delete = db.query(Task).filter(Task.group_id == group_id).all()
+
+            if not tasks_to_delete:
+                logger.warning(f"No tasks found for group {group_id}.")
                 return None
 
             for task in tasks_to_delete:
