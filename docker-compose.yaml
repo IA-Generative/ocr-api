@@ -54,7 +54,7 @@ services:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/:/app/tests
     - ./apps/server/services/:/app/services/
-    - ./apps/server/business/paddleocr2:/app/business/paddleocr2
+    - ./apps/server/business/:/app/business/
     build:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile

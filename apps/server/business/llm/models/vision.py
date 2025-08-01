@@ -66,7 +66,14 @@ class LLMToForm(BaseLLMOCR):
             print(e)
         return response
 
-    async def aprocess(self, image_or_path: Union[Image.Image, Path], batch_size: int = 2) -> list[LLMFormField]:
+    async def aprocess(
+        self,
+        image_or_path: Union[Image.Image, Path],
+        batch_size: int = 2,
+        apply: bool = True,
+    ) -> list[LLMFormField]:
+        if not apply:
+            return []
         semaphore = asyncio.Semaphore(batch_size)
         async with semaphore:
             b64 = encode_image(image_or_path=image_or_path)
@@ -92,11 +99,17 @@ class LLMToForm(BaseLLMOCR):
     async def _async_batch_predict(self, images: list[Image.Image], pages: list[Page]):
         semaphore = asyncio.Semaphore(self.batch_size)
 
-        async def wrapped_aprocess(image):
+        async def wrapped_aprocess(image, apply: bool = True):
             async with semaphore:
-                return await self.aprocess(image)
+                return await self.aprocess(image, apply=apply)
 
-        tasks = [wrapped_aprocess(image) for image in images]
+        tasks = [
+            wrapped_aprocess(
+                image,
+                apply=page.image_form_detector is None or page.image_form_detector.is_form,
+            )
+            for image, page in zip(images, pages)
+        ]
         results = await asyncio.gather(*tasks)
 
         for page, result in zip(pages, results):
@@ -113,7 +126,8 @@ class LLMToForm(BaseLLMOCR):
             pages = [Page(page=i + 1) for i in range(len(images))]
         if isinstance(self.openai_client, OpenAI):
             for page, image in zip(pages, images):
-                page.form_entries = self.process(image=image, batch_size=2)
+                if page.image_form_detector is None or page.image_form_detector.is_form:
+                    page.form_entries = self.process(image=image, batch_size=2)
 
             return pages
 
