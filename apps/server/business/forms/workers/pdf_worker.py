@@ -162,11 +162,19 @@ class PDFFormsExtractorWorker(BaseWorker):
         forms_bboxes: list[list[Bbox]] = []
         forms_entries: list[list[FormEntry]] = []
         t = time.time()
-        for page in doc:
+
+        # Parcours explicite par numéro de page pour garantir l'ordre correct
+        for page_num in range(len(doc)):
+            page = doc[page_num]
             page_forms: list[FormEntry] = []
             page_bboxes: list[Bbox] = []
             pix = page.get_pixmap(dpi=dpi)
             img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+
+            logger.debug(
+                f"[worker {self.name}]Processing page {page_num + 1}/{len(doc)} for task {task.id}",
+                extra={"task_id": task.id, "user_id": task.user_id},
+            )
 
             for widget in page.widgets():
                 rect = widget.rect
