@@ -1,145 +1,136 @@
 import os
 import boto3
-
-from services.base.worker import AnyFileProcessWorker
+from openai import AsyncOpenAI
 from services.base.pipeline import Pipeline
-from business.forms.workers.pdf_worker import PDFFormsExtractorWorker
 from business.cache.sql_cache import TaskCache
+
+## Models
 from business.checkbox_service.models.morpho import MorphoBoxDetection
+from business.paddleocr2.models.paddle import PaddleInferOCR2
+from business.llm.models.vision import LLMToForm
+from business.llm.models.classification import FormClassification
+from business.llm.models.base import VisionLLMOCR
+from business.llm.models.template import FormFieldExtractor
+
+# Workers
+from business.llm.workers.llm_worker import VLMOcrWorker
+from business.forms.workers.pdf_worker import (
+    PDFFormsExtractorWorker,
+    DefaultPdfExtractor,
+)
+from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
+
+from business.paddleocr2.configs.paddle import PaddleSetting
 from src.config.ocr_model import OCRModelSettings
 
 from src.connector import S3Connector, s3_settings
-from src.logger import logger
 
 s3_client = boto3.client("s3")
 s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 main_ocr_settings = OCRModelSettings()
 
-DEVICE = os.environ.get("DEVICE", "cpu")
 
+def load_worker(
+    name: str,
+    batch_size: int = 1,
+    worker_weight: float = 1,
+) -> Pipeline:
+    # logger.info(f"---- {name} selected ----")
+    ################# OPENAI CLIENT #################
+    openai_client = AsyncOpenAI(
+        api_key=os.environ.get("OPENAI_API_KEY"),
+        base_url=os.environ.get("OPENAI_API_BASE_URL", "https://api.openai.com/v1"),
+    )
+    vision_model_name = os.environ.get("VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503")
+    #################################################
 
-def load_worker(name: str, batch_size: int = 1, worker_weight: float = 1) -> Pipeline:
-    logger.info(f"---- {name} selected ----")
-    models = []
-    model = None
-    if name == "paddleocr-2.10.0":
-        from business.paddleocr2.models.paddle import PaddleInferOCR2
-        from business.paddleocr2.configs.paddle import PaddleSetting
+    ################# CACHE CLIENT ##################
+    cache = TaskCache(file_connector=s3_client_connector)
+    #################################################
 
-        model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
-        models.append(model)
+    #################    MODELS   ####################
+    ocr_model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
+    morpho_model = MorphoBoxDetection()
+    vlm_visual_form_parser = LLMToForm(
+        client=openai_client,
+        model_name=vision_model_name,
+    )
+    vlm_visual_ocr_model = VisionLLMOCR(client=openai_client, model_name=vision_model_name)
+    form_visual_classification_model = FormClassification(client=openai_client, model_name=vision_model_name)
+    from_text_field_extractor = FormFieldExtractor(client=openai_client, model_name=vision_model_name)
+    ##################################################
 
-    elif name == "paddleocr-3.0.1":
-        from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
-
-        ocr_settings = PaddleSetting()
-
-        model = PaddleInferOCR(
-            device=DEVICE,
-            batch_size=ocr_settings.DETECTION_BATCH_SIZE,
-            ocr_version=ocr_settings.OCR_VERSION,
-            lang=ocr_settings.OCR_LANG,
-            text_detection_model_name=f"{ocr_settings.OCR_VERSION}_mobile_det",
-            text_recognition_model_name=f"{ocr_settings.OCR_VERSION}_mobile_rec",
-        )
-        models.append(model)
-
-    elif name == "paddleocr-3.0.1-pipeline":
-        from business.paddleocr3.config import PaddleSetting
-        from business.paddleocr3.models.paddle_pipe import PaddleInferOCR
-
-        ocr_settings = PaddleSetting()
-        ocr_model = PaddleInferOCR(
-            device=DEVICE,
-            batch_size=ocr_settings.DETECTION_BATCH_SIZE,
-            ocr_version=ocr_settings.OCR_VERSION,
-            lang=ocr_settings.OCR_LANG,
-        )
-        models.append(ocr_model)
-        if ocr_settings.USE_LAYOUT_DETECTION:
-            from business.paddleocr3.models.layout import PaddleLayoutDetection
-
-            models.append(PaddleLayoutDetection(device=DEVICE))
-            if ocr_settings.USE_FORMULA_RECOGNITION:
-                from business.paddleocr3.models.formula import PaddleFormulaRecognizer
-
-                models.append(PaddleFormulaRecognizer(device=DEVICE))
-
-            if ocr_settings.USE_TABLE_RECOGNITION:
-                from business.paddleocr3.models.table import TablePrediction
-
-                models.append(TablePrediction(device=DEVICE))
-
-        # model = PipelineLinearPrediction(models=tmp_models)
-        # models.append(model)
-
-    elif name == "only-llm":
-        from openai import OpenAI
-        from business.llm.models.base import VisionLLMOCR
-        from business.llm.models.template import TemplateLLMDetector
-        from business.llm.config import OpenAISetting
-
-        openai_settings = OpenAISetting()
-        client = OpenAI(
-            api_key=openai_settings.OPENAI_API_KEY,
-            base_url=openai_settings.OPENAI_BASE_URL,
-        )
-
-        models.append(VisionLLMOCR(client=client, model_name=openai_settings.VISION_MODEL))
-        models.append(TemplateLLMDetector(client=client, model_name=openai_settings.INSTRUCT_MODEL_NAME))
-
-    elif name == "mixed-classic-and-vlm":
-        from openai import OpenAI
-        from business.llm.models.template import TemplateLLMDetector
-        from business.llm.config import OpenAISetting
-
-        openai_settings = OpenAISetting()
-        client = OpenAI(
-            api_key=openai_settings.OPENAI_API_KEY,
-            base_url=openai_settings.OPENAI_BASE_URL,
-        )
-        base_worker = load_worker(
-            name="paddleocr-3.0.1-pipeline",
-            batch_size=batch_size,
-            worker_weight=worker_weight,
-        )
-        base_worker.models.append(TemplateLLMDetector(client=client, model_name=openai_settings.INSTRUCT_MODEL_NAME))
-        return base_worker
-
-    else:
-        raise NotImplementedError("")
-
-    if main_ocr_settings.USE_VISION_LLM_EXTRACT_KIE:
-        from openai import AsyncOpenAI
-        from business.llm.config import OpenAISetting
-
-        openai_settings = OpenAISetting()
-        client = AsyncOpenAI(
-            api_key=openai_settings.OPENAI_API_KEY,
-            base_url=openai_settings.OPENAI_BASE_URL,
-        )
-        from business.llm.models.vision import LLMToForm
-
-        models.append(LLMToForm(client=client, model_name=openai_settings.VISION_MODEL))
-
-    models.append(MorphoBoxDetection())
-
-    next_worker = AnyFileProcessWorker(
-        name=name,
+    ################# WORKERS ########################
+    default_worker = DefaultFileProcessWorker(
+        name="default-worker",
         file_connector=s3_client_connector,
-        models=models,
+        models=[ocr_model, morpho_model],
+        batch_size=2,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    # Si c'est un pdf and un vrai formulaire (donnée issue de is_form_pdf) on rentre dans ce worker
+    # ensuite on prends le texte dans ce pdf, llm -> src.schemas.template.FormEntry
+    worker_pdf = PDFFormsExtractorWorker(
+        name="pdf-worker-llm-field-extractor",
+        file_connector=s3_client_connector,
+        models=[from_text_field_extractor],
         batch_size=batch_size,
         worker_weight=worker_weight,
-        cache=TaskCache(file_connector=s3_client_connector),
+        cache=cache,
     )
-    worker_pdf = PDFFormsExtractorWorker(
-        name=f"pdf-{name}",
+    default_worker_pdf = DefaultPdfExtractor(
+        name="default-pdf-worker",
         file_connector=s3_client_connector,
         models=[],
         batch_size=batch_size,
         worker_weight=worker_weight,
-        cache=TaskCache(file_connector=s3_client_connector),
+        cache=cache,
     )
 
-    return Pipeline(workers=[worker_pdf, next_worker])
+    # On rentre dedans si task.type == TaskOperation.VLM_OCR dans le cas d'un pdf non reconnu formulaire (is_form_pdf=false)
+    # on utilise le modèle de VLM pour extraire les informations
+    # on classifie le contenu extrait pour savoir si c'est un formulaire
+    # on utilise un vlm pour avoir avoir key information extraction
+
+    vlm_ocr_worker = VLMOcrWorker(
+        name="vlm-ocr-worker",
+        file_connector=s3_client_connector,
+        models=[
+            vlm_visual_ocr_model,
+            form_visual_classification_model,
+            vlm_visual_form_parser,
+        ],
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+
+    # On rentre dedans dans les autre cas
+    # on classifie le contenu extrait pour savoir si c'est un formulaire
+    # on utilise un vlm pour avoir avoir key information extraction
+    any_file_worker = AnyFileProcessWorker(
+        name="any-file-worker",
+        file_connector=s3_client_connector,
+        models=[
+            ocr_model,
+            morpho_model,
+            form_visual_classification_model,
+            vlm_visual_form_parser,
+        ],
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+
+    ##################################################
+
+    return Pipeline(
+        workers=[
+            default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
+            default_worker,  # TaskOperation.DEFAULT
+            worker_pdf,  # application/pdf AND is_form_pdf
+            vlm_ocr_worker,  # TaskOperation.VLM_OCR
+            any_file_worker,  # OTHER
+        ]
+    )

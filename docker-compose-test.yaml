@@ -40,14 +40,15 @@ services:
     - --cov=./services
     - --cov-report=term-missing
     - tests/business/
-    - tests/integrations/business/paddle2
     - tests/services
+    - --ignore=tests/business/features
     - -ra -v --maxfail=0
     volumes:
     - ./apps/server/src/:/app/src/
     - ./apps/server/tests/:/app/tests
     - ./apps/server/services/:/app/services/
     - ./apps/server/business/:/app/business/
+    - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -177,6 +178,7 @@ services:
     - ./apps/server/tests/src:/app/tests/src
     - ./apps/server/tests/:/app/tests/
     - ./apps/server/ocr_backend/:/app/ocr_backend/
+    - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default

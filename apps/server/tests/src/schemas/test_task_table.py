@@ -375,3 +375,57 @@ def test_delete_task_between_date(task_table: TaskTable):
     )
     # Step 5: Assertions
     assert deleted_task is None
+
+
+def test_task_group_id(task_table: TaskTable):
+    # Step 1: Insert a task with group_id
+    task = task_table.insert_new_task(
+        user_id="user1234",
+        form_data=TaskForm(
+            user_id="user123",
+            type="task_type_0",
+            status=TaskStatus.QUEUED.value,
+            percentage=50.0,
+            extras={"key": "value_0"},
+            group_id="group_1",
+        ),
+    )
+
+    assert task.group_id == "group_1"
+
+    # Step 2: Retrieve tasks by group_id
+    tasks = task_table.get_tasks_by_group_id(group_id="group_1")
+
+    assert tasks is not None
+    assert len(tasks) == 1
+    assert tasks[0].id == task.id
+
+
+def test_delete_tasks_by_group_id(task_table: TaskTable):
+    # Step 1: Insert a task with group_id
+    task = task_table.insert_new_task(
+        user_id="user1234",
+        form_data=TaskForm(
+            user_id="user123",
+            type="task_type_0",
+            status=TaskStatus.QUEUED.value,
+            percentage=50.0,
+            extras={"key": "value_0"},
+            group_id="group_1",
+        ),
+    )
+    # Step 2: Delete tasks by group_id
+    deleted_tasks = task_table.delete_tasks_by_group_id(group_id="group_1")
+
+    assert deleted_tasks is not None
+    assert len(deleted_tasks) == 1
+    assert deleted_tasks[0].id == task.id
+
+    # Step 3: Verify that tasks are actually deleted
+    tasks_after_deletion = task_table.get_tasks_by_group_id(group_id="group_1")
+    assert tasks_after_deletion is None or len(tasks_after_deletion) == 0
+    assert task_table.get_task_by_id(task.id) is None  # Task should be deleted
+
+    # Step 4: Try to delete again
+    deleted_tasks_again = task_table.delete_tasks_by_group_id(group_id="group_1")
+    assert deleted_tasks_again is None or len(deleted_tasks_again) == 0

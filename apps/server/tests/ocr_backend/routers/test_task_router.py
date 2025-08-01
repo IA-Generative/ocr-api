@@ -1,5 +1,4 @@
 import pytest
-from httpx import AsyncClient
 from datetime import datetime, timedelta
 
 from fastapi.testclient import TestClient
@@ -46,6 +45,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         "position": None,
         "extras": {"key": "value"},
         "content_hash": None,
+        "group_id": None,
     }
 
 
@@ -122,6 +122,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "position": None,
             "output": None,
             "content_hash": None,
+            "group_id": None,
         },
         {
             "id": "12345",
@@ -136,6 +137,7 @@ def test_get_task_by_user(mock_get_task_by_user):
             "position": None,
             "output": None,
             "content_hash": None,
+            "group_id": None,
         },
     ]
 
@@ -223,21 +225,20 @@ async def test_delete_tasks_by_date_and_status_not_found():
     with patch("ocr_backend.routers.task.task_table") as mock_task_table:
         mock_task_table.delete_tasks_by_date_and_status.return_value = []
 
-        async with AsyncClient(app=app, base_url="http://test") as ac:
-            response = await ac.delete(
-                "/api/v1/tasks/",
-                params={
-                    "start_date": start.isoformat(),
-                    "end_date": end.isoformat(),
-                    "status": TaskStatus.COMPLETED.value,
-                },
-                headers={
-                    "x-user-id": "test-user-id",
-                    "x-user-email": "test@example.com",
-                    "x-roles": "admin,user",
-                    "authorization": "Bearer test-token-abc",
-                },
-            )
+        response = client.delete(
+            "/api/v1/tasks/",
+            params={
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "status": TaskStatus.COMPLETED.value,
+            },
+            headers={
+                "x-user-id": "test-user-id",
+                "x-user-email": "test@example.com",
+                "x-roles": "admin,user",
+                "authorization": "Bearer test-token-abc",
+            },
+        )
 
         assert response.status_code == 200
         data = response.json()
