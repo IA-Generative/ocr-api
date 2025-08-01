@@ -1,0 +1,38 @@
+{
+  "facebook/dinov2-small": {
+    "type": "FacebookImageFeatureExtractor",
+    "model_size": 384
+  },
+  "facebook/dinov2-base": {
+    "type": "FacebookImageFeatureExtractor",
+    "model_size": 768
+  },
+  "facebook/dinov2-large": {
+    "type": "FacebookImageFeatureExtractor",
+    "model_size": 1024
+  },
+  "efficientnet-b0": {
+    "type": "EfficientImageFeatureExtractor",
+    "model_size": 1280
+  },
+  "efficientnet-b1": {
+    "type": "EfficientImageFeatureExtractor",
+    "model_size": 1280
+  },
+  "efficientnet-b2": {
+    "type": "EfficientImageFeatureExtractor",
+    "model_size": 1408
+  },
+  "google/vit-base-patch16-224-in21k": {
+    "type": "GoogleImageFeatureExtractor",
+    "model_size": 768
+  },
+  "google/vit-base-patch32-224-in21k": {
+    "type": "GoogleImageFeatureExtractor",
+    "model_size": 768
+  },
+  "dummy": {
+    "type": "DummyFeatureCreator",
+    "model_size": 128
+  }
+}

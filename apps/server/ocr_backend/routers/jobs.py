@@ -1,14 +1,16 @@
 import json
+from json import JSONDecodeError
 import os
-import shutil
-import tempfile
+import aiofiles
 import traceback
+from typing import Optional
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends
+from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
+import fitz
 
 from src.connector.broker_connector import celery_app, celery_config
 from src.logger import logger
-from src.schemas.input import InputForm
+from src.schemas.input import InputForm, RegionOfInterest
 from src.schemas.task import (
     TaskForm,
     TaskModel,
@@ -26,9 +28,62 @@ router = APIRouter(tags=["Jobs"])
 WORKER_NAME = "worker.tasks.ocr"
 
 
+def _handle_pdf_interest_zone(file_path: str, interest_zone: Optional[str]) -> list[RegionOfInterest]:
+    doc = fitz.open(file_path)
+    if doc.is_form_pdf:
+        return []
+    try:
+        regions = [RegionOfInterest(**item) for item in json.loads(interest_zone)]
+        if len(regions) != len(doc):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Interest zone cannot be empty for PDF files {traceback.format_exc()}",
+            )
+        return regions
+    except JSONDecodeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON format for interest_zone {e}{traceback.format_exc()}",
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON format for interest_zone {e}{traceback.format_exc()}",
+        )
+
+
+def _handle_image_interest_zone(interest_zone: Optional[str]) -> list[RegionOfInterest]:
+    regions = [RegionOfInterest(**item) for item in json.loads(interest_zone)]
+    if len(regions) != 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Interest zone cannot be empty for image files {traceback.format_exc()}",
+        )
+    return regions
+
+
+def verify_interest_zone(
+    file_path: str,
+    content_type: str,
+    interest_zone: Optional[str] = "",
+) -> list[RegionOfInterest]:
+    if content_type == "application/pdf":
+        return _handle_pdf_interest_zone(file_path, interest_zone)
+    elif content_type.startswith("image/"):
+        return _handle_image_interest_zone(interest_zone)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid content type {traceback.format_exc()}",
+        )
+
+
 @router.post("/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
 async def upload_file(
     file: UploadFile = File(...),
+    group_id: str = Form("DEFAULT"),
+    interest_zone: Optional[str] = Form(None),
+    task_operation: TaskOperation = Form(TaskOperation.OCR.value),
     ctx: RequestContext = Depends(TokenVerifier),
 ):
     extras = {}
@@ -36,20 +91,43 @@ async def upload_file(
         user_id=ctx.user_id,
         form_data=TaskForm(
             user_id=ctx.user_id,
-            type=TaskOperation.OCR.value,
+            type=task_operation,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
+            group_id=group_id,
         ),
     )
     try:
-        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-            temp_file_path = temp_file.name  # Le chemin du fichier temporaire
-            with open(temp_file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
+        async with aiofiles.tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file_path = temp_file.name
 
-        logger.debug(task_data.model_dump())
+            # Lecture par chunks pour économiser la mémoire
+            chunk_size = 8192  # 8KB chunks
+            while chunk := await file.read(chunk_size):
+                await temp_file.write(chunk)
+        if interest_zone is not None:
+            interest_zone = verify_interest_zone(
+                file_path=temp_file_path,
+                content_type=file.content_type,
+                interest_zone=interest_zone,
+            )
+    except Exception as e:
+        logger.error(f"HTTPException for user {ctx.user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
+        task_table.update_task(
+            task_id=task_data.id,
+            form_data=TaskUpdateForm(
+                type=task_operation,
+                status=TaskStatus.FAILED.value,
+                extras={"error": str(e)},
+            ),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid JSON format for interest_zone {e}{traceback.format_exc()}",
+        )
 
+    try:
         saved_path = s3_client_connector.save(ctx.user_id, task_data.id, temp_file_path)
         logger.debug(f"Save into S3 - {saved_path}")
 
@@ -62,6 +140,7 @@ async def upload_file(
             content_type=file.content_type,
             ext=extension,
             size=file.size,
+            interest_zone=interest_zone,
         )
 
         task_data = task_table.update_task(
@@ -76,15 +155,9 @@ async def upload_file(
         task_data.position = task_table.get_position_in_queue(task_id=task_data.id)
         os.remove(temp_file_path)
 
-        # QUEUE_NAME=checkbox_model
         logger.debug(f"{task_data.id} worker name {WORKER_NAME} - {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*")
 
-        celery_app.send_task(
-            WORKER_NAME,
-            args=[json.dumps(task_data.model_dump())],
-            task_id=task_data.id,
-            # queue="ocr_queue",
-        )
+        celery_app.send_task(WORKER_NAME, args=[json.dumps(task_data.model_dump())], task_id=task_data.id)
 
         return task_data
 
@@ -95,12 +168,12 @@ async def upload_file(
         task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
-                type=TaskOperation.OCR.value,
+                type=task_operation,
                 status=TaskStatus.FAILED.value,
                 extras={"error": str(e)},
             ),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="File upload failed",
+            detail=f"File upload failed: {e} {traceback.format_exc()}",
         )

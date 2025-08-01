@@ -17,7 +17,9 @@ class TaskCache(BaseCache):
 
     def is_in_cache(self, task: TaskModel) -> bool:
         found_task = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
-        return found_task is not None and found_task.status == TaskStatus.COMPLETED.value
+        return (
+            found_task is not None and found_task.status == TaskStatus.COMPLETED.value and found_task.type == task.type
+        )
 
     def update_get_obj(self, task: TaskModel) -> TaskModel:
         if not self.file_connector:

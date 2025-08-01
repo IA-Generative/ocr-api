@@ -7,17 +7,20 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "httpx==0.25.0",
+    "httpx>=0.28.1",
     "python-json-logger==3.3.0",
     "setuptools>=80.9.0",
     "toml>=0.10.2",
-    "minio==7.2.15",
-    "pydantic-settings==2.8.1",
+    "minio>=7.2.16",
+    "pydantic-settings>=2.10.1",
     "sqlalchemy>=2.0.42",
     "celery[redis]>=5.5.1",
     "flower>=2.0.1",
     "psycopg2-binary>=2.9.10",
-    "boto3>=1.37.36"
+    "boto3>=1.40.0",
+    "qdrant-client>=1.15.1",
+    "aiofiles>=24.1.0",
+    "pymupdf>=1.26.3",
 ]
 
 [dependency-groups]
@@ -100,6 +103,12 @@ business-forms = [
     "pydantic>=2.11.7",
     "pymupdf>=1.26.3",
 ]
+ocr-service-features = [
+    "efficientnet-pytorch>=0.7.1",
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+    "transformers>=4.55.2",
+]
 
 
 [tool.commitizen]
@@ -114,3 +123,17 @@ major_version_zero = true
 
 [tool.ruff]
 line-length = 120
+
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu" },
+]
+torchvision = [
+    { index = "pytorch-cpu" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
