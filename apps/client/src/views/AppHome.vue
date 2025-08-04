@@ -8,6 +8,7 @@ import CustomCard from '@/components/CustomCard.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
+import InfoBulle from '@/components/InfoBulle.vue'
 import { useOcrStore } from '@/stores/ocr'
 import { generateRandomUUID } from '@/utils/uniqueId'
 
@@ -101,6 +102,9 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
+        
+        <InfoBulle />
+
         <div class="page-container">
           <!-- File Upload -->
           <div class="file-upload-container flex flex-col">
