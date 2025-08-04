@@ -16,12 +16,11 @@ declare module 'vue' {
     DsfrHeader: typeof import('@gouvminint/vue-dsfr')['DsfrHeader']
     DsfrPagination: typeof import('@gouvminint/vue-dsfr')['DsfrPagination']
     DsfrTile: typeof import('@gouvminint/vue-dsfr')['DsfrTile']
+    InfoBulle: typeof import('./components/InfoBulle.vue')['default']
     OcrViewer: typeof import('./components/OcrViewer.vue')['default']
     ProgressBar: typeof import('./components/ProgressBar.vue')['default']
-    ReloadPrompt: typeof import('./components/ReloadPrompt.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SideBar: typeof import('./components/SideBar.vue')['default']
-    VIcon: typeof import('@gouvminint/vue-dsfr')['VIcon']
   }
 }

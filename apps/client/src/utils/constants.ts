@@ -19,5 +19,6 @@ export const KEYCLOAK_REDIRECT_URI = (window as any).VITE_REDIRECT_URI ?? import
 
 // EXTERNAL LINKS
 export const USER_REVIEW_URL = (window as any).VITE_USER_REVIEW_URL ?? import.meta.env.VITE_USER_REVIEW_URL
-export const CHAP_CANAL_URL = (window as any).VITE_CHAP_CANAL_URL ?? import.meta.env.VITE_CHAP_CANAL_URL
+export const TCHAP_CANAL_URL = (window as any).VITE_TCHAP_CANAL_URL ?? import.meta.env.VITE_TCHAP_CANAL_URL
 export const CHAT_URL = (window as any).VITE_CHAT_URL ?? import.meta.env.VITE_CHAT_URL
+export const PORTAIL_URL = (window as any).VITE_PORTAIL_URL ?? import.meta.env.VITE_PORTAIL_URL

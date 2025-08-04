@@ -46,7 +46,7 @@ class TablePrediction(BaseModelPrediction):
                     t = time.perf_counter()
                     table_cls = self.table_reco.predict(crop_image)
                     logger.debug(
-                        f"[Table detection image {i} - {layout.label}] - crop size {size}  - time to process {time.perf_counter() -t :.2f}s"
+                        f"[Table detection image {i} - {layout.label}] - crop size {size}  - time to process {time.perf_counter() - t:.2f}s"
                     )
                     for table in table_cls:
                         for layout_boxes, table_res in zip(table["layout_det_res"]["boxes"], table["table_res_list"]):
