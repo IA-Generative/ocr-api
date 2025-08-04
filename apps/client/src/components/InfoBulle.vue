@@ -9,7 +9,7 @@ import { TCHAP_CANAL_URL } from '@/utils/constants'
         les conditions d'utilisation ainsi que les responsabilités de l'agent et du service utilisateur.</span>
       <br>
       <br>
-      Nous travaillons pour améliorer la performance et le type de documents acceptes, veuillez nous notifier
+      Nous travaillons pour améliorer la performance et le type de documents acceptés, veuillez nous notifier
       via le <a :href="TCHAP_CANAL_URL" target="_blank">canal Tchap</a> de tout dysfonctionnement.
     </p>
   </div>
