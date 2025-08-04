@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional
-from src.schemas.task import TaskModel, task_table
+from src.schemas.task import TaskModel, task_table, TaskStatus
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
+from datetime import datetime
+from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Tasks"])
 
@@ -47,3 +49,24 @@ async def get_tasks_by_user(
     ctx: RequestContext = Depends(TokenVerifier),
 ):
     return await get_tasks_by_user_id(user_id=ctx.user_id, page=page, page_size=page_size)
+
+
+@router.delete("/v1/tasks/", response_model=Optional[list[TaskModel]])
+async def delete_tasks_by_date_and_status(
+    start_date: datetime,
+    end_date: datetime,
+    status: TaskStatus,
+    ctx: RequestContext = Depends(TokenVerifier),
+):
+    if not ctx.is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="Only Admin users can delete tasks by date and status",
+        )
+    results = task_table.delete_tasks_by_date_and_status(start_date=start_date, end_date=end_date, status=status)
+    if not results:
+        return []
+
+    for task in results:
+        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
+    return results

@@ -1,139 +1,126 @@
 
 # OCR API
 
-Une API permettant d'extraire du texte à partir de documents (PDF/images) à l’aide d’un pipeline asynchrone basé sur Redis, S3, et OCR.
+Cette API fournit un service d’extraction de texte à partir de fichiers PDF ou d’images. Elle repose sur un pipeline de traitement asynchrone utilisant Redis (queue), S3 (stockage), et PaddleOCR pour effectuer la reconnaissance de texte.
 
-## ℹ️ Fonctionnement
+## Démo
 
-Le fonctionne de l'application est décrit dans les schémas suivant :
+![DEMO](docs/images/demo-ocr.gif)
 
-<img src= "docs/Diagrame.drawio.png" title="qsqs"></img>
+## [Fonctionnement](docs/server/asyncronus.md)
 
-En termes d'ordre d'execution :
+Dans cette section vous trouverez le fonctionnement de cette application [docs/server/asyncronus.md](docs/server/asyncronus.md)
 
-```mermaid
-flowchart TD
-    A[Client envoie un document image/pdf] --> B[API Python reçoit le fichier]
-    B --> C[Le fichier est sauvegardé dans S3]
-    C --> D[Création de la task en BDD -task_id, status = CREATED]
-    D --> E[Envoi de la task dans la queue du Broker]
-    E --> F[Queue FIFO Broker]
-    F --> G[Consommateur OCR récupère une tâche - pas de doublon]
-    G --> H[Récupération du fichier depuis S3]
-    H --> I[OCR en cours - Mise à jour du status en BDD à chaque étape]
-    I --> J[Status de la task disponible via l'API]
-    J --> K[Retour de l’état de la task avec/sans résultats]
+## Prérequis
 
-    classDef store fill:#f9f,stroke:#333,stroke-width:1px;
-    class C,H store;
+- [Docker](https://docs.docker.com/get-docker/) installé
+- [Docker Compose](https://docs.docker.com/compose/) (version 2+ recommandée)
+- Un fichier `.env` configuré à la racine du projet (voir exemple ci-dessous)
 
-    classDef queue fill:#bbf,stroke:#333,stroke-width:1px;
-    class E,F queue;
+---
 
-    classDef api fill:#bfb,stroke:#333,stroke-width:1px;
-    class B,J,K api;
+## Configuration du fichier `.env`
 
-    classDef db fill:#ffb,stroke:#333,stroke-width:1px;
-    class D,I db;
+Crée un fichier `.env` à la racine avec les variables suivantes (à adapter si besoin) :
 
-    classDef process fill:#eef,stroke:#333,stroke-width:1px;
-    class G process;
-```
+```env
+# Redis configuration
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_QUEUE_NAME=redis-queue
 
-La diagramme de séquence est le suivant :
+# Database connection string (PostgreSQL)
+DATABASE_URL=postgresql://postgres:secret@db:5432/example_db
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant API
-    participant S3
-    participant BDD
-    participant Broker
-    participant Consommateur_OCR
+# Monitoring interval (seconds)
+MONITOR_RESSOURCE_EVERY=5
 
-    Client->>API: Envoi document (image/pdf)
-    API->>S3: Sauvegarde du fichier
-    API->>BDD: Création task (task_id, status=CREATED)
-    API->>Broker: Push task dans la queue
-    Broker->>Consommateur_OCR: Délivre task (FIFO, sans doublon)
-    Consommateur_OCR->>S3: Récupération du fichier
-    Consommateur_OCR->>BDD: Maj status étape par étape (processing...)
-    Client->>API: Demande status task
-    API->>BDD: Lecture status task
-    API-->>Client: Retour état + résultats si dispo
+# S3 (MinIO) configuration
+S3_BUCKET_NAME=test
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=minioadmin
+AWS_ENDPOINT_URL=http://minio:9000
+AWS_DEFAULT_REGION=us-east-1
 
-```
+# Terminal settings
+TERM=xterm-256color
+no_proxy=minio
 
-## 🛟 Contribution
+# OCR worker settings
+PROCESS_NAME="mixed-classic-and-vlm"
+WORKER_NAME=worker.tasks.ocr
+DEVICE=cpu
 
-Le projet utilise les prérequis suivant :
+````
 
-- Linux ou macOS
-- `Docker` et `Docker Compose`
-- `curl`, `make`
+---
 
-L'ensemble des commandes du projet est disponible avec la commande
+## Lancer l’application (Backend)
 
-```
-make
-```
-
-### ⚙️ Installation
-
-Installation des dépendances Python depuis `pyproject.toml` :
+Depuis la racine du projet, lance la commande :
 
 ```bash
-# with pip
-pip install -r requirements.txt
-
-# with docker
-docker build -t ocr-api .
+docker compose up --build -d
 ```
 
-## Run
+Cette commande construit les images si nécessaire et démarre tous les containers en arrière-plan.
+
+---
+
+## Accès aux services
+
+- API OCR (FastAPI) : [http://localhost:5000](http://localhost:5000)
+- Interface MinIO : [http://localhost:9001](http://localhost:9001)
+  — Identifiant : `minioadmin`
+  — Mot de passe : `minioadmin`
+- Monitoring Celery (Flower) : [http://localhost:5555](http://localhost:5555)
+
+---
+
+## Arrêter l’application
+
+Pour stopper et supprimer les containers, exécute :
+
 ```bash
-# with python
-uvicorn main:app --reload --host 0.0.0.0 --port 5000
-
-# with docker
-docker run --rm -p 5000:5000 -v $PWD:/app ocr-api
-
-#With docker compose
-docker compose -f docker-compose.yaml up -d
+docker compose down
 ```
 
+Pour supprimer aussi les volumes persistants (base de données, MinIO), ajoute l’option `-v` :
 
-then open `localhost:5000`
-
-## Test
-Use file `test.py` or write some code:
-```python
-import requests
-import base64
-
-
-with open("image_test.jpg", "rb") as image_file:
-    encoded_data = base64.b64encode(image_file.read()).decode()
-
-res = requests.post(
-                    url='http://localhost:5000/',
-                    json={"images": [encoded_data]}).json()
-print("-------",res['msg'])
-print(res['results'])
-print("\n\n")
+```bash
+docker compose down -v
 ```
 
-### With pytest
+---
+
+## Tester l’API
+
+Tu peux tester l’API OCR avec un script simple, par exemple :
+
+```bash
+curl -X POST "http://localhost:5000/jobs/ton_user_id" \
+  -F "file=@/chemin/vers/ton/fichier.jpg"
 ```
-docker compose -f docker-compose.yaml run backend /bin/sh -c 'pip3 install pytest && pytest tests/ -s'
+
+Obtenir l'état de la taches :
+
+```bash
+curl -X GET "http://localhost:5000/tasks/ton_task_id"
 ```
+Vous pouvez aussi passé par l'ui dédié [Frontend](#frontend)
+
+---
+
+## Support et dépannage
+
+- Assure-toi que Docker et Docker Compose sont correctement installés
+- Vérifie que le fichier `.env` est présent et bien configuré
 
 ## Frontend
 
 ### Installation
 
 Utilisation d'un Makefile pour exécuter les commandes ***(installation de `make` requis)***.
-
 
 ```sh
 # Démarrer l'environnement de développement

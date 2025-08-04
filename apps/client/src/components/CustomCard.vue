@@ -30,7 +30,10 @@ defineProps({
 <template>
   <div class="custom-card fr-mt-4w fr-mb-4w">
     <div class="custom-card-image">
-      <img :src="imgSrc" :alt="imgAlt">
+      <img
+        :src="imgSrc"
+        :alt="imgAlt"
+      >
     </div>
     <div class="custom-card-text">
       <h3 class="fr-card__title">
@@ -40,7 +43,10 @@ defineProps({
       <div class="infos">
         <p v-html="infos" />
       </div>
-      <p class="hint m-0!" v-html="hint" />
+      <p
+        class="hint m-0!"
+        v-html="hint"
+      />
     </div>
   </div>
 </template>

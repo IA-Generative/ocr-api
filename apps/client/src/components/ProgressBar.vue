@@ -4,19 +4,33 @@ import { computed } from 'vue'
 const props = defineProps<{ visible: boolean, progress: number }>()
 
 const progressColor = computed(() => {
-  if (props.progress < 25) { return '#e8edff' }
-  if (props.progress < 50) { return '#dde5ff' }
-  if (props.progress < 75) { return '#bccdff' }
-  if (props.progress < 100) { return 'var(--background-flat-info)' }
+  if (props.progress < 25) {
+    return '#e8edff'
+  }
+  if (props.progress < 50) {
+    return '#dde5ff'
+  }
+  if (props.progress < 75) {
+    return '#bccdff'
+  }
+  if (props.progress < 100) {
+    return 'var(--background-flat-info)'
+  }
   return 'var(--artwork-major-blue-france)'
 })
 </script>
 
 <template>
-  <div v-if="visible" class="mt-4">
+  <div
+    v-if="visible"
+    class="mt-4"
+  >
     <div>En cours de chargement... ({{ progress }}%)</div>
     <div class="progress-bar-container">
-      <div class="progress-bar" :style="{ width: `${progress}%`, backgroundColor: progressColor }" />
+      <div
+        class="progress-bar"
+        :style="{ width: `${progress}%`, backgroundColor: progressColor }"
+      />
     </div>
   </div>
 </template>

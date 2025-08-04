@@ -8,6 +8,7 @@ import CustomCard from '@/components/CustomCard.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
+import InfoBulle from '@/components/InfoBulle.vue'
 import { useOcrStore } from '@/stores/ocr'
 import { generateRandomUUID } from '@/utils/uniqueId'
 
@@ -32,7 +33,9 @@ function selectFile (files: FileList | File[]) {
 }
 
 async function startOcr () {
-  if (!selectedFile.value) { return }
+  if (!selectedFile.value) {
+    return
+  }
 
   isLoading.value = true
 
@@ -74,12 +77,13 @@ const uploadLabel = 'Ajouter un fichier'
 const uploadAccept = 'image/jpeg,image/png,application/pdf'
 
 onBeforeUnmount(() => {
-  if (pdfUrl.value) { URL.revokeObjectURL(pdfUrl.value) }
+  if (pdfUrl.value) {
+    URL.revokeObjectURL(pdfUrl.value)
+  }
 })
 </script>
 
 <template>
-
   <div class="main-page">
     <SideBar :other-tools="myOtherTools" />
     <div class="main-page__container">
@@ -98,6 +102,8 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
+        
+        <InfoBulle />
 
         <div class="page-container">
           <!-- File Upload -->

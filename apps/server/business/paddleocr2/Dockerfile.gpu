@@ -1,4 +1,7 @@
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 AS paddle_model
+ARG HARBOR_PROXY_URL
+
+FROM ${HARBOR_PROXY_URL:-docker.io}/nvidia/cuda:11.8.0-devel-ubuntu22.04 AS paddle_model
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 ENV DEBIAN_FRONTEND=noninteractive

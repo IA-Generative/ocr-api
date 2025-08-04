@@ -1,18 +1,21 @@
-FROM paddlepaddle/paddle:3.0.0 AS paddle_model
+ARG HARBOR_PROXY_URL
+
+FROM ${HARBOR_PROXY_URL:-docker.io}/paddlepaddle/paddle:3.0.0 AS paddle_model
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -qy && \
-    apt-get install -qy --no-install-recommends \
-    ffmpeg \
-    libsm6 \
-    libxext6 \
-    libgl1 \
-    libglib2.0-0 \
-    poppler-utils \
-    ccache \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+	apt-get install -qy --no-install-recommends \
+	ccache \
+	ffmpeg \
+	libgl1 \
+	libglib2.0-0 \
+	libsm6 \
+	libxext6 \
+	poppler-utils \
+	&& apt-get clean \
+	&& rm -rf /var/lib/apt/lists/*
 
 ENV MKLDNN_VERBOSE=1
 ENV UV_CACHE_DIR=/app/.cache

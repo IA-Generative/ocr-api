@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useOcrStore } from '@/stores/ocr'
-import useToaster from '@/composables/use-toaster'
-import type { components } from '@/api/types/api.schema'
-type Bbox = components["schemas"]["Bbox"]
-type Page = components["schemas"]["Page"]
-
 import type { CSSProperties } from 'vue'
+import type { components } from '@/api/types/api.schema'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import useToaster from '@/composables/use-toaster'
+
+import { useOcrStore } from '@/stores/ocr'
+
+type Bbox = components['schemas']['Bbox']
+type Page = components['schemas']['Page']
+
+interface PaginationPage {
+  href?: string
+  label: string
+  title: string
+}
 
 const props = defineProps<{
   data: {
@@ -21,15 +28,15 @@ const pages = props.data.pages
 const currentPage = ref(0)
 
 // Paginatination pages
-const paginationPages = computed(() =>
+const paginationPages = computed<PaginationPage[]>(() =>
   pages.map((p, idx) => ({
-    href: p.page_url,
+    href: p.page_url ?? undefined,
     label: String(idx + 1),
     title: `Page ${idx + 1}`,
   })),
 )
 
-const imageUrl = computed(() => pages[currentPage.value].page_url)
+const imageUrl = computed(() => pages[currentPage.value].page_url ?? undefined)
 const boxes = computed<Bbox[]>(() => {
   return pages[currentPage.value]?.boxes || []
 })
@@ -39,7 +46,7 @@ const imgRef = ref<HTMLImageElement | null>(null)
 const imgDimensions = ref({ width: 0, height: 0 })
 let resizeObserver: ResizeObserver
 
-function styleForBox(box: Bbox): CSSProperties {
+function styleForBox (box: Bbox): CSSProperties {
   const W = imgDimensions.value.width
   const H = imgDimensions.value.height
   return {
@@ -54,7 +61,9 @@ function styleForBox(box: Bbox): CSSProperties {
 }
 
 onMounted(() => {
-  if (!imgRef.value) return
+  if (!imgRef.value) {
+    return
+  }
   imgDimensions.value = {
     width: imgRef.value.clientWidth,
     height: imgRef.value.clientHeight,
@@ -74,7 +83,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
 })
 
-function copyText(text: string) {
+function copyText (text: string) {
   navigator.clipboard.writeText(text).then(() => {
     addSuccessMessage({
       title: 'Texte copié :',
@@ -91,15 +100,18 @@ function copyText(text: string) {
 /**
  * Handler du bouton Télécharger
  */
-async function onDownloadText() {
-  if (!props.data.id) return
+async function onDownloadText () {
+  if (!props.data.id) {
+    return
+  }
   try {
     await store.downloadText(props.data.id)
     addSuccessMessage({
       title: 'Succès !',
       description: `Document téléchargé.`,
     })
-  } catch (error) {
+  }
+  catch (error) {
     addErrorMessage({
       title: 'Erreur :',
       description: `${error}`,
@@ -136,7 +148,8 @@ async function onDownloadText() {
         ref="imgRef"
         :src="imageUrl"
         alt="OCR page"
-        class="block w-full h-auto transition-opacity duration-300" :class="[showImage ? 'opacity-100' : 'opacity-0']"
+        class="block w-full h-auto transition-opacity duration-300"
+        :class="[showImage ? 'opacity-100' : 'opacity-0']"
       >
 
       <!-- Bounding Boxes -->
@@ -148,7 +161,10 @@ async function onDownloadText() {
           ? 'box-visible pointer-events-auto'
           : 'box-hidden pointer-events-auto'"
       >
-        <span v-if="!showImage" class="text-xs font-bold text-black">
+        <span
+          v-if="!showImage"
+          class="text-xs font-bold text-black"
+        >
           {{ box.text }}
         </span>
         <!-- Affiche taille + bouton copier -->
@@ -157,7 +173,10 @@ async function onDownloadText() {
             class="absolute top-[-10px] left-[-25px] z-100"
             @click.stop="copyText(box.text)"
           >
-            <span class="fr-icon-draft-line" aria-hidden="true" />
+            <span
+              class="fr-icon-draft-line"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </div>
