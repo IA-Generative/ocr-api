@@ -13,13 +13,14 @@
  *
  */
 import type { components } from '@/api/types/api.schema'
-type TaskModel = components["schemas"]["TaskModel"]
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import useToaster from '@/composables/use-toaster'
 import createHttpClient from './../api/http-client'
 import { OCR_API_URL } from './../utils/constants'
+
+type TaskModel = components['schemas']['TaskModel']
 
 const { addErrorMessage, addSuccessMessage } = useToaster()
 
@@ -42,7 +43,7 @@ export const useOcrStore = defineStore('ocr', () => {
   const originalFileName = ref<string | null>(null)
   const previousPosition = ref<number | null>(null)
 
-  async function healthCheck(): Promise<boolean> {
+  async function healthCheck (): Promise<boolean> {
     try {
       processingState.value = 'validating'
       const { data } = await http.get<{ status: string }>('/health')
@@ -62,7 +63,7 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
-  async function getTask(taskId: string): Promise<TaskModel> {
+  async function getTask (taskId: string): Promise<TaskModel> {
     try {
       const { data } = await http.get<TaskModel>(`/tasks/${taskId}`)
       return data
@@ -76,7 +77,7 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
-  async function pollTask(
+  async function pollTask (
     taskId: string,
     intervalMs = 2000,
   ) {
@@ -117,7 +118,9 @@ export const useOcrStore = defineStore('ocr', () => {
               title: 'Échec du traitement :',
               description: 'Une erreur est survenue lors du traitement OCR.',
             })
-            error.value = task?.error ?? 'Le traitement OCR a échoué'
+            error.value = typeof task?.extras?.error === 'string'
+              ? task.extras.error
+              : 'Le traitement OCR a échoué'
             isPolling.value = false
             processingState.value = 'idle'
             return
@@ -158,7 +161,7 @@ export const useOcrStore = defineStore('ocr', () => {
   /**
    * Vérifie le type de fichier avant envoi
    */
-  function validateFile(file: File): { valid: boolean, message?: string } {
+  function validateFile (file: File): { valid: boolean, message?: string } {
     // Vérification du type MIME
     if (!VALID_MIME_TYPES.includes(file.type)) {
       return {
@@ -177,7 +180,7 @@ export const useOcrStore = defineStore('ocr', () => {
     return { valid: true }
   }
 
-  async function sendFileAndPoll(userId: string, formData: FormData) {
+  async function sendFileAndPoll (userId: string, formData: FormData) {
     // Récupérer le fichier pour validation
     const file = formData.get('file') as File
     if (file) {
@@ -236,7 +239,7 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
-  function reset() {
+  function reset () {
     status.value = null
     percentage.value = 0
     taskData.value = null
@@ -249,7 +252,7 @@ export const useOcrStore = defineStore('ocr', () => {
    * Télécharge le texte OCR pour un taskId donné.
    * Crée un fichier .txt et déclenche le téléchargement côté client.
    */
-  async function downloadText(taskId: string): Promise<void> {
+  async function downloadText (taskId: string): Promise<void> {
     try {
       const response = await http.get<string>(
         `/text-task/${taskId}`,

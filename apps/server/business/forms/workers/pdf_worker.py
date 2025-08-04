@@ -40,8 +40,14 @@ class PDFFormsExtractorWorker(BaseWorker):
             self._cached_doc = fitz.open(tmp_filename)
         return self._cached_doc
 
+    def _clear_cached_document(self):
+        """Nettoie le document mis en cache pour éviter les conflits entre tâches"""
+        if self._cached_doc is not None:
+            self._cached_doc.close()
+            self._cached_doc = None
+
     def is_applicable(self, task: TaskModel) -> bool:
-        if not task.input.content_type == "application/pdf":
+        if task.input.content_type != "application/pdf":
             return False
         t = time.time()
         doc = self._get_cached_document(task)
@@ -50,7 +56,13 @@ class PDFFormsExtractorWorker(BaseWorker):
             f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
         )
 
-        return doc.is_form_pdf
+        is_form = doc.is_form_pdf
+
+        # Si ce n'est pas un formulaire PDF, nettoyer le cache immédiatement
+        if not is_form:
+            self._clear_cached_document()
+
+        return is_form
 
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
         extra_log = {
@@ -147,6 +159,9 @@ class PDFFormsExtractorWorker(BaseWorker):
                 task.extras,
                 extra=extra_log,
             )
+
+        # Nettoyer le cache du document après traitement
+        self._clear_cached_document()
         return task
 
     def process(self, task: TaskModel) -> tuple[list[list[Bbox]], list[list[FormEntry]]]:
@@ -162,11 +177,19 @@ class PDFFormsExtractorWorker(BaseWorker):
         forms_bboxes: list[list[Bbox]] = []
         forms_entries: list[list[FormEntry]] = []
         t = time.time()
-        for page in doc:
+
+        # Parcours explicite par numéro de page pour garantir l'ordre correct
+        for page_num in range(len(doc)):
+            page = doc[page_num]
             page_forms: list[FormEntry] = []
             page_bboxes: list[Bbox] = []
             pix = page.get_pixmap(dpi=dpi)
             img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+
+            logger.debug(
+                f"[worker {self.name}]Processing page {page_num + 1}/{len(doc)} for task {task.id}",
+                extra={"task_id": task.id, "user_id": task.user_id},
+            )
 
             for widget in page.widgets():
                 rect = widget.rect
@@ -194,4 +217,6 @@ class PDFFormsExtractorWorker(BaseWorker):
             f"[worker {self.name}]Time to process PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
             extra={"task_id": task.id, "user_id": task.user_id},
         )
+        # Nettoyer le cache du document après traitement
+        self._clear_cached_document()
         return forms_bboxes, forms_entries

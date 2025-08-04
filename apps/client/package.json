@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977",
   "scripts": {
     "clean:dist": "rimraf dist",
     "build-only": "vite build",
@@ -10,7 +11,7 @@
     "build": "run-p type-check \"build-only {@}\" --",
     "format": "eslint . --fix",
     "lint": "eslint .",
-    "prepare": "cd .. && husky ocr-front/.husky",
+    "prepare": "cd .. && husky apps/client/.husky",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
     "test:unit": "vitest run",
@@ -20,8 +21,8 @@
     "generate-openapi": "pnpx openapi-typescript ${VITE_OCR_API_URL}/openapi.json -o ./src/api/types/api.schema.d.ts"
   },
   "dependencies": {
-    "@gouvfr/dsfr": "~1.12.1",
-    "@gouvminint/vue-dsfr": "^6.3.1",
+    "@gouvfr/dsfr": "~1.14.0",
+    "@gouvminint/vue-dsfr": "^8.6.0",
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.11.0",
     "focus-trap": "^7.6.5",
@@ -30,6 +31,7 @@
     "pinia": "^2.3.1",
     "tailwindcss": "^4.1.11",
     "vue": "^3.5.18",
+    "vue-matomo": "^4.2.0",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
@@ -60,6 +62,5 @@
     "vitest": "^2.1.9",
     "vue-tsc": "^2.2.12",
     "workbox-window": "^7.3.0"
-  },
-  "packageManager": "pnpm@10.11.0+sha512.6540583f41cc5f628eb3d9773ecee802f4f9ef9923cc45b69890fb47991d4b092964694ec3a4f738a420c918a333062c8b925d312f42e4f0c263eb603551f977"
+  }
 }

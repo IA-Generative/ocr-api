@@ -33,7 +33,6 @@ def test_pdf_forms_extractor_worker(
         batch_size=2,
         worker_weight=1,
         cache=None,
-        next_worker=None,
     )
 
     # Test the worker's initialization
