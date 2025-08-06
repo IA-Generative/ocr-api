@@ -211,6 +211,28 @@ class PDFFormsExtractorWorker(BaseWorker):
                         text=f"{name} = {value}",
                     )
                 )
+            page_width = page.rect.width
+            page_height = page.rect.height
+
+            # Get text with positions using dict format
+            text_dict = page.get_text("dict")
+
+            for block in text_dict["blocks"]:
+                if "lines" in block:  # Text block
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            if span["text"].strip():  # Only non-empty text
+                                # Normalize coordinates to 0-1 range
+                                bbox = Bbox(
+                                    text=span["text"],
+                                    x=span["bbox"][0] / page_width,  # x0 normalized
+                                    y=span["bbox"][1] / page_height,  # y0 normalized
+                                    width=(span["bbox"][2] - span["bbox"][0]) / page_width,  # width normalized
+                                    height=(span["bbox"][3] - span["bbox"][1]) / page_height,  # height normalized
+                                    confidence=1.0,
+                                )
+                                page_bboxes.append(bbox)
+            # TODO: merge overlapping boxes with form entries
             forms_bboxes.append(page_bboxes)
             forms_entries.append(page_forms)
         logger.debug(
