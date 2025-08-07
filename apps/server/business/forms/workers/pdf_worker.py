@@ -1,6 +1,5 @@
 import fitz
 from PIL import Image
-import io
 
 from src.schemas.box import Bbox
 from src.schemas.template import FormEntry
@@ -172,8 +171,8 @@ class PDFFormsExtractorWorker(BaseWorker):
             extra={"task_id": task.id, "user_id": task.user_id},
         )
 
-        dpi = 150
-        scale = dpi / 72
+        # dpi = 150
+        # scale = dpi / 72
         forms_bboxes: list[list[Bbox]] = []
         forms_entries: list[list[FormEntry]] = []
         t = time.time()
@@ -183,8 +182,8 @@ class PDFFormsExtractorWorker(BaseWorker):
             page = doc[page_num]
             page_forms: list[FormEntry] = []
             page_bboxes: list[Bbox] = []
-            pix = page.get_pixmap(dpi=dpi)
-            img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
+            # pix = page.get_pixmap(dpi=dpi)
+            # img = Image.open(io.BytesIO(pix.tobytes("png"))).convert("RGB")
 
             logger.debug(
                 f"[worker {self.name}]Processing page {page_num + 1}/{len(doc)} for task {task.id}",
@@ -192,25 +191,25 @@ class PDFFormsExtractorWorker(BaseWorker):
             )
 
             for widget in page.widgets():
-                rect = widget.rect
                 name = widget.field_name
                 value = widget.field_value
 
-                x0, y0 = rect.x0 * scale / img.width, rect.y0 * scale / img.height
-                x1, y1 = rect.x1 * scale / img.width, rect.y1 * scale / img.height
-
                 page_forms.append(FormEntry(key=name, value=value))
+                # rect = widget.rect
+                # x0, y0 = rect.x0 * scale / img.width, rect.y0 * scale / img.height
+                # x1, y1 = rect.x1 * scale / img.width, rect.y1 * scale / img.height
 
-                page_bboxes.append(
-                    Bbox(
-                        x=x0,
-                        y=y0,
-                        width=x1 - x0,
-                        height=y1 - y0,
-                        confidence=1.0,
-                        text=f"{name} = {value}",
-                    )
-                )
+                # page_bboxes.append(
+                #     Bbox(
+                #         x=x0,
+                #         y=y0,
+                #         width=x1 - x0,
+                #         height=y1 - y0,
+                #         confidence=1.0,
+                #         text=f"{name} = {value}",
+                #     )
+                # )
+                # TODO: use that if you need real bounding boxes and form entries
             page_width = page.rect.width
             page_height = page.rect.height
 
