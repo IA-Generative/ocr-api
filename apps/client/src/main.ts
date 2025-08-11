@@ -6,6 +6,7 @@ import VueMatomo from 'vue-matomo'
 import App from './App.vue'
 import router from './router/index'
 import { MATOMO_SITE_ID, MATOMO_SITE_URL } from './utils/constants'
+import { keycloakInit } from './utils/keycloak'
 
 import '@gouvfr/dsfr/dist/core/core.main.min.css'
 import '@gouvfr/dsfr/dist/component/component.main.min.css'
@@ -23,6 +24,13 @@ declare global {
 }
 
 async function initializeApp () {
+  try {
+    await keycloakInit()
+  }
+  catch (e) {
+    console.error('[App] keycloakInit a échoué. L\'application démarre quand même pour debug.', e)
+  }
+
   createApp(App)
     .use(createPinia())
     .use(router)
@@ -34,7 +42,9 @@ async function initializeApp () {
     })
     .mount('#app')
 
-  window._paq.push(['trackPageView'])
+  if (window._paq) {
+    window._paq.push(['trackPageView'])
+  }
 }
 
 initializeApp()
