@@ -3,6 +3,7 @@ IMAGE_NAME_OCR_SERVICE=ocr-service
 PYTHONPATH=$(PWD)
 OCR_BACKEND_CONTAINER=ocr-api
 OCR_FRONTEND_CONTAINER=ocr-frontend
+FRONTEND_COMPOSE_FILE=docker-compose.frontend.yaml
 STRESS_HOST=http://localhost:5000
 HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
@@ -65,8 +66,13 @@ bump-minor:
 up: ## Lance l'environnement de développement en conteneurs
 	docker compose up -d
 
-up-frontend: ## Lance l'environnement frontend en conteneur
-	docker compose -f docker-compose.vue.yaml up -d ocr_frontend
+setup-frontend: clean-front ## Prépare le frontend pour le développement
+	cd apps/client && \
+		pnpm install && \
+		pnpm update
+
+up-frontend: setup-frontend ## Lance l'environnement frontend en conteneur
+	docker compose -f $(FRONTEND_COMPOSE_FILE) up -d ocr_frontend
 
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
@@ -75,7 +81,7 @@ down-test: ## remove orphan containers
 	docker compose -f docker-compose-test.yaml down --remove-orphans -v || true
 
 down-frontend: ## Eteint l'environnement frontend en conteneur
-	docker compose -f docker-compose.vue.yaml down || true
+	docker compose -f docker-compose.frontend.yaml down || true
 
 logs-api: ## Affiche les logs du conteneur de l'API
 	docker compose logs -f $(OCR_BACKEND_CONTAINER)
@@ -92,8 +98,18 @@ clean: ## Nettoyage du dépôt
 	$(MAKE) down
 
 clean-front: ## Nettoyage du frontend
-	rm -rf apps/client/node_modules apps/client/.nuxt apps/client/.output
-	$(MAKE) down-frontend
+	# Stop containers (fichier compose unifié)
+	docker compose -f $(FRONTEND_COMPOSE_FILE) down || true
+	# Si node_modules est root-owned (créé depuis un conteneur), corrige les permissions avant suppression
+	@if [ -d "apps/client/node_modules" ] && [ "$$(stat -f %Su apps/client/node_modules 2>/dev/null || echo unknown)" != "$$(whoami)" ]; then \
+		echo "Permissions node_modules incorrectes, tentative de chown..."; \
+		sudo chown -R $$(id -u):$$(id -g) apps/client/node_modules || true; \
+	fi
+	rm -rf apps/client/node_modules
+	rm -rf apps/client/dist
+	echo "Frontend nettoyé"
+
+########################### DOCKER BUILD ###########################
 
 build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
 
@@ -106,7 +122,7 @@ build-ocr-backend: ## Lance la construction de l'image Docker backend
 
 
 build-ocr-frontend: ## Lance la construction de l'image Docker frontend
-	docker compose -f docker-compose.vue.yaml build ocr_frontend
+	docker compose -f $(FRONTEND_COMPOSE_FILE) build ocr_frontend
 
 upgrade-db: ## Applique les migrations de base de données
 	docker compose run --rm migration alembic upgrade head
@@ -162,4 +178,4 @@ test-backend-api: build-container-dependencies up-db ## Test ocr backend
 	make down-test
 
 generate-openapi: up-frontend  ## Génère la documentation OpenAPI
-	docker compose -f docker-compose.vue.yaml exec ocr_frontend pnpm run generate-openapi
+	docker compose -f $(FRONTEND_COMPOSE_FILE) exec ocr_frontend pnpm run generate-openapi
