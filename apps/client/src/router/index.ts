@@ -1,12 +1,59 @@
+import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
+
+import { useUserStore } from '@/stores/user'
+import { KEYCLOAK_CLIENT_ID, KEYCLOAK_REALM, KEYCLOAK_REDIRECT_URI, KEYCLOAK_URL } from '@/utils/constants'
+import { getKeycloak } from '@/utils/keycloak'
 import Home from '../views/AppHome.vue'
 
-const MAIN_TITLE = 'MIrAI - OCR'
+function redirectToSSO () {
+  const loginUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}&redirect_uri=${encodeURIComponent(KEYCLOAK_REDIRECT_URI)}&response_type=code`
+  window.location.href = loginUrl
+}
+
+// Force la redirection explicite vers le serveur
+// Si l'utilisateur n'est pas authentifié, provoque
+// alors le processus SSO (trappé par oauth2-proxy)
+function authGuard (_path: string) {
+  return async (
+    _to: RouteLocationNormalized,
+    _from: RouteLocationNormalized,
+    next: NavigationGuardNext
+  ) => {
+    const keycloak = getKeycloak()
+    if (!keycloak.authenticated) {
+      redirectToSSO()
+      return
+    }
+    next()
+  }
+}
 
 const routes = [
   {
     path: '/',
     name: 'Home',
+    component: Home,
+    beforeEnter: authGuard('/'),
+  },
+  {
+    path: '/login',
+    name: 'Login',
+    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+      const userStore = useUserStore()
+      await userStore.login()
+      next()
+    },
+    component: Home,
+  },
+  {
+    path: '/logout',
+    name: 'Logout',
+    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+      const userStore = useUserStore()
+      await userStore.logout()
+      next()
+    },
     component: Home,
   }
 ]
@@ -14,11 +61,6 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env?.BASE_URL || ''),
   routes,
-})
-
-router.beforeEach((to) => { // Cf. https://github.com/vueuse/head pour des transformations avancées de Head
-  const specificTitle = to.meta.title ? `${to.meta.title} - ` : ''
-  document.title = `${specificTitle}${MAIN_TITLE}`
 })
 
 export default router
