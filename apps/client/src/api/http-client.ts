@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import axios from 'axios'
 
-import { getKeycloak, getUserProfile } from '@/utils/keycloak'
+import { getKeycloak } from '@/utils/keycloak'
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
