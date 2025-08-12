@@ -1,8 +1,7 @@
-
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import axios from 'axios'
 
-import { getKeycloak } from '@/utils/keycloak'
+import { getKeycloak, getUserProfile } from '@/utils/keycloak'
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
@@ -21,9 +20,23 @@ function createHttpClient (baseURL: string): AxiosInstance {
   httpClient.interceptors.request.use(
     (config: CustomAxiosRequestConfig): CustomAxiosRequestConfig => {
       const keycloak = getKeycloak()
+
       if (keycloak.authenticated && keycloak.token) {
         if (config.headers && typeof config.headers.set === 'function') {
-          config.headers.set('Authorization', `Bearer ${keycloak.token}`)
+          config.headers.set('Authorization', `${keycloak.tokenParsed?.typ} ${keycloak.token}`)
+
+          // Send user id
+          const userId = keycloak.subject || keycloak.tokenParsed?.sub
+          if (userId) {
+            config.headers.set('X-User-Id', userId)
+          }
+
+          // Send user roles
+          const roles = keycloak.realmAccess?.roles || keycloak.tokenParsed?.realm_access?.roles
+
+          if (roles && roles.length > 0) {
+            config.headers.set('X-User-Roles', roles.join(','))
+          }
         }
       }
       return config
