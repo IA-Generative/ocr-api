@@ -160,7 +160,7 @@ export async function keycloakRegister () {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
-    throw new Error('échec de l\'inscription avec keycloak')
+    throw new Error('Failed to register with keycloak')
   }
 }
 
