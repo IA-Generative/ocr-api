@@ -125,7 +125,8 @@ export async function keycloakInit () {
   }
   catch (error) {
     // Si CORS: on log et on laisse l’app fonctionner (les guards feront une redirection manuelle).
-    console.error('[keycloakInit] échec init (souvent CORS). Redirections manuelles actives.', error)
+    // If CORS: log the error and let the app continue (guards will handle manual redirection).
+    console.error('[keycloakInit] init failed (often CORS). Manual redirections active.', error)
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
