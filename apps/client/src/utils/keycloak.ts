@@ -173,7 +173,7 @@ export async function keycloakLogout () {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
-    throw new Error('échec de déconnexion du keycloak')
+    throw new Error('Failed to logout from keycloak')
   }
 }
 
