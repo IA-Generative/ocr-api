@@ -24,12 +24,7 @@ declare global {
 }
 
 async function initializeApp () {
-  try {
-    await keycloakInit()
-  }
-  catch (e) {
-    console.error('[App] keycloakInit a échoué. L\'application démarre quand même pour debug.', e)
-  }
+  await keycloakInit()
 
   createApp(App)
     .use(createPinia())
