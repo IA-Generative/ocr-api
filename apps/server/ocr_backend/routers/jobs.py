@@ -26,18 +26,16 @@ router = APIRouter(tags=["Jobs"])
 WORKER_NAME = "worker.tasks.ocr"
 
 
-@router.post(
-    "/jobs/{user_id}",
-    status_code=status.HTTP_201_CREATED,
-    response_model=TaskModel,
-    deprecated=True,
-)
-async def upload_file(user_id: str, file: UploadFile = File(...)):
+@router.post("/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+async def upload_file(
+    file: UploadFile = File(...),
+    ctx: RequestContext = Depends(TokenVerifier),
+):
     extras = {}
     task_data = task_table.insert_new_task(
-        user_id=user_id,
+        user_id=ctx.user_id,
         form_data=TaskForm(
-            user_id=user_id,
+            user_id=ctx.user_id,
             type=TaskOperation.OCR.value,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
@@ -52,7 +50,7 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
 
         logger.debug(task_data.model_dump())
 
-        saved_path = s3_client_connector.save(user_id, task_data.id, temp_file_path)
+        saved_path = s3_client_connector.save(ctx.user_id, task_data.id, temp_file_path)
         logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
@@ -91,7 +89,9 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
         return task_data
 
     except Exception as e:
-        logger.error(f"Failed to upload file for user {user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
+        logger.error(
+            f"Failed to upload file for user {ctx.user_id}, task {task_data.id}: {e} - {traceback.format_exc()}"
+        )
         task_table.update_task(
             task_id=task_data.id,
             form_data=TaskUpdateForm(
@@ -104,8 +104,3 @@ async def upload_file(user_id: str, file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="File upload failed",
         )
-
-
-@router.post("/v1/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
-async def upload_files(file: UploadFile = File(...), ctx: RequestContext = Depends(TokenVerifier)):
-    return await upload_file(user_id=ctx.user_id, file=file)
