@@ -24,12 +24,6 @@ function createHttpClient (baseURL: string): AxiosInstance {
       if (keycloak.authenticated && keycloak.token) {
         if (config.headers && typeof config.headers.set === 'function') {
           config.headers.set('Authorization', `${keycloak.tokenParsed?.typ || 'Bearer'} ${keycloak.token}`)
-
-          // Send user id
-          const userId = keycloak.subject || keycloak.tokenParsed?.sub
-          if (userId) {
-            config.headers.set('X-User-Id', userId)
-          }
         }
       }
       return config

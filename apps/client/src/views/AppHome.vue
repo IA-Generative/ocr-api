@@ -5,12 +5,11 @@ import Media from '@/assets/ocr-card.svg'
 import ComminitySVG from '@/assets/pictograms/community.svg'
 import PenSVG from '@/assets/pictograms/pen.svg'
 import CustomCard from '@/components/CustomCard.vue'
+import InfoBulle from '@/components/InfoBulle.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
-import InfoBulle from '@/components/InfoBulle.vue'
 import { useOcrStore } from '@/stores/ocr'
-import { generateRandomUUID } from '@/utils/uniqueId'
 
 const store = useOcrStore()
 const selectedFile = ref<File | null>(null)
@@ -19,7 +18,6 @@ const uploadError = computed(() => store.error)
 const progressPercent = computed(() => Math.round(store.percentage * 100))
 const isPolling = computed(() => store.isPolling)
 const taskData = computed(() => store.taskData)
-const userId = ref<string>(generateRandomUUID())
 const status = computed(() => store.status)
 const isLoading = ref(false)
 
@@ -42,7 +40,7 @@ async function startOcr () {
   try {
     const form = new FormData()
     form.append('file', selectedFile.value)
-    await store.sendFileAndPoll(userId.value, form)
+    await store.sendFileAndPoll(form)
   }
   finally {
     isLoading.value = false
@@ -66,11 +64,6 @@ const myOtherTools = ref([
     imgSrc: DocumentDownload,
   },
 ])
-
-// FIXME : Decomment for authentication
-// import { getKeycloak } from '@/utils/keycloak/keycloak'
-// const keycloak = getKeycloak()
-// const isLoggedIn = ref<boolean | undefined>(keycloak.authenticated)
 
 const uploadHint = 'Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l’outil de reconnaissance de texte sera performant.'
 const uploadLabel = 'Ajouter un fichier'
@@ -102,7 +95,6 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
-        
         <InfoBulle />
 
         <div class="page-container">
