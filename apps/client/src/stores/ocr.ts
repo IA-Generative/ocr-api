@@ -180,7 +180,7 @@ export const useOcrStore = defineStore('ocr', () => {
     return { valid: true }
   }
 
-  async function sendFileAndPoll (userId: string, formData: FormData) {
+  async function sendFileAndPoll (formData: FormData) {
     // Récupérer le fichier pour validation
     const file = formData.get('file') as File
     if (file) {
@@ -200,11 +200,7 @@ export const useOcrStore = defineStore('ocr', () => {
     }
 
     try {
-      const { data: task } = await http.post<TaskModel>(
-        `/jobs/${userId}`,
-        formData,
-        // options
-      )
+      const { data: task } = await http.post<TaskModel>(`/jobs/`, formData)
 
       if (!task?.id) {
         throw new Error('Réponse API invalide: ID de tâche manquant')
