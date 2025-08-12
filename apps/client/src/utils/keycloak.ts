@@ -130,7 +130,7 @@ export async function keycloakInit () {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
-    throw new Error('échec d\'initialisation du keycloak')
+    throw new Error('keycloak initialization failed')
   }
 }
 
