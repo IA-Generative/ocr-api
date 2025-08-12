@@ -145,7 +145,7 @@ export async function keycloakLogin () {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
-    throw new Error('échec de connexion au keycloak')
+    throw new Error('Failed to connect to Keycloak')
   }
 }
 
