@@ -30,13 +30,6 @@ function createHttpClient (baseURL: string): AxiosInstance {
           if (userId) {
             config.headers.set('X-User-Id', userId)
           }
-
-          // Send user roles
-          const roles = keycloak.realmAccess?.roles || keycloak.tokenParsed?.realm_access?.roles
-
-          if (roles && roles.length > 0) {
-            config.headers.set('X-User-Roles', roles.join(','))
-          }
         }
       }
       return config
