@@ -4,7 +4,7 @@ import { getKeycloak } from '@/utils/keycloak'
 import useToaster from './composables/use-toaster'
 
 const keycloak = getKeycloak()
-const isLoggedIn = ref<boolean | undefined>(keycloak.authenticated)
+const isLoggedIn = computed(() => keycloak.authenticated)
 
 const toaster = useToaster()
 
@@ -17,7 +17,6 @@ const quickLinks = computed(() => {
   if (!isLoggedIn.value) {
     items.push(
       { label: 'Se connecter', to: '/login', class: 'fr-icon-user-fill' },
-      { label: 'S\'enregister', to: '/register', class: 'fr-icon-user-add-fill' }
     )
   }
   else {
