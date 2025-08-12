@@ -73,7 +73,7 @@ export function getUserProfile (): IUser {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
-    throw new Error('échec de récupération du profil keycloak de l\'utilisateur')
+    throw new Error("Failed to retrieve the user's keycloak profile")
   }
 }
 
