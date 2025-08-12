@@ -181,7 +181,7 @@ export async function getAuthTokens () {
   const keycloak = getKeycloak()
 
   if (!keycloak.authenticated) {
-    throw new Error('L\'utilisateur n\'est pas authentifié')
+    throw new Error('User is not authenticated')
   }
 
   return {
