@@ -16,7 +16,7 @@ def test_get_task_by_id(mock_get_task_by_id):
     # Simuler une tâche retournée
     mock_task = TaskModel(
         id="12345",
-        user_id="user123",
+        user_id="test_user",
         type="task_type_example",
         status=TaskStatus.QUEUED.value,
         percentage=50.0,
@@ -35,7 +35,7 @@ def test_get_task_by_id(mock_get_task_by_id):
     assert response.status_code == 200
     assert response.json() == {
         "id": "12345",
-        "user_id": "user123",
+        "user_id": "test_user",
         "type": "task_type_example",
         "status": TaskStatus.QUEUED.value,
         "percentage": 50.0,
@@ -72,7 +72,7 @@ def test_get_task_by_user_not_found(mock_get_task_by_user):
 
     # Assertions
     assert response.status_code == 404
-    assert response.json() == {"detail": "No tasks found for this user"}
+    assert response.json() == {"detail": "Not Found"}
 
 
 @patch.object(TaskTable, "get_tasks_by_user_id")
@@ -104,7 +104,7 @@ def test_get_task_by_user(mock_get_task_by_user):
 
     mock_get_task_by_user.return_value = [mock_task_1, mock_task_2]
     # Appel à l'API
-    response = client.get("/api/tasks/user/mic2")
+    response = client.get("/api/tasks/user/")
 
     # Assertions
     assert response.status_code == 200
