@@ -30,6 +30,7 @@ class Task(Base):
         default=lambda: int(datetime.now().timestamp()),
         onupdate=lambda: int(datetime.now().timestamp()),
     )
+    parameters = Column(JSON, nullable=True)
 
     extras = Column(JSON, nullable=True)
     content_hash = Column(String, nullable=True, index=True, unique=False)
