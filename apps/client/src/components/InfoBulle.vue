@@ -10,7 +10,10 @@ import { TCHAP_CANAL_URL } from '@/utils/constants'
       <br>
       <br>
       Nous travaillons pour améliorer la performance et le type de documents acceptés, veuillez nous notifier
-      via le <a :href="TCHAP_CANAL_URL" target="_blank">canal Tchap</a> de tout dysfonctionnement.
+      via le <a
+        :href="TCHAP_CANAL_URL"
+        target="_blank"
+      >canal Tchap</a> de tout dysfonctionnement.
     </p>
   </div>
 </template>
