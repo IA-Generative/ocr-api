@@ -9,8 +9,6 @@ test.describe('Logout with Keycloak', () => {
     await expect(logoutLink).toBeVisible({ timeout: 60000 })
     await logoutLink.click()
 
-    await page.waitForTimeout(2000)
-
     await expect(page.getByText('Connectez-vous à votre compte')).toBeVisible()
   })
 })
