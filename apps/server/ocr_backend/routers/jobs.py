@@ -83,7 +83,7 @@ async def upload_file(
     file: UploadFile = File(...),
     group_id: str = Form("DEFAULT"),
     interest_zone: Optional[str] = Form(None),
-    task_operation: TaskOperation = Form(TaskOperation.OCR.value),
+    task_operation: TaskOperation = Form(TaskOperation.DEFAULT.value),
     ctx: RequestContext = Depends(TokenVerifier),
 ):
     extras = {}
