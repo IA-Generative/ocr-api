@@ -1,4 +1,3 @@
-
 ## Environment Variables
 
 Ce projet utilise plusieurs variables d'environnement pour configurer les modèles OCR, Celery, les connecteurs de stockage (MinIO / S3), Redis, ainsi que le monitoring des ressources.
@@ -17,6 +16,16 @@ Les variables sont chargées automatiquement grâce à [`pydantic-settings`](htt
 | `CLASSIFICATION_FOLDER` | Sous-dossier du modèle de classification. | `classification` | `ocr_service` |
 | `DETECTION_BATCH_SIZE` | Batch size pour la détection. | `2` | `ocr_service` |
 | `RECOGNITION_BATCH_SIZE` | Batch size pour la reconnaissance. | `4` | `ocr_service` |
+
+---
+
+### Variable liée au choix du modèle LLM
+
+| Variable           | Description                                      | Default      | Utilisation    |
+|:-------------------|:------------------------------------------------|:-------------|:---------------|
+| `OPENAI_API_KEY`   | Clé API OpenAI pour accéder aux modèles LLM.     | (aucune)     | `ocr_service`  |
+| `OPENAI_BASE_URL`  | URL de l’API OpenAI (ex : https://api.openai.com/v1). | (aucune)     | `ocr_service`  |
+| `VISION_MODEL_NAME`| Nom du modèle de vision à utiliser.              | `gpt-4-vision` | `ocr_service`  |
 
 ---
 
