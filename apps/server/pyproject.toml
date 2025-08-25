@@ -109,6 +109,9 @@ ocr-service-features = [
     "torchvision>=0.23.0",
     "transformers>=4.55.2",
 ]
+ocr-docling = [
+    "docling>=2.47.1",
+]
 
 
 [tool.commitizen]
