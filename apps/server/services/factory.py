@@ -124,13 +124,30 @@ def load_worker(
     )
 
     ##################################################
+    workers = [
+        default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
+        default_worker,  # TaskOperation.DEFAULT
+        worker_pdf,  # application/pdf AND is_form_pdf
+        vlm_ocr_worker,  # TaskOperation.VLM_OCR
+        any_file_worker,  # OTHER
+    ]
 
-    return Pipeline(
-        workers=[
-            default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
-            default_worker,  # TaskOperation.DEFAULT
-            worker_pdf,  # application/pdf AND is_form_pdf
-            vlm_ocr_worker,  # TaskOperation.VLM_OCR
-            any_file_worker,  # OTHER
-        ]
-    )
+    try:
+        from business.docling_inference.worker.docling_worker import DoclingWorker
+        from business.docling_inference.models.inference import DoclingInferenceModel
+
+        model_docling = DoclingInferenceModel()
+        worker_docling = DoclingWorker(
+            name="docling-worker",
+            file_connector=s3_client_connector,
+            models=[model_docling],
+            batch_size=batch_size,
+            worker_weight=worker_weight,
+            cache=cache,
+        )
+        workers.insert(3, worker_docling)  # TaskOperation.DOCLING
+
+    except ImportError as e:
+        print(e)
+
+    return Pipeline(workers=workers)
