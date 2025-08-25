@@ -24,6 +24,7 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group ocr-service-paddle \
+  --group ocr-docling \
   --group services \
   && uv cache clean
 
@@ -54,6 +55,7 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group ocr-service-paddle \
+  --group ocr-docling \
   --group services \
   --group test \
   && uv cache clean

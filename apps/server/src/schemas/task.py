@@ -97,6 +97,7 @@ class TaskOperation(str, Enum):
     FORMS: str = "forms"
     VECTORIZE: str = "vectorize"
     VLM_OCR: str = "vlm_ocr"
+    DOCLING: str = "docling"
 
 
 class TaskTable:
