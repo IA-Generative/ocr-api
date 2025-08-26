@@ -112,6 +112,13 @@ ocr-service-features = [
 ocr-docling = [
     "docling>=2.47.1",
 ]
+evaluation = [
+    "datasets>=4.0.0",
+    "jiwer>=4.0.0",
+    "langfuse>=3.3.1",
+    "openai>=1.97.0",
+    "pdf2image>=1.17.0",
+]
 
 
 [tool.commitizen]
