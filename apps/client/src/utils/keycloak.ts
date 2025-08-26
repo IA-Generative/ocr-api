@@ -168,6 +168,7 @@ export async function keycloakLogout () {
   try {
     const keycloak = getKeycloak()
     await keycloak.logout()
+    await keycloak.clearToken()
   }
   catch (error) {
     if (error instanceof Error) {
