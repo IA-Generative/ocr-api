@@ -1,5 +1,4 @@
 from typing import List, Union
-import logging
 from PIL import Image
 from time import time
 from uuid import uuid4
@@ -13,8 +12,6 @@ from src.schemas.layout import Layout
 from src.schemas.output import Page
 from services.base.model import BaseModelPrediction
 from src.logger import logger
-
-logger.setLevel(logging.DEBUG)
 
 
 class PaddleLayoutDetection(BaseModelPrediction):

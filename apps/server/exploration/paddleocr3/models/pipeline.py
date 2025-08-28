@@ -1,12 +1,8 @@
-import logging
 from time import time
 
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.logger import logger
-
-
-logger.setLevel(logging.DEBUG)
 
 
 class PipelineLinearPrediction(BaseModelPrediction):

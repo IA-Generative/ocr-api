@@ -45,6 +45,7 @@ COPY apps/server/business/llm /app/business/llm
 # Copy common code
 COPY apps/server/src /app/src
 COPY apps/server/services /app/services/
+COPY apps/server/configs /app/configs/
 
 ENV PATH=$PATH:/app/.venv/bin/
 
