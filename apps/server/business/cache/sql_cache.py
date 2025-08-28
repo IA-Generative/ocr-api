@@ -1,6 +1,5 @@
 from PIL import Image
 import time
-import logging
 from io import BytesIO
 from services.base.cache import BaseCache
 from src.schemas.task import TaskModel, task_table, TaskStatus
@@ -8,7 +7,7 @@ from src.connector.s3_connector import S3Connector
 from services.utils.lazy_pdf import LazyPdfImageList
 from src.logger import logger
 
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class TaskCache(BaseCache):

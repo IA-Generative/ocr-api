@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import instructor
 import traceback
 from openai import OpenAI, AsyncOpenAI
@@ -9,7 +8,7 @@ from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxe
 from src.schemas.template import LLMFormField
 from src.logger import logger
 
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 class FormFieldExtractor(BaseLLMOCR):

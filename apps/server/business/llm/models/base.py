@@ -1,17 +1,15 @@
 import asyncio
-import logging
 import base64
 from io import BytesIO
 from PIL import Image
 from services.base.model import BaseModelPrediction
-from src.logger import logger
 from openai import OpenAI, AsyncOpenAI
 from src.schemas.output import Page
 from src.schemas.layout import Layout
 from src.schemas.box import Bbox
 
 
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 def pil_image_to_base64(pil_img: Image.Image, img_format: str = "JPEG") -> str:

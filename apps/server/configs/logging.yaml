@@ -1,0 +1,76 @@
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  json:
+    class: pythonjsonlogger.json.JsonFormatter
+    format: "%(asctime)s %(levelname)s %(name)s %(pathname)s %(lineno)d %(funcName)s %(message)s"
+    rename_fields:
+      asctime: "@timestamp"
+      levelname: "level"
+      pathname: "file_path"
+      lineno: "line"
+      funcName: "function"
+      message: "message"
+
+  standard:
+    format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s (%(filename)s:%(lineno)d)"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  console_json:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: json
+    stream: ext://sys.stdout
+
+loggers:
+  "":  # root logger
+    handlers: [console_json]
+    level: INFO
+    propagate: false
+
+  ocr_api:
+    handlers: [console_json]
+    level: DEBUG
+    propagate: false
+
+  ocr_worker:
+    handlers: [console_json]
+    level: DEBUG
+    propagate: false
+
+# Configuration spécifique par environnement
+environments:
+  development:
+    loggers:
+      ocr_api:
+        handlers: [console_json]
+        level: DEBUG
+      ocr_worker:
+        handlers: [console_json]
+        level: DEBUG
+
+  production:
+    loggers:
+      ocr_api:
+        handlers: [console_json]
+        level: INFO
+      ocr_worker:
+        handlers: [console_json]
+        level: INFO
+
+  testing:
+    loggers:
+      ocr_api:
+        handlers: [console_json]
+        level: WARNING
+      ocr_worker:
+        handlers: [console_json]
+        level: WARNING
