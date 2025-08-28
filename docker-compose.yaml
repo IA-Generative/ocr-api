@@ -67,6 +67,8 @@ services:
       - PROCESS_NAME=paddleocr-2.10.0
       - WORKER_NAME=worker.tasks.ocr
       - CELERY_APP_NAME=default
+      - SERVICE_NAME=ocr_worker
+      - ENVIRONMENT=development
     env_file:
       - .env
 
@@ -88,6 +90,8 @@ services:
       - PROCESS_NAME=paddleocr-2.10.0
       - WORKER_NAME=worker.tasks.ocr
       - CELERY_APP_NAME=default
+      - SERVICE_NAME=ocr_api
+      - ENVIRONMENT=development
     depends_on:
       - redis
       - db

@@ -1,5 +1,4 @@
 from typing import List
-import logging
 from PIL import Image
 import numpy as np
 import time
@@ -11,8 +10,6 @@ from business.paddleocr3.utils.image import crop_img
 
 from paddleocr import FormulaRecognition
 from src.logger import logger
-
-logger.setLevel(logging.DEBUG)
 
 
 class PaddleFormulaRecognizer(BaseModelPrediction):
