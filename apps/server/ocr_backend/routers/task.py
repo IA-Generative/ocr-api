@@ -15,6 +15,10 @@ def get_task_by_id(task_id: str) -> TaskModel:
         task.position = task_table.get_position_in_queue(task_id=task_id)
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
+    if task.status != TaskStatus.COMPLETED.value:
+        if task.output is not None:
+            task.output.pages = []
+
     return task
 
 
