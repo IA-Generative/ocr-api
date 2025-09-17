@@ -30,5 +30,8 @@ jobs:
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
 
+    - name: Install dependencies
+      run: make install
+
     - name: Run lint
       run: make lint
