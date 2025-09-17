@@ -34,7 +34,7 @@ def draw_normalized_bboxes(
         x1 = (bb.x + bb.width) * img_w
         y1 = (bb.y + bb.height) * img_h
         draw.rectangle([x0, y0, x1, y1], outline=outline, width=width)
-        label = f"[{100*bb.confidence:.1f}]{bb.text}"
+        label = f"[{100 * bb.confidence:.1f}]{bb.text}"
         if font:
             bbox = draw.textbbox((0, 0), label, font=font)
             text_h = bbox[3] - bbox[1]
@@ -80,7 +80,7 @@ def draw_normalized_layout(
         y1 = y1 * img_h
 
         draw.rectangle([x0, y0, x1, y1], outline=outline, width=width)
-        label = f"[{100*bb.score:.1f}]{bb.label}"
+        label = f"[{100 * bb.score:.1f}]{bb.label}"
         if font:
             bbox = draw.textbbox((0, 0), label, font=font)
             text_h = bbox[3] - bbox[1]
@@ -133,7 +133,7 @@ def draw_normalized_checkboxes(
         y1 = y1 * img_h
 
         draw.rectangle([x0, y0, x1, y1], outline=outline, width=width)
-        label = f"[{100*bb.confidence:.1f}]{ '[x]' if bb.confidence > 0.5 else '[ ]'}"
+        label = f"[{100 * bb.confidence:.1f}]{'[x]' if bb.confidence > 0.5 else '[ ]'}"
         if font:
             bbox = draw.textbbox((0, 0), label, font=font)
             text_h = bbox[3] - bbox[1]

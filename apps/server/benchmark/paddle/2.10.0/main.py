@@ -19,4 +19,4 @@ for iter in range(10):
         print(f"{image} - process in {time.time() - t}")
         total_time += time.time() - t
         counter_image_pred += 1
-        print(f"avg time {total_time/counter_image_pred:.2f}s")
+        print(f"avg time {total_time / counter_image_pred:.2f}s")
