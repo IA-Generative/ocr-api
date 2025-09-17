@@ -20,9 +20,9 @@ help:
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
 
 install: install-uv ## Installation de l'environnement pour du développement local (gestionnaire de dépendances)
-	@if [ ! -d ".venv" ]; then \
+	@if [ ! -d "apps/server/.venv" ]; then \
 		echo "Synchronisation des dépendances..."; \
-		uv sync --group test --group ocr-backend --group ocr-service --group ocr-service-paddle; \
+		cd apps/server && uv sync --group test --group ocr-backend --group ocr-service-paddle; \
 	else \
 		echo "Dépendances déjà synchronisées (suppose .venv existant)"; \
 	fi
@@ -51,8 +51,14 @@ else
 endif
 
 lint: install-uv ## Lint le code du dépôt
-	uv tool install ruff
-	uv run ruff check .
+	cd apps/server && \
+		uv run ruff check --exclude '**/*.ipynb' . && \
+		uv run ruff format --check .
+
+lint-fix: ## Lint et correction automatique du code backend
+	cd apps/server && \
+		uv run ruff check --exclude '**/*.ipynb' . --fix && \
+		uv run ruff format .
 
 bump:
 	@echo "Usage: make bump-patch OR make bump-minor"
