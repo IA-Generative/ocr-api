@@ -106,7 +106,7 @@ class MorphoBoxDetection(BaseModelPrediction):
             image = np.array(image)
             stats, _ = detect_checkboxes(image)
             checkboxes = classify_checkboxes(image, img_height=img_height, img_width=img_width, stats=stats)
-            logger.debug(f"[MorphoCheckboxes] time : {time()-t:.2f}s")
+            logger.debug(f"[MorphoCheckboxes] time : {time() - t:.2f}s")
             page.checkboxes = checkboxes
 
         return current_pages
