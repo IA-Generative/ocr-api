@@ -1,6 +1,5 @@
 import os
 import json
-import time
 import traceback
 
 
@@ -8,6 +7,7 @@ from services.base.pipeline import Pipeline
 from src.connector.broker_connector import celery_app, celery_config
 from src.logger import logger
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
+from services.base.tracing import get_tracing_service
 from .factory import load_worker
 
 process_ocr: Pipeline = load_worker(name=os.environ["PROCESS_NAME"])
@@ -16,15 +16,16 @@ logger.info(
     f"{os.environ['WORKER_NAME']} - {os.environ['PROCESS_NAME']} {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*"
 )
 
+tracing = get_tracing_service(tracing_name=os.environ.get("TRACING_SERVICE", "logging"))
+
 
 @celery_app.task(name=os.environ["WORKER_NAME"], bind=True)
 def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
-        t = time.time()
-        logger.info({"task_id": task.id, "message": "Start"})
-        task = process_ocr.process(task=task)
-        logger.info({"task_id": task.id, "process_time": time.time() - t, "message": "End"})
+        with tracing.trace_context(trace_id=task.id, user_id=task.user_id):
+            task = process_ocr.process(task=task)
+
         return task.model_dump()
     except Exception as e:
         task.extras = task.extras if task.extras else {}
