@@ -23,7 +23,7 @@ tracing = get_tracing_service(tracing_name=os.environ.get("TRACING_SERVICE", "lo
 def launch_task(self, task_info: dict):
     task = TaskModel.model_validate(json.loads(task_info))
     try:
-        with tracing.trace_context(trace_id=task.id, user_id=task.user_id):
+        with tracing.trace_context(trace_id=task.id, user_id=task.user_id, name=os.environ["WORKER_NAME"]):
             task = process_ocr.process(task=task)
 
         return task.model_dump()
