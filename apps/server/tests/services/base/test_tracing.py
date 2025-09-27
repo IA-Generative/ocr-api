@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import Mock, patch
+from contextlib import contextmanager
 
 from services.base.tracing import (
     TracingService,
@@ -11,28 +12,22 @@ from services.base.tracing import (
 
 class MockTracingService(TracingService):
     def __init__(self):
-        self.start_trace_called = False
-        self.end_trace_called = False
-        self.start_trace_error = None
-        self.end_trace_error = None
-        self.start_trace_args = None
-        self.start_trace_kwargs = None
-        self.end_trace_args = None
-        self.end_trace_kwargs = None
+        self.trace_implementation_called = False
+        self.trace_implementation_error = None
+        self.trace_implementation_args = None
+        self.trace_implementation_kwargs = None
 
-    def _start_trace(self, trace_id: str, *args, **kwargs) -> None:
-        self.start_trace_called = True
-        self.start_trace_args = args
-        self.start_trace_kwargs = kwargs
-        if self.start_trace_error:
-            raise self.start_trace_error
-
-    def _end_trace(self, trace_id: str, *args, **kwargs) -> None:
-        self.end_trace_called = True
-        self.end_trace_args = args
-        self.end_trace_kwargs = kwargs
-        if self.end_trace_error:
-            raise self.end_trace_error
+    @contextmanager
+    def _trace_implementation(self, trace_id: str, **kwargs):
+        """Mock implementation du context manager"""
+        self.trace_implementation_called = True
+        self.trace_implementation_kwargs = kwargs
+        if self.trace_implementation_error:
+            raise self.trace_implementation_error
+        try:
+            yield trace_id
+        finally:
+            pass
 
 
 @pytest.fixture
@@ -41,58 +36,44 @@ def mock_tracing_service():
 
 
 @patch("services.base.tracing.logger")
-def test_start_trace_success(mock_logger, mock_tracing_service):
-    """Test successful start_trace execution"""
+def test_trace_context_success(mock_logger, mock_tracing_service):
+    """Test successful trace_context execution"""
     trace_id = "test_trace_123"
 
-    mock_tracing_service.start_trace(trace_id)
+    with mock_tracing_service.trace_context(trace_id):
+        pass
 
-    assert mock_tracing_service.start_trace_called
-    mock_logger.info.assert_called_once_with(f"Starting trace {trace_id}")
-    mock_logger.error.assert_not_called()
+    assert mock_tracing_service.trace_implementation_called
 
 
 @patch("services.base.tracing.logger")
-def test_start_trace_with_args_kwargs(mock_logger, mock_tracing_service):
-    """Test start_trace with additional arguments and keyword arguments"""
+def test_trace_context_with_kwargs(mock_logger, mock_tracing_service):
+    """Test trace_context with additional keyword arguments"""
     trace_id = "test_trace_123"
-    args = ("arg1", "arg2")
     kwargs = {"name": "test", "metadata": {"key": "value"}}
 
-    mock_tracing_service.start_trace(trace_id, *args, **kwargs)
+    with mock_tracing_service.trace_context(trace_id, **kwargs):
+        pass
 
-    assert mock_tracing_service.start_trace_called
-    assert mock_tracing_service.start_trace_args == args
-    assert mock_tracing_service.start_trace_kwargs == kwargs
-    mock_logger.info.assert_called_once_with(f"Starting trace {trace_id}")
-
-
-@patch("services.base.tracing.logger")
-def test_end_trace_with_args_kwargs(mock_logger, mock_tracing_service):
-    """Test end_trace with additional arguments and keyword arguments"""
-    trace_id = "test_trace_123"
-    args = ("arg1", "arg2")
-    kwargs = {"metadata": {"duration": 5.0, "status": "completed"}}
-
-    mock_tracing_service.end_trace(trace_id, *args, **kwargs)
-
-    assert mock_tracing_service.end_trace_called
-    assert mock_tracing_service.end_trace_args == args
-    assert mock_tracing_service.end_trace_kwargs == kwargs
-    mock_logger.info.assert_called_once_with(f"Ending trace {trace_id}")
+    assert mock_tracing_service.trace_implementation_called
+    # Vérifie que les kwargs ont été passés (avec metadata enrichie)
+    passed_kwargs = mock_tracing_service.trace_implementation_kwargs
+    assert "name" in passed_kwargs
+    assert passed_kwargs["name"] == "test"
+    assert "metadata" in passed_kwargs
+    assert "key" in passed_kwargs["metadata"]
+    assert "start_time" in passed_kwargs["metadata"]  # Ajouté automatiquement
 
 
 @patch("builtins.__import__")
 @patch("services.base.tracing.logger")
 def test_langfuse_tracing_service_init_success(mock_logger, mock_import):
     """Test LangFuseTracingService initialization with successful auth"""
-    # Mock the Langfuse class
     mock_langfuse_class = Mock()
     mock_client = Mock()
     mock_client.auth_check.return_value = True
     mock_langfuse_class.return_value = mock_client
 
-    # Mock the import to return our mock Langfuse class
     def import_side_effect(name, *args, **kwargs):
         if name == "langfuse":
             mock_module = Mock()
@@ -114,13 +95,11 @@ def test_langfuse_tracing_service_init_success(mock_logger, mock_import):
 @patch("services.base.tracing.logger")
 def test_langfuse_tracing_service_init_auth_fail(mock_logger, mock_import):
     """Test LangFuseTracingService initialization with failed auth"""
-    # Mock the Langfuse class
     mock_langfuse_class = Mock()
     mock_client = Mock()
     mock_client.auth_check.return_value = False
     mock_langfuse_class.return_value = mock_client
 
-    # Mock the import to return our mock Langfuse class
     def import_side_effect(name, *args, **kwargs):
         if name == "langfuse":
             mock_module = Mock()
@@ -139,15 +118,33 @@ def test_langfuse_tracing_service_init_auth_fail(mock_logger, mock_import):
 
 
 @patch("builtins.__import__")
-def test_langfuse_tracing_service_start_trace_disabled(mock_import):
-    """Test LangFuseTracingService._start_trace when tracing is disabled"""
-    # Mock the Langfuse class
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_init_import_error(mock_logger, mock_import):
+    """Test LangFuseTracingService initialization with import error"""
+
+    def import_side_effect(name, *args, **kwargs):
+        if name == "langfuse":
+            raise ImportError("No module named 'langfuse'")
+        return __import__(name, *args, **kwargs)
+
+    mock_import.side_effect = import_side_effect
+
+    service = LangFuseTracingService()
+
+    assert service.client is None
+    assert service.is_langfuse is False
+    mock_logger.warning.assert_called_once()
+    assert "Failed to initialize Langfuse client" in mock_logger.warning.call_args[0][0]
+
+
+@patch("builtins.__import__")
+def test_langfuse_tracing_service_trace_disabled(mock_import):
+    """Test LangFuseTracingService trace when disabled"""
     mock_langfuse_class = Mock()
     mock_client = Mock()
     mock_client.auth_check.return_value = False
     mock_langfuse_class.return_value = mock_client
 
-    # Mock the import to return our mock Langfuse class
     def import_side_effect(name, *args, **kwargs):
         if name == "langfuse":
             mock_module = Mock()
@@ -160,51 +157,26 @@ def test_langfuse_tracing_service_start_trace_disabled(mock_import):
     service = LangFuseTracingService()
     trace_id = "test_trace"
 
-    service._start_trace(trace_id, name="test")
+    with service.trace_context(trace_id, name="test"):
+        pass
 
-    mock_client.start_as_current_span.assert_not_called()
-
-
-@patch("builtins.__import__")
-def test_langfuse_tracing_service_end_trace_disabled(mock_import):
-    """Test LangFuseTracingService._end_trace when tracing is disabled"""
-    # Mock the Langfuse class
-    mock_langfuse_class = Mock()
-    mock_client = Mock()
-    mock_client.auth_check.return_value = False
-    mock_langfuse_class.return_value = mock_client
-
-    # Mock the import to return our mock Langfuse class
-    def import_side_effect(name, *args, **kwargs):
-        if name == "langfuse":
-            mock_module = Mock()
-            mock_module.Langfuse = mock_langfuse_class
-            return mock_module
-        return __import__(name, *args, **kwargs)
-
-    mock_import.side_effect = import_side_effect
-
-    service = LangFuseTracingService()
-    trace_id = "test_trace"
-
-    service._end_trace(trace_id, metadata={"duration_seconds": 5.0})
-
-    mock_client.score.assert_not_called()
-    mock_client.flush.assert_not_called()
+    # Vérifier qu'aucune méthode Langfuse n'a été appelée
+    mock_client.create_trace_id.assert_not_called()
+    mock_client.start_generation.assert_not_called()
 
 
 @patch("builtins.__import__")
-def test_langfuse_tracing_service_end_trace_without_duration(mock_import):
-    """Test LangFuseTracingService._end_trace without duration in metadata"""
-    # Mock the Langfuse class
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_trace_enabled(mock_logger, mock_import):
+    """Test LangFuseTracingService trace when enabled"""
     mock_langfuse_class = Mock()
     mock_client = Mock()
     mock_client.auth_check.return_value = True
-    mock_span = Mock()
-    mock_client.start_as_current_span.return_value = mock_span
+    mock_trace = Mock()
+    mock_client.create_trace_id.return_value = "generated_trace_id"
+    mock_client.start_generation.return_value = mock_trace
     mock_langfuse_class.return_value = mock_client
 
-    # Mock the import to return our mock Langfuse class
     def import_side_effect(name, *args, **kwargs):
         if name == "langfuse":
             mock_module = Mock()
@@ -215,13 +187,17 @@ def test_langfuse_tracing_service_end_trace_without_duration(mock_import):
     mock_import.side_effect = import_side_effect
 
     service = LangFuseTracingService()
-    # Simulate having a span from start_trace
-    service._span = mock_span
     trace_id = "test_trace"
 
-    service._end_trace(trace_id, metadata={"status": "completed"})
+    with service.trace_context(trace_id, name="test", input={"test": "data"}):
+        pass
 
-    mock_client.score.assert_not_called()
+    # Vérifier que les méthodes Langfuse ont été appelées
+    mock_client.create_trace_id.assert_called_once_with(seed=trace_id)
+    mock_client.start_generation.assert_called_once()
+    mock_trace.update_trace.assert_called_once()
+    mock_trace.update.assert_called_once()
+    mock_trace.end.assert_called_once()
     mock_client.flush.assert_called_once()
 
 
@@ -241,20 +217,16 @@ def test_trace_context_metadata_initialization(mock_datetime, mock_time, mock_tr
     with mock_tracing_service.trace_context(trace_id):
         pass
 
-    # Check that start_trace was called with metadata containing start_time
-    start_kwargs = mock_tracing_service.start_trace_kwargs
-    assert "metadata" in start_kwargs
-    assert "start_time" in start_kwargs["metadata"]
-    assert start_kwargs["metadata"]["start_time"] == start_iso
-
-    # Check that end_trace was called with complete metadata
-    end_kwargs = mock_tracing_service.end_trace_kwargs
-    assert "metadata" in end_kwargs
-    metadata = end_kwargs["metadata"]
-    assert "duration_seconds" in metadata
-    assert "end_time" in metadata
-    assert "status" in metadata
-    assert metadata["status"] == "completed"
+    # Vérifier que les métadonnées ont été correctement initialisées
+    kwargs = mock_tracing_service.trace_implementation_kwargs
+    assert "metadata" in kwargs
+    assert "start_time" in kwargs["metadata"]
+    assert kwargs["metadata"]["start_time"] == start_iso
+    # Les métadonnées finales sont ajoutées dans le finally
+    assert "duration_seconds" in kwargs["metadata"]
+    assert "end_time" in kwargs["metadata"]
+    assert "status" in kwargs["metadata"]
+    assert kwargs["metadata"]["status"] == "completed"
 
 
 @patch("services.base.tracing.time")
@@ -276,9 +248,9 @@ def test_trace_context_error_metadata(mock_datetime, mock_time, mock_tracing_ser
         with mock_tracing_service.trace_context(trace_id):
             raise test_exception
 
-    # Check error metadata was added
-    end_kwargs = mock_tracing_service.end_trace_kwargs
-    metadata = end_kwargs["metadata"]
+    # Vérifier que les métadonnées d'erreur ont été ajoutées
+    kwargs = mock_tracing_service.trace_implementation_kwargs
+    metadata = kwargs["metadata"]
     assert "error" in metadata
     assert "error_type" in metadata
     assert "status" in metadata
@@ -305,46 +277,78 @@ def test_get_tracing_service_langfuse():
     assert isinstance(service, LangFuseTracingService)
 
 
+def test_get_tracing_service_unknown():
+    """Test get_tracing_service with unknown service"""
+    with pytest.raises(ValueError, match="Unknown tracing service: unknown"):
+        get_tracing_service("unknown")
+
+
 @patch("services.base.tracing.logger")
-def test_logging_tracing_service_empty_args_kwargs(mock_logger):
-    """Test LoggingTracingService with empty args and kwargs"""
+def test_logging_tracing_service_trace(mock_logger):
+    """Test LoggingTracingService trace context"""
     service = LoggingTracingService()
     trace_id = "test_trace"
+    kwargs = {"name": "test", "metadata": {"key": "value"}}
 
-    service._start_trace(trace_id)
-    service._end_trace(trace_id)
+    with service.trace_context(trace_id, **kwargs):
+        pass
 
-    expected_start_msg = f"Trace {trace_id} started with args: (), kwargs: {{}}"
-    expected_end_msg = f"Trace {trace_id} ended with args: (), kwargs: {{}}"
+    # Vérifier que les logs ont été appelés
+    assert mock_logger.info.call_count == 2
+    # Premier appel : start
+    start_call = mock_logger.info.call_args_list[0][0][0]
+    assert f"Trace {trace_id} started with kwargs:" in start_call
+    # Deuxième appel : end
+    end_call = mock_logger.info.call_args_list[1][0][0]
+    assert f"Trace {trace_id} ended with kwargs:" in end_call
 
-    mock_logger.info.assert_any_call(expected_start_msg)
-    mock_logger.info.assert_any_call(expected_end_msg)
 
+def test_process_error_still_propagated():
+    """Test that business logic errors are still propagated"""
 
-def test_tracing_error():
-    class MockerrorTracingService(TracingService):
-        def _start_trace(self, trace_id: str, *args, **kwargs) -> None:
-            raise RuntimeError("Start trace error")
+    class MockTracingService(TracingService):
+        @contextmanager
+        def _trace_implementation(self, trace_id: str, **kwargs):
+            yield trace_id
 
-        def _end_trace(self, trace_id: str, *args, **kwargs) -> None:
-            raise RuntimeError("End trace error")
-
-    service = MockerrorTracingService()
+    service = MockTracingService()
     trace_id = "test_trace"
-    with service.trace_context(trace_id):
-        pass  # Should not raise
 
-
-def test_process_error():
-    class MockerrorTracingService(TracingService):
-        def _start_trace(self, trace_id: str, *args, **kwargs) -> None:
-            print("Starting trace")
-
-        def _end_trace(self, trace_id: str, *args, **kwargs) -> None:
-            print("Ending trace")
-
-    service = MockerrorTracingService()
-    trace_id = "test_trace"
+    # Les erreurs métier doivent toujours être propagées
     with pytest.raises(ValueError, match="Test error"):
         with service.trace_context(trace_id):
             raise ValueError("Test error")
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_trace_error_handling(mock_logger, mock_import):
+    """Test LangFuseTracingService handles trace errors gracefully"""
+    mock_langfuse_class = Mock()
+    mock_client = Mock()
+    mock_client.auth_check.return_value = True
+    mock_client.create_trace_id.side_effect = Exception("Trace creation error")
+    mock_langfuse_class.return_value = mock_client
+
+    def import_side_effect(name, *args, **kwargs):
+        if name == "langfuse":
+            mock_module = Mock()
+            mock_module.Langfuse = mock_langfuse_class
+            return mock_module
+        return __import__(name, *args, **kwargs)
+
+    mock_import.side_effect = import_side_effect
+
+    service = LangFuseTracingService()
+    trace_id = "test_trace"
+
+    # Ne devrait pas lever d'exception malgré l'erreur de tracing
+    with service.trace_context(trace_id, name="test"):
+        pass
+
+    # Vérifier qu'un warning a été loggé
+    mock_logger.warning.assert_called()
+    warning_calls = [
+        call for call in mock_logger.warning.call_args_list if "Error managing Langfuse trace" in str(call)
+    ]
+    assert len(warning_calls) > 0

@@ -7,24 +7,10 @@ from src.logger import logger
 
 class TracingService(ABC):
     @abstractmethod
-    def _start_trace(self, trace_id: str, *args, **kwargs) -> None: ...
-
-    def start_trace(self, trace_id: str, *args, **kwargs) -> None:
-        logger.info(f"Starting trace {trace_id}")
-        try:
-            self._start_trace(trace_id, *args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error starting trace {trace_id}: {e}")
-
-    @abstractmethod
-    def _end_trace(self, trace_id: str, *args, **kwargs) -> None: ...
-
-    def end_trace(self, trace_id: str, *args, **kwargs) -> None:
-        logger.info(f"Ending trace {trace_id}")
-        try:
-            self._end_trace(trace_id, *args, **kwargs)
-        except Exception as e:
-            logger.error(f"Error ending trace {trace_id}: {e}")
+    @contextmanager
+    def _trace_implementation(self, trace_id: str, **kwargs):
+        """Context manager abstrait pour l'implémentation du tracing"""
+        pass
 
     @contextmanager
     def trace_context(self, trace_id: str, **kwargs):
@@ -32,105 +18,108 @@ class TracingService(ABC):
         start_time = time.time()
         kwargs.setdefault("metadata", {})["start_time"] = datetime.now().isoformat()
 
-        self.start_trace(trace_id, **kwargs)
-        try:
-            yield trace_id
-        except Exception as e:
-            # Ajouter l'erreur dans les métadonnées
-            error_metadata = {
-                "error": str(e),
-                "error_type": type(e).__name__,
-                "status": "failed",
-            }
-            kwargs.get("metadata", {}).update(error_metadata)
-            raise
-        finally:
-            # Calculer la durée et finaliser
-            duration = time.time() - start_time
-            kwargs.get("metadata", {}).update(
-                {
-                    "duration_seconds": duration,
-                    "end_time": datetime.now().isoformat(),
-                    "status": kwargs.get("metadata", {}).get("status", "completed"),
+        with self._trace_implementation(trace_id, **kwargs):
+            try:
+                yield trace_id
+            except Exception as e:
+                # Ajouter l'erreur dans les métadonnées
+                error_metadata = {
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "status": "failed",
                 }
-            )
-            self.end_trace(trace_id, **kwargs)
+                kwargs.get("metadata", {}).update(error_metadata)
+                raise
+            finally:
+                # Calculer la durée et finaliser
+                duration = time.time() - start_time
+                kwargs.get("metadata", {}).update(
+                    {
+                        "duration_seconds": duration,
+                        "end_time": datetime.now().isoformat(),
+                        "status": kwargs.get("metadata", {}).get("status", "completed"),
+                    }
+                )
 
 
 class LoggingTracingService(TracingService):
-    def _start_trace(self, trace_id: str, *args, **kwargs) -> None:
-        logger.info(f"Trace {trace_id} started with args: {args}, kwargs: {kwargs}")
-
-    def _end_trace(self, trace_id: str, *args, **kwargs) -> None:
-        logger.info(f"Trace {trace_id} ended with args: {args}, kwargs: {kwargs}")
+    @contextmanager
+    def _trace_implementation(self, trace_id: str, **kwargs):
+        """Implementation du tracing avec logging"""
+        logger.info(f"Trace {trace_id} started with kwargs: {kwargs}")
+        try:
+            yield trace_id
+        finally:
+            logger.info(f"Trace {trace_id} ended with kwargs: {kwargs}")
 
 
 class LangFuseTracingService(TracingService):
     def __init__(self):
         """
-        public_key (Optional[str]): Your Langfuse public API key. Can also be set via LANGFUSE_PUBLIC_KEY environment variable.
-        secret_key (Optional[str]): Your Langfuse secret API key. Can also be set via LANGFUSE_SECRET_KEY environment variable.
-        host (Optional[str]): The Langfuse API host URL. Defaults to "https://cloud.langfuse.com". Can also be set via LANGFUSE_HOST environment variable.
-        timeout (Optional[int]): Timeout in seconds for API requests. Defaults to 5 seconds.
-        httpx_client (Optional[httpx.Client]): Custom httpx client for making non-tracing HTTP requests. If not provided, a default client will be created.
-        debug (bool): Enable debug logging. Defaults to False. Can also be set via LANGFUSE_DEBUG environment variable.
-        tracing_enabled (Optional[bool]): Enable or disable tracing. Defaults to True. Can also be set via LANGFUSE_TRACING_ENABLED environment variable.
-        flush_at (Optional[int]): Number of spans to batch before sending to the API. Defaults to 512. Can also be set via LANGFUSE_FLUSH_AT environment variable.
-        flush_interval (Optional[float]): Time in seconds between batch flushes. Defaults to 5 seconds. Can also be set via LANGFUSE_FLUSH_INTERVAL environment variable.
-        environment (Optional[str]): Environment name for tracing. Default is 'default'. Can also be set via LANGFUSE_TRACING_ENVIRONMENT environment variable. Can be any lowercase alphanumeric string with hyphens and underscores that does not start with 'langfuse'.
+        Initialise le service de traçage Langfuse.
         """
-        from langfuse import Langfuse
+        try:
+            from langfuse import Langfuse
 
-        self.client = Langfuse()
-        self.is_langfuse = True
-        if not self.client.auth_check():
-            logger.warning("Langfuse authentication failed. Tracing will be disabled.")
+            self.client = Langfuse()
+            self.is_langfuse = self.client.auth_check()
+            if not self.is_langfuse:
+                logger.warning("Langfuse authentication failed. Tracing will be disabled.")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Langfuse client: {e}. Tracing will be disabled.")
+            self.client = None
             self.is_langfuse = False
 
-    def _start_trace(self, trace_id: str, *args, **kwargs) -> None:
-        if not self.is_langfuse:
+    @contextmanager
+    def _trace_implementation(self, trace_id: str, **kwargs):
+        """Implementation du tracing avec Langfuse"""
+        if not self.is_langfuse or not self.client:
+            yield None
             return
 
-        # Crée un span manuel
-        self._span = self.client.start_as_current_span(
-            name=kwargs.get("name", trace_id),
-            trace_context={"trace_id": trace_id},
-            input=kwargs.get("input"),
-            metadata=kwargs.get("metadata", {}),
-            tags=kwargs.get("tags", []),
-            user_id=kwargs.get("user_id"),
-            session_id=kwargs.get("session_id"),
-        )
-        # Ne pas oublier de commencer le span
-        self._span.__enter__()
-
-    def _end_trace(self, trace_id: str, *args, **kwargs) -> None:
-        if not self.is_langfuse or not hasattr(self, "_span"):
-            return
-
-        metadata = kwargs.get("metadata", {})
-        # Ajouter la durée comme score si disponible
-        if "duration_seconds" in metadata:
-            try:
-                self.client.score(
-                    trace_id=trace_id,
-                    name="duration",
-                    value=metadata["duration_seconds"],
-                )
-            except Exception as e:
-                logger.warning(f"Unable to send score: {e}")
-
-        # Fermer le span
+        trace = None
         try:
-            self._span.__exit__(None, None, None)
+            # Créer le trace Langfuse
+            trace_id = self.client.create_trace_id(seed=trace_id)
+            trace = self.client.start_generation(
+                trace_context={"trace_id": trace_id},
+                name=kwargs.get("name", trace_id),
+                input=kwargs.get("input"),
+                metadata=kwargs.get("metadata", {}),
+                model=kwargs.get("model", "ocr-service"),
+            )
+            trace.update_trace(
+                user_id=kwargs.get("user_id"),
+                session_id=kwargs.get("session_id"),
+            )
+
+            yield trace
         except Exception as e:
-            logger.warning(f"Error ending Langfuse span: {e}")
+            logger.warning(f"Error managing Langfuse trace: {e}")
+            yield None
         finally:
-            # Forcer flush
-            try:
-                self.client.flush()
-            except Exception as e:
-                logger.warning(f"Error flushing Langfuse client: {e}")
+            # Mettre à jour le trace avec les données finales
+            if trace and self.client:
+                try:
+                    metadata = kwargs.get("metadata", {})
+
+                    # Mettre à jour avec les métadonnées finales si possible
+                    trace.update(
+                        output=metadata,
+                        metadata=metadata,
+                        usage_details=kwargs.get("usage_details", {}),
+                        cost_details=kwargs.get("cost_details", {}),
+                        model=kwargs.get("model", "ocr-service"),
+                    )
+
+                    # Ajouter la durée comme score si disponible
+                    trace.end()
+
+                    # Forcer flush
+                    self.client.flush()
+
+                except Exception as e:
+                    logger.warning(f"Error finalizing Langfuse trace: {e}")
 
 
 def get_tracing_service(tracing_name: str) -> TracingService:
@@ -139,3 +128,20 @@ def get_tracing_service(tracing_name: str) -> TracingService:
     elif tracing_name == "logging":
         return LoggingTracingService()
     raise ValueError(f"Unknown tracing service: {tracing_name}")
+
+
+if __name__ == "__main__":
+    from uuid import uuid4
+
+    logging_service = get_tracing_service("logging")
+    langfuse_service = get_tracing_service("langfuse")
+
+    with langfuse_service.trace_context(
+        trace_id=str(uuid4()),
+        name="ocr-trace",
+        input={"task_id": 123},
+        user_id="user_1",
+        session_id="session_1",
+    ):
+        time.sleep(1)
+        logger.info("Inside langfuse trace context")
