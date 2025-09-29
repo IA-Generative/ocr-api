@@ -29,6 +29,20 @@
 - code clean
 - :art: change minio vars
 
+## [0.4.0](https://github.com/IA-Generative/ocr-api/compare/v0.3.0...v0.4.0) (2025-09-29)
+
+
+### Features
+
+* **docs:** add Langfuse tracing configuration variables ([56fe229](https://github.com/IA-Generative/ocr-api/commit/56fe22991c1c72c20dfa792af08486896cc99abb))
+
+
+### Bug Fixes
+
+* improve logging format and enhance trace context in launch_task ([8fc774f](https://github.com/IA-Generative/ocr-api/commit/8fc774f4392eaf677f7c9619dd89d9ea69202123))
+* remove unused 'tags' parameter from LangFuseTracingService ([8fc774f](https://github.com/IA-Generative/ocr-api/commit/8fc774f4392eaf677f7c9619dd89d9ea69202123))
+* simplify metadata handling in LangFuseTracingService ([8fc774f](https://github.com/IA-Generative/ocr-api/commit/8fc774f4392eaf677f7c9619dd89d9ea69202123))
+
 ## [0.3.0](https://github.com/IA-Generative/ocr-api/compare/v0.2.0...v0.3.0) (2025-09-27)
 
 
