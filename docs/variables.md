@@ -89,6 +89,19 @@ Les variables sont chargées automatiquement grâce à [`pydantic-settings`](htt
 
 ---
 
+### Variables pour la configuration du tracing Langfuse
+
+| Variable | Description | Default | Utilisation |
+|:---|:---|:---|:---|
+| `TRACING_SERVICE` | Service de tracing à utiliser (`langfuse` ou `logging`). | `logging` | `TracingService` |
+| `LANGFUSE_PUBLIC_KEY` | Clé publique Langfuse pour l'authentification. | (aucune) | `LangFuseTracingService` |
+| `LANGFUSE_SECRET_KEY` | Clé secrète Langfuse pour l'authentification. | (aucune) | `LangFuseTracingService` |
+| `LANGFUSE_HOST` | URL du serveur Langfuse (ex: https://cloud.langfuse.com). | (aucune) | `LangFuseTracingService` |
+| `LANGFUSE_DEBUG` | Active le mode debug Langfuse (`true` ou `false`). | `false` | `LangFuseTracingService` |
+| `LANGFUSE_TRACING_ENVIRONMENT` | Environnement de tracing (ex: `dev`, `preprod`, `prod`). | `dev` | `LangFuseTracingService` |
+
+---
+
 ### Variables diverses
 
 | Variable | Description | Default | Utilisation |
@@ -136,6 +149,14 @@ S3_REGION=fr-par
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_QUEUE_NAME=redis-queue
+
+# Tracing Langfuse
+TRACING_SERVICE=langfuse
+LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxxxxxxxxxxxx
+LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxxxxxxxxx
+LANGFUSE_HOST=https://cloud.langfuse.com
+LANGFUSE_DEBUG=true
+LANGFUSE_TRACING_ENVIRONMENT=preprod
 
 # Monitoring
 MONITOR_RESSOURCE_EVERY=5
