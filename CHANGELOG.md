@@ -29,6 +29,73 @@
 - code clean
 - :art: change minio vars
 
+## [0.5.0](https://github.com/IA-Generative/ocr-api/compare/v0.4.0...v0.5.0) (2025-09-29)
+
+
+### Features
+
+* :art: add auth with backend ([8d5b74c](https://github.com/IA-Generative/ocr-api/commit/8d5b74cf18eedf7b0c4f9a1c73eee71404f8d120))
+* :art: add headers to api ([ca4e425](https://github.com/IA-Generative/ocr-api/commit/ca4e425fd2d9f1a134d7ce5ee5491b22643f09ba))
+* :chart_with_upwards_trend: add matomo tracking ([e0cbb46](https://github.com/IA-Generative/ocr-api/commit/e0cbb46d1487386dbca7ff3b35b7aa094a389fa6))
+* :sparkles: add husky, pre-commit and commitlint ([5b77743](https://github.com/IA-Generative/ocr-api/commit/5b77743f85c7d229d33360347556121c213aef6b))
+* :sparkles: update environment variables and improve sidebar links ([4a3f1e6](https://github.com/IA-Generative/ocr-api/commit/4a3f1e67158313ef84c757e05cb85ab68d95666f))
+* add all text from pdf ([0ed2c8d](https://github.com/IA-Generative/ocr-api/commit/0ed2c8dfc5643272bbfe0f7d5eafc174da631d68))
+* add configs directory copy to Dockerfile ([d54236b](https://github.com/IA-Generative/ocr-api/commit/d54236b08fed9727205591a1a810c438376a0adb))
+* add delete routers ([701ed7d](https://github.com/IA-Generative/ocr-api/commit/701ed7d9573ecb9063848d3e6534034354707f06))
+* add docling process ([96f7828](https://github.com/IA-Generative/ocr-api/commit/96f782802b6726e2ec6b34733978bdd1006a0262))
+* add example curl commands for OCR API usage ([c3cc714](https://github.com/IA-Generative/ocr-api/commit/c3cc714a6e94f5b0deb42aeb0d1e88ec7633da1a))
+* add Keycloak configuration details and OpenAI API variables to documentation ([ff217ac](https://github.com/IA-Generative/ocr-api/commit/ff217ac84f988c7da8e3193f5675f1eb5180150e))
+* add ocr-docling group to Dockerfile build process ([96f7828](https://github.com/IA-Generative/ocr-api/commit/96f782802b6726e2ec6b34733978bdd1006a0262))
+* add parameters column to tasks and update migration script ([a1f092a](https://github.com/IA-Generative/ocr-api/commit/a1f092ae75ae27dd3fe92e1f65e680f22f8feec9))
+* add PDF forms extraction worker and related tests ([d1392d9](https://github.com/IA-Generative/ocr-api/commit/d1392d9f2bdd605f01d6e966a390575d4a0b46d4))
+* add workflow for testing services related to forms ([d5647b9](https://github.com/IA-Generative/ocr-api/commit/d5647b98afe4cec88e80c95275c071fc1cae12b9))
+* **docs:** add Langfuse tracing configuration variables ([88ee3b5](https://github.com/IA-Generative/ocr-api/commit/88ee3b5172da4e43a3f8459c8d12542af8bf4d85))
+* enhance Keycloak token verification and update dependencies ([af64177](https://github.com/IA-Generative/ocr-api/commit/af64177631d952c02da1a0cf77f40ca8b540f1d1))
+* enhance task management with admin checks and update request context ([701ed7d](https://github.com/IA-Generative/ocr-api/commit/701ed7d9573ecb9063848d3e6534034354707f06))
+* extract text and bounding boxes from PDF pages for improved data processing ([0ed2c8d](https://github.com/IA-Generative/ocr-api/commit/0ed2c8dfc5643272bbfe0f7d5eafc174da631d68))
+* implement centralized logging configuration system ([d54236b](https://github.com/IA-Generative/ocr-api/commit/d54236b08fed9727205591a1a810c438376a0adb))
+* integrate Keycloak authentication and update dependencies ([af64177](https://github.com/IA-Generative/ocr-api/commit/af64177631d952c02da1a0cf77f40ca8b540f1d1))
+* integrate Keycloak for authentication and user management ([521a930](https://github.com/IA-Generative/ocr-api/commit/521a930719010e44b6ae39b4c4e5fb6d48a0354a))
+* merge staging to preprod ([#144](https://github.com/IA-Generative/ocr-api/issues/144)) ([59cb5a8](https://github.com/IA-Generative/ocr-api/commit/59cb5a89691b75fa200af457c59b1b7e2896b5fc))
+* refactor PDF form extraction, add vector and template management, and improve feature extraction ([cda4e3d](https://github.com/IA-Generative/ocr-api/commit/cda4e3d73c515ce5a0f20827c4d61fd59ecc3808))
+* **security:** improve Keycloak token verification, logging, and documentation ([15c3b87](https://github.com/IA-Generative/ocr-api/commit/15c3b871a5d4ef77d339e1f3f0bf6555a8de1de8))
+* update environment variables and refactor job and task routers for improved functionality ([af64177](https://github.com/IA-Generative/ocr-api/commit/af64177631d952c02da1a0cf77f40ca8b540f1d1))
+
+
+### Bug Fixes
+
+* :label: fix error types ts ([c3d1a13](https://github.com/IA-Generative/ocr-api/commit/c3d1a1377f0899cccb8696499abd3c4addcbebce))
+* :passport_control: fixing keycloak infinity loop on sign in ([0bc8db0](https://github.com/IA-Generative/ocr-api/commit/0bc8db07a79b770b2e765fa607f4d5f240493217))
+* :rocket: don't open twice file ([1ae8f31](https://github.com/IA-Generative/ocr-api/commit/1ae8f31ff1d34e822d07795411af3564bf688c3d))
+* :white_check_mark: fix ocr e2e test ([f225d2f](https://github.com/IA-Generative/ocr-api/commit/f225d2f2e7fdbe5ac28b99fe34542c5d13d546e7))
+* add clearToken when keycloak logout ([1fabd51](https://github.com/IA-Generative/ocr-api/commit/1fabd51be72115d858eb204512adacbf92e4340b))
+* add docling_inference directory to Dockerfile ([3707056](https://github.com/IA-Generative/ocr-api/commit/37070567d0ad9f5aa77fe3d1b955b3c9df102a1d))
+* add more log using user_id ([9b310c9](https://github.com/IA-Generative/ocr-api/commit/9b310c9a25ad8fdc73e15ffff17e3a3c82e5adb5))
+* async routes ([#7](https://github.com/IA-Generative/ocr-api/issues/7)) ([525dddd](https://github.com/IA-Generative/ocr-api/commit/525dddd4ca418c396ced33c29953f4ac9a87f6e9))
+* correct attribut href to in DsfrTile component ([43f670a](https://github.com/IA-Generative/ocr-api/commit/43f670a4171cbc6fe67a37bd00b87bda0ed97a6c))
+* delete role in headers (not necessary) ([098d6a6](https://github.com/IA-Generative/ocr-api/commit/098d6a68f8ff74f0a3ff607f1e7c26b371395265))
+* ensure task output pages are cleared for non-completed tasks and format delete function parameters ([edb41af](https://github.com/IA-Generative/ocr-api/commit/edb41afa9e0f4dd8b2117909cc168fa5b6a586a6))
+* fix keycloak client id ([c5e932e](https://github.com/IA-Generative/ocr-api/commit/c5e932ea1e662d624c6816a6113e090f9660b209))
+* hot fix lock ([2e93413](https://github.com/IA-Generative/ocr-api/commit/2e93413ed1802fa711a78a549b36d522fe013273))
+* improve logging format and enhance trace context in launch_task ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* Refactor batch_predict method to improve handling of predictions and ensure non-null checks for better stability ([#55](https://github.com/IA-Generative/ocr-api/issues/55)) ([2ffdcfc](https://github.com/IA-Generative/ocr-api/commit/2ffdcfc07f2ff12b2cb399066e28a05bbd385de8))
+* remove docling from dependencies and add ocr-docling group ([96f7828](https://github.com/IA-Generative/ocr-api/commit/96f782802b6726e2ec6b34733978bdd1006a0262))
+* remove unused 'tags' parameter from LangFuseTracingService ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* simplify metadata handling in LangFuseTracingService ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* update apps/client/src/api/http-client.ts ([7012539](https://github.com/IA-Generative/ocr-api/commit/70125395a3408a92004ab257e178714f9d53f020))
+* update apps/client/src/api/http-client.ts ([2d0704f](https://github.com/IA-Generative/ocr-api/commit/2d0704f6d0f7815c4e0a501990aa9ba80701b5eb))
+* update apps/client/src/api/http-client.ts ([453edc0](https://github.com/IA-Generative/ocr-api/commit/453edc0c6203c9bfee29402161a96409e9b2f377))
+* update apps/client/src/utils/keycloak.ts ([9bca0e0](https://github.com/IA-Generative/ocr-api/commit/9bca0e03a7c67386a9a1e87c17716943310ab5dc))
+* update apps/client/src/utils/keycloak.ts ([cdfb2f9](https://github.com/IA-Generative/ocr-api/commit/cdfb2f9c1b9443ae4aff82e9c45e4397453d1574))
+* update apps/client/src/utils/keycloak.ts ([12b3614](https://github.com/IA-Generative/ocr-api/commit/12b3614a3bb2aef2669ca0bebde8d43d8b20092d))
+* update apps/client/src/utils/keycloak.ts ([655e2ee](https://github.com/IA-Generative/ocr-api/commit/655e2eeda630b3d6fce788d6c8f06a217c154915))
+* update apps/client/src/utils/keycloak.ts ([cb674a4](https://github.com/IA-Generative/ocr-api/commit/cb674a44d5cc705345242179cc5d66b40620004b))
+* update apps/client/src/utils/keycloak.ts ([cb0a6c0](https://github.com/IA-Generative/ocr-api/commit/cb0a6c096f9b1736ebf4f9aa10b978e3c1c11a04))
+* update apps/client/src/utils/keycloak.ts ([0a5e16b](https://github.com/IA-Generative/ocr-api/commit/0a5e16bd52602d0618e1882cdd2e0619b45dcedd))
+* update default task operation to use DEFAULT value in upload_file function ([e5b8162](https://github.com/IA-Generative/ocr-api/commit/e5b8162ea60664dad5e3b774d3d145bff6bec1f3))
+* update maxfail option in test commands to allow all tests to run ([00616f0](https://github.com/IA-Generative/ocr-api/commit/00616f004ae19bee5a587ed5fd71c963091f79b4))
+* update release workflow to correct manifest and config file paths ([93de8cc](https://github.com/IA-Generative/ocr-api/commit/93de8cc4636c41e568bec0a069972c37dc020388))
+
 ## [0.4.0](https://github.com/IA-Generative/ocr-api/compare/v0.3.0...v0.4.0) (2025-09-29)
 
 
