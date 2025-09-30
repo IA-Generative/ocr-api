@@ -71,7 +71,7 @@ class KeycloakToken(BaseVerifyToken):
             ctx.groups = user_info.get("groups", [])
 
             # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = user_info.get("realm_access", {}).get("roles", [])
+            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
             # Ou si les rôles sont dans realm_access :
             # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
 
