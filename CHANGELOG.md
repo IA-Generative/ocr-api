@@ -29,6 +29,18 @@
 - code clean
 - :art: change minio vars
 
+## [0.6.0](https://github.com/IA-Generative/ocr-api/compare/v0.5.0...v0.6.0) (2025-10-01)
+
+
+### Features
+
+* add purge script for task deletion with Keycloak authentication ([68b5ebb](https://github.com/IA-Generative/ocr-api/commit/68b5ebbfd960cc4e933a11a5aa3d0a8a8707f0e5))
+
+
+### Bug Fixes
+
+* use resource_access and client_id to get roles ([c1a26d7](https://github.com/IA-Generative/ocr-api/commit/c1a26d70274b5c5fd85d916c184cfb232594cd73))
+
 ## [0.5.0](https://github.com/IA-Generative/ocr-api/compare/v0.4.0...v0.5.0) (2025-09-29)
 
 
