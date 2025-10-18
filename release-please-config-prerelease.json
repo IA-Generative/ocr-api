@@ -5,6 +5,16 @@
       "release-type": "simple",
       "prerelease": true,
       "prerelease-type": "rc"
+    },
+    "apps/server": {
+      "release-type": "python",
+      "prerelease": true,
+      "prerelease-type": "rc"
+    },
+    "apps/client": {
+      "release-type": "node",
+      "prerelease": true,
+      "prerelease-type": "rc"
     }
   }
 }
