@@ -4,6 +4,14 @@
     ".": {
       "release-type": "simple",
       "prerelease": false
-    }
+    },
+    "apps/server": {
+      "release-type": "python",
+      "prerelease": false
+    },
+    "apps/client": {
+      "release-type": "node",
+      "prerelease": false
   }
+}
 }
