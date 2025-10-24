@@ -13,12 +13,12 @@ defineProps({
     default: () => [
       {
         title: 'Converser avec le Chatbot',
-        to: '/webui',
+        to: '/outils-mirai/chat',
         imgSrc: ComminitySVG,
       },
       {
         title: 'Résumer un texte',
-        to: '/resume',
+        to: '/outils-mirai/resume',
         imgSrc: PenSVG,
       },
     ],
