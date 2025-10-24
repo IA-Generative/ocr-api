@@ -50,17 +50,17 @@ async function startOcr () {
 const myOtherTools = ref([
   {
     title: 'Converser avec le Chatbot',
-    to: '/webui',
+    to: '/outils-mirai/chat',
     imgSrc: ComminitySVG,
   },
   {
     title: 'Résumer un texte',
-    to: '/resume',
+    to: '/outils-mirai/resume',
     imgSrc: PenSVG,
   },
   {
     title: 'Faire un compte rendu',
-    to: '/france-compte-rendu',
+    to: '/outils-mirai/compte-rendu',
     imgSrc: DocumentDownload,
   },
 ])
