@@ -6,6 +6,7 @@ from .routers.task import router as task_router
 from .routers.health import router as health_router
 from .routers.jobs import router as job_router
 from .routers.text import text_router
+from .routers.process import process_router
 
 # from .routers.template import template_router
 from src import __name__, __version__
@@ -32,4 +33,5 @@ app.include_router(task_router, prefix="/api")
 app.include_router(health_router, prefix="/api")
 app.include_router(job_router, prefix="/api")
 app.include_router(text_router, prefix="/api")
+app.include_router(process_router, prefix="/api")
 # app.include_router(template_router, prefix="/api")
