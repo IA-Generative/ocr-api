@@ -18,6 +18,14 @@ from business.forms.workers.pdf_worker import (
     PDFFormsExtractorWorker,
     DefaultPdfExtractor,
 )
+from business.extractions.worker.file_worker import (
+    CSVWorker,
+    DocxWorker,
+    XlsxWorker,
+    OdtWorker,
+    OdsWorker,
+    OdpWorker,
+)
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
 from business.paddleocr2.configs.paddle import PaddleSetting
@@ -124,7 +132,57 @@ def load_worker(
     )
 
     ##################################################
+    ################# FILE WORKERS ###################
+    csv_worker = CSVWorker(
+        name="csv-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    xlsx_worker = XlsxWorker(
+        name="xlsx-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    docx_worker = DocxWorker(
+        name="docx-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    odt_worker = OdtWorker(
+        name="odt-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    ods_worker = OdsWorker(
+        name="ods-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    odp_worker = OdpWorker(
+        name="odp-worker",
+        file_connector=s3_client_connector,
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
+    ##################################################
     workers = [
+        csv_worker,  # TaskOperation.DEFAULT and text/csv
+        xlsx_worker,  # TaskOperation.DEFAULT and application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        docx_worker,  # TaskOperation.DEFAULT and application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        odt_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.text
+        ods_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.spreadsheet
+        odp_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.presentation
         default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
         default_worker,  # TaskOperation.DEFAULT
         worker_pdf,  # application/pdf AND is_form_pdf

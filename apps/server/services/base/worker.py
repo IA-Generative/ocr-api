@@ -80,7 +80,7 @@ class BaseWorker(ABC):
         #     raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
-    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image]:
+    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image | bytes]:
         task = self.set_output(task=task)
 
         content_type: str = task.input.content_type
@@ -110,7 +110,7 @@ class BaseWorker(ABC):
 
         return pages
 
-    def predict_on_pages(self, task: TaskModel, pages: List[Image.Image]) -> TaskModel:
+    def predict_on_pages(self, task: TaskModel, pages: List[Image.Image], save_image: bool = True) -> TaskModel:
         extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task, total_pages=len(pages))
         filename = task.input.raw_filename
@@ -144,22 +144,23 @@ class BaseWorker(ABC):
                     f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
                     extra=extra_log,
                 )
-            for j, image in enumerate(batch):
-                buffer = BytesIO()
-                image.save(buffer, format="JPEG")
-                buffer.seek(0)
-                key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
-                client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
-                logger.debug(
-                    f"[worker {self.name}] Uploaded page {i + j} to {key}",
-                    extra=extra_log,
-                )
-                signed_url = client_s3.generate_presigned_url(
-                    ClientMethod="get_object",
-                    Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-                    ExpiresIn=3600,  # 1h
-                )
-                partial_result[j].page_url = signed_url
+            if save_image:
+                for j, image in enumerate(batch):
+                    buffer = BytesIO()
+                    image.save(buffer, format="JPEG")
+                    buffer.seek(0)
+                    key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
+                    client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
+                    logger.debug(
+                        f"[worker {self.name}] Uploaded page {i + j} to {key}",
+                        extra=extra_log,
+                    )
+                    signed_url = client_s3.generate_presigned_url(
+                        ClientMethod="get_object",
+                        Params={"Bucket": self.file_connector.bucket_name, "Key": key},
+                        ExpiresIn=3600,  # 1h
+                    )
+                    partial_result[j].page_url = signed_url
 
             task.output.pages[i : i + self.batch_size] = partial_result
 
