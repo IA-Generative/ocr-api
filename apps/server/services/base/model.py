@@ -16,7 +16,7 @@ class BaseModelPrediction(ABC):
     @abstractmethod
     def batch_predict(
         self,
-        images: list[Union[np.ndarray, Image.Image]],
+        images: list[Union[np.ndarray, Image.Image, bytes]],
         pages: list[Page] = [],
         *args,
         **kwargs,

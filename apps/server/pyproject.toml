@@ -68,12 +68,17 @@ ocr-service-paddle-gpu = [
 ]
 
 services = [
+    "docx2txt>=0.9",
+    "langchain-community>=0.4",
     "langfuse>=3.5.1",
+    "odfpy>=1.4.1",
     "opencv-python-headless>=4.11.0.86",
     "pdf2image==1.17.0",
     "pillow==10.4.0",
     "psutil>=7.0.0",
     "pynvml>=12.0.0",
+    "pypandoc-binary>=1.15",
+    "unstructured>=0.18.15",
 ]
 
 migration = [
