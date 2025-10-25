@@ -29,6 +29,16 @@
 - code clean
 - :art: change minio vars
 
+## [0.8.0](https://github.com/IA-Generative/ocr-api/compare/v0.7.0...v0.8.0) (2025-10-25)
+
+
+### Features
+
+* add document extraction support for multiple file formats ([026088c](https://github.com/IA-Generative/ocr-api/commit/026088cab3efb9cd2719fbb4039d70812e551612))
+* add process router for document processing and related tests ([9f2473e](https://github.com/IA-Generative/ocr-api/commit/9f2473e8156fbafcc8d606f056b1acf199ae22bf))
+* add set_page_text method to OCRResult for page text extraction ([3522ca4](https://github.com/IA-Generative/ocr-api/commit/3522ca4f3b849f5d0904d353c9bc320870146b2c))
+* add test.csv file for validation in tests/data/valid ([69cfc75](https://github.com/IA-Generative/ocr-api/commit/69cfc755e6a7a84ffd45988f589503b466b7ee4a))
+
 ## [0.7.0](https://github.com/IA-Generative/ocr-api/compare/v0.6.0...v0.7.0) (2025-10-01)
 
 
