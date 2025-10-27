@@ -1,0 +1,16 @@
+{
+    "packages": {
+        ".": {
+            "package-name": "ocr",
+            "include-component-in-tag": false
+        },
+        "apps/client": {
+            "package-name": "apps/client",
+            "include-component-in-tag": true
+        },
+        "apps/server": {
+            "package-name": "apps/server",
+            "include-component-in-tag": true
+        }
+    }
+}
