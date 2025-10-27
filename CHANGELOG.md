@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.8.1](https://github.com/IA-Generative/ocr-api/compare/v0.8.0...v0.8.1) (2025-10-27)
+
+
+### Bug Fixes
+
+* mettre à jour les chemins des liens dans la barre latérale ([78c54ea](https://github.com/IA-Generative/ocr-api/commit/78c54eaa3c94d030cb73deef41588911173b45a6))
+* mettre à jour les liens des conditions d'utilisation et de la FAQ dans la barre latérale ([88e73de](https://github.com/IA-Generative/ocr-api/commit/88e73decd3986bb9dedbfe8c49cccc1368876300))
+
 ## [0.8.0](https://github.com/IA-Generative/ocr-api/compare/v0.7.0...v0.8.0) (2025-10-25)
 
 
