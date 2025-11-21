@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.8.2](https://github.com/IA-Generative/ocr-api/compare/v0.8.1...v0.8.2) (2025-11-21)
+
+
+### Bug Fixes
+
+* add missing extraction files to Dockerfile ([0f3be43](https://github.com/IA-Generative/ocr-api/commit/0f3be43371cc68e2759d7b8ba70ab5661d365164))
+* update package name in release-please manifest ([2786f37](https://github.com/IA-Generative/ocr-api/commit/2786f37b1ecd64607f0f34b579a56d28aecdaf4e))
+
 ## [0.8.1](https://github.com/IA-Generative/ocr-api/compare/v0.8.0...v0.8.1) (2025-10-27)
 
 
