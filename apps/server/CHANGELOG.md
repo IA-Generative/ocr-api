@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.4.0](https://github.com/IA-Generative/ocr-api/compare/v0.3.0...v0.4.0) (2025-11-21)
+
+
+### Features
+
+* add document extraction support for multiple file formats ([026088c](https://github.com/IA-Generative/ocr-api/commit/026088cab3efb9cd2719fbb4039d70812e551612))
+* add process router for document processing and related tests ([9f2473e](https://github.com/IA-Generative/ocr-api/commit/9f2473e8156fbafcc8d606f056b1acf199ae22bf))
+* add purge script for task deletion with Keycloak authentication ([b9197ca](https://github.com/IA-Generative/ocr-api/commit/b9197ca4192ecfe671f73d1bcd18d03682bce948))
+* add set_page_text method to OCRResult for page text extraction ([3522ca4](https://github.com/IA-Generative/ocr-api/commit/3522ca4f3b849f5d0904d353c9bc320870146b2c))
+* add test.csv file for validation in tests/data/valid ([69cfc75](https://github.com/IA-Generative/ocr-api/commit/69cfc755e6a7a84ffd45988f589503b466b7ee4a))
+
+
+### Bug Fixes
+
+* add missing extraction files to Dockerfile ([0f3be43](https://github.com/IA-Generative/ocr-api/commit/0f3be43371cc68e2759d7b8ba70ab5661d365164))
+* improve logging format and enhance trace context in launch_task ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* remove unused 'tags' parameter from LangFuseTracingService ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* simplify metadata handling in LangFuseTracingService ([084fc56](https://github.com/IA-Generative/ocr-api/commit/084fc56e6c5326a491c4e0a02a62f3312dcdd028))
+* use resource_access and client_id to get roles ([d22ac16](https://github.com/IA-Generative/ocr-api/commit/d22ac162de5acddd0700e8c45482c56bb9b0cb3c))
+
 ## [0.3.0](https://github.com/IA-Generative/ocr-api/compare/v0.2.0...v0.3.0) (2025-11-21)
 
 
