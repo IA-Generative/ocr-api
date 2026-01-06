@@ -5,10 +5,10 @@ version = "0.3.0"
 
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
     "httpx>=0.28.1",
-    "python-json-logger==3.3.0",
+    "python-json-logger>=3.3.0",
     "setuptools>=80.9.0",
     "toml>=0.10.2",
     "minio>=7.2.16",
@@ -31,7 +31,7 @@ stress-test = [
 test = [
     "httpx>=0.25.0",
     "pytest-asyncio>=0.26.0",
-    "pytest==8.3.5",
+    "pytest>=8.3.5",
     "ruff>=0.11.5",
     "pytest-cov>=6.1.1",
     # "celery[pytest]>=5.5.1",
@@ -39,42 +39,45 @@ test = [
     "requests>=2.32.3",
     "coverage>=7.8.0",
     "datasets>=3.6.0",
+    "moto[s3]>=5.1.19",
 ]
 ocr-backend = [
     "httpx>=0.25.0",
     "fastapi>=0.116.1",
-    "uvicorn[standard]==0.35.0",
-    "python-multipart==0.0.20",
+    "uvicorn[standard]>=0.35.0",
+    "python-multipart>=0.0.20",
     "prometheus-fastapi-instrumentator>=7.1.0",
     "python-keycloak>=5.7.0",
 ]
 
 ocr-service-paddle = [
+
     "opencv-python-headless>=4.11.0.86",
-    "paddleocr==2.10.0",
-    "paddlepaddle==3.0.0",
-    "pdf2image==1.17.0",
-    "pillow==10.4.0",
+    "paddleocr[doc-parser]>=3.3.2",
+    "paddlepaddle==3.2.0",
+    "pdf2image>=1.17.0",
+    "pillow>=10.4.0",
     "psutil>=7.0.0",
     "pynvml>=12.0.0",
 ]
 
 ocr-service-paddle-gpu = [
     "opencv-python-headless>=4.11.0.86",
-    "pdf2image==1.17.0",
-    "pillow==10.4.0",
+    "pdf2image>=1.17.0",
+    "pillow>=10.4.0",
     "psutil>=7.0.0",
     "pynvml>=12.0.0",
 ]
 
 services = [
     "docx2txt>=0.9",
-    "langchain-community>=0.4",
+    "langchain-community>=0.4.1",
     "langfuse>=3.5.1",
     "odfpy>=1.4.1",
     "opencv-python-headless>=4.11.0.86",
-    "pdf2image==1.17.0",
-    "pillow==10.4.0",
+    "openpyxl>=3.1.5",
+    "pdf2image>=1.17.0",
+    "pillow>=10.4.0",
     "psutil>=7.0.0",
     "pynvml>=12.0.0",
     "pypandoc-binary>=1.15",
@@ -109,14 +112,8 @@ business-forms = [
     "pydantic>=2.11.7",
     "pymupdf>=1.26.3",
 ]
-ocr-service-features = [
-    "efficientnet-pytorch>=0.7.1",
-    "torch>=2.8.0",
-    "torchvision>=0.23.0",
-    "transformers>=4.55.2",
-]
+
 ocr-docling = [
-    "docling>=2.47.1",
 ]
 
 
