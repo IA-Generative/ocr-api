@@ -11,6 +11,7 @@ OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
 VISION_MODEL = os.environ.get("VISION_MODEL")
 
 
+@pytest.mark.skipif(not OPENAI_API_KEY, reason="OPENAI_API_KEY not set")
 def test_vision_extraction_only_unit(monkeypatch: pytest.MonkeyPatch):
     client = OpenAI(
         api_key=OPENAI_API_KEY,

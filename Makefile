@@ -164,6 +164,26 @@ test-services-paddleocr2.10.0: build-container-dependencies up-db ## Test Paddle
 	docker compose -f docker-compose-test.yaml up paddleocr2_service --exit-code-from paddleocr2_service
 	make down-test
 
+test-locally-services-paddleocr: install-uv ## Test PaddleOCR locally
+	cd apps/server && \
+		uv sync --group test --group ocr-service-paddle && \
+		PYTHONPATH=./ uv run pytest tests/business/paddleocr2 -s --cov=./business/paddleocr2 --cov-report=term-missing -ra -v --maxfail=0
+
+test-locally-services-checkbox: install-uv ## Test Checkbox service locally
+	cd apps/server && \
+		uv sync --group test --group checkbox_service && \
+		PYTHONPATH=./ uv run pytest tests/business/checkbox_service -s --cov=./business/checkbox_service --cov-report=term-missing -ra -v --maxfail=0
+
+test-locally-services-forms: install-uv ## Test Forms service locally
+	cd apps/server && \
+		uv sync --group test --group business-forms --group services && \
+		PYTHONPATH=./ uv run pytest tests/business/forms -s --cov=./business/forms --cov-report=term-missing -ra -v --maxfail=0
+
+test-locally-services-llm: install-uv ## Test Forms service locally
+	cd apps/server && \
+		uv sync --group test --group llm --group services && \
+		PYTHONPATH=./ uv run pytest tests/business/llm -s --cov=./business/llm --cov-report=term-missing -ra -v --maxfail=0
+
 # test-services-paddleocr3.1.0: build-container-dependencies up-db ## Test PaddleOCR 3.1.0
 # 	docker compose -f docker-compose-test.yaml up paddleocr3_service --exit-code-from paddleocr3_service
 # 	make down-test

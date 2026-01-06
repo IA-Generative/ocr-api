@@ -43,6 +43,7 @@ def test_vision_extraction_only():
     assert isinstance(result[0].form_entries[0], LLMFormField)
 
 
+@pytest.mark.skipif(not OPENAI_API_KEY, reason="OPENAI_API_KEY not set")
 def test_vision_extraction_only_unit(monkeypatch: pytest.MonkeyPatch):
     client = OpenAI(
         api_key=OPENAI_API_KEY,

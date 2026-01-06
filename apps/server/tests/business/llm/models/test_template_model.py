@@ -78,6 +78,7 @@ def test_llm_template_extractor_with_correction_integration():
     assert isinstance(pages[0].form_entries[0], LLMFormField)
 
 
+@pytest.mark.skipif(not OPENAI_API_KEY, reason="OPENAI_API_KEY not set")
 def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyPatch):
     client = OpenAI(
         api_key=OPENAI_API_KEY,

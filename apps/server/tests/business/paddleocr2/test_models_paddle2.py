@@ -1,12 +1,19 @@
-import os
 import pytest
 from PIL import Image
 from src.schemas.output import Page
-from business.paddleocr2.models.paddle import PaddleInferOCR2
+from business.paddleocr2.models.paddle import PaddleInferenceOCRV5
+from pathlib import Path
+
+
+@pytest.fixture(scope="module", autouse=True)
+def setup_models():
+    # Ensure the model path exists
+    model_path = Path("models/paddleocr/v5/")
+    model_path.mkdir(parents=True, exist_ok=True)
 
 
 def test_ocr_inference():
-    obj = PaddleInferOCR2(path_model=os.environ.get("PADDLE_OCR_BASE_DIR"))
+    obj = PaddleInferenceOCRV5()
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")
     actual_pages = obj.batch_predict(images=[image])
@@ -15,7 +22,7 @@ def test_ocr_inference():
 
 
 def test_ocr_empty_image():
-    obj = PaddleInferOCR2(path_model=os.environ.get("PADDLE_OCR_BASE_DIR"))
+    obj = PaddleInferenceOCRV5()
     # create an empty image
     image = Image.new("RGB", (100, 100), color=(255, 255, 255))
 
@@ -25,7 +32,7 @@ def test_ocr_empty_image():
 
 
 def test_size_pages_not_align():
-    obj = PaddleInferOCR2(path_model=os.environ.get("PADDLE_OCR_BASE_DIR"))
+    obj = PaddleInferenceOCRV5()
     image_path = "tests/data/valid/identite.jpg"
     image = Image.open(image_path).convert("RGB")
     with pytest.raises(AssertionError):

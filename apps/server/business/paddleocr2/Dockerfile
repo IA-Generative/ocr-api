@@ -39,7 +39,7 @@ COPY apps/server/business/__init__.py /app/business/__init__.py
 COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
 COPY apps/server/business/forms /app/business/forms
-COPY apps/server/business/features /app/business/features
+# COPY apps/server/business/features /app/business/features
 COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/docling_inference /app/business/docling_inference
 COPY apps/server/business/extractions /app/business/extractions

@@ -4,9 +4,9 @@ from openai import AsyncOpenAI
 from services.base.pipeline import Pipeline
 from business.cache.sql_cache import TaskCache
 
-## Models
+# Models
 from business.checkbox_service.models.morpho import MorphoBoxDetection
-from business.paddleocr2.models.paddle import PaddleInferOCR2
+from business.paddleocr2.models.paddle import PaddleInferenceOCRV5
 from business.llm.models.vision import LLMToForm
 from business.llm.models.classification import FormClassification
 from business.llm.models.base import VisionLLMOCR
@@ -28,7 +28,7 @@ from business.extractions.worker.file_worker import (
 )
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
-from business.paddleocr2.configs.paddle import PaddleSetting
+
 from src.config.ocr_model import OCRModelSettings
 
 from src.connector import S3Connector, s3_settings
@@ -57,7 +57,7 @@ def load_worker(
     #################################################
 
     #################    MODELS   ####################
-    ocr_model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
+    ocr_model = PaddleInferenceOCRV5()
     morpho_model = MorphoBoxDetection()
     vlm_visual_form_parser = LLMToForm(
         client=openai_client,

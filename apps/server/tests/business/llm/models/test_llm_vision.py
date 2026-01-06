@@ -27,6 +27,7 @@ def test_vision_extraction_integration():
     assert result[0].boxes[0].text
 
 
+@pytest.mark.skipif(not OPENAI_API_KEY, reason="OPENAI_API_KEY not set")
 def test_vision_extraction(monkeypatch: pytest.MonkeyPatch):
     client = OpenAI(
         api_key=OPENAI_API_KEY,
