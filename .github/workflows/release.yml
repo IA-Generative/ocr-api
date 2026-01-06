@@ -6,6 +6,9 @@ on:
       release-created:
         description: Has the release been created
         value: ${{ jobs.release.outputs.release-created }}
+      tag_name:
+        description: Released version tag
+        value: ${{ jobs.release.outputs.tag_name }}
       major-tag:
         description: Major version tag
         value: ${{ jobs.release.outputs.major-tag }}
@@ -15,6 +18,9 @@ on:
       patch-tag:
         description: Patch version tag
         value: ${{ jobs.release.outputs.patch-tag }}
+      version:
+        description: Version number without v prefix
+        value: ${{ jobs.release.outputs.version }}
 
 jobs:
   release:
@@ -25,6 +31,8 @@ jobs:
       major-tag: ${{ steps.release.outputs.major }}
       minor-tag: ${{ steps.release.outputs.minor }}
       patch-tag: ${{ steps.release.outputs.patch }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
     permissions:
       contents: write
       pull-requests: write
