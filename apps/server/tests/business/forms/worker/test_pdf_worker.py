@@ -60,8 +60,7 @@ def test_worker_extractor_not_process(
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
-    worker = PDFFormsExtractorWorker(
-        name="test", file_connector=storage_service, models=[], cache=None)
+    worker = PDFFormsExtractorWorker(name="test", file_connector=storage_service, models=[], cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == dummy_task.percentage
     assert update_task.status != dummy_task.status
@@ -83,8 +82,7 @@ def test_worker_extractor_process_pdf(
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
-    worker = PDFFormsExtractorWorker(
-        name="test", file_connector=storage_service, models=[], cache=None)
+    worker = PDFFormsExtractorWorker(name="test", file_connector=storage_service, models=[], cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task != dummy_task
     assert len(update_task.output.pages) > 0

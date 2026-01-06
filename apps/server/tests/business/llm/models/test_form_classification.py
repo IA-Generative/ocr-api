@@ -22,8 +22,7 @@ def test_vision_extraction_only_unit(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         type(obj.client.chat.completions),
         "create",
-        lambda self, *
-        args, **kwargs: ImageFormDetector(is_form=True, confidence=0.95),
+        lambda self, *args, **kwargs: ImageFormDetector(is_form=True, confidence=0.95),
     )
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")

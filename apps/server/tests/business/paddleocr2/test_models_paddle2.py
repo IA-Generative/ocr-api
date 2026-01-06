@@ -13,7 +13,6 @@ def setup_models():
 
 
 def test_ocr_inference():
-
     obj = PaddleInferenceOCRV5()
     image_path = "tests/data/valid/formulaire-cerfa-complete.png"
     image = Image.open(image_path).convert("RGB")

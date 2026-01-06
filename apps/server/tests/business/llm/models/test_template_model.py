@@ -34,8 +34,7 @@ def test_llm_template_extractor_integration():
         pages=[
             Page(
                 page=1,
-                boxes=[Bbox(x=0, y=0, width=1, height=1,
-                            confidence=1, text=text)],
+                boxes=[Bbox(x=0, y=0, width=1, height=1, confidence=1, text=text)],
             )
         ],
     )
@@ -69,8 +68,7 @@ def test_llm_template_extractor_with_correction_integration():
         pages=[
             Page(
                 page=1,
-                boxes=[Bbox(x=0, y=0, width=1, height=1,
-                            confidence=1, text=text)],
+                boxes=[Bbox(x=0, y=0, width=1, height=1, confidence=1, text=text)],
             )
         ],
     )
@@ -91,10 +89,8 @@ def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyP
         type(obj.instructor.chat.completions),
         "create",
         lambda self, *args, **kwargs: [
-            LLMFormField(name="Name", value="Roger",
-                         type="checkbox", filled=True, sections=[]),
-            LLMFormField(name="Prénom", value="Jean",
-                         type="text", filled=True, sections=[]),
+            LLMFormField(name="Name", value="Roger", type="checkbox", filled=True, sections=[]),
+            LLMFormField(name="Prénom", value="Jean", type="text", filled=True, sections=[]),
             LLMFormField(
                 name="Adresse",
                 value="5 route de la lumiere 75001 Paris",
@@ -102,8 +98,7 @@ def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyP
                 filled=True,
                 sections=[],
             ),
-            LLMFormField(name="Numéro", value="0123456789",
-                         type="text", filled=True, sections=[]),
+            LLMFormField(name="Numéro", value="0123456789", type="text", filled=True, sections=[]),
             LLMFormField(
                 name="propietire",
                 value="[x]",
@@ -111,8 +106,7 @@ def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyP
                 filled=True,
                 sections=[],
             ),
-            LLMFormField(name="Numéro", value="0123456789",
-                         type="text", filled=True, sections=[]),
+            LLMFormField(name="Numéro", value="0123456789", type="text", filled=True, sections=[]),
             LLMFormField(
                 name="propietire",
                 value="[x]",
@@ -120,8 +114,7 @@ def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyP
                 filled=True,
                 sections=[],
             ),
-            LLMFormField(
-                name="Loctaire", value="[ ]", type="checkbox", filled=False, sections=[]),
+            LLMFormField(name="Loctaire", value="[ ]", type="checkbox", filled=False, sections=[]),
         ],
     )
     text = """
@@ -138,8 +131,7 @@ def test_llm_template_extractor_with_correction_unit(monkeypatch: pytest.MonkeyP
         pages=[
             Page(
                 page=1,
-                boxes=[Bbox(x=0, y=0, width=1, height=1,
-                            confidence=1, text=text)],
+                boxes=[Bbox(x=0, y=0, width=1, height=1, confidence=1, text=text)],
             )
         ],
     )

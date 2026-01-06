@@ -31,8 +31,7 @@ class PaddleInferOCR2(BaseModelPrediction):
         for i, image in enumerate(images):
             width_img, height_img = image.size
             t = time()
-            predictions = self.model.ocr(
-                np.array(image), det=True, rec=True, cls=True)
+            predictions = self.model.ocr(np.array(image), det=True, rec=True, cls=True)
             logger.info(f"[PaddleOCR] Inference time: {time() - t:.2f}s")
             page_boxes: List[Bbox] = []
 
