@@ -12,16 +12,22 @@ class Page(BaseModel):
     page: int
     page_url: Optional[str] = None
     boxes: List[Bbox] = Field(default_factory=list, description="Detections")
-    layouts: List[Layout] = Field(default_factory=list, description="Layout definition")
-    checkboxes: List[Checkbox] = Field(default_factory=list, description="Checkbox definition")
-    form_entries: List[Union[LLMFormField, FormEntry]] = Field(default_factory=list, description="Form extraction")
+    layouts: List[Layout] = Field(
+        default_factory=list, description="Layout definition")
+    checkboxes: List[Checkbox] = Field(
+        default_factory=list, description="Checkbox definition")
+    form_entries: List[Union[LLMFormField, FormEntry]] = Field(
+        default_factory=list, description="Form extraction")
     image_form_detector: Optional[ImageFormDetector] = Field(
         default=None, description="Détection de formulaire d'image"
     )
-    vector: Optional[Vector] = Field(None, description="Vector representation of the page")
+    vector: Optional[Vector] = Field(
+        None, description="Vector representation of the page")
     similar_template_ids: List[tuple[str, float]] = Field(
         default_factory=list, description="List of similar template IDs"
     )
+    markdown: Optional[str] = Field(
+        default=None, description="Markdown representation of the page")
 
 
 class OCRResult(BaseModel):
@@ -37,6 +43,8 @@ class OCRResult(BaseModel):
     text: Optional[str] = ""
 
     def set_page_text(self, page: Page, delta_y: float = 0.005) -> str:
+        if page.markdown:
+            return page.markdown
         page_lines_content = []
         checkboxes = [
             Bbox(
@@ -50,7 +58,8 @@ class OCRResult(BaseModel):
             for checkbox in page.checkboxes
         ]
 
-        sorted_bboxes = sort_bboxes_reading_order(bboxes=page.boxes + checkboxes, delta_y=delta_y)
+        sorted_bboxes = sort_bboxes_reading_order(
+            bboxes=page.boxes + checkboxes, delta_y=delta_y)
         for line_sorted_boxes in sorted_bboxes:
             text_line = get_text_from_list_bboxes(line_sorted_boxes)
             page_lines_content.append(text_line)
@@ -59,12 +68,18 @@ class OCRResult(BaseModel):
         return page_content
 
     def set_text(self, delta_y: float = 0.005):
+
         self.text = ""
         pages_content_per_page = []
 
         for i, page in enumerate(self.pages):
             page_lines_content = f"{20 * '-'} Page: {i + 1} {20 * '-'}\n"
-            page_content = page_lines_content + self.set_page_text(page, delta_y=delta_y)
+            if page.markdown:
+                page_content = page.markdown
+                pages_content_per_page.append(page_lines_content+page_content)
+                continue
+            page_content = page_lines_content + \
+                self.set_page_text(page, delta_y=delta_y)
             pages_content_per_page.append(page_content)
 
         self.text = "\n".join(pages_content_per_page)
