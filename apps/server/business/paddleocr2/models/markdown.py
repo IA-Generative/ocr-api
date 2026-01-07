@@ -11,38 +11,12 @@ from src.schemas.box import Bbox
 from src.logger import logger
 
 
-class PPStructureV3fix(PPStructureV3):
-    def __init__(self, layout_detection_model_name=None, layout_detection_model_dir=None, layout_threshold=None, layout_nms=None, layout_unclip_ratio=None, layout_merge_bboxes_mode=None, chart_recognition_model_name=None, chart_recognition_model_dir=None, chart_recognition_batch_size=None, region_detection_model_name=None, region_detection_model_dir=None, doc_orientation_classify_model_name=None, doc_orientation_classify_model_dir=None, doc_unwarping_model_name=None, doc_unwarping_model_dir=None, text_detection_model_name=None, text_detection_model_dir=None, text_det_limit_side_len=None, text_det_limit_type=None, text_det_thresh=None, text_det_box_thresh=None, text_det_unclip_ratio=None, textline_orientation_model_name=None, textline_orientation_model_dir=None, textline_orientation_batch_size=None, text_recognition_model_name=None, text_recognition_model_dir=None, text_recognition_batch_size=None, text_rec_score_thresh=None, table_classification_model_name=None, table_classification_model_dir=None, wired_table_structure_recognition_model_name=None, wired_table_structure_recognition_model_dir=None, wireless_table_structure_recognition_model_name=None, wireless_table_structure_recognition_model_dir=None, wired_table_cells_detection_model_name=None, wired_table_cells_detection_model_dir=None, wireless_table_cells_detection_model_name=None, wireless_table_cells_detection_model_dir=None, table_orientation_classify_model_name=None, table_orientation_classify_model_dir=None, seal_text_detection_model_name=None, seal_text_detection_model_dir=None, seal_det_limit_side_len=None, seal_det_limit_type=None, seal_det_thresh=None, seal_det_box_thresh=None, seal_det_unclip_ratio=None, seal_text_recognition_model_name=None, seal_text_recognition_model_dir=None, seal_text_recognition_batch_size=None, seal_rec_score_thresh=None, formula_recognition_model_name=None, formula_recognition_model_dir=None, formula_recognition_batch_size=None, use_doc_orientation_classify=None, use_doc_unwarping=None, use_textline_orientation=None, use_seal_recognition=None, use_table_recognition=None, use_formula_recognition=None, use_chart_recognition=None, use_region_detection=None, lang=None, ocr_version=None, **kwargs):
-        super().__init__(layout_detection_model_name, layout_detection_model_dir, layout_threshold, layout_nms, layout_unclip_ratio, layout_merge_bboxes_mode, chart_recognition_model_name, chart_recognition_model_dir, chart_recognition_batch_size, region_detection_model_name, region_detection_model_dir, doc_orientation_classify_model_name, doc_orientation_classify_model_dir, doc_unwarping_model_name, doc_unwarping_model_dir, text_detection_model_name, text_detection_model_dir, text_det_limit_side_len, text_det_limit_type, text_det_thresh, text_det_box_thresh, text_det_unclip_ratio, textline_orientation_model_name, textline_orientation_model_dir, textline_orientation_batch_size, text_recognition_model_name, text_recognition_model_dir, text_recognition_batch_size, text_rec_score_thresh, table_classification_model_name, table_classification_model_dir, wired_table_structure_recognition_model_name, wired_table_structure_recognition_model_dir,
-                         wireless_table_structure_recognition_model_name, wireless_table_structure_recognition_model_dir, wired_table_cells_detection_model_name, wired_table_cells_detection_model_dir, wireless_table_cells_detection_model_name, wireless_table_cells_detection_model_dir, table_orientation_classify_model_name, table_orientation_classify_model_dir, seal_text_detection_model_name, seal_text_detection_model_dir, seal_det_limit_side_len, seal_det_limit_type, seal_det_thresh, seal_det_box_thresh, seal_det_unclip_ratio, seal_text_recognition_model_name, seal_text_recognition_model_dir, seal_text_recognition_batch_size, seal_rec_score_thresh, formula_recognition_model_name, formula_recognition_model_dir, formula_recognition_batch_size, use_doc_orientation_classify, use_doc_unwarping, use_textline_orientation, use_seal_recognition, use_table_recognition, use_formula_recognition, use_chart_recognition, use_region_detection, lang, ocr_version, **kwargs)
-
-        self._params["layout_detection_model_name"] = layout_detection_model_name
-        self._params["layout_detection_model_dir"] = layout_detection_model_dir
-        self._params["layout_threshold"] = layout_threshold
-        self._params["layout_nms"] = layout_nms
-        self._params["layout_unclip_ratio"] = layout_unclip_ratio
-        self._params["layout_merge_bboxes_mode"] = layout_merge_bboxes_mode
-        self._params["chart_recognition_model_name"] = chart_recognition_model_name
-        self._params["chart_recognition_model_dir"] = chart_recognition_model_dir
-        self._params["chart_recognition_batch_size"] = chart_recognition_batch_size
-        self._params["region_detection_model_name"] = region_detection_model_name
-        self._params["region_detection_model_dir"] = region_detection_model_dir
-        self._params["doc_orientation_classify_model_name"] = doc_orientation_classify_model_name
-        self._params["doc_orientation_classify_model_dir"] = doc_orientation_classify_model_dir
-        self._params["doc_unwarping_model_name"] = doc_unwarping_model_name
-        self._params["doc_unwarping_model_dir"] = doc_unwarping_model_dir
-        self._params["text_detection_model_name"] = text_detection_model_name
-        self._params["text_detection_model_dir"] = text_detection_model_dir
-        self._params["text_det_limit_side_len"] = text_det_limit_side_len
-        self._params['use_chart_recognition'] = use_chart_recognition
-
-
 class PPStructureInferV5(BaseModelPrediction):
     def __init__(self, **options):
         chart_recognition_model_name = None
         chart_recognition_model_dir = None
 
-        self.model: PPStructureV3 = PPStructureV3fix(
+        self.model: PPStructureV3 = PPStructureV3(
             # text_detection_model_name=options.get(
             #     "text_detection_model_name", "PP-OCRv5_mobile_det"),
             # text_recognition_model_name=options.get(
