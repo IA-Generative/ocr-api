@@ -124,24 +124,25 @@ class SyncOCRClient:
             raise FileNotFoundError(f"File not found: {file_path}")
         
         # Prepare form data
-        files = {
-            "file": (file_path.name, open(file_path, "rb")),
-        }
-        
-        data = {
-            "group_id": group_id,
-            "task_operation": task_operation.value,
-        }
-        
-        if interest_zone:
-            data["interest_zone"] = interest_zone
-        
-        response = self._request(
-            "POST",
-            "/api/jobs/",
-            files=files,
-            data=data,
-        )
+        with open(file_path, "rb") as f:
+            files = {
+                "file": (file_path.name, f),
+            }
+            
+            data = {
+                "group_id": group_id,
+                "task_operation": task_operation.value,
+            }
+            
+            if interest_zone:
+                data["interest_zone"] = interest_zone
+            
+            response = self._request(
+                "POST",
+                "/api/jobs/",
+                files=files,
+                data=data,
+            )
         
         return TaskModel(**response.json())
 
