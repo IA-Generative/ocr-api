@@ -185,3 +185,8 @@ test-backend-api: build-container-dependencies up-db ## Test ocr backend
 
 generate-openapi: up-frontend  ## Génère la documentation OpenAPI
 	docker compose -f $(FRONTEND_COMPOSE_FILE) exec ocr_frontend pnpm run generate-openapi
+
+test-sdk: install-uv ## Test le SDK Python
+	cd sdk && \
+	uv sync --dev && \
+	uv run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests

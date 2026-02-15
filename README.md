@@ -7,6 +7,35 @@ Cette API fournit un service d’extraction de texte à partir de fichiers PDF o
 
 ![DEMO](docs/images/demo-ocr.gif)
 
+## SDK Python
+
+Un SDK Python est disponible pour faciliter l'intégration de l'API OCR dans vos projets. Le SDK supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+
+📦 **[Voir le SDK](sdk/README.md)** - Client Python avec support async/sync
+
+### Installation rapide du SDK
+
+```bash
+cd sdk
+uv pip install -e .
+# ou
+pip install -e .
+```
+
+### Utilisation du SDK
+
+```python
+from ocr_sdk import SyncOCRClient
+
+with SyncOCRClient("http://localhost:5000") as client:
+    task = client.create_job("document.pdf")
+    result = client.wait_for_task(task.id)
+    text = client.get_task_text(task.id)
+    print(text)
+```
+
+Pour plus de détails, consultez la [documentation du SDK](sdk/README.md).
+
 ## [Fonctionnement](docs/server/asyncronus.md)
 
 Dans cette section vous trouverez le fonctionnement de cette application [docs/server/asyncronus.md](docs/server/asyncronus.md)

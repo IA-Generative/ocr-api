@@ -33,6 +33,23 @@ jobs:
         run: |
           make test-backend-api
 
+  run-tests-sdk:
+    runs-on: actions-runner-controller
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies and run tests
+        run: |
+          make test-sdk
+
   run-tests-service-paddle:
     runs-on: actions-runner-controller
     permissions:
