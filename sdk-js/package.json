@@ -1,0 +1,39 @@
+{
+  "name": "@ia-generative/ocr-sdk",
+  "version": "0.1.0",
+  "description": "JavaScript SDK for OCR API - Client to interact with the OCR API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "node --test",
+    "lint": "eslint src/**/*.ts"
+  },
+  "keywords": [
+    "ocr",
+    "sdk",
+    "client",
+    "api",
+    "document",
+    "processing"
+  ],
+  "author": "IA-Generative",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.5",
+    "form-data": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
