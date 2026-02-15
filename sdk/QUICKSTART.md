@@ -6,13 +6,26 @@
 
 #### From Git Repository
 
+**Option 1: SSH** (requires SSH keys configured)
+
 ```bash
-# Install directly from the repository
 uv add git@github.com:IA-Generative/ocr-api.git#subdirectory=sdk
 ```
-ou 
+
+**Option 2: HTTPS with GitHub Token** (for private repos)
+
 ```bash
-uv add git+ssh://git@github.com/IA-Generative/ocr-api.git#subdirectory=sdk
+# First, set your GitHub token
+export GITHUB_TOKEN=your_personal_access_token
+
+# Then install
+uv add https://${GITHUB_TOKEN}@github.com/IA-Generative/ocr-api.git#subdirectory=sdk
+```
+
+**Option 3: GitHub CLI** (if `gh` is installed and authenticated)
+
+```bash
+uv add https://github.com/IA-Generative/ocr-api.git#subdirectory=sdk
 ```
 
 #### From Local Directory
