@@ -7,13 +7,17 @@ Cette API fournit un service d’extraction de texte à partir de fichiers PDF o
 
 ![DEMO](docs/images/demo-ocr.gif)
 
-## SDK Python
+## SDKs Clients
 
-Un SDK Python est disponible pour faciliter l'intégration de l'API OCR dans vos projets. Le SDK supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+Deux SDKs sont disponibles pour faciliter l'intégration de l'API OCR dans vos projets :
 
-📦 **[Voir le SDK](sdk/README.md)** - Client Python avec support async/sync
+### SDK Python
 
-### Installation rapide du SDK
+Un SDK Python avec support synchrone et asynchrone utilisant Pydantic pour une validation stricte des données.
+
+📦 **[Voir le SDK Python](sdk/README.md)** - Client Python avec support async/sync
+
+#### Installation rapide du SDK Python
 
 ```bash
 cd sdk
@@ -22,7 +26,7 @@ uv pip install -e .
 pip install -e .
 ```
 
-### Utilisation du SDK
+#### Utilisation du SDK Python
 
 ```python
 from ocr_sdk import SyncOCRClient
@@ -34,7 +38,38 @@ with SyncOCRClient("http://localhost:5000") as client:
     print(text)
 ```
 
-Pour plus de détails, consultez la [documentation du SDK](sdk/README.md).
+Pour plus de détails, consultez la [documentation du SDK Python](sdk/README.md).
+
+### SDK JavaScript/TypeScript
+
+Un SDK JavaScript/TypeScript avec support asynchrone natif et types TypeScript complets.
+
+📦 **[Voir le SDK JavaScript](sdk-js/README.md)** - Client JS/TS avec types TypeScript
+
+#### Installation rapide du SDK JavaScript
+
+```bash
+cd sdk-js
+npm install
+npm run build
+```
+
+#### Utilisation du SDK JavaScript
+
+```typescript
+import { SyncOCRClient, TaskOperation } from "@ia-generative/ocr-sdk";
+
+const client = new SyncOCRClient({
+  baseUrl: "http://localhost:5000"
+});
+
+const task = await client.createJob("document.pdf");
+const result = await client.waitForTask(task.id);
+const text = await client.getTaskText(task.id);
+console.log(text);
+```
+
+Pour plus de détails, consultez la [documentation du SDK JavaScript](sdk-js/README.md).
 
 ## [Fonctionnement](docs/server/asyncronus.md)
 
