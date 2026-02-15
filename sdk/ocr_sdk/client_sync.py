@@ -6,19 +6,13 @@ from typing import List, Optional, Union
 
 import httpx
 
-from ocr_sdk.models import (
-    Health,
-    TaskModel,
-    TaskOperation,
-    TaskStatus,
-    ProcessResponse,
-)
+from ocr_sdk.models import Health, TaskModel, TaskOperation, TaskStatus
 from ocr_sdk.exceptions import OCRAPIError, OCRTimeoutError
 
 
 class SyncOCRClient:
     """Synchronous client for OCR API.
-    
+
     Example:
         >>> with SyncOCRClient("http://localhost:5000") as client:
         ...     # Upload a file for OCR processing
@@ -34,7 +28,7 @@ class SyncOCRClient:
         timeout: float = 30.0,
     ):
         """Initialize the sync OCR client.
-        
+
         Args:
             base_url: Base URL of the OCR API (e.g., "http://localhost:5000")
             api_key: Optional API key for authentication
@@ -50,7 +44,7 @@ class SyncOCRClient:
         headers = {}
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
-        
+
         self._client = httpx.Client(
             base_url=self.base_url,
             headers=headers,
@@ -78,7 +72,7 @@ class SyncOCRClient:
     ) -> httpx.Response:
         """Make an HTTP request."""
         self._ensure_client()
-        
+
         try:
             response = self._client.request(method, endpoint, **kwargs)
             response.raise_for_status()
@@ -93,7 +87,7 @@ class SyncOCRClient:
 
     def get_health(self) -> Health:
         """Get health status of the API.
-        
+
         Returns:
             Health object with API status
         """
@@ -108,50 +102,50 @@ class SyncOCRClient:
         task_operation: TaskOperation = TaskOperation.DEFAULT,
     ) -> TaskModel:
         """Create a new OCR job.
-        
+
         Args:
             file_path: Path to the file to process
             group_id: Group ID for the task
             interest_zone: Optional JSON string defining regions of interest
             task_operation: Type of operation to perform
-            
+
         Returns:
             TaskModel with job details
         """
         file_path = Path(file_path)
-        
+
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
-        
+
         # Prepare form data
         with open(file_path, "rb") as f:
             files = {
                 "file": (file_path.name, f),
             }
-            
+
             data = {
                 "group_id": group_id,
                 "task_operation": task_operation.value,
             }
-            
+
             if interest_zone:
                 data["interest_zone"] = interest_zone
-            
+
             response = self._request(
                 "POST",
                 "/api/jobs/",
                 files=files,
                 data=data,
             )
-        
+
         return TaskModel(**response.json())
 
     def get_task(self, task_id: str) -> TaskModel:
         """Get task details by ID.
-        
+
         Args:
             task_id: Task ID
-            
+
         Returns:
             TaskModel with task details
         """
@@ -164,11 +158,11 @@ class SyncOCRClient:
         page_size: int = 10,
     ) -> List[TaskModel]:
         """Get tasks for the authenticated user.
-        
+
         Args:
             page: Page number (1-indexed)
             page_size: Number of tasks per page
-            
+
         Returns:
             List of TaskModel objects
         """
@@ -179,18 +173,6 @@ class SyncOCRClient:
         )
         return [TaskModel(**task) for task in response.json()]
 
-    def get_task_text(self, task_id: str) -> str:
-        """Get extracted text from a completed task.
-        
-        Args:
-            task_id: Task ID
-            
-        Returns:
-            Extracted text content
-        """
-        response = self._request("GET", f"/api/text-task/{task_id}")
-        return response.text
-
     def wait_for_task(
         self,
         task_id: str,
@@ -198,75 +180,37 @@ class SyncOCRClient:
         max_wait_time: float = 300.0,
     ) -> TaskModel:
         """Wait for a task to complete.
-        
+
         Args:
             task_id: Task ID
             poll_interval: Time between status checks in seconds
             max_wait_time: Maximum time to wait in seconds
-            
+
         Returns:
             Completed TaskModel
-            
+
         Raises:
             OCRTimeoutError: If task doesn't complete within max_wait_time
             OCRAPIError: If task fails
         """
         elapsed = 0.0
-        
+
         while elapsed < max_wait_time:
             task = self.get_task(task_id)
-            
+
             if task.status == TaskStatus.COMPLETED.value:
                 return task
             elif task.status == TaskStatus.FAILED.value:
-                error = task.extras.get("error", "Unknown error") if task.extras else "Unknown error"
+                error = (
+                    task.extras.get("error", "Unknown error")
+                    if task.extras
+                    else "Unknown error"
+                )
                 raise OCRAPIError(500, f"Task failed: {error}")
-            
+
             time.sleep(poll_interval)
             elapsed += poll_interval
-        
-        raise OCRTimeoutError(f"Task {task_id} did not complete within {max_wait_time}s")
 
-    def process_document(
-        self,
-        file_path: Union[str, Path],
-        max_wait_time: int = 300,
-        poll_interval: int = 2,
-    ) -> List[ProcessResponse]:
-        """Process a document and wait for results.
-        
-        This is a convenience method that uploads a file and waits for processing.
-        
-        Args:
-            file_path: Path to the file to process
-            max_wait_time: Maximum time to wait in seconds
-            poll_interval: Time between status checks in seconds
-            
-        Returns:
-            List of ProcessResponse objects with page content and metadata
-        """
-        file_path = Path(file_path)
-        
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
-        
-        # Read file content
-        with open(file_path, "rb") as f:
-            file_content = f.read()
-        
-        # Set headers
-        headers = {
-            "X-Filename": file_path.name,
-            "Content-Type": "application/octet-stream",
-            "Max-Wait-Time": str(max_wait_time),
-            "Poll-Interval": str(poll_interval),
-        }
-        
-        response = self._request(
-            "PUT",
-            "/api/process",
-            content=file_content,
-            headers=headers,
+        raise OCRTimeoutError(
+            f"Task {task_id} did not complete within {max_wait_time}s"
         )
-        
-        return [ProcessResponse(**item) for item in response.json()]

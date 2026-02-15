@@ -12,6 +12,10 @@
     "apps/client": {
       "release-type": "node",
       "prerelease": false
-  }
+  }, 
+  "sdk/": {
+      "release-type": "python",
+      "prerelease": false
+    }
 }
 }

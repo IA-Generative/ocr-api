@@ -1,12 +1,13 @@
 """Pydantic models for OCR API inputs and outputs."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from enum import Enum
 from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskStatus(str, Enum):
     """Task status enum."""
+
     CREATED = "created"
     QUEUED = "queued"
     STARTED = "started"
@@ -20,6 +21,7 @@ class TaskStatus(str, Enum):
 
 class TaskOperation(str, Enum):
     """Task operation enum."""
+
     OCR = "ocr"
     DEFAULT = "default"
     SAVE_TEMPLATE = "save_template"
@@ -29,30 +31,28 @@ class TaskOperation(str, Enum):
     DOCLING = "docling"
 
 
-class Bbox(BaseModel):
-    """Bounding box model."""
+class BaseBox(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     x: float
     y: float
     width: float
     height: float
+    confidence: float
+
+
+class Bbox(BaseBox):
+    model_config = ConfigDict(from_attributes=True)
     text: str
-    confidence: Optional[float] = None
 
 
-class Checkbox(BaseModel):
-    """Checkbox model."""
+class Checkbox(BaseBox):
     model_config = ConfigDict(from_attributes=True)
-    x: float
-    y: float
-    width: float
-    height: float
-    confidence: Optional[float] = None
-    is_checked: bool = False
+    is_checked: bool
 
 
 class Layout(BaseModel):
     """Layout model."""
+
     model_config = ConfigDict(from_attributes=True)
     type: str
     bbox: Optional[Bbox] = None
@@ -60,6 +60,7 @@ class Layout(BaseModel):
 
 class RegionOfInterest(BaseModel):
     """Region of interest model."""
+
     model_config = ConfigDict(from_attributes=True)
     interest_zone: list[Bbox] = Field(default_factory=list)
     labels: Optional[str] = None
@@ -67,6 +68,7 @@ class RegionOfInterest(BaseModel):
 
 class InputForm(BaseModel):
     """Input form model."""
+
     model_config = ConfigDict(from_attributes=True)
     storage_file_path: str
     raw_filename: str
@@ -80,6 +82,7 @@ class InputForm(BaseModel):
 
 class FormEntry(BaseModel):
     """Form entry model."""
+
     model_config = ConfigDict(from_attributes=True)
     field_name: Optional[str] = None
     field_value: Optional[str] = None
@@ -87,6 +90,7 @@ class FormEntry(BaseModel):
 
 class Page(BaseModel):
     """Page model."""
+
     model_config = ConfigDict(from_attributes=True)
     page: int
     page_url: Optional[str] = None
@@ -98,6 +102,7 @@ class Page(BaseModel):
 
 class OCRResult(BaseModel):
     """OCR result model."""
+
     model_config = ConfigDict(from_attributes=True)
     type: str
     model_name: str
@@ -112,6 +117,7 @@ class OCRResult(BaseModel):
 
 class TaskModel(BaseModel):
     """Task model."""
+
     model_config = ConfigDict(from_attributes=True)
     id: str
     user_id: str
@@ -130,6 +136,7 @@ class TaskModel(BaseModel):
 
 class Health(BaseModel):
     """Health check model."""
+
     model_config = ConfigDict(from_attributes=True)
     name: str
     version: str
@@ -140,6 +147,7 @@ class Health(BaseModel):
 
 class ProcessResponse(BaseModel):
     """Process response model."""
+
     model_config = ConfigDict(from_attributes=True)
     page_content: str
     metadata: Dict[str, Any]
