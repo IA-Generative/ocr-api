@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "node --test",
+    "test": "node test/validate-sdk.js",
     "lint": "eslint src/**/*.ts"
   },
   "keywords": [
