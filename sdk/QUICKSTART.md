@@ -4,6 +4,19 @@
 
 ### Using uv (Recommended)
 
+#### From Git Repository
+
+```bash
+# Install directly from the repository
+uv add git@github.com:IA-Generative/ocr-api.git#subdirectory=sdk
+```
+ou 
+```bash
+uv add git+ssh://git@github.com/IA-Generative/ocr-api.git#subdirectory=sdk
+```
+
+#### From Local Directory
+
 ```bash
 # Navigate to the SDK directory
 cd sdk
