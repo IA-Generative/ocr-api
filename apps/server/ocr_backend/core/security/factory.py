@@ -39,6 +39,20 @@ class DevToken(BaseVerifyToken):
         return False
 
 
+class ApiToken(BaseVerifyToken):
+    def __init__(self):
+        super().__init__(verify_token=True, is_fastapi=True)
+        logging.info("Using API Token for verification")
+        # TODO: use db or vault to store API keys and get user info associated with the key
+        self.__api_keys = set(os.environ.get("API_KEYS", "default-api-key").split(","))
+
+    def verify(self, ctx: RequestContext) -> bool:
+        if ctx.token in self.__api_keys:
+            ctx.user_id = "api_user"
+            return True
+        return False
+
+
 class KeycloakToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
@@ -55,9 +69,13 @@ class KeycloakToken(BaseVerifyToken):
             client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
         )
         logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
         """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
+        if self.__api_token_verifier.verify(ctx):
+            logging.info("API token valid, skipping Keycloak verification")
+            return True
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
             logging.debug(f"Token info: {user_info.keys()}")

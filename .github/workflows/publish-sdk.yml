@@ -1,0 +1,29 @@
+name: Attach SDK artifact to Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-and-attach:
+    if: startsWith(github.event.release.tag_name, 'ocr-sdk-v')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: 3.13
+        
+      - name: Build SDK
+        working-directory: sdk
+        run: uv build
+
+      - name: Upload artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sdk/dist/*

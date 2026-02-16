@@ -14,7 +14,7 @@
         }, 
         "sdk": {
             "package-name": "ocr-sdk",
-            "include-component-in-tag": false
+            "include-component-in-tag": true
         }
     }
 }
