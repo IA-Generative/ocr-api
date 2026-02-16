@@ -15,7 +15,8 @@ logging.basicConfig(
 class AllowAllAccess(BaseVerifyToken):
     def __init__(self, verify_token=True):
         super().__init__(verify_token, is_fastapi=True)
-        warnings.warn(message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
+        warnings.warn(
+            message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
 
     def verify(self, ctx: RequestContext) -> bool:
         ctx.user_id = "test_user"
@@ -25,7 +26,8 @@ class AllowAllAccess(BaseVerifyToken):
 class DevToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        warnings.warn(message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
+        warnings.warn(
+            message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
         self.user_info = {
             "token1": RequestContext(user_id="test1", email="r@exemple.com", roles=[], token="token1"),
             "token2": RequestContext(user_id="test2", email="r@exemple.com", roles=[], token="token2"),
@@ -39,25 +41,47 @@ class DevToken(BaseVerifyToken):
         return False
 
 
+class ApiToken(BaseVerifyToken):
+    def __init__(self):
+        super().__init__(verify_token=True, is_fastapi=True)
+        logging.info("Using API Token for verification")
+        # TODO: use db or vault to store API keys and get user info associated with the key
+        self.__api_keys = set(os.environ.get(
+            "API_KEYS", "default-api-key").split(","))
+
+    def verify(self, ctx: RequestContext) -> bool:
+        if ctx.token in self.__api_keys:
+            ctx.user_id = "api_user"
+            return True
+        return False
+
+
 class KeycloakToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
         logging.info("Using Keycloak for token verification")
 
         # Configuration Keycloak depuis les variables d'environnement
-        self.keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8080")
+        self.keycloak_url = os.environ.get(
+            "KEYCLOAK_URL", "http://localhost:8080")
         self.realm_name = os.environ.get("KEYCLOAK_REALM", "master")
         self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "your-client-id")
         self.keycloak_openid = KeycloakOpenID(
             server_url=self.keycloak_url,
             client_id=self.client_id,
             realm_name=self.realm_name,
-            client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
+            client_secret_key=os.environ.get(
+                "KEYCLOAK_CLIENT_SECRET", "secret"),
         )
-        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        logging.debug(
+            f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
         """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
+        if self.__api_token_verifier.verify(ctx):
+            logging.info("API token valid, skipping Keycloak verification")
+            return True
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
             logging.debug(f"Token info: {user_info.keys()}")
@@ -71,7 +95,8 @@ class KeycloakToken(BaseVerifyToken):
             ctx.groups = user_info.get("groups", [])
 
             # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
+            ctx.roles = user_info.get("resource_access", {}).get(
+                self.client_id, {}).get("roles", [])
             # Ou si les rôles sont dans realm_access :
             # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
 
@@ -91,4 +116,5 @@ SECURITY_FACTORY: dict[str, BaseVerifyToken] = {
     "keycloak": KeycloakToken,
 }
 
-TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()
+TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get(
+    "VERIFY_TOKEN_MODEL", "keycloak")]()

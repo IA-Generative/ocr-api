@@ -4,7 +4,7 @@ from openai import AsyncOpenAI
 from services.base.pipeline import Pipeline
 from business.cache.sql_cache import TaskCache
 
-## Models
+# Models
 from business.checkbox_service.models.morpho import MorphoBoxDetection
 from business.paddleocr2.models.paddle import PaddleInferOCR2
 from business.llm.models.vision import LLMToForm
@@ -34,7 +34,8 @@ from src.config.ocr_model import OCRModelSettings
 from src.connector import S3Connector, s3_settings
 
 s3_client = boto3.client("s3")
-s3_client_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
+s3_client_connector = S3Connector(
+    s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 main_ocr_settings = OCRModelSettings()
 
 
@@ -46,10 +47,12 @@ def load_worker(
     # logger.info(f"---- {name} selected ----")
     ################# OPENAI CLIENT #################
     openai_client = AsyncOpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY"),
-        base_url=os.environ.get("OPENAI_API_BASE_URL", "https://api.openai.com/v1"),
+        api_key=os.environ.get("OPENAI_API_KEY", "default-api-key"),
+        base_url=os.environ.get("OPENAI_API_BASE_URL",
+                                "https://api.openai.com/v1"),
     )
-    vision_model_name = os.environ.get("VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503")
+    vision_model_name = os.environ.get(
+        "VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503")
     #################################################
 
     ################# CACHE CLIENT ##################
@@ -63,9 +66,12 @@ def load_worker(
         client=openai_client,
         model_name=vision_model_name,
     )
-    vlm_visual_ocr_model = VisionLLMOCR(client=openai_client, model_name=vision_model_name)
-    form_visual_classification_model = FormClassification(client=openai_client, model_name=vision_model_name)
-    from_text_field_extractor = FormFieldExtractor(client=openai_client, model_name=vision_model_name)
+    vlm_visual_ocr_model = VisionLLMOCR(
+        client=openai_client, model_name=vision_model_name)
+    form_visual_classification_model = FormClassification(
+        client=openai_client, model_name=vision_model_name)
+    from_text_field_extractor = FormFieldExtractor(
+        client=openai_client, model_name=vision_model_name)
     ##################################################
 
     ################# WORKERS ########################
