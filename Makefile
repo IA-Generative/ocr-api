@@ -78,7 +78,8 @@ setup-frontend: clean-front ## Prépare le frontend pour le développement
 		pnpm update
 
 up-frontend: setup-frontend ## Lance l'environnement frontend en conteneur
-	docker compose -f $(FRONTEND_COMPOSE_FILE) up -d ocr_frontend
+	docker compose -f $(FRONTEND_COMPOSE_FILE) build --no-cache
+	docker compose -f $(FRONTEND_COMPOSE_FILE) up -d ocr_frontend --force-recreate
 
 down: ## Eteint l'environnement de développement en conteneurs
 	docker compose down || true
