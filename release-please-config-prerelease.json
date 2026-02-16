@@ -3,18 +3,53 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "prerelease": true,
-      "prerelease-type": "rc"
+      "prerelease": true
     },
+
     "apps/server": {
       "release-type": "python",
       "prerelease": true,
-      "prerelease-type": "rc"
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "apps/server/pyproject.toml",
+          "jsonpath": "project.version"
+        },
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name=='ocr-api')].version"
+        }
+      ]
     },
+
     "apps/client": {
       "release-type": "node",
       "prerelease": true,
-      "prerelease-type": "rc"
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "apps/client/package.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    },
+
+    "sdk": {
+      "release-type": "python",
+      "prerelease": true,
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "sdk/pyproject.toml",
+          "jsonpath": "project.version"
+        }, 
+        {
+          "type": "toml",
+          "path": "sdk/uv.lock",
+          "jsonpath": "$.package[?(@.name=='ocr-sdk')].version"
+        }
+      ]
     }
   }
 }

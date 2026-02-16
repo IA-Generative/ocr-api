@@ -5,11 +5,15 @@
             "include-component-in-tag": false
         },
         "apps/client": {
-            "package-name": "apps/client",
+            "package-name": "ocr-client",
             "include-component-in-tag": true
         },
         "apps/server": {
-            "package-name": "apps/server",
+            "package-name": "ocr-server",
+            "include-component-in-tag": true
+        }, 
+        "sdk": {
+            "package-name": "ocr-sdk",
             "include-component-in-tag": true
         }
     }
