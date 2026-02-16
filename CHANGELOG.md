@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.8.3](https://github.com/IA-Generative/ocr-api/compare/v0.8.2...v0.8.3) (2026-02-16)
+
+
+### Bug Fixes
+
+* update package names and include-component-in-tag settings in re… ([#238](https://github.com/IA-Generative/ocr-api/issues/238)) ([e41e106](https://github.com/IA-Generative/ocr-api/commit/e41e10695e4839e525cd5afccc1f675032a1c21e))
+
 ## [0.8.2](https://github.com/IA-Generative/ocr-api/compare/v0.8.1...v0.8.2) (2025-11-21)
 
 
