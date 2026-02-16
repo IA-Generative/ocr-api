@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/IA-Generative/ocr-api/compare/v0.9.0...v0.9.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* update SDK test cases and improve Makefile for testing ([#242](https://github.com/IA-Generative/ocr-api/issues/242)) ([e00afd8](https://github.com/IA-Generative/ocr-api/commit/e00afd832068a76b072ddc3cb9a363a9a92a31b9))
+
 ## [0.9.0](https://github.com/IA-Generative/ocr-api/compare/v0.8.0...v0.9.0) (2026-02-16)
 
 
