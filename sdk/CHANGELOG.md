@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0 (2026-02-16)
+
+
+### Documentation
+
+* update Quick Start Guide with installation instructions for uv ([#233](https://github.com/IA-Generative/ocr-api/issues/233)) ([21ddae5](https://github.com/IA-Generative/ocr-api/commit/21ddae533131c184c269b5ba5f331f4963981c12))
+
 ## [0.1.0] - 2026-02-14
 
 ### Added
