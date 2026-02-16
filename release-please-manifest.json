@@ -1,20 +1,20 @@
 {
     "packages": {
         ".": {
-            "package-name": "ocr",
-            "include-component-in-tag": false
+            "package-name": "ocr-api",
+            "include-component-in-tag": true
         },
         "apps/client": {
             "package-name": "ocr-client",
-            "include-component-in-tag": true
+            "include-component-in-tag": false
         },
         "apps/server": {
             "package-name": "ocr-server",
-            "include-component-in-tag": true
+            "include-component-in-tag": false
         }, 
         "sdk": {
             "package-name": "ocr-sdk",
-            "include-component-in-tag": true
+            "include-component-in-tag": false
         }
     }
 }
