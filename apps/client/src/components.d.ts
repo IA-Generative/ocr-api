@@ -12,11 +12,14 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppHeader: typeof import('./components/AppHeader.vue')['default']
     AppToaster: typeof import('./components/AppToaster.vue')['default']
     CustomCard: typeof import('./components/CustomCard.vue')['default']
     DsfrAlert: typeof import('@gouvminint/vue-dsfr')['DsfrAlert']
     DsfrButton: typeof import('@gouvminint/vue-dsfr')['DsfrButton']
+    DsfrButtonGroup: typeof import('@gouvminint/vue-dsfr')['DsfrButtonGroup']
     DsfrCallout: typeof import('@gouvminint/vue-dsfr')['DsfrCallout']
+    DsfrDropdown: typeof import('./components/DsfrDropdown.vue')['default']
     DsfrFileUpload: typeof import('@gouvminint/vue-dsfr')['DsfrFileUpload']
     DsfrHeader: typeof import('@gouvminint/vue-dsfr')['DsfrHeader']
     DsfrPagination: typeof import('@gouvminint/vue-dsfr')['DsfrPagination']
@@ -32,11 +35,14 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AppHeader: typeof import('./components/AppHeader.vue')['default']
   const AppToaster: typeof import('./components/AppToaster.vue')['default']
   const CustomCard: typeof import('./components/CustomCard.vue')['default']
   const DsfrAlert: typeof import('@gouvminint/vue-dsfr')['DsfrAlert']
   const DsfrButton: typeof import('@gouvminint/vue-dsfr')['DsfrButton']
+  const DsfrButtonGroup: typeof import('@gouvminint/vue-dsfr')['DsfrButtonGroup']
   const DsfrCallout: typeof import('@gouvminint/vue-dsfr')['DsfrCallout']
+  const DsfrDropdown: typeof import('./components/DsfrDropdown.vue')['default']
   const DsfrFileUpload: typeof import('@gouvminint/vue-dsfr')['DsfrFileUpload']
   const DsfrHeader: typeof import('@gouvminint/vue-dsfr')['DsfrHeader']
   const DsfrPagination: typeof import('@gouvminint/vue-dsfr')['DsfrPagination']
