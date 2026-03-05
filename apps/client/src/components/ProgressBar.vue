@@ -25,7 +25,7 @@ const progressColor = computed(() => {
     v-if="visible"
     class="mt-4"
   >
-    <div>En cours de chargement... ({{ progress }}%)</div>
+    <div>{{ text ?? 'En cours de chargement ...' }} ({{ progress }}%)</div>
     <div class="progress-bar-container">
       <div
         class="progress-bar"
