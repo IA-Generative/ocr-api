@@ -164,8 +164,6 @@ def test_delete_tasks_by_date_and_status_success(
     )
 
     assert response.status_code == 204
-    data = response.json()
-    assert len(data) == 2
     for task in mock_tasks:
         mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
 
@@ -210,5 +208,3 @@ async def test_delete_tasks_by_date_and_status_not_found():
         )
 
         assert response.status_code == 204
-        data = response.json()
-        assert len(data) == 0
