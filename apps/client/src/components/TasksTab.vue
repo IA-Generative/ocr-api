@@ -165,7 +165,7 @@ const paginatedTasks = computed(() => {
   const resolved = paginatedData && Object.prototype.hasOwnProperty.call(paginatedData, 'value')
     ? paginatedData.value
     : paginatedData
-
+  console.log('Resolved paginated data for sorting:', resolved)
   const items = resolved?.items ?? []
   if (!sortKey.value) return items
   return [...items].sort((a: any, b: any) => {
