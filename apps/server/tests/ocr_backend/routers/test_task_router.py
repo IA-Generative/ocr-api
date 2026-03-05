@@ -167,8 +167,7 @@ def test_delete_tasks_by_date_and_status_success(
     data = response.json()
     assert len(data) == 2
     for task in mock_tasks:
-        mock_s3.delete_by_task_id.assert_any_call(
-            user_id=task.user_id, task_id=task.id)
+        mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
 
     response = client.delete(
         "/api/v1/tasks/",
