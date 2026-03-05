@@ -126,7 +126,7 @@ const http = createHttpClient(OCR_API_URL)
 
 const fetchConnectedUsers = async () => {
   try {
-    const { data } = await http.get('/tasks/count-users-today')
+    const { data } = await http.get('/users/count-users-today')
     connectedUsers.value = data?.users_today ?? null
   }
   catch (e) {
