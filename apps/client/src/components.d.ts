@@ -30,6 +30,9 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SideBar: typeof import('./components/SideBar.vue')['default']
+    StatModel: typeof import('./components/StatModel.vue')['default']
+    StatsModel: typeof import('./components/StatsModel.vue')['default']
+    TasksTab: typeof import('./components/TasksTab.vue')['default']
   }
 }
 
@@ -53,4 +56,7 @@ declare global {
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']
   const SideBar: typeof import('./components/SideBar.vue')['default']
+  const StatModel: typeof import('./components/StatModel.vue')['default']
+  const StatsModel: typeof import('./components/StatsModel.vue')['default']
+  const TasksTab: typeof import('./components/TasksTab.vue')['default']
 }

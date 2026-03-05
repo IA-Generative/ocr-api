@@ -9,6 +9,7 @@ import InfoBulle from '@/components/InfoBulle.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
+import TasksTab from '@/components/TasksTab.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 const store = useOcrStore()
@@ -68,6 +69,7 @@ const myOtherTools = ref([
 const uploadHint = 'Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l’outil de reconnaissance de texte sera performant.'
 const uploadLabel = 'Ajouter un fichier'
 const uploadAccept = 'image/jpeg,image/png,application/pdf'
+const currentTab = ref<'ocr' | 'tasks'>('ocr')
 
 onBeforeUnmount(() => {
   if (pdfUrl.value) {
@@ -94,40 +96,61 @@ onBeforeUnmount(() => {
         </h1>
       </div>
 
+      <div class="tabs flex gap-2 mt-4">
+        <DsfrButton
+          label="OCR"
+          :priority="currentTab === 'ocr' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'ocr'"
+        />
+        <DsfrButton
+          label="Mes tâches"
+          :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'tasks'"
+        />
+      </div>
+
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
         <InfoBulle />
 
         <div class="page-container">
-          <!-- File Upload -->
-          <div class="file-upload-container flex flex-col">
-            <DsfrFileUpload
-              :label="uploadLabel"
-              :hint="uploadHint"
-              :error="uploadError"
-              :accept="uploadAccept"
-              @change="selectFile"
-            />
-
-            <div class="mt-4">
-              <DsfrButton
-                label="Extraire le texte"
-                size="lg"
-                :disabled="!selectedFile || isPolling || isLoading"
-                @click="startOcr"
+          <div v-if="currentTab === 'ocr'">
+            <!-- File Upload -->
+            <div class="file-upload-container flex flex-col">
+              <DsfrFileUpload
+                :label="uploadLabel"
+                :hint="uploadHint"
+                :error="uploadError"
+                :accept="uploadAccept"
+                @change="selectFile"
               />
-            </div>
 
-            <ProgressBar
-              :visible="isPolling && status === 'in_progress'"
-              :progress="progressPercent"
-            />
+              <div class="mt-4">
+                <DsfrButton
+                  label="Extraire le texte"
+                  size="lg"
+                  :disabled="!selectedFile || isPolling || isLoading"
+                  @click="startOcr"
+                />
+              </div>
 
-            <div class="flex justify-center">
-              <OcrViewer
-                v-if="taskData?.output && !isPolling"
-                :data="{ id: taskData.id, pages: taskData.output.pages }"
+              <ProgressBar
+                :visible="isPolling && status === 'in_progress'"
+                :progress="progressPercent"
               />
+
+              <div class="flex justify-center">
+                <OcrViewer
+                  v-if="taskData?.output && !isPolling"
+                  :data="{ id: taskData.id, pages: taskData.output.pages }"
+                />
+              </div>
             </div>
+          </div>
+
+          <div v-else>
+            <TasksTab />
           </div>
         </div>
       </div>
