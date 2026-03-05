@@ -29,6 +29,20 @@
 - code clean
 - :art: change minio vars
 
+## [0.10.0](https://github.com/IA-Generative/ocr-api/compare/v0.9.0...v0.10.0) (2026-03-05)
+
+
+### Features
+
+* add OPENAI_API_KEY to environment configuration ([95de513](https://github.com/IA-Generative/ocr-api/commit/95de5131a084d84f35d1287df07fd518b2a659bc))
+
+
+### Bug Fixes
+
+* add missing version and tag_name outputs to release workflow ([9f69eeb](https://github.com/IA-Generative/ocr-api/commit/9f69eeb00da51d0beda9e90bfac4173983f7a5fe))
+* **release:** unify release ([#246](https://github.com/IA-Generative/ocr-api/issues/246)) ([80c044c](https://github.com/IA-Generative/ocr-api/commit/80c044c545ffc92ef25df156aed7ff5645a19adb))
+* update SDK test cases and improve Makefile for testing ([#242](https://github.com/IA-Generative/ocr-api/issues/242)) ([e00afd8](https://github.com/IA-Generative/ocr-api/commit/e00afd832068a76b072ddc3cb9a363a9a92a31b9))
+
 ## [0.9.0](https://github.com/IA-Generative/ocr-api/compare/v0.8.4...v0.9.0) (2026-02-17)
 
 
