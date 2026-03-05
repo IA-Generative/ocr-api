@@ -16,7 +16,7 @@
       </thead>
 
       <tbody>
-        <tr v-for="task in paginatedTasks" :key="task.id">
+        <tr v-for="task in displayedTasks" :key="task.id">
           <td>
             <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
             <span v-else>Inconnu</span>
@@ -44,13 +44,13 @@
 
     <!-- Pagination -->
     <div class="pagination fr-mt-2">
-      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedData.page === 1" @click="loadPage(paginatedData.page - 1)">
+      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === 1" @click="loadPage(paginatedDataSafe.page - 1)">
         Précédent
       </DsfrButton>
 
-      <span class="fr-ml-2 fr-mr-2">Page {{ paginatedData.page }} / {{ totalPages }}</span>
+      <span class="fr-ml-2 fr-mr-2">Page {{ paginatedDataSafe.page }} / {{ totalPages }}</span>
 
-      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedData.page === totalPages" @click="loadPage(paginatedData.page + 1)">
+      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === totalPages" @click="loadPage(paginatedDataSafe.page + 1)">
         Suivant
       </DsfrButton>
     </div>
@@ -134,6 +134,10 @@ const fetchConnectedUsers = async () => {
   }
 }
 
+
+const data_task_mock = {"total": 0, "page": 1, "page_size": 10, "items": []}
+
+
 // ----- TRI -----
 const sortKey = ref('')
 const sortAsc = ref(true)
@@ -173,6 +177,21 @@ const paginatedTasks = computed(() => {
   })
 })
 
+// If API returns no tasks, use the provided mock so the table is visible for dev
+const displayedTasks = computed(() => {
+  const items = paginatedTasks.value || []
+  if (items.length > 0) return items
+  return (data_task_mock?.items ?? [])
+})
+
+const paginatedDataSafe = computed(() => {
+  const resolved = paginatedData && Object.prototype.hasOwnProperty.call(paginatedData, 'value')
+    ? paginatedData.value
+    : paginatedData
+  if ((resolved?.items ?? []).length > 0) return resolved
+  return data_task_mock
+})
+
 const loadPage = async (page = 1, overridePageSize?: number) => {
   const pageSize = overridePageSize ?? paginatedData?.page_size ?? 10
   await store.fetchUserTasks(page, pageSize)
@@ -191,8 +210,9 @@ onBeforeUnmount(() => {
 })
 
 const totalPages = computed(() => {
-  const total = paginatedData.value?.total ?? 0
-  const pageSize = paginatedData.value?.page_size ?? 1
+  const resolved = paginatedDataSafe.value || {}
+  const total = resolved.total ?? 0
+  const pageSize = resolved.page_size ?? 1
   return Math.max(1, Math.ceil(total / pageSize))
 })
 
@@ -332,7 +352,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
   padding-right: 1rem;
 }
 
-.summary-text {
+.extracted-text {
   width: 100%;
   min-height: 6rem;
   resize: vertical;
@@ -348,7 +368,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
 .modal-section { border-top:1px solid #eee; padding:0.75rem 0 }
 .section-title { font-weight:600; margin-bottom:0.5rem }
 .section-content { display:block }
-.summary-text { width:100%; min-height:6rem; resize:vertical }
+.extracted-text { width:100%; min-height:6rem; resize:vertical }
 .modal-actions .section-content > * { margin-right:0.5rem }
 .modal-meta .meta-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem 1rem }
 .modal-footer { margin-top:1rem; display:flex; justify-content:flex-end }
