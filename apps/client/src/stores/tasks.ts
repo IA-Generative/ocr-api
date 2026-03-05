@@ -19,7 +19,7 @@ export const useTasksStore = defineStore('tasks', () => {
   async function fetchUserTasks (page = 1, page_size = 10) {
     loading.value = true
     try {
-      const { data } = await http.get(`/task/user/`, { params: { offset: page, limit: page_size } })
+      const { data } = await http.get(`/task/user/`, { params: { page: page, limit: page_size } })
       userTasksPaginated.value.total = data.total ?? 0
       userTasksPaginated.value.page = data.page ?? page
       userTasksPaginated.value.page_size = data.page_size ?? page_size
