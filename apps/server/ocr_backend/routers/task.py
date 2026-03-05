@@ -55,7 +55,9 @@ async def get_tasks_by_user(
     page_size: int = Query(10, le=100),
     ctx: RequestContext = Depends(TokenVerifier),
 ):
-    return get_tasks_by_user_id(user_id=ctx.user_id or '', page=page, page_size=page_size)
+    if ctx.user_id is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return get_tasks_by_user_id(user_id=ctx.user_id, page=page, page_size=page_size)
 
 
 @router.get(
@@ -70,7 +72,7 @@ async def get_tasks_stats(
     # reuse task_table.statistics which returns TaskStats
     # page and page_size are forwarded as skip/limit for admin listing
     skip = (page - 1) * page_size
-    return task_table.statistics(user_id=ctx.user_id or '', is_admin=bool(ctx.is_admin), skip=skip, limit=page_size)
+    return task_table.statistics(user_id=ctx.user_id or "", is_admin=bool(ctx.is_admin), skip=skip, limit=page_size)
 
 
 @router.get("/tasks/count-users-today")
@@ -96,8 +98,7 @@ async def delete_task_by_id(
         raise HTTPException(status_code=404, detail="Task not found")
     task_table.delete_task_by_id(task_id=task_id)
     try:
-        s3_client_connector.delete_by_task_id(
-            user_id=task.user_id, task_id=task.id)
+        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
     except Exception as e:
         logger.error(f"Error occurred while deleting task from S3: {e}")
 
@@ -114,11 +115,9 @@ async def delete_tasks_by_date_and_status(
             status_code=403,
             detail="Only Admin users can delete tasks by date and status",
         )
-    results = task_table.delete_tasks_by_date_and_status(
-        start_date=start_date, end_date=end_date, status=status)
+    results = task_table.delete_tasks_by_date_and_status(start_date=start_date, end_date=end_date, status=status)
     if not results:
         return []
 
     for task in results:
-        s3_client_connector.delete_by_task_id(
-            user_id=task.user_id, task_id=task.id)
+        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
