@@ -100,6 +100,27 @@ class TaskOperation(str, Enum):
     DOCLING: str = "docling"
 
 
+class TaskStatsGlobal(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    total_tasks: int
+    # Clé = status, Valeur = nombre de tâches
+    tasks_stats: Dict[TaskStatus, int]
+
+
+class TaskStatsUser(TaskStatsGlobal):
+    model_config = ConfigDict(from_attributes=True)
+    user_id: str
+
+
+class TaskStats(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    global_stats: TaskStatsGlobal
+    user_stats: TaskStatsUser
+    # all_users_stats: Pagination[TaskStatsUser] = Field(
+    #     None, description="Statistiques paginées pour tous les utilisateurs"
+    # )
+
+
 class TaskTable:
     def __init__(self, get_db):
         self.get_db = get_db
@@ -191,6 +212,11 @@ class TaskTable:
 
             return [TaskModel.model_validate(task) for task in tasks]
 
+    def count_tasks_by_user_id(self, user_id: str) -> int:
+        with self.get_db() as db:
+            count = db.query(func.count(Task.id)).filter(Task.user_id == user_id).scalar()
+            return count
+
     def delete_tasks_by_user_id(self, user_id: str) -> Optional[List[TaskModel]]:
         with self.get_db() as db:
             tasks_to_delete = db.query(Task).filter(Task.user_id == user_id).all()
@@ -279,6 +305,76 @@ class TaskTable:
             db.commit()
 
             return [TaskModel.model_validate(task) for task in tasks_to_delete]
+
+    def statistics(self, user_id: str, is_admin: bool = False, skip: int = 0, limit: int = 10) -> TaskStats:
+        with get_db() as db:
+            # statistiques User
+
+            # Statistiques globales
+            total_tasks = db.query(func.count(Task.id)).scalar()
+
+            tasks_stats = (
+                db.query(Task.status, func.count(Task.id))  # noqa
+                .group_by(Task.status)
+                .all()
+            )
+            tasks_stats_dict = {status: count for status, count in tasks_stats}
+
+            global_stats = TaskStatsGlobal(total_tasks=total_tasks, tasks_stats=tasks_stats_dict)
+
+            # Statistiques de l'utilisateur courant
+            user_total_tasks = db.query(func.count(Task.id)).filter(Task.user_id == user_id).scalar()
+            user_tasks_stats = (
+                db.query(Task.status, func.count(Task.id))  # noqa
+                .filter(Task.user_id == user_id)
+                .group_by(Task.status)
+                .all()
+            )
+            user_tasks_stats_dict = {status: count for status, count in user_tasks_stats}
+            user_stats = TaskStatsUser(user_id=user_id, total_tasks=user_total_tasks, tasks_stats=user_tasks_stats_dict)
+
+            # # Statistiques par utilisateur (paginated)
+            # user_stats_list = []
+            # pagination_stats = None
+            # if is_admin:
+            #     user_stats_count = db.query(func.count(
+            #         func.distinct(Task.user_id))).scalar()
+            #     user_stats_query = (
+            #         db.query(Task.user_id, func.count(Task.id))  # noqa
+            #         .group_by(Task.user_id)
+            #         .offset(skip)
+            #         .limit(limit)
+            #         .all()
+            #     )
+
+            #     for user_id, count in user_stats_query:
+            #         user_tasks_stats = (
+            #             db.query(Task.status, func.count(Task.id))  # noqa
+            #             .filter(Task.user_id == user_id)
+            #             .group_by(Task.status)
+            #             .all()
+            #         )
+            #         user_tasks_stats_dict = {
+            #             status: count for status, count in user_tasks_stats}
+            #         user_stats_list.append(
+            #             TaskStatsUser(user_id=user_id, total_tasks=count,
+            #                           tasks_stats=user_tasks_stats_dict)
+            #         )
+            #     pagination_stats = Pagination[TaskStatsUser](
+            #         total=user_stats_count, page=skip // limit + 1, page_size=limit, items=user_stats_list
+            #     )
+
+            return TaskStats(global_stats=global_stats, all_users_stats=None, user_stats=user_stats)
+
+    def count_unique_users_between_dates(self, start_date: int, end_date: int) -> int:
+        with get_db() as db:
+            unique_users = (
+                db.query(Task.user_id)
+                .filter(Task.created_at >= start_date, Task.created_at <= end_date)
+                .distinct()
+                .count()
+            )
+            return unique_users
 
 
 task_table = TaskTable(get_db)

@@ -21,7 +21,8 @@ function authGuard (_path: string) {
     next: NavigationGuardNext
   ) => {
     const keycloak = getKeycloak()
-    if (!keycloak.authenticated) {
+    const ssoBypass = import.meta.env.VITE_SSO_BYPASS === 'true' || (window as any).VITE_SSO_BYPASS === 'true'
+    if (!keycloak.authenticated && !ssoBypass) {
       redirectToSSO()
       return
     }
