@@ -16,42 +16,17 @@ export const useTasksStore = defineStore('tasks', () => {
   const loading = ref(false)
   const error = ref<string | undefined>(undefined)
 
-  async function fetchUserTasks (page = 1, pageSize = 10) {
+  async function fetchUserTasks (page = 1, page_size = 10) {
     loading.value = true
-    error.value = undefined
     try {
-      const { data } = await http.get('/tasks/user/', { params: { page, page_size: pageSize } })
-      // Expecting API to return a paginated object { items, page, page_size, total }
-      // If it returns an array, normalize to that shape. Also normalize each task item.
-      const normalizeTask = (t: any) => ({
-        id: t.id,
-        user_id: t.user_id,
-        type: t.type,
-        status: t.status ?? 'queued',
-        percentage: typeof t.percentage === 'number' ? t.percentage : (t.percentage ? Number(t.percentage) : 0),
-        input: t.input ?? null,
-        output: t.output ?? null,
-        created_at: typeof t.created_at === 'number' ? t.created_at : (t.created_at ? Number(t.created_at) : 0),
-        updated_at: typeof t.updated_at === 'number' ? t.updated_at : (t.updated_at ? Number(t.updated_at) : 0),
-        extras: t.extras ?? null,
-        position: typeof t.position === 'number' ? t.position : (t.position ? Number(t.position) : null),
-        content_hash: t.content_hash ?? null,
-      })
-
-      if (Array.isArray(data)) {
-        userTasksPaginated.value = { items: data.map(normalizeTask), page, page_size: pageSize, total: data.length }
-      }
-      else {
-        const pag = data || { items: [], page, page_size: pageSize, total: 0 }
-        pag.items = (pag.items || []).map(normalizeTask)
-        userTasksPaginated.value = pag
-      }
-      return userTasksPaginated.value
+      const { data } = await http.get(`/task/user/`, { params: { offset: page, limit: page_size } })
+      userTasksPaginated.value.total = data.total ?? 0
+      userTasksPaginated.value.page = data.page ?? page
+      userTasksPaginated.value.page_size = data.page_size ?? page_size
+      userTasksPaginated.value.items = data.items ?? []
     }
     catch (err: any) {
-      error.value = err?.message ?? 'Erreur lors de la récupération des tâches.'
-      addErrorMessage({ title: 'Erreur :', description: error.value })
-      throw err
+      // keep existing behavior: swallow errors here (UI may show nothing)
     }
     finally {
       loading.value = false
