@@ -98,8 +98,7 @@ async def delete_task_by_id(
         raise HTTPException(status_code=404, detail="Task not found")
     task_table.delete_task_by_id(task_id=task_id)
     try:
-        s3_client_connector.delete_by_task_id(
-            user_id=task.user_id, task_id=task.id)
+        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
     except Exception as e:
         logger.error(f"Error occurred while deleting task from S3: {e}")
 
@@ -116,11 +115,9 @@ async def delete_tasks_by_date_and_status(
             status_code=403,
             detail="Only Admin users can delete tasks by date and status",
         )
-    results = task_table.delete_tasks_by_date_and_status(
-        start_date=start_date, end_date=end_date, status=status)
+    results = task_table.delete_tasks_by_date_and_status(start_date=start_date, end_date=end_date, status=status)
     if not results:
         return []
 
     for task in results:
-        s3_client_connector.delete_by_task_id(
-            user_id=task.user_id, task_id=task.id)
+        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
