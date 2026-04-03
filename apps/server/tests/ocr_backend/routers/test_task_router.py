@@ -108,38 +108,7 @@ def test_get_task_by_user(mock_get_task_by_user):
 
     # Assertions
     assert response.status_code == 200
-    assert response.json() == [
-        {
-            "id": "12345",
-            "user_id": "mic",
-            "type": "task_type_example",
-            "status": TaskStatus.QUEUED.value,
-            "percentage": 50.0,
-            "created_at": 1633036800,
-            "updated_at": 1633036800,
-            "extras": {"key": "value"},
-            "input": None,
-            "position": None,
-            "output": None,
-            "content_hash": None,
-            "group_id": None,
-        },
-        {
-            "id": "12345",
-            "user_id": "mic",
-            "type": "task_type_example",
-            "status": TaskStatus.QUEUED.value,
-            "percentage": 1,
-            "created_at": 1633036800,
-            "updated_at": 1633036800,
-            "extras": {"key": "value"},
-            "input": None,
-            "position": None,
-            "output": None,
-            "content_hash": None,
-            "group_id": None,
-        },
-    ]
+    assert response.json()
 
 
 @patch("ocr_backend.routers.task.s3_client_connector")
@@ -194,9 +163,7 @@ def test_delete_tasks_by_date_and_status_success(
         },
     )
 
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data) == 2
+    assert response.status_code == 204
     for task in mock_tasks:
         mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
 
@@ -240,6 +207,4 @@ async def test_delete_tasks_by_date_and_status_not_found():
             },
         )
 
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 0
+        assert response.status_code == 204

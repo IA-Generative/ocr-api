@@ -9,8 +9,20 @@ services:
       target: dev
     env_file:
       - .env
+    environment:
+      - VITE_SSO_BYPASS=true
     ports:
       - 8081:3000
     volumes:
       - ./apps/client:/app
       - /app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/client/src
+          target: /app/src
+        - action: sync
+          path: ./apps/client/public
+          target: /app/public
+        - action: rebuild
+          path: ./apps/client/package.json

@@ -1,14 +1,38 @@
+import httpx
 import pytest
 from ocr_sdk.client_sync import SyncOCRClient
 from ocr_sdk.client_async import AsyncOCRClient
 from pathlib import Path
 
+BASE_URL = "http://localhost:5000"
+
+
+@pytest.fixture(scope="module", autouse=True)
+def require_server():
+    """Skip all tests in this module if the server is not reachable."""
+    try:
+        httpx.get(f"{BASE_URL}/health", timeout=3)
+    except (
+        httpx.ConnectError,
+        httpx.ReadError,
+        httpx.RemoteProtocolError,
+        httpx.ConnectTimeout,
+    ):
+        pytest.skip("Server not reachable at localhost:5000", allow_module_level=True)
+
 
 @pytest.fixture(scope="module")
 def path_to_test_file() -> str:
     """Helper function to get the absolute path to a test file."""
-    path = Path(__file__).parent.parent.parent.parent / \
-        "apps"/"server"/"tests"/"data"/"valid"/"identite.jpg"
+    path = (
+        Path(__file__).parent.parent.parent.parent
+        / "apps"
+        / "server"
+        / "tests"
+        / "data"
+        / "valid"
+        / "identite.jpg"
+    )
 
     if not path.is_file():
         pytest.skip(f"Test file not found: {path}")
@@ -16,7 +40,9 @@ def path_to_test_file() -> str:
 
 
 def test_sync_client(path_to_test_file: str):
-    with SyncOCRClient(base_url="http://localhost:5000", api_key="default-api-key") as client:
+    with SyncOCRClient(
+        base_url="http://localhost:5000", api_key="default-api-key"
+    ) as client:
         health = client.get_health()
         assert health.status == "healthy"
         task = client.create_job(
@@ -24,14 +50,15 @@ def test_sync_client(path_to_test_file: str):
         )
         assert task.status == "queued"
 
-        result = client.wait_for_task(
-            task.id, max_wait_time=300, poll_interval=5)
+        result = client.wait_for_task(task.id, max_wait_time=300, poll_interval=5)
         assert result.status == "completed"
 
 
 @pytest.mark.asyncio
 async def test_async_client(path_to_test_file: str):
-    async with AsyncOCRClient(base_url="http://localhost:5000", api_key="default-api-key") as client:
+    async with AsyncOCRClient(
+        base_url="http://localhost:5000", api_key="default-api-key"
+    ) as client:
         health = await client.get_health()
         assert health.status == "healthy"
         task = await client.create_job(
@@ -39,6 +66,5 @@ async def test_async_client(path_to_test_file: str):
         )
         assert task.status == "queued"
 
-        result = await client.wait_for_task(
-            task.id, max_wait_time=300, poll_interval=5)
+        result = await client.wait_for_task(task.id, max_wait_time=300, poll_interval=5)
         assert result.status == "completed"

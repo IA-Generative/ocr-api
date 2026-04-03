@@ -51,12 +51,8 @@ class TaskCache(BaseCache):
             key = f"{task.user_id}/{task.id}/images/page_{index}.jpg"
             self.file_connector.client.upload_fileobj(buffer, self.file_connector.bucket_name, key)
             logger.debug(f"Uploaded page {index} to {key}")
-            signed_url = self.file_connector.client.generate_presigned_url(
-                ClientMethod="get_object",
-                Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-                ExpiresIn=3600,  # 1h
-            )
-            page.page_url = signed_url
+            # signed_url = self.file_connector.generate_presigned_url(key)
+            page.page_url = key
             index += 1
 
         return task

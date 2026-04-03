@@ -106,12 +106,14 @@ async def upload_file(
             chunk_size = 8192  # 8KB chunks
             while chunk := await file.read(chunk_size):
                 await temp_file.write(chunk)
-        if interest_zone is not None:
+        if interest_zone:
             interest_zone = verify_interest_zone(
                 file_path=temp_file_path,
                 content_type=file.content_type,
                 interest_zone=interest_zone,
             )
+        else:
+            interest_zone = None
     except Exception as e:
         logger.error(f"HTTPException for user {ctx.user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
         task_table.update_task(

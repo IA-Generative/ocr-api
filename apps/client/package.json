@@ -24,6 +24,7 @@
   "dependencies": {
     "@gouvfr/dsfr": "~1.14.3",
     "@gouvminint/vue-dsfr": "^8.14.0",
+    "@lottiefiles/dotlottie-vue": "^0.11.9",
     "@tailwindcss/vite": "^4.1.18",
     "@vueuse/components": "^13.9.0",
     "axios": "^1.13.5",

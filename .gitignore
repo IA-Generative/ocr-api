@@ -28,3 +28,4 @@ tests/data/valid/formulaire-cerfa-complete
 apps/server/datasets/*.png
 node_modules/
 !apps/server/tests/data/valid/test.csv
+.env

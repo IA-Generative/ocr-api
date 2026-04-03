@@ -184,8 +184,8 @@ test-backend-api: build-container-dependencies up-db ## Test ocr backend
 	docker compose -f docker-compose-test.yaml up ocr_backend --exit-code-from ocr_backend
 	make down-test
 
-generate-openapi: up-frontend  ## Génère la documentation OpenAPI
-	docker compose -f $(FRONTEND_COMPOSE_FILE) exec ocr_frontend pnpm run generate-openapi
+generate-openapi: ## Génère les types TypeScript depuis l'OpenAPI local (backend doit tourner sur localhost:5000)
+	cd apps/client && VITE_OCR_API_URL=http://localhost:5000/api pnpm run generate-openapi
 
 test-sdk: install-uv ## Test le SDK Python
 	docker compose -f docker-compose.yaml up -d && \
@@ -194,3 +194,9 @@ test-sdk: install-uv ## Test le SDK Python
 	uv run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests || \
 	docker compose -f docker-compose.yaml down -v 
 	
+migration-add-revision: ## Crée une nouvelle révision de base de données
+	@read -p "Message de révision : " msg; \
+	docker compose run --rm migration alembic revision --autogenerate -m "$$msg"
+
+migration-upgrade: ## Applique les migrations de base de données
+	docker compose run --rm migration alembic upgrade head

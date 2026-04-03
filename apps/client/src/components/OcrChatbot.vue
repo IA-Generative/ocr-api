@@ -1,0 +1,269 @@
+<script setup lang="ts">
+import { nextTick, ref } from 'vue'
+import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
+import type { ChatMessage, ChatSource } from '@/composables/use-ocr-chatbot'
+
+const CAT_LOTTIE = 'https://assets-v2.lottiefiles.com/a/1614c7a4-563f-11f0-bc77-27cc630b4a7e/ZsiRI8cM3m.lottie'
+const PAWS_LOTTIE = 'https://assets-v2.lottiefiles.com/a/298baac0-1161-11ee-bd48-97a84b28beeb/8kwnLuLFzE.lottie'
+
+// Couleurs cycliques pour différencier visuellement les sources
+const SOURCE_COLORS = [
+  'bg-blue-50   border-blue-300   text-blue-700   hover:bg-blue-100',
+  'bg-violet-50 border-violet-300 text-violet-700 hover:bg-violet-100',
+  'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100',
+  'bg-amber-50  border-amber-300  text-amber-700  hover:bg-amber-100',
+  'bg-rose-50   border-rose-300   text-rose-700   hover:bg-rose-100',
+  'bg-cyan-50   border-cyan-300   text-cyan-700   hover:bg-cyan-100',
+]
+const SOURCE_NUMBER_COLORS = [
+  'bg-blue-200   text-blue-800',
+  'bg-violet-200 text-violet-800',
+  'bg-emerald-200 text-emerald-800',
+  'bg-amber-200  text-amber-800',
+  'bg-rose-200   text-rose-800',
+  'bg-cyan-200   text-cyan-800',
+]
+
+defineProps<{
+  messages: ChatMessage[]
+  isLoading: boolean
+}>()
+
+const emit = defineEmits<{
+  send: [content: string]
+  jumpTo: [source: ChatSource]
+}>()
+
+const isOpen = ref(false)
+const input = ref('')
+const messagesEl = ref<HTMLElement | null>(null)
+
+async function submit () {
+  const value = input.value.trim()
+  if (!value) return
+  input.value = ''
+  emit('send', value)
+  await nextTick()
+  messagesEl.value?.scrollTo({ top: messagesEl.value.scrollHeight, behavior: 'smooth' })
+}
+
+function onKeydown (e: KeyboardEvent) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    submit()
+  }
+}
+</script>
+
+<template>
+  <Teleport to="body">
+    <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+      <!-- Chat panel -->
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0 translate-y-4 scale-95"
+        enter-to-class="opacity-100 translate-y-0 scale-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100 translate-y-0 scale-100"
+        leave-to-class="opacity-0 translate-y-4 scale-95"
+      >
+        <div
+          v-if="isOpen"
+          class="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden w-[360px] h-[480px] origin-bottom-right"
+        >
+          <!-- Header -->
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
+            <DotLottieVue :src="CAT_LOTTIE" :loop="true" :autoplay="true" style="width:32px;height:32px;" />
+            <span class="text-sm font-semibold text-slate-700">Assistant OCR</span>
+            <span class="ml-auto text-xs text-slate-400 italic">Démo</span>
+            <button
+              class="ml-2 flex items-center justify-center w-6 h-6 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+              aria-label="Fermer"
+              @click="isOpen = false"
+            >
+              <span class="fr-icon-close-line" style="font-size: 12px;" aria-hidden="true" />
+            </button>
+          </div>
+
+          <!-- Experimental banner -->
+          <div class="px-4 pt-3 pb-1">
+            <div class="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+              <span class="fr-icon-flashlight-line shrink-0" aria-hidden="true" />
+              <span>⚠️ Fonctionnalité expérimentale — les réponses peuvent être inexactes ou défaillantes.</span>
+            </div>
+          </div>
+
+          <!-- Messages -->
+          <div
+            ref="messagesEl"
+            class="flex-1 overflow-y-auto px-4 py-3 space-y-4"
+          >
+            <!-- Empty state -->
+            <div
+              v-if="!messages.length"
+              class="h-full flex flex-col items-center justify-center text-center text-slate-400 text-sm gap-2"
+            >
+              <span class="fr-icon-search-line text-3xl opacity-30" aria-hidden="true" />
+              <p>Posez une question sur le document.<br>Les sources seront localisées à la zone OCR près.</p>
+            </div>
+
+            <!-- Message list -->
+            <div
+              v-for="msg in messages"
+              :key="msg.id"
+              class="flex gap-2"
+              :class="msg.role === 'user' ? 'justify-end' : 'justify-start'"
+            >
+              <div
+                v-if="msg.role === 'bot'"
+                class="shrink-0 w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 overflow-hidden"
+              >
+                <DotLottieVue :src="CAT_LOTTIE" :loop="true" :autoplay="true" style="width:28px;height:28px;" />
+              </div>
+
+              <div
+                class="max-w-[80%] rounded-2xl px-3 py-2 text-sm"
+                :class="msg.role === 'user'
+                  ? 'bg-blue-600 text-white rounded-tr-sm'
+                  : 'bg-slate-100 text-slate-800 rounded-tl-sm'"
+              >
+                <div v-if="msg.isLoading" class="py-1">
+                  <DotLottieVue :src="PAWS_LOTTIE" :loop="true" :autoplay="true" style="width:56px;height:56px;" />
+                </div>
+                <p v-else>
+                  {{ msg.content }}
+                </p>
+
+                <div
+                  v-if="msg.sources?.length"
+                  class="mt-2 flex flex-wrap gap-1.5"
+                >
+                  <button
+                    v-for="(src, si) in msg.sources"
+                    :key="si"
+                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border transition-colors cursor-pointer shadow-sm"
+                    :class="SOURCE_COLORS[si % SOURCE_COLORS.length]"
+                    :title="src.text"
+                    @click="emit('jumpTo', src)"
+                  >
+                    <span
+                      class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full text-[9px] font-bold shrink-0 opacity-80"
+                      :class="SOURCE_NUMBER_COLORS[si % SOURCE_NUMBER_COLORS.length]"
+                    >{{ si + 1 }}</span>
+                    <span class="fr-icon-map-pin-2-line" style="font-size: 10px;" aria-hidden="true" />
+                    {{ src.pageLabel }} · {{ (src.boxIndices?.length ?? 1) > 1 ? `${src.boxIndices.length} zones` : '1 zone' }}
+                    <span v-if="src.score != null" class="opacity-60 ml-0.5">{{ Math.round(src.score * 100) }}%</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Typing indicator -->
+            <div
+              v-if="isLoading"
+              class="flex gap-2 justify-start"
+            >
+              <div class="shrink-0 w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 overflow-hidden">
+                <DotLottieVue :src="CAT_LOTTIE" :loop="true" :autoplay="true" style="width:28px;height:28px;" />
+              </div>
+              <div class="bg-slate-100 rounded-2xl rounded-tl-sm px-3 py-2.5">
+                <DotLottieVue :src="PAWS_LOTTIE" :loop="true" :autoplay="true" style="width:56px;height:56px;" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Input -->
+          <div class="shrink-0 px-3 py-2.5 border-t border-slate-100 flex gap-2 items-end">
+            <textarea
+              v-model="input"
+              rows="1"
+              placeholder="Posez une question sur le document…"
+              class="flex-1 resize-none rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 text-slate-800 placeholder-slate-400 transition-colors"
+              :disabled="isLoading"
+              @keydown="onKeydown"
+            />
+            <button
+              class="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-colors"
+              :disabled="isLoading || !input.trim()"
+              aria-label="Envoyer"
+              @click="submit"
+            >
+              <span class="fr-icon-send-plane-fill" style="font-size: 14px;" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- FAB button -->
+      <button
+        class="relative flex items-center justify-center w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white shadow-lg transition-all"
+        :aria-label="isOpen ? 'Fermer l\'assistant' : 'Ouvrir l\'assistant OCR'"
+        @click="isOpen = !isOpen"
+      >
+        <Transition
+          mode="out-in"
+          enter-active-class="transition duration-150"
+          enter-from-class="opacity-0 rotate-90 scale-50"
+          enter-to-class="opacity-100 rotate-0 scale-100"
+          leave-active-class="transition duration-150"
+          leave-from-class="opacity-100 rotate-0 scale-100"
+          leave-to-class="opacity-0 -rotate-90 scale-50"
+        >
+          <template v-if="isOpen">
+            <span class="fr-icon-close-line" style="font-size: 22px;" aria-hidden="true" />
+          </template>
+          <template v-else>
+            <DotLottieVue :src="CAT_LOTTIE" :loop="true" :autoplay="true" style="width:40px;height:40px;" />
+          </template>
+        </Transition>
+        <!-- Unread badge -->
+        <span
+          v-if="!isOpen && messages.length"
+          class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center"
+        >
+          {{ messages.filter(m => m.role === 'bot').length > 9 ? '9+' : messages.filter(m => m.role === 'bot').length }}
+        </span>
+      </button>
+    </div>
+  </Teleport>
+</template>
+
+<style scoped>
+/* Cat chasing yarn animation */
+.cat-chase {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 72px;
+  position: relative;
+  height: 24px;
+}
+
+.cat-chase .yarn {
+  font-size: 18px;
+  position: absolute;
+  left: 0;
+  animation: yarn-roll 1.2s ease-in-out infinite alternate;
+}
+
+.cat-chase .cat {
+  font-size: 18px;
+  position: absolute;
+  left: 0;
+  animation: cat-run 1.2s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+/* yarn rolls to the right */
+@keyframes yarn-roll {
+  0%   { left: 42px; transform: rotate(0deg); }
+  100% { left: 8px;  transform: rotate(-360deg); }
+}
+
+/* cat follows it */
+@keyframes cat-run {
+  0%   { left: 52px; transform: scaleX(1); }
+  100% { left: 18px; transform: scaleX(1); }
+}
+</style>
+
