@@ -29,3 +29,9 @@ apps/server/datasets/*.png
 node_modules/
 !apps/server/tests/data/valid/test.csv
 .env
+apps/server/training/datasets/datasets/
+apps/server/training/data/
+apps/server/data/*
+apps/server/training/output/*
+PaddleOCR/
+apps/server/PaddleOCR/

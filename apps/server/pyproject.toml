@@ -23,6 +23,7 @@ dependencies = [
     "pymupdf>=1.26.3",
     "openai>=2.30.0",
     "pydantic>=2.11.5",
+    "loguru>=0.7.3",
 ]
 
 [dependency-groups]
@@ -123,6 +124,13 @@ ocr-service-features = [
 ocr-docling = [
     "docling>=2.84.0",
 ]
+training = [
+    "albumentations>=2.0.8",
+    "jiwer>=4.0.0",
+    "lmdb>=2.2.0",
+    "rapidfuzz>=3.13.0",
+    "scikit-image>=0.26.0",
+]
 
 
 [tool.pytest.ini_options]
@@ -140,6 +148,16 @@ major_version_zero = true
 
 [tool.ruff]
 line-length = 120
+exclude = [
+    "apps/server/training/datasets/datasets/",
+    "apps/server/training/data/",
+    "apps/server/data/",
+    "apps/server/training/output/",
+    "apps/server/tests/data/valid/test.csv",
+    "PaddleOCR",
+    "apps/server/PaddleOCR",
+    ".venv",
+]
 
 
 [tool.uv.sources]

@@ -57,8 +57,8 @@ lint: install-uv ## Lint le code du dépôt
 
 lint-fix: ## Lint et correction automatique du code backend
 	cd apps/server && \
-		uv run ruff check --exclude '**/*.ipynb' . --fix && \
-		uv run ruff format .
+		uv run ruff check --exclude '**/*.ipynb' --exclude 'PaddleOCR' . --fix && \
+		uv run ruff format --exclude 'PaddleOCR' .
 
 bump:
 	@echo "Usage: make bump-patch OR make bump-minor"

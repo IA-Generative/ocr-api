@@ -24,7 +24,7 @@ if not _db_url.startswith("sqlite"):
 else:
     JSONB = JSON  # type: ignore[assignment,misc]
 
-from src.connector.db_connector import Base, get_db
+from src.connector.db_connector import Base, get_db  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -171,11 +171,7 @@ class OcrChunkRepository:
     def delete_by_content_hash(self, content_hash: str) -> int:
         """Delete all chunks for a file. Returns the count deleted."""
         with self.get_db() as db:
-            rows = (
-                db.query(OcrChunksTable)
-                .filter(OcrChunksTable.content_hash == content_hash)
-                .all()
-            )
+            rows = db.query(OcrChunksTable).filter(OcrChunksTable.content_hash == content_hash).all()
             count = len(rows)
             for r in rows:
                 db.delete(r)
@@ -188,11 +184,7 @@ class OcrChunkRepository:
 
     def get_by_content_hash(self, content_hash: str) -> List[OcrChunkModel]:
         with self.get_db() as db:
-            rows = (
-                db.query(OcrChunksTable)
-                .filter(OcrChunksTable.content_hash == content_hash)
-                .all()
-            )
+            rows = db.query(OcrChunksTable).filter(OcrChunksTable.content_hash == content_hash).all()
             return [OcrChunkModel.model_validate(r) for r in rows]
 
     # ------------------------------------------------------------------

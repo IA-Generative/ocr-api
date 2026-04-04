@@ -35,9 +35,7 @@ class PaddleInferOCR2(BaseModelPrediction):
             ocr_version="PP-OCRv3",
         )
 
-    def batch_predict(
-        self, images: list[Image.Image], pages: list = [], *args, **kwargs
-    ) -> list[Page]:
+    def batch_predict(self, images: list[Image.Image], pages: list = [], *args, **kwargs) -> list[Page]:
         result: list[Page] = []
         if len(pages):
             assert len(images) == len(pages), "Number of images and pages must match"
@@ -55,9 +53,7 @@ class PaddleInferOCR2(BaseModelPrediction):
                 # textline_orientation_angles = pred["textline_orientation_angles"]
                 rec_texts = pred["rec_texts"]
                 if pred is not None and len(pred):
-                    for rec_score, rec_text, bbox in zip(
-                        rec_scores, rec_texts, rec_boxes
-                    ):
+                    for rec_score, rec_text, bbox in zip(rec_scores, rec_texts, rec_boxes):
                         text = rec_text
 
                         # Convert polygon to bounding box
