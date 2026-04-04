@@ -13,8 +13,16 @@ import uuid
 from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import BigInteger, Column, Integer, String
-from sqlalchemy.dialects.postgresql import JSONB
+import os
+
+from sqlalchemy import JSON, BigInteger, Column, Integer, String
+
+# Use native JSONB on PostgreSQL, fall back to generic JSON for SQLite (tests)
+_db_url = os.environ.get("DATABASE_URL", "sqlite:///./example.db")
+if not _db_url.startswith("sqlite"):
+    from sqlalchemy.dialects.postgresql import JSONB
+else:
+    JSONB = JSON  # type: ignore[assignment,misc]
 
 from src.connector.db_connector import Base, get_db
 
@@ -163,7 +171,11 @@ class OcrChunkRepository:
     def delete_by_content_hash(self, content_hash: str) -> int:
         """Delete all chunks for a file. Returns the count deleted."""
         with self.get_db() as db:
-            rows = db.query(OcrChunksTable).filter(OcrChunksTable.content_hash == content_hash).all()
+            rows = (
+                db.query(OcrChunksTable)
+                .filter(OcrChunksTable.content_hash == content_hash)
+                .all()
+            )
             count = len(rows)
             for r in rows:
                 db.delete(r)
@@ -176,7 +188,11 @@ class OcrChunkRepository:
 
     def get_by_content_hash(self, content_hash: str) -> List[OcrChunkModel]:
         with self.get_db() as db:
-            rows = db.query(OcrChunksTable).filter(OcrChunksTable.content_hash == content_hash).all()
+            rows = (
+                db.query(OcrChunksTable)
+                .filter(OcrChunksTable.content_hash == content_hash)
+                .all()
+            )
             return [OcrChunkModel.model_validate(r) for r in rows]
 
     # ------------------------------------------------------------------

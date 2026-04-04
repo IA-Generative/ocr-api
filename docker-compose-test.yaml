@@ -32,23 +32,24 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr2_service
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/
-    - --cov=./services
-    - --cov-report=term-missing
-    - tests/business/
-    - tests/services
-    - --ignore=tests/business/features
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./business/
+      - --cov=./services
+      - --cov-report=term-missing
+      - tests/business/
+      - tests/services
+      - --ignore=tests/business/features
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/:/app/business/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/:/app/business/
+      - ./apps/server/configs/:/app/configs/
+      - test_cache:/app/.cache/paddle/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -57,94 +58,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
       VISION_MODEL: ${VISION_MODEL}
-    depends_on:
-      - redis
-      - db
-      - minio
-      - migration
-    env_file:
-      - .env
-
-  paddleocr3_service:
-    image: paddleocr3_service
-    build:
-      target: test
-      context: .
-      dockerfile: apps/server/business/paddleocr3/Dockerfile
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: paddleocr3_service
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - tests/integrations/business/paddle3.1.0/
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-    - ./apps/server/business/llm:/app/business/llm
-    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-      PROCESS_NAME: "paddleocr-3.0.1"
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-    depends_on:
-      - redis
-      - db
-      - minio
-    env_file:
-      - .env
-
-  paddleocr3_service_gpu:
-    image: paddleocr3_service_gpu
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    build:
-      target: test
-      context: .
-      dockerfile: Dockerfiles/services/paddleocr/3.1.0/Dockerfile.gpu
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: paddleocr3_service_gpu
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-      DEVICE: "gpu"
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-      PROCESS_NAME: "paddleocr-3.0.1"
+      DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
     depends_on:
       - redis
       - db
@@ -163,22 +77,22 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr_backend
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./ocr_backend
-    - --cov=./src
-    - --cov-report=term-missing
-    - tests/ocr_backend
-    - tests/src/
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./ocr_backend
+      - --cov=./src
+      - --cov-report=term-missing
+      - tests/ocr_backend
+      - tests/src/
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/src:/app/tests/src
-    - ./apps/server/tests/:/app/tests/
-    - ./apps/server/ocr_backend/:/app/ocr_backend/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/src:/app/tests/src
+      - ./apps/server/tests/:/app/tests/
+      - ./apps/server/ocr_backend/:/app/ocr_backend/
+      - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -192,9 +106,9 @@ services:
 
   migration:
     command:
-    - alembic
-    - upgrade
-    - head
+      - alembic
+      - upgrade
+      - head
     build:
       target: test
       context: .
@@ -203,8 +117,8 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr-migration
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/migration/:/app/migration
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/migration/:/app/migration
     env_file:
       - .env
     depends_on:
@@ -230,6 +144,9 @@ services:
 
 volumes:
   minio_data:
+    driver: local
+
+  test_cache:
     driver: local
 
   postgres_data:

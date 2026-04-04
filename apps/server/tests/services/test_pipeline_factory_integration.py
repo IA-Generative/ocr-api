@@ -15,11 +15,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
 from src.schemas import Base
+import os
 
 
 @pytest.fixture(scope="module")
 def db_session():
-    engine = create_engine("sqlite:///:memory:")
+    db_url = os.environ.get("DATABASE_URL", "sqlite:///:memory:")
+    engine = create_engine(db_url)
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -46,11 +48,10 @@ def template_table(db_session) -> TemplateTable:
 
 
 @pytest.fixture(scope="function")
-def dummy_task_pdf_form(task_table: TaskTable) -> TaskModel:
+def dummy_task_pdf_form(task_table: TaskTable) -> TaskModel | None:
     return task_table.insert_new_task(
         user_id="123",
         form_data=TaskForm(
-            user_id="123",
             type=TaskOperation.DEFAULT.value,
             status="created",
             group_id="DEFAULT",
