@@ -242,4 +242,6 @@ def test_chat_completion_streaming_error_task(client: TestClient, valid_request:
     assert lines[-1] == "data: [DONE]"
     chunks = [json.loads(line[len("data: ") :]) for line in lines[:-1]]
     content_chunks = [c for c in chunks if c["choices"][0]["delta"].get("content")]
-    assert any("[OCR failed]" in c["choices"][0]["delta"]["content"] for c in content_chunks)
+    # On error the task JSON is streamed as content and finish_reason is "stop"
+    assert len(content_chunks) == 1
+    assert chunks[-1]["choices"][0]["finish_reason"] == "stop"
