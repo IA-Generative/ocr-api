@@ -13,16 +13,27 @@ import uuid
 from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field
-import os
 
 from sqlalchemy import JSON, BigInteger, Column, Integer, String
+from sqlalchemy.engine import Dialect
+from sqlalchemy.types import TypeDecorator
 
-# Use native JSONB on PostgreSQL, fall back to generic JSON for SQLite (tests)
-_db_url = os.environ.get("DATABASE_URL", "sqlite:///./example.db")
-if not _db_url.startswith("sqlite"):
-    from sqlalchemy.dialects.postgresql import JSONB
-else:
-    JSONB = JSON  # type: ignore[assignment,misc]
+
+class _JsonbOrJson(TypeDecorator):
+    """Uses PostgreSQL JSONB when available, falls back to JSON (e.g. SQLite)."""
+
+    impl = JSON
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect: Dialect):
+        if dialect.name == "postgresql":
+            from sqlalchemy.dialects.postgresql import JSONB
+
+            return dialect.type_descriptor(JSONB())
+        return dialect.type_descriptor(JSON())
+
+
+JSONB = _JsonbOrJson  # type: ignore[assignment,misc]
 
 from src.connector.db_connector import Base, get_db  # noqa: E402
 

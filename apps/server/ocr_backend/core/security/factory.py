@@ -44,11 +44,22 @@ class ApiToken(BaseVerifyToken):
         super().__init__(verify_token=True, is_fastapi=True)
         logging.info("Using API Token for verification")
         # TODO: use db or vault to store API keys and get user info associated with the key
-        self.__api_keys = set(os.environ.get("API_KEYS", "default-api-key").split(","))
+        self.__api_keys = {
+            "secret-api": RequestContext(
+                user_id="api_user",
+                email="api_user@example.com",
+                roles=[],
+                token="secret-api",
+            )
+        }
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:
-            ctx.user_id = "api_user"
+            current_user = self.__api_keys[ctx.token]
+            ctx.user_id = current_user.user_id
+            ctx.email = current_user.email
+            ctx.roles = current_user.roles
+            ctx.is_admin = current_user.is_admin
             return True
         return False
 

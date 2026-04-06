@@ -10,6 +10,7 @@ from .routers.process import process_router
 from .routers.annotations import router as annotations_router
 from .routers.ocr_chunks import router as ocr_chunks_router
 from .routers.chat import router as chat_router
+from .routers.v1 import router as v1_router
 
 # from .routers.template import template_router
 from src import __name__, __version__
@@ -40,4 +41,5 @@ app.include_router(process_router, prefix="/api")
 app.include_router(annotations_router, prefix="/api")
 app.include_router(ocr_chunks_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
+app.include_router(v1_router, prefix="/v1")
 # app.include_router(template_router, prefix="/api")
