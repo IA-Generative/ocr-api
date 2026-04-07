@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.10.3](https://github.com/IA-Generative/ocr-api/compare/v0.10.2...v0.10.3) (2026-04-07)
+
+
+### Bug Fixes
+
+* improve code formatting and structure in token verification classes ([#259](https://github.com/IA-Generative/ocr-api/issues/259)) ([d85cc55](https://github.com/IA-Generative/ocr-api/commit/d85cc55a591ffc6d36d4d172b5c7272de18dbd03))
+
 ## [0.10.2](https://github.com/IA-Generative/ocr-api/compare/v0.10.1...v0.10.2) (2026-04-07)
 
 
