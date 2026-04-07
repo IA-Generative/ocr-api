@@ -14,7 +14,7 @@ RUN apt update -qy && apt install -qy \
   poppler-utils \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
-ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
+ENV PADDLE_OCR_BASE_DIR=/app/models/paddle/
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 
