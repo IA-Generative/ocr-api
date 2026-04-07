@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.10.4](https://github.com/IA-Generative/ocr-api/compare/v0.10.3...v0.10.4) (2026-04-07)
+
+
+### Bug Fixes
+
+* update PaddleOCR base directory path in Dockerfile ([#261](https://github.com/IA-Generative/ocr-api/issues/261)) ([b9e6d8c](https://github.com/IA-Generative/ocr-api/commit/b9e6d8cde4aab7b0c600ad28e65ce4346eaf622b))
+
 ## [0.10.3](https://github.com/IA-Generative/ocr-api/compare/v0.10.2...v0.10.3) (2026-04-07)
 
 
