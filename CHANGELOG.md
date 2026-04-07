@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.10.1](https://github.com/IA-Generative/ocr-api/compare/v0.10.0...v0.10.1) (2026-04-07)
+
+
+### Bug Fixes
+
+* enable SSL verification for S3 client and improve code formatting ([#254](https://github.com/IA-Generative/ocr-api/issues/254)) ([33d197f](https://github.com/IA-Generative/ocr-api/commit/33d197f8fa8590a8de6c53fb1a8b68809e8bb7d0))
+
 ## [0.10.0](https://github.com/IA-Generative/ocr-api/compare/v0.9.0...v0.10.0) (2026-03-05)
 
 
