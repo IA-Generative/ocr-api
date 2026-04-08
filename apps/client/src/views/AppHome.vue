@@ -1,18 +1,21 @@
 <script setup lang="ts">
 import DocumentDownload from '@gouvfr/dsfr/dist/artwork/pictograms/document/document-download.svg'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Media from '@/assets/ocr-card.svg'
 import ComminitySVG from '@/assets/pictograms/community.svg'
 import PenSVG from '@/assets/pictograms/pen.svg'
 import CustomCard from '@/components/CustomCard.vue'
 import InfoBulle from '@/components/InfoBulle.vue'
-import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
 import TasksTab from '@/components/TasksTab.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 const store = useOcrStore()
+const router = useRouter()
+const route = useRoute()
+const currentTab = ref<'ocr' | 'tasks'>(route.name === 'Tasks' ? 'tasks' : 'ocr')
 const selectedFile = ref<File | null>(null)
 const pdfUrl = ref<string | null>(null)
 const uploadError = computed(() => store.error)
@@ -47,6 +50,12 @@ async function startOcr () {
     isLoading.value = false
   }
 }
+
+watch(() => store.taskData, (task) => {
+  if (task?.id && store.status === 'completed') {
+    router.push(`/${task.id}`)
+  }
+})
 
 const myOtherTools = ref([
   {

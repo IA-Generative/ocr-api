@@ -9,8 +9,10 @@ from src.logger import logger
 from src.schemas.task import TaskForm, TaskModel, TaskStatus, task_table
 from services.base.tracing import get_tracing_service
 from .factory import load_worker
+from business.chunks.worker import ChunkWorker
 
 process_ocr: Pipeline = load_worker(name=os.environ["PROCESS_NAME"])
+non_blocking_chunk_worker = ChunkWorker(name="chunk-worker", batch_size=1, worker_weight=0)
 
 logger.info(
     f"{os.environ['WORKER_NAME']} - {os.environ['PROCESS_NAME']} {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*"
@@ -25,6 +27,11 @@ def launch_task(self, task_info: dict):
     try:
         with tracing.trace_context(trace_id=task.id, user_id=task.user_id, name=os.environ["WORKER_NAME"]):
             task = process_ocr.process(task=task)
+            try:
+                logger.info(f"Starting non-blocking chunk worker for task {task.id}")
+                task = non_blocking_chunk_worker._process_task(task=task)
+            except Exception as e:
+                logger.error(f"Error in chunk worker: {e}")
 
         return task.model_dump()
     except Exception as e:

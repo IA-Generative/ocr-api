@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 
 import httpx
 
-from ocr_sdk.models import Health, TaskModel, TaskOperation, TaskStatus
+from ocr_sdk.models import Health, TaskModel, TaskOperation, TaskStatus, TaskUpdateForm
 from ocr_sdk.exceptions import OCRAPIError, OCRTimeoutError
 
 
@@ -172,6 +172,23 @@ class SyncOCRClient:
             params={"page": page, "page_size": page_size},
         )
         return [TaskModel(**task) for task in response.json()]
+
+    def update_task(self, task_id: str, update_form: TaskUpdateForm) -> TaskModel:
+        """Update task status.
+
+        Args:
+            task_id: Task ID
+            update_form: Form data for updating the task
+
+        Returns:
+            Updated TaskModel
+        """
+        response = self._request(
+            "PATCH",
+            f"/api/tasks/{task_id}",
+            json=update_form.model_dump(exclude_unset=True),
+        )
+        return TaskModel(**response.json())
 
     def wait_for_task(
         self,

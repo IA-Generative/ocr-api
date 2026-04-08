@@ -151,3 +151,15 @@ class ProcessResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     page_content: str
     metadata: Dict[str, Any]
+
+
+class TaskUpdateForm(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    group_id: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
+    percentage: Optional[float] = 0.0
+    extras: Optional[dict] = None
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
+    content_hash: Optional[str] = None

@@ -294,5 +294,6 @@ export const useOcrStore = defineStore('ocr', () => {
     reset,
     validateFile,
     downloadText,
+    getTask,
   }
 })
