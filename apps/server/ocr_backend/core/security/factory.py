@@ -46,7 +46,7 @@ class ApiToken(BaseVerifyToken):
         logging.info("Using API Token for verification")
         api_json = os.environ.get(
             "API_KEYS",
-            '[{"user_id": "api_user", "email": "api_user@example.com"}]',
+            '[{"user_id": "api_user", "email": "api_user@example.com", "roles": ["user"], "is_admin": false, "token": "secret-api"}]',
         )
         self.__api_keys: dict[str, RequestContext] = {}
         if not api_json:

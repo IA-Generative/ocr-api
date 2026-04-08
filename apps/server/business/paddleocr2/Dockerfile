@@ -15,7 +15,7 @@ RUN apt update -qy && apt install -qy \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/models/paddle/
-ENV PADDLE_PDX_CACHE_HOME=/app/.cache/paddle/
+ENV PADDLE_PDX_CACHE_HOME=/app/models/paddle/
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 

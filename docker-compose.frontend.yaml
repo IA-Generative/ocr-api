@@ -1,28 +1,22 @@
 services:
   ocr_frontend:
     container_name: ocr_frontend
-    restart: always
+    restart: unless-stopped
     working_dir: /app
     build:
       context: ./apps/client
       dockerfile: Dockerfile
       target: dev
-    env_file:
-      - .env
+      args:
+        PNPM_VERSION: 10.14.0
     environment:
-      - VITE_SSO_BYPASS=true
+      VITE_SSO_BYPASS: "true"
     ports:
-      - 8081:3000
+      - "8081:5173"
     volumes:
-      - ./apps/client:/app
-      - /app/node_modules
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/client/src
-          target: /app/src
-        - action: sync
-          path: ./apps/client/public
-          target: /app/public
-        - action: rebuild
-          path: ./apps/client/package.json
+      - ./apps/client:/app:cached
+      - node_modules:/app/node_modules
+    tty: true
+
+volumes:
+  node_modules:

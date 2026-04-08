@@ -51,7 +51,7 @@ services:
       - ./apps/server/services/:/app/services/
       - ./apps/server/business/:/app/business/
       - ./apps/server/configs/:/app/configs/
-      - test_cache:/app/.cache/paddle/
+      - test_cache:/app/models/paddle/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -68,7 +68,7 @@ services:
       REDIS_HOST: redis
       VERIFY_TOKEN_MODEL: full-access
       WORKER_NAME: "worker.tasks.ocr"
-      PADDLE_PDX_CACHE_HOME: /app/.cache/paddle/
+      PADDLE_PDX_CACHE_HOME: /app/models/paddle/
       PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "true"
     depends_on:
       redis:
