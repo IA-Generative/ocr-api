@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.12.0](https://github.com/IA-Generative/ocr-api/compare/v0.11.0...v0.12.0) (2026-04-08)
+
+
+### Features
+
+* **docker:** add PaddleOCR model download script and update Dockerfile ([#264](https://github.com/IA-Generative/ocr-api/issues/264)) ([1e179f2](https://github.com/IA-Generative/ocr-api/commit/1e179f28843c73a32475be635b99abc44a748cf3))
+
 ## [0.11.0](https://github.com/IA-Generative/ocr-api/compare/v0.10.4...v0.11.0) (2026-04-08)
 
 
