@@ -68,6 +68,8 @@ services:
       REDIS_HOST: redis
       VERIFY_TOKEN_MODEL: full-access
       WORKER_NAME: "worker.tasks.ocr"
+      PADDLE_PDX_CACHE_HOME: /app/.cache/paddle/
+      PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "true"
     depends_on:
       redis:
         condition: service_started
