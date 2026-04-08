@@ -4,6 +4,7 @@ import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
+import json
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -43,15 +44,22 @@ class ApiToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
         logging.info("Using API Token for verification")
-        # TODO: use db or vault to store API keys and get user info associated with the key
-        self.__api_keys = {
-            "secret-api": RequestContext(
-                user_id="api_user",
-                email="api_user@example.com",
-                roles=[],
-                token="secret-api",
-            )
-        }
+        api_json = os.environ.get(
+            "API_KEYS",
+            '[{"user_id": "api_user", "email": "api_user@example.com"}]',
+        )
+        self.__api_keys: dict[str, RequestContext] = {}
+        if not api_json:
+            logging.warning("No API keys provided, using default key: secret-api")
+        else:
+            api_keys = json.loads(api_json)
+            for value in api_keys:
+                try:
+                    request_context = RequestContext.model_validate(value)
+                    if request_context.token:
+                        self.__api_keys[request_context.token] = request_context
+                except Exception as e:
+                    logging.error(f"Error validating API key: {e}")
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:
