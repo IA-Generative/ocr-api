@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.2](https://github.com/IA-Generative/ocr-api/compare/v0.13.1...v0.13.2) (2026-04-08)
+
+
+### Bug Fixes
+
+* update environment variables and adjust frontend port in docker-compose ([#272](https://github.com/IA-Generative/ocr-api/issues/272)) ([3e88d8d](https://github.com/IA-Generative/ocr-api/commit/3e88d8d430daea725954eb6dc44d170122fe00a5))
+
 ## [0.13.1](https://github.com/IA-Generative/ocr-api/compare/v0.13.0...v0.13.1) (2026-04-08)
 
 
