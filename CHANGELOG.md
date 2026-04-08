@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.11.0](https://github.com/IA-Generative/ocr-api/compare/v0.10.4...v0.11.0) (2026-04-08)
+
+
+### Features
+
+* **annotation:** feat(annotation):  ([14d2446](https://github.com/IA-Generative/ocr-api/commit/14d244614e23ede5c91213addc9a88e4d0c300fa))
+* **new:** add annotation view ([#251](https://github.com/IA-Generative/ocr-api/issues/251)) ([f8d5b9e](https://github.com/IA-Generative/ocr-api/commit/f8d5b9e7aa637c85b73a4a1924e8bfc89b16a8d0))
+
 ## [0.10.4](https://github.com/IA-Generative/ocr-api/compare/v0.10.3...v0.10.4) (2026-04-07)
 
 
