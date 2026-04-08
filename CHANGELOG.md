@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.0](https://github.com/IA-Generative/ocr-api/compare/v0.12.0...v0.13.0) (2026-04-08)
+
+
+### Features
+
+* **api:** enhance API key handling and validation in ApiToken class ([#265](https://github.com/IA-Generative/ocr-api/issues/265)) ([59531d8](https://github.com/IA-Generative/ocr-api/commit/59531d87b54a2b9ed2883c7610276a147a915579))
+
 ## [0.12.0](https://github.com/IA-Generative/ocr-api/compare/v0.11.0...v0.12.0) (2026-04-08)
 
 
