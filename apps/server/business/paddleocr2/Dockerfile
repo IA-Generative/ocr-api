@@ -15,6 +15,7 @@ RUN apt update -qy && apt install -qy \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/models/paddle/
+ENV PADDLE_PDX_CACHE_HOME=/app/.cache/paddle/
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 
@@ -31,8 +32,7 @@ RUN uv sync --no-cache --group business-forms \
 ENV PYTHONPATH=/app
 # Download PaddleOCR models
 COPY apps/server/business/paddleocr2 /app/business/paddleocr2
-# RUN uv run business/paddleocr2/utils/download_paddle_models.2.10.0.py --version PP-OCRv3 \
-#   --folder $PADDLE_OCR_BASE_DIR
+RUN uv run business/paddleocr2/utils/download_paddle_models_v3.py
 
 # Copy application code
 COPY apps/server/business/__init__.py /app/business/__init__.py
