@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.1](https://github.com/IA-Generative/ocr-api/compare/v0.13.0...v0.13.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **tests:** unitttest and model folder ([#270](https://github.com/IA-Generative/ocr-api/issues/270)) ([8defbfa](https://github.com/IA-Generative/ocr-api/commit/8defbfa1faa2c203cd0f3137d7dcb0acce1fbfd3))
+
 ## [0.13.0](https://github.com/IA-Generative/ocr-api/compare/v0.12.0...v0.13.0) (2026-04-08)
 
 
