@@ -172,7 +172,7 @@ services:
     environment:
       - VITE_SSO_BYPASS=true
     ports:
-      - 8081:3000
+      - 8081:5173
     volumes:
       - ./apps/client:/app
       - /app/node_modules

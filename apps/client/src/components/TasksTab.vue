@@ -30,7 +30,7 @@
           <td>{{ formatDate(task.updated_at) }}</td>
 
           <td>
-            <DsfrButton size="sm" priority="secondary" :disabled="task.status !== 'completed'" @click="openModal(task)">
+            <DsfrButton size="sm" priority="secondary" :disabled="task.status !== 'completed'" @click="goToTask(task)">
               Voir le contenu
             </DsfrButton>
           </td>
@@ -111,6 +111,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 import { useTasksStore } from '@/stores/tasks'
@@ -118,6 +119,7 @@ import StatModel from './StatModel.vue'
 import ProgressBar from './ProgressBar.vue'
 
 const store = useTasksStore()
+const router = useRouter()
 const paginatedData = store.userTasksPaginated
 
 // connected users today badge
@@ -223,6 +225,12 @@ const statsVisible = ref(false)
 const openModal = (task: any) => {
   if (!task || task.status !== 'completed') return
   selectedTask.value = task
+}
+
+const goToTask = (task: any) => {
+  if (!task || !task.id) return
+  // navigate to OCR result / annotation view
+  router.push(`/${task.id}`)
 }
 
 const removeTask = async (taskId: string) => {
