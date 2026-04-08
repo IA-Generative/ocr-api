@@ -4,7 +4,7 @@ import type { DsfrButtonGroup, DsfrButtonProps } from '@gouvminint/vue-dsfr'
 import type { ButtonHTMLAttributes } from 'vue'
 import { useCollapsable } from '@gouvminint/vue-dsfr'
 import { vOnClickOutside } from '@vueuse/components'
-import { ref, watch } from 'vue'
+import { ref, watch, computed, toRefs, useId } from 'vue'
 
 const props = defineProps<DsfrDropdownProps>()
 
