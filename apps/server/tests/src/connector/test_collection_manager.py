@@ -342,7 +342,7 @@ class TestQdrantVectorStore:
 
     def test_search_vectors_success(self, vector_store_instance: QdrantVectorStore, mock_qdrant_client: QdrantClient):
         """Test successful vector search"""
-        with patch.object(mock_qdrant_client, "search") as mock_search:
+        with patch.object(mock_qdrant_client, "query_points") as mock_search:
             mock_result1 = Mock()
             mock_result1.id = "1"
             mock_result1.score = 0.95
@@ -355,15 +355,9 @@ class TestQdrantVectorStore:
             mock_result2.payload = {"text": "test2"}
             mock_result2.vector = [0.4, 0.5, 0.6]
 
-            mock_search.return_value = [mock_result1, mock_result2]
-
-            results = vector_store_instance.search_vectors("test_collection", [0.1, 0.2, 0.3], limit=10)
-
-            assert len(results) == 2
-            assert results[0].id == "1"
-            mock_result2.vector = [0.4, 0.5, 0.6]
-
-            mock_qdrant_client.search.return_value = [mock_result1, mock_result2]
+            mock_response = Mock()
+            mock_response.points = [mock_result1, mock_result2]
+            mock_search.return_value = mock_response
 
             results = vector_store_instance.search_vectors("test_collection", [0.1, 0.2, 0.3], limit=10)
 
@@ -377,8 +371,10 @@ class TestQdrantVectorStore:
         self, vector_store_instance: QdrantVectorStore, mock_qdrant_client: QdrantClient
     ):
         """Test vector search with filter conditions"""
-        with patch.object(mock_qdrant_client, "search") as mock_search:
-            mock_search.return_value = []
+        with patch.object(mock_qdrant_client, "query_points") as mock_search:
+            mock_response = Mock()
+            mock_response.points = []
+            mock_search.return_value = mock_response
 
             results = vector_store_instance.search_vectors(
                 "test_collection",
@@ -390,7 +386,7 @@ class TestQdrantVectorStore:
 
     def test_search_vectors_error(self, vector_store_instance: QdrantVectorStore, mock_qdrant_client: QdrantClient):
         """Test vector search error"""
-        with patch.object(mock_qdrant_client, "search") as mock_search:
+        with patch.object(mock_qdrant_client, "query_points") as mock_search:
             mock_search.side_effect = Exception("Search failed")
 
             results = vector_store_instance.search_vectors("test_collection", [0.1, 0.2, 0.3])

@@ -26,6 +26,12 @@ class S3Connector(BaseFileConnector):
         self.bucket_name = bucket_name
         self.up_time = datetime.datetime.now().isoformat()
 
+        settings = S3Settings()
+        self._public_client = boto3.client(
+            "s3",
+            endpoint_url=settings.public_url,
+        )
+
         try:
             self.client.head_bucket(Bucket=self.bucket_name)
         except ClientError as e:
@@ -34,6 +40,14 @@ class S3Connector(BaseFileConnector):
                 self.client.create_bucket(Bucket=self.bucket_name)
             else:
                 raise e
+
+    def generate_presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        """Generate a presigned URL using the public-facing endpoint (browser-accessible)."""
+        return self._public_client.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": self.bucket_name, "Key": key},
+            ExpiresIn=expires_in,
+        )
 
     def get_by_task_id(self, user_id: str, task_id: str) -> str:
         object_key = f"{user_id}/{task_id}"

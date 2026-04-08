@@ -155,12 +155,8 @@ class BaseWorker(ABC):
                         f"[worker {self.name}] Uploaded page {i + j} to {key}",
                         extra=extra_log,
                     )
-                    signed_url = client_s3.generate_presigned_url(
-                        ClientMethod="get_object",
-                        Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-                        ExpiresIn=3600,  # 1h
-                    )
-                    partial_result[j].page_url = signed_url
+                    # signed_url = self.file_connector.generate_presigned_url(key)
+                    partial_result[j].page_url = key
 
             task.output.pages[i : i + self.batch_size] = partial_result
 

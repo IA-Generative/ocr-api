@@ -5,6 +5,8 @@ import { useUserStore } from '@/stores/user'
 import { KEYCLOAK_CLIENT_ID, KEYCLOAK_REALM, KEYCLOAK_REDIRECT_URI, KEYCLOAK_URL } from '@/utils/constants'
 import { getKeycloak } from '@/utils/keycloak'
 import Home from '../views/AppHome.vue'
+import DevOcrViewer from '../views/DevOcrViewer.vue'
+import OcrResultView from '../views/OcrResultView.vue'
 
 function redirectToSSO () {
   const loginUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}&redirect_uri=${encodeURIComponent(KEYCLOAK_REDIRECT_URI)}&response_type=code`
@@ -38,6 +40,12 @@ const routes = [
     beforeEnter: authGuard('/'),
   },
   {
+    path: '/tasks',
+    name: 'Tasks',
+    component: Home,
+    beforeEnter: authGuard('/tasks'),
+  },
+  {
     path: '/login',
     name: 'Login',
     beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
@@ -56,7 +64,18 @@ const routes = [
       next()
     },
     component: Home,
-  }
+  },
+  {
+    path: '/dev/ocr-viewer',
+    name: 'DevOcrViewer',
+    component: DevOcrViewer,
+  },
+  {
+    path: '/:taskId',
+    name: 'OcrResult',
+    component: OcrResultView,
+    beforeEnter: authGuard('/:taskId'),
+  },
 ]
 
 const router = createRouter({

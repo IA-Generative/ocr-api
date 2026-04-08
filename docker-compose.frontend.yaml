@@ -16,3 +16,13 @@ services:
     volumes:
       - ./apps/client:/app
       - /app/node_modules
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/client/src
+          target: /app/src
+        - action: sync
+          path: ./apps/client/public
+          target: /app/public
+        - action: rebuild
+          path: ./apps/client/package.json

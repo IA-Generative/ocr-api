@@ -4,712 +4,1292 @@
  */
 
 export interface paths {
-  '/metrics': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /**
-     * Metrics
-     * @description Endpoint that serves Prometheus metrics.
-     */
-    get: operations['metrics_metrics_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/tasks/{task_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get Task By Id */
-    get: operations['get_task_by_id_tasks__task_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/tasks/{task_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get Task By Id User */
-    get: operations['get_task_by_id_user_v1_tasks__task_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/tasks/user/{user_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get Tasks By User Id */
-    get: operations['get_tasks_by_user_id_tasks_user__user_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/tasks/user/': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Get Tasks By User */
-    get: operations['get_tasks_by_user_v1_tasks_user__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/health': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Perform a Health Check */
-    get: operations['get_health_health_get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/jobs/{user_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    /** Upload File */
-    post: operations['upload_file_jobs__user_id__post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/jobs/': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    get?: never
-    put?: never
-    /** Upload Files */
-    post: operations['upload_files_v1_jobs__post']
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/text-task/{task_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Download Text Content */
-    get: operations['download_text_content_text_task__task_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
-  '/v1/text-task/{task_id}': {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    /** Download Text Content New */
-    get: operations['download_text_content_new_v1_text_task__task_id__get']
-    put?: never
-    post?: never
-    delete?: never
-    options?: never
-    head?: never
-    patch?: never
-    trace?: never
-  }
+    "/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metrics
+         * @description Endpoint that serves Prometheus metrics.
+         */
+        get: operations["metrics_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Task By Id User */
+        get: operations["get_task_by_id_user_api_tasks__task_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Task By Id */
+        delete: operations["delete_task_by_id_api_tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/user/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Tasks By User */
+        get: operations["get_tasks_by_user_api_tasks_user__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Tasks Stats */
+        get: operations["get_tasks_stats_api_stats_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/users/count-users-today": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count Users Today */
+        get: operations["count_users_today_api_users_count_users_today_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Tasks By Date And Status */
+        delete: operations["delete_tasks_by_date_and_status_api_v1_tasks__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perform a Health Check */
+        get: operations["get_health_api_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Upload File */
+        post: operations["upload_file_api_jobs__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/text-task/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Text Content New */
+        get: operations["download_text_content_new_api_text_task__task_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/task-to-value/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Task Form */
+        get: operations["download_task_form_api_task_to_value__task_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/process": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Process Document */
+        put: operations["process_document_api_process_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annotations/{content_hash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get annotation by file hash */
+        get: operations["get_annotation_api_annotations__content_hash__get"];
+        /** Create or update annotation for a file (upsert) */
+        put: operations["upsert_annotation_api_annotations__content_hash__put"];
+        post?: never;
+        /** Delete annotation by file hash */
+        delete: operations["delete_annotation_api_annotations__content_hash__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annotations/task/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all annotations linked to a task */
+        get: operations["get_annotations_by_task_api_annotations_task__task_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/annotations/user/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get paginated annotations for the current user */
+        get: operations["get_annotations_by_user_api_annotations_user__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Annotation metrics (global + current user) */
+        get: operations["get_annotation_stats_api_stats_annotations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
-export type webhooks = Record<string, never>
+export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** Bbox */
-    Bbox: {
-      /** X */
-      x: number
-      /** Y */
-      y: number
-      /** Width */
-      width: number
-      /** Height */
-      height: number
-      /** Confidence */
-      confidence: number
-      /** Text */
-      text: string
-    }
-    /** Body_upload_file_jobs__user_id__post */
-    Body_upload_file_jobs__user_id__post: {
-      /**
-       * File
-       * Format: binary
-       */
-      file: string
-    }
-    /** Body_upload_files_v1_jobs__post */
-    Body_upload_files_v1_jobs__post: {
-      /**
-       * File
-       * Format: binary
-       */
-      file: string
-    }
-    /** Checkbox */
-    Checkbox: {
-      /** X */
-      x: number
-      /** Y */
-      y: number
-      /** Width */
-      width: number
-      /** Height */
-      height: number
-      /** Confidence */
-      confidence: number
-      /** Is Checked */
-      is_checked: boolean
-    }
-    /** FormEntry */
-    FormEntry: {
-      /**
-       * Key
-       * @description Nom brut du champ extrait
-       */
-      key: string
-      /**
-       * Value
-       * @description Valeur brute extraite
-       */
-      value: string
-      /**
-       * Corrected Key
-       * @description Nom de champ corrigé (typo, casse, orthographe …) de key si besoin
-       */
-      corrected_key?: string | null
-      /**
-       * Corrected Value
-       * @description Valeur corrigée (typo, casse, format date, nombres, orthographe…) de value si besoin
-       */
-      corrected_value?: string | null
-    }
-    /** HTTPValidationError */
-    HTTPValidationError: {
-      /** Detail */
-      detail?: components['schemas']['ValidationError'][]
-    }
-    /** Health */
-    Health: {
-      /** Name */
-      name: string
-      /** Version */
-      version: string
-      /** Up Time */
-      up_time: string
-      /** Extras */
-      extras?: {
-        [key: string]: unknown
-      } | null
-      /** Status */
-      status?: string | null
-      /** Dependencies */
-      dependencies?: components['schemas']['Health'][] | null
-    }
-    /** InputForm */
-    InputForm: {
-      /** Storage File Path */
-      storage_file_path: string
-      /** Raw Filename */
-      raw_filename: string
-      /** Content Type */
-      content_type: string
-      /** Ext */
-      ext: string
-      /** Size */
-      size: number
-    }
-    /** Layout */
-    Layout: {
-      /**
-       * Cls Id
-       * @description Class ID, an integer.
-       */
-      cls_id: number
-      /**
-       * Label
-       * @description Class label, a string.
-       */
-      label: string
-      /**
-       * Score
-       * @description Confidence score of the bounding box, a float.
-       */
-      score: number
-      /**
-       * Coordinate
-       * @description Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]
-       */
-      coordinate: number[]
-      /** Content */
-      content?: unknown | null
-    }
-    /** OCRResult */
-    OCRResult: {
-      /** Type */
-      type: string
-      /** Model Name */
-      model_name: string
-      /** Created At */
-      created_at: number
-      /** Updated At */
-      updated_at: number
-      /** Version */
-      version: string
-      /** Total Pages */
-      total_pages: number
-      /** Pages */
-      pages: components['schemas']['Page'][]
-      /** Extras */
-      extras?: {
-        [key: string]: unknown
-      } | null
-      /**
-       * Text
-       * @default
-       */
-      text: string | null
-    }
-    /** Page */
-    Page: {
-      /** Page */
-      page: number
-      /** Page Url */
-      page_url?: string | null
-      /**
-       * Boxes
-       * @description Detections
-       */
-      boxes?: components['schemas']['Bbox'][]
-      /**
-       * Layouts
-       * @description Layout definition
-       */
-      layouts?: components['schemas']['Layout'][]
-      /**
-       * Checkboxes
-       * @description Checkbox definition
-       */
-      checkboxes?: components['schemas']['Checkbox'][]
-      /**
-       * Form Entries
-       * @description Form extraction
-       */
-      form_entries?: components['schemas']['FormEntry'][]
-    }
-    /** TaskModel */
-    TaskModel: {
-      /** Id */
-      id: string
-      /** User Id */
-      user_id: string
-      /** Type */
-      type: string
-      /**
-       * Status
-       * @default queued
-       */
-      status: string
-      /**
-       * Percentage
-       * @default 0
-       */
-      percentage: number | null
-      input?: components['schemas']['InputForm'] | null
-      output?: components['schemas']['OCRResult'] | null
-      /** Created At */
-      created_at: number
-      /** Updated At */
-      updated_at: number
-      /** Extras */
-      extras?: {
-        [key: string]: unknown
-      } | null
-      /** Position */
-      position?: number | null
-      /** Content Hash */
-      content_hash?: string | null
-    }
-    /** ValidationError */
-    ValidationError: {
-      /** Location */
-      loc: (string | number)[]
-      /** Message */
-      msg: string
-      /** Error Type */
-      type: string
-    }
-  }
-  responses: never
-  parameters: never
-  requestBodies: never
-  headers: never
-  pathItems: never
+    schemas: {
+        /** AnnotationModel */
+        AnnotationModel: {
+            /** Content Hash */
+            content_hash: string;
+            /** Task Id */
+            task_id?: string | null;
+            /** User Id */
+            user_id: string;
+            /** Output */
+            output?: components["schemas"]["PageAnnotation"][];
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /** Created At */
+            created_at: number;
+            /** Updated At */
+            updated_at: number;
+        };
+        /** AnnotationStats */
+        AnnotationStats: {
+            global_stats: components["schemas"]["AnnotationStatsGlobal"];
+            user_stats: components["schemas"]["AnnotationStatsUser"];
+        };
+        /** AnnotationStatsGlobal */
+        AnnotationStatsGlobal: {
+            /** Total Annotations */
+            total_annotations: number;
+            /** Total Unique Files */
+            total_unique_files: number;
+        };
+        /** AnnotationStatsUser */
+        AnnotationStatsUser: {
+            /** User Id */
+            user_id: string;
+            /** Total Annotations */
+            total_annotations: number;
+            /** Total Unique Files */
+            total_unique_files: number;
+        };
+        /** AnnotationUpsertForm */
+        AnnotationUpsertForm: {
+            /** Task Id */
+            task_id?: string | null;
+            /** User Id */
+            user_id: string;
+            /** Output */
+            output?: components["schemas"]["PageAnnotation"][];
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** Bbox */
+        Bbox: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Confidence */
+            confidence: number;
+            /** Text */
+            text: string;
+        };
+        /** Body_upload_file_api_jobs__post */
+        Body_upload_file_api_jobs__post: {
+            /**
+             * File
+             * Format: binary
+             */
+            file: string;
+            /**
+             * Group Id
+             * @default DEFAULT
+             */
+            group_id: string;
+            /** Interest Zone */
+            interest_zone?: string | null;
+            /** @default default */
+            task_operation: components["schemas"]["TaskOperation"];
+        };
+        /** BoxAnnotation */
+        BoxAnnotation: {
+            /**
+             * Index
+             * @description Index of the bbox in the original detection list
+             */
+            index: number;
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Text */
+            text?: string | null;
+            /**
+             * Validation
+             * @description Validation state: 'valid', 'invalid', or null
+             */
+            validation?: string | null;
+            /**
+             * Private
+             * @description Whether the box annotation is private or not
+             * @default false
+             */
+            private?: boolean | null;
+        };
+        /** Checkbox */
+        Checkbox: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Confidence */
+            confidence: number;
+            /** Is Checked */
+            is_checked: boolean;
+        };
+        /** ClassificationAnnotation */
+        ClassificationAnnotation: {
+            /** Label */
+            label: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** FormEntry */
+        FormEntry: {
+            /**
+             * Key
+             * @description Nom brut du champ extrait
+             */
+            key: string;
+            /**
+             * Value
+             * @description Valeur brute extraite
+             */
+            value: string;
+            /**
+             * Corrected Key
+             * @description Nom de champ corrigé (typo, casse, orthographe …) de key si besoin
+             */
+            corrected_key?: string | null;
+            /**
+             * Corrected Value
+             * @description Valeur corrigée (typo, casse, format date, nombres, orthographe…) de value si besoin
+             */
+            corrected_value?: string | null;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /** Health */
+        Health: {
+            /** Name */
+            name: string;
+            /** Version */
+            version: string;
+            /** Up Time */
+            up_time: string;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /** Status */
+            status?: string | null;
+            /** Dependencies */
+            dependencies?: components["schemas"]["Health"][] | null;
+        };
+        /** ImageFormDetector */
+        ImageFormDetector: {
+            /**
+             * Is Form
+             * @description Indique si l'image est un formulaire ou non.
+             */
+            is_form: boolean;
+            /**
+             * Confidence
+             * @description Confiance de la classification (0-1).
+             */
+            confidence: number;
+        };
+        /** InputForm */
+        InputForm: {
+            /** Storage File Path */
+            storage_file_path: string;
+            /** Raw Filename */
+            raw_filename: string;
+            /** Content Type */
+            content_type: string;
+            /** Ext */
+            ext: string;
+            /** Size */
+            size: number;
+            /**
+             * Process Type
+             * @default DEFAULT
+             */
+            process_type: string;
+            /** Group Id */
+            group_id?: string | null;
+            /** Interest Zone */
+            interest_zone?: components["schemas"]["RegionOfInterest"][] | null;
+        };
+        /** LLMFormField */
+        LLMFormField: {
+            /**
+             * Name
+             * @description Nom du champ (ex: 'nom', 'adresse').
+             */
+            name?: string | null;
+            /**
+             * Value
+             * @description Valeur actuelle du champ.
+             */
+            value?: string | null;
+            /**
+             * Type
+             * @description Type de champ.
+             */
+            type: string;
+            /**
+             * Sections
+             * @description Sections auxquelles appartient le champ.
+             */
+            sections?: string[] | null;
+            /**
+             * Filled
+             * @description Indique si le champ est rempli.
+             */
+            filled?: boolean | null;
+        };
+        /** Layout */
+        Layout: {
+            /**
+             * Cls Id
+             * @description Class ID, an integer.
+             */
+            cls_id: number;
+            /**
+             * Label
+             * @description Class label, a string.
+             */
+            label: string;
+            /**
+             * Score
+             * @description Confidence score of the bounding box, a float.
+             */
+            score: number;
+            /**
+             * Coordinate
+             * @description Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]
+             */
+            coordinate: number[];
+            /** Content */
+            content?: unknown | null;
+        };
+        /** OCRResult */
+        OCRResult: {
+            /** Type */
+            type: string;
+            /** Model Name */
+            model_name: string;
+            /** Created At */
+            created_at: number;
+            /** Updated At */
+            updated_at: number;
+            /** Version */
+            version: string;
+            /** Total Pages */
+            total_pages: number;
+            /** Pages */
+            pages: components["schemas"]["Page"][];
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Text
+             * @default
+             */
+            text: string | null;
+        };
+        /** Page */
+        Page: {
+            /** Page */
+            page: number;
+            /** Page Url */
+            page_url?: string | null;
+            /**
+             * Boxes
+             * @description Detections
+             */
+            boxes?: components["schemas"]["Bbox"][];
+            /**
+             * Layouts
+             * @description Layout definition
+             */
+            layouts?: components["schemas"]["Layout"][];
+            /**
+             * Checkboxes
+             * @description Checkbox definition
+             */
+            checkboxes?: components["schemas"]["Checkbox"][];
+            /**
+             * Form Entries
+             * @description Form extraction
+             */
+            form_entries?: (components["schemas"]["LLMFormField"] | components["schemas"]["FormEntry"])[];
+            /** @description Détection de formulaire d'image */
+            image_form_detector?: components["schemas"]["ImageFormDetector"] | null;
+            /** @description Vector representation of the page */
+            vector?: components["schemas"]["Vector"] | null;
+            /**
+             * Similar Template Ids
+             * @description List of similar template IDs
+             */
+            similar_template_ids?: [
+                string,
+                number
+            ][];
+        };
+        /** PageAnnotation */
+        PageAnnotation: {
+            /** Page */
+            page: number;
+            /**
+             * Boxes
+             * @description Detections
+             */
+            boxes?: components["schemas"]["BoxAnnotation"][];
+            /**
+             * Classifications
+             * @description Classifications
+             */
+            classifications?: components["schemas"]["ClassificationAnnotation"][];
+            /**
+             * Private
+             * @description Whether the annotation is private or not
+             * @default false
+             */
+            private?: boolean | null;
+        };
+        /** Pagination[AnnotationModel] */
+        Pagination_AnnotationModel_: {
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Items */
+            items?: components["schemas"]["AnnotationModel"][] | null;
+        };
+        /** Pagination[TaskModel] */
+        Pagination_TaskModel_: {
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            /** Items */
+            items?: components["schemas"]["TaskModel"][] | null;
+        };
+        /** RegionOfInterest */
+        RegionOfInterest: {
+            /**
+             * Interest Zone
+             * @default []
+             */
+            interest_zone: components["schemas"]["Bbox"][];
+            /** Labels */
+            labels?: string | null;
+        };
+        /** TaskModel */
+        TaskModel: {
+            /** Id */
+            id: string;
+            /** User Id */
+            user_id: string;
+            /** Group Id */
+            group_id?: string | null;
+            /** Type */
+            type: string;
+            /**
+             * Status
+             * @default queued
+             */
+            status: string;
+            /**
+             * Percentage
+             * @default 0
+             */
+            percentage: number | null;
+            input?: components["schemas"]["InputForm"] | null;
+            output?: components["schemas"]["OCRResult"] | null;
+            /** Created At */
+            created_at: number;
+            /** Updated At */
+            updated_at: number;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /** Position */
+            position?: number | null;
+            /** Content Hash */
+            content_hash?: string | null;
+        };
+        /**
+         * TaskOperation
+         * @enum {string}
+         */
+        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "docling";
+        /** TaskStats */
+        TaskStats: {
+            global_stats: components["schemas"]["TaskStatsGlobal"];
+            user_stats: components["schemas"]["TaskStatsUser"];
+        };
+        /** TaskStatsGlobal */
+        TaskStatsGlobal: {
+            /** Total Tasks */
+            total_tasks: number;
+            /** Tasks Stats */
+            tasks_stats: {
+                [key: string]: number;
+            };
+        };
+        /** TaskStatsUser */
+        TaskStatsUser: {
+            /** Total Tasks */
+            total_tasks: number;
+            /** Tasks Stats */
+            tasks_stats: {
+                [key: string]: number;
+            };
+            /** User Id */
+            user_id: string;
+        };
+        /**
+         * TaskStatus
+         * @enum {string}
+         */
+        TaskStatus: "created" | "queued" | "started" | "in_progress" | "completed" | "failed" | "retrying" | "canceled" | "timeout";
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /** Vector */
+        Vector: {
+            /** Id */
+            id: string;
+            /** Collection Name */
+            collection_name?: string | null;
+            /** Model Name */
+            model_name: string;
+            /** Vector */
+            vector: number[];
+            /** Vector Size */
+            vector_size: number;
+            /** Label */
+            label: string;
+            /** Source Id */
+            source_id?: string | null;
+            /**
+             * Page Num
+             * @default 0
+             */
+            page_num: number | null;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
-export type $defs = Record<string, never>
+export type $defs = Record<string, never>;
 export interface operations {
-  metrics_metrics_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': unknown
-        }
-      }
-    }
-  }
-  get_task_by_id_tasks__task_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        task_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel'] | null
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_task_by_id_user_v1_tasks__task_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        task_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel'] | null
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_tasks_by_user_id_tasks_user__user_id__get: {
-    parameters: {
-      query?: {
-        page?: number
-        page_size?: number
-      }
-      header?: never
-      path: {
-        user_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel'][]
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_tasks_by_user_v1_tasks_user__get: {
-    parameters: {
-      query?: {
-        page?: number
-        page_size?: number
-      }
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel'][]
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  get_health_health_get: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Return health of all dependencies */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['Health']
-        }
-      }
-    }
-  }
-  upload_file_jobs__user_id__post: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        user_id: string
-      }
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'multipart/form-data': components['schemas']['Body_upload_file_jobs__user_id__post']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  upload_files_v1_jobs__post: {
-    parameters: {
-      query?: never
-      header?: never
-      path?: never
-      cookie?: never
-    }
-    requestBody: {
-      content: {
-        'multipart/form-data': components['schemas']['Body_upload_files_v1_jobs__post']
-      }
-    }
-    responses: {
-      /** @description Successful Response */
-      201: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['TaskModel']
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  download_text_content_text_task__task_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        task_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'text/plain': string
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
-  download_text_content_new_v1_text_task__task_id__get: {
-    parameters: {
-      query?: never
-      header?: never
-      path: {
-        task_id: string
-      }
-      cookie?: never
-    }
-    requestBody?: never
-    responses: {
-      /** @description Successful Response */
-      200: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'text/plain': string
-        }
-      }
-      /** @description Validation Error */
-      422: {
-        headers: {
-          [name: string]: unknown
-        }
-        content: {
-          'application/json': components['schemas']['HTTPValidationError']
-        }
-      }
-    }
-  }
+    metrics_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    get_task_by_id_user_api_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_task_by_id_api_tasks__task_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_tasks_by_user_api_tasks_user__get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagination_TaskModel_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_tasks_stats_api_stats_tasks_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskStats"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    count_users_today_api_users_count_users_today_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    delete_tasks_by_date_and_status_api_v1_tasks__delete: {
+        parameters: {
+            query: {
+                start_date: string;
+                end_date: string;
+                status: components["schemas"]["TaskStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_health_api_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Return health of all dependencies */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Health"];
+                };
+            };
+        };
+    };
+    upload_file_api_jobs__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_file_api_jobs__post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_text_content_new_api_text_task__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_task_form_api_task_to_value__task_id__get: {
+        parameters: {
+            query?: {
+                transform?: "text" | "form" | "form-csv" | "only-result";
+            };
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    process_document_api_process_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "max-wait-time"?: number;
+                "poll-interval"?: number;
+                "x-filename"?: string | null;
+                "content-type"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_annotation_api_annotations__content_hash__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_annotation_api_annotations__content_hash__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnnotationUpsertForm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_annotation_api_annotations__content_hash__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_annotations_by_task_api_annotations_task__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationModel"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_annotations_by_user_api_annotations_user__get: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Pagination_AnnotationModel_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_annotation_stats_api_stats_annotations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnotationStats"];
+                };
+            };
+        };
+    };
 }

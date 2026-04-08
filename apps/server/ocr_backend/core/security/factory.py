@@ -27,12 +27,8 @@ class DevToken(BaseVerifyToken):
         super().__init__(verify_token=True, is_fastapi=True)
         warnings.warn(message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
         self.user_info = {
-            "token1": RequestContext(
-                user_id="test1", email="r@exemple.com", roles=[], token="token1"
-            ),
-            "token2": RequestContext(
-                user_id="test2", email="r@exemple.com", roles=[], token="token2"
-            ),
+            "token1": RequestContext(user_id="test1", email="r@exemple.com", roles=[], token="token1"),
+            "token2": RequestContext(user_id="test2", email="r@exemple.com", roles=[], token="token2"),
         }
 
     def verify(self, ctx: RequestContext):
@@ -48,11 +44,22 @@ class ApiToken(BaseVerifyToken):
         super().__init__(verify_token=True, is_fastapi=True)
         logging.info("Using API Token for verification")
         # TODO: use db or vault to store API keys and get user info associated with the key
-        self.__api_keys = set(os.environ.get("API_KEYS", "default-api-key").split(","))
+        self.__api_keys = {
+            "secret-api": RequestContext(
+                user_id="api_user",
+                email="api_user@example.com",
+                roles=[],
+                token="secret-api",
+            )
+        }
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:
-            ctx.user_id = "api_user"
+            current_user = self.__api_keys[ctx.token]
+            ctx.user_id = current_user.user_id
+            ctx.email = current_user.email
+            ctx.roles = current_user.roles
+            ctx.is_admin = current_user.is_admin
             return True
         return False
 
@@ -72,9 +79,7 @@ class KeycloakToken(BaseVerifyToken):
             realm_name=self.realm_name,
             client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
         )
-        logging.debug(
-            f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}"
-        )
+        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
         self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
@@ -95,11 +100,7 @@ class KeycloakToken(BaseVerifyToken):
             ctx.groups = user_info.get("groups", [])
 
             # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = (
-                user_info.get("resource_access", {})
-                .get(self.client_id, {})
-                .get("roles", [])
-            )
+            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
             # Ou si les rôles sont dans realm_access :
             # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
 
@@ -120,6 +121,4 @@ SECURITY_FACTORY: dict[str, BaseVerifyToken] = {
     "api-token": ApiToken,
 }
 
-TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[
-    os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")
-]()
+TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()

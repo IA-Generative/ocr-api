@@ -7,7 +7,7 @@ from qdrant_client.models import (
     PointStruct,
     Filter,
     FieldCondition,
-    Match,
+    MatchValue,
 )
 
 from src.logger import logger
@@ -281,7 +281,9 @@ class QdrantVectorStore(VectorStoreInterface):
             True si la suppression réussit, False sinon
         """
         try:
-            conditions = [FieldCondition(key=key, match=Match(value=value)) for key, value in filter_conditions.items()]
+            conditions = [
+                FieldCondition(key=key, match=MatchValue(value=value)) for key, value in filter_conditions.items()
+            ]
 
             filter_obj = Filter(must=conditions)
 
@@ -326,13 +328,13 @@ class QdrantVectorStore(VectorStoreInterface):
             filter_obj = None
             if filter_conditions:
                 conditions = [
-                    FieldCondition(key=key, match=Match(value=value)) for key, value in filter_conditions.items()
+                    FieldCondition(key=key, match=MatchValue(value=value)) for key, value in filter_conditions.items()
                 ]
                 filter_obj = Filter(must=conditions)
 
-            results = self.client.search(
+            response = self.client.query_points(
                 collection_name=collection_name,
-                query_vector=query_vector,
+                query=query_vector,
                 limit=limit,
                 offset=offset,
                 query_filter=filter_obj,
@@ -342,7 +344,7 @@ class QdrantVectorStore(VectorStoreInterface):
             )
 
             search_results = []
-            for result in results:
+            for result in response.points:
                 search_results.append(
                     VectorSearchResult(
                         id=result.id,
@@ -450,7 +452,7 @@ class QdrantVectorStore(VectorStoreInterface):
             filter_obj = None
             if filter_conditions:
                 conditions = [
-                    FieldCondition(key=key, match=Match(value=value)) for key, value in filter_conditions.items()
+                    FieldCondition(key=key, match=MatchValue(value=value)) for key, value in filter_conditions.items()
                 ]
                 filter_obj = Filter(must=conditions)
 

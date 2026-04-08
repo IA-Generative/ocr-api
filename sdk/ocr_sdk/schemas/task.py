@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -48,7 +48,7 @@ class TaskUpdateForm(BaseModel):
     content_hash: Optional[str] = None
 
 
-class TaskStatus(str, Enum):
+class TaskStatus(StrEnum):
     CREATED = "created"  # Tâche instanciée mais pas encore mise en file
     QUEUED = "queued"  # En attente dans une file de traitement
     STARTED = "started"  # A commencé à être traitée
@@ -60,11 +60,11 @@ class TaskStatus(str, Enum):
     TIMEOUT = "timeout"  # N’a pas pu terminer dans le temps imparti
 
 
-class TaskOperation(str, Enum):
-    OCR: str = "ocr"
-    DEFAULT: str = "default"
-    SAVE_TEMPLATE: str = "save_template"
-    FORMS: str = "forms"
-    VECTORIZE: str = "vectorize"
-    VLM_OCR: str = "vlm_ocr"
-    DOCLING: str = "docling"
+class TaskOperation(StrEnum):
+    OCR = "ocr"
+    DEFAULT = "default"
+    SAVE_TEMPLATE = "save_template"
+    FORMS = "forms"
+    VECTORIZE = "vectorize"
+    VLM_OCR = "vlm_ocr"
+    DOCLING = "docling"

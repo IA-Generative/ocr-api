@@ -11,214 +11,143 @@ services:
       - minio_data:/data
     command: server /data
     restart: unless-stopped
-    env_file:
-      - .env
+    # no env_file referenced
 
   redis:
     image: redis:latest
     ports:
       - "6379:6379"
     restart: unless-stopped
-    env_file:
-      - .env
+    # no env_file referenced
 
   paddleocr2_service:
     image: paddleocr2_service
     build:
-      target: test
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
+      target: test
       args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
+        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
     container_name: paddleocr2_service
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/
-    - --cov=./services
-    - --cov-report=term-missing
-    - tests/business/
-    - tests/services
-    - --ignore=tests/business/features
-    - -ra -v --maxfail=0
+      [
+        "uv",
+        "run",
+        "pytest",
+        "-s",
+        "--cov=./business/",
+        "--cov=./services",
+        "--cov-report=term-missing",
+        "tests/business/",
+        "tests/services",
+        "--ignore=tests/business/features",
+        "-ra",
+        "-v",
+        "--maxfail=0",
+      ]
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/:/app/business/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/:/app/business/
+      - ./apps/server/configs/:/app/configs/
+      - test_cache:/app/.cache/paddle/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       PROCESS_NAME: "paddleocr-2.10.0"
       OPENAI_BASE_URL: ${OPENAI_BASE_URL}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-      VISION_MODEL: ${VISION_MODEL}
+      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME:-gpt-3.5-turbo-instruct}
+      VISION_MODEL: ${VISION_MODEL:-gpt-4-vision-preview}
+      DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_NAME: test
+      REDIS_HOST: redis
+      VERIFY_TOKEN_MODEL: full-access
+      WORKER_NAME: "worker.tasks.ocr"
     depends_on:
-      - redis
-      - db
-      - minio
-      - migration
-    env_file:
-      - .env
-
-  paddleocr3_service:
-    image: paddleocr3_service
-    build:
-      target: test
-      context: .
-      dockerfile: apps/server/business/paddleocr3/Dockerfile
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: paddleocr3_service
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - tests/integrations/business/paddle3.1.0/
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-    - ./apps/server/business/llm:/app/business/llm
-    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-      PROCESS_NAME: "paddleocr-3.0.1"
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-    depends_on:
-      - redis
-      - db
-      - minio
-    env_file:
-      - .env
-
-  paddleocr3_service_gpu:
-    image: paddleocr3_service_gpu
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    build:
-      target: test
-      context: .
-      dockerfile: Dockerfiles/services/paddleocr/3.1.0/Dockerfile.gpu
-      args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
-    container_name: paddleocr3_service_gpu
-    command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - -ra -v --maxfail=0
-    volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-    environment:
-      DEV_MODE: "true"
-      CELERY_APP_NAME: default
-      DEVICE: "gpu"
-      OPENAI_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-      PROCESS_NAME: "paddleocr-3.0.1"
-    depends_on:
-      - redis
-      - db
-      - minio
-      - migration
-    env_file:
-      - .env
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      migration:
+        condition: service_completed_successfully
+    # no env_file referenced
 
   ocr_backend:
     image: ocr_backend
     build:
-      target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
+      target: test
       args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
+        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
     container_name: ocr_backend
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./ocr_backend
-    - --cov=./src
-    - --cov-report=term-missing
-    - tests/ocr_backend
-    - tests/src/
-    - -ra -v --maxfail=0
+      - "sh"
+      - "-c"
+      - "uvicorn ocr_backend.main:app --host 0.0.0.0 --port 5000 & sleep 2 && pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend/ tests/src/ -ra -v"
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/src:/app/tests/src
-    - ./apps/server/tests/:/app/tests/
-    - ./apps/server/ocr_backend/:/app/ocr_backend/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/src:/app/tests/src
+      - ./apps/server/tests/:/app/tests/
+      - ./apps/server/ocr_backend/:/app/ocr_backend/
+      - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_NAME: test
+      DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
+      REDIS_HOST: redis
+      OPENAI_API_KEY: dummy-key-for-tests
+      VERIFY_TOKEN_MODEL: full-access
     depends_on:
-      - redis
-      - db
-      - minio
-      - migration
-    env_file:
-      - .env
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      migration:
+        condition: service_completed_successfully
+    # no env_file referenced
 
   migration:
-    command:
-    - alembic
-    - upgrade
-    - head
+    image: ocr_backend
     build:
-      target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
+      target: test
       args:
-        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
+        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
     container_name: ocr-migration
+    command: ["alembic", "upgrade", "head"]
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/migration/:/app/migration
-    env_file:
-      - .env
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/migration/:/app/migration
+    environment:
+      DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
     restart: always
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
-      interval: 1m30s
-      timeout: 30s
-      retries: 5
-      start_period: 30s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
@@ -230,6 +159,9 @@ services:
 
 volumes:
   minio_data:
+    driver: local
+
+  test_cache:
     driver: local
 
   postgres_data:

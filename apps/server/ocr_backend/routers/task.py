@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Query, Depends
-from typing import Optional
+from typing import Optional, Annotated
 from src.schemas.task import TaskModel, task_table, TaskStatus, TaskStats
 from src.schemas.pagination import Pagination
 from ocr_backend.core.security.token import RequestContext
@@ -9,6 +9,21 @@ from src.logger import logger
 from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Tasks"])
+
+TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
+PageDep = Annotated[int, Query(ge=1)]
+PageSizeDep = Annotated[int, Query(le=100)]
+
+
+def _rewrite_page_urls(task: TaskModel) -> TaskModel:
+    """Replace the origin of page_url with the public URL, regardless of the internal hostname."""
+    if task.output and task.output.pages:
+        for page in task.output.pages:
+            if page.page_url:
+                # Avoid generating a presigned URL if `page_url` is already a full URL
+                if not (page.page_url.startswith("http://") or page.page_url.startswith("https://")):
+                    page.page_url = s3_client_connector.generate_presigned_url(page.page_url)
+    return task
 
 
 def get_task_by_id(task_id: str) -> TaskModel:
@@ -21,13 +36,13 @@ def get_task_by_id(task_id: str) -> TaskModel:
         if task.output is not None:
             task.output.pages = []
 
-    return task
+    return _rewrite_page_urls(task)
 
 
 @router.get("/tasks/{task_id}", response_model=Optional[TaskModel])
 async def get_task_by_id_user(
     task_id: str,
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
 ):
     task: TaskModel = get_task_by_id(task_id=task_id)
     if task.user_id != ctx.user_id:
@@ -51,9 +66,9 @@ def get_tasks_by_user_id(
     response_model=Pagination[TaskModel],
 )
 async def get_tasks_by_user(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, le=100),
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
+    page: PageDep = 1,
+    page_size: PageSizeDep = 10,
 ):
     if ctx.user_id is None:
         raise HTTPException(status_code=401, detail="Unauthorized")
@@ -72,7 +87,12 @@ async def get_tasks_stats(
     # reuse task_table.statistics which returns TaskStats
     # page and page_size are forwarded as skip/limit for admin listing
     skip = (page - 1) * page_size
-    return task_table.statistics(user_id=ctx.user_id or "", is_admin=bool(ctx.is_admin), skip=skip, limit=page_size)
+    return task_table.statistics(
+        user_id=ctx.user_id or "",
+        is_admin=bool(ctx.is_admin),
+        skip=skip,
+        limit=page_size,
+    )
 
 
 @router.get("/users/count-users-today")
@@ -108,7 +128,7 @@ async def delete_tasks_by_date_and_status(
     start_date: datetime,
     end_date: datetime,
     status: TaskStatus,
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
 ):
     if not ctx.is_admin:
         raise HTTPException(
