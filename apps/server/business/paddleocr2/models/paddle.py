@@ -22,15 +22,14 @@ class PaddleInferOCR2(BaseModelPrediction):
 
         det_dir = _maybe_dir(path_model, "detection")
         rec_dir = _maybe_dir(path_model, "recognition")
-        cls_dir = _maybe_dir(path_model, "classification")
 
         # If specific model dirs are missing, pass None so PaddleOCR falls back
         # to built-in/official models or auto-downloads as per its logic.
         self.model: PaddleOCR = PaddleOCR(
             text_detection_model_dir=det_dir,
             text_recognition_model_dir=rec_dir,
-            textline_orientation_model_dir=cls_dir,
-            use_textline_orientation=True if cls_dir is not None else False,
+            use_textline_orientation=False,
+            use_doc_unwarping=False,
             lang="fr",
             ocr_version="PP-OCRv3",
         )
@@ -48,36 +47,34 @@ class PaddleInferOCR2(BaseModelPrediction):
             page_boxes: List[Bbox] = []
 
             for pred in predictions:
-                rec_scores = pred["rec_scores"]
-                rec_boxes = pred["rec_boxes"]
-                # textline_orientation_angles = pred["textline_orientation_angles"]
+                dt_polys = pred["dt_polys"]  # (N, 4, 2) — polygons in pixel coords
                 rec_texts = pred["rec_texts"]
-                if pred is not None and len(pred):
-                    for rec_score, rec_text, bbox in zip(rec_scores, rec_texts, rec_boxes):
-                        text = rec_text
+                rec_scores = pred["rec_scores"]
+                if not (len(dt_polys) and len(rec_texts)):
+                    continue
+                for poly, text, score in zip(dt_polys, rec_texts, rec_scores):
+                    # trans_poly_to_bbox: axis-aligned bbox from polygon points
+                    pts = np.asarray(poly, dtype=float)  # (4, 2)
+                    x1 = float(np.min(pts[:, 0]))
+                    y1 = float(np.min(pts[:, 1]))
+                    x2 = float(np.max(pts[:, 0]))
+                    y2 = float(np.max(pts[:, 1]))
 
-                        # Convert polygon to bounding box
+                    # Normalize coordinates between 0 and 1
+                    norm_x = x1 / width_img
+                    norm_y = y1 / height_img
+                    norm_w = (x2 - x1) / width_img
+                    norm_h = (y2 - y1) / height_img
 
-                        x = bbox[0]
-                        y = bbox[1]
-                        w = bbox[2] - bbox[0]
-                        h = bbox[3] - bbox[1]
-
-                        # Normalize coordinates between 0 and 1
-                        norm_x = x / width_img
-                        norm_y = y / height_img
-                        norm_w = w / width_img
-                        norm_h = h / height_img
-
-                        box = Bbox(
-                            x=norm_x,
-                            y=norm_y,
-                            width=norm_w,
-                            height=norm_h,
-                            confidence=float(rec_score),
-                            text=text,
-                        )
-                        page_boxes.append(box)
+                    box = Bbox(
+                        x=norm_x,
+                        y=norm_y,
+                        width=norm_w,
+                        height=norm_h,
+                        confidence=float(score),
+                        text=text,
+                    )
+                    page_boxes.append(box)
 
             page = Page(page=i, boxes=page_boxes)
             result.append(page)

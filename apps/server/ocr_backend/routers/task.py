@@ -21,8 +21,21 @@ def _rewrite_page_urls(task: TaskModel) -> TaskModel:
         for page in task.output.pages:
             if page.page_url:
                 # Avoid generating a presigned URL if `page_url` is already a full URL
-                if not (page.page_url.startswith("http://") or page.page_url.startswith("https://")):
-                    page.page_url = s3_client_connector.generate_presigned_url(page.page_url)
+                logger.debug(f"Original page URL: {page.page_url}")
+                key = page.page_url
+                if page.page_url.startswith("http://") or page.page_url.startswith("https://"):
+                    logger.debug("Page URL is already a full URL, skipping presigned URL generation.")
+                    key = s3_client_connector.extract_key_from_url(
+                        page.page_url,
+                        bucket_name=s3_client_connector.bucket_name,
+                        s3_endpoint=s3_client_connector.client.meta.endpoint_url,
+                    )
+                    # TODO: save the extracted key back to the database to avoid this step in the future
+
+                page.page_url = s3_client_connector.generate_presigned_url(
+                    key,
+                    expires_in=5,  # URL valable 5 minutes
+                )
     return task
 
 

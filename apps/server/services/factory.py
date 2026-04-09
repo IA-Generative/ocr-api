@@ -57,7 +57,7 @@ def load_worker(
     #################################################
 
     #################    MODELS   ####################
-    ocr_model = PaddleInferOCR2(PaddleSetting().PADDLE_OCR_BASE_DIR)
+    ocr_model = PaddleInferOCR2(PaddleSetting().PADDLE_PDX_CACHE_HOME)
     morpho_model = MorphoBoxDetection()
     vlm_visual_form_parser = LLMToForm(
         client=openai_client,

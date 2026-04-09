@@ -67,3 +67,16 @@ def test_delete_by_user_id(s3_connector: S3Connector):
 
     success = s3_connector.delete_by_user_id(user_id)
     assert success
+
+
+def test_extract_key_from_url(s3_connector: S3Connector):
+    bucket_name = settings.S3_BUCKET_NAME
+    s3_endpoint = "https://s3.amazonaws.com/"
+    url1 = f"{s3_endpoint}{bucket_name}/user123/task456?signature=abc123"
+    url2 = f"{s3_endpoint}{bucket_name}/user123/task456?signature=abc123"
+
+    key1 = s3_connector.extract_key_from_url(url1, bucket_name, s3_endpoint=s3_endpoint)
+    key2 = s3_connector.extract_key_from_url(url2, bucket_name, s3_endpoint=s3_endpoint)
+
+    assert key1 == "user123/task456"
+    assert key2 == "user123/task456"
