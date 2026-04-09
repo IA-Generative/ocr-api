@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ visible: boolean, progress: number }>()
+const props = defineProps<{ visible: boolean, progress: number, text?: string }>()
 
 const progressColor = computed(() => {
   if (props.progress < 25) {

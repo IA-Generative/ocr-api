@@ -110,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, unref } from 'vue'
 import { useRouter } from 'vue-router'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
@@ -164,9 +164,7 @@ function sortBy(key: string) {
 }
 
 const paginatedTasks = computed(() => {
-  const resolved = paginatedData && Object.prototype.hasOwnProperty.call(paginatedData, 'value')
-    ? paginatedData.value
-    : paginatedData
+  const resolved = unref(paginatedData)
   console.log('Resolved paginated data for sorting:', resolved)
   const items = resolved?.items ?? []
   if (!sortKey.value) return items
@@ -187,15 +185,13 @@ const displayedTasks = computed(() => {
 })
 
 const paginatedDataSafe = computed(() => {
-  const resolved = paginatedData && Object.prototype.hasOwnProperty.call(paginatedData, 'value')
-    ? paginatedData.value
-    : paginatedData
+  const resolved = unref(paginatedData)
   if ((resolved?.items ?? []).length > 0) return resolved
   return data_task_mock
 })
 
 const loadPage = async (page = 1, overridePageSize?: number) => {
-  const pageSize = overridePageSize ?? paginatedData?.page_size ?? 10
+  const pageSize = overridePageSize ?? unref(paginatedData)?.page_size ?? 10
   await store.fetchUserTasks(page, pageSize)
   try { await fetchConnectedUsers() } catch (e) { }
 }
@@ -237,8 +233,15 @@ const removeTask = async (taskId: string) => {
   if (!taskId) return
   try {
     await store.deleteTask(taskId)
-    const currentPage = paginatedData && paginatedData.value ? paginatedData.value.page ?? 1 : (paginatedData.page ?? 1)
-    const pageSize = paginatedData && paginatedData.value ? paginatedData.value.page_size ?? 10 : (paginatedData.page_size ?? 10)
+
+    // Try to update UI locally first (store.deleteTask already removes the item locally).
+    // If the current page became empty after deletion, load the previous page.
+    const resolved = unref(paginatedData)
+
+    const currentPage = resolved?.page ?? 1
+    const pageSize = resolved?.page_size ?? 10
+
+    // Refresh the current page to ensure UI reflects server state (and pagination)
     await loadPage(currentPage, pageSize)
   }
   catch (e) {
