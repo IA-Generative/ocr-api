@@ -1,8 +1,9 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class PaddleSetting(BaseSettings):
     PADDLE_OCR_BASE_DIR: str = "models/"
+    PADDLE_PDX_CACHE_HOME: str = "models/paddle_pdx_cache/"
     DETECTION_FOLDER: str = "detection"
     RECOGNITION_FOLDER: str = "recognition"
     CLASSIFICATION_FOLDER: str = "classification"
@@ -11,3 +12,4 @@ class PaddleSetting(BaseSettings):
     OCR_VERSION: str = "PP-OCRv5"
     DEVICE: str = "cpu"
     OCR_LANG: str | None = None
+    model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")
