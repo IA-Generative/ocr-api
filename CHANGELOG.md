@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.4](https://github.com/IA-Generative/ocr-api/compare/v0.13.3...v0.13.4) (2026-04-09)
+
+
+### Bug Fixes
+
+* **docker:** include chunks directory in Dockerfile ([#276](https://github.com/IA-Generative/ocr-api/issues/276)) ([dfd54b8](https://github.com/IA-Generative/ocr-api/commit/dfd54b865708c3636e707033b38890ba40e56468))
+
 ## [0.13.3](https://github.com/IA-Generative/ocr-api/compare/v0.13.2...v0.13.3) (2026-04-09)
 
 
