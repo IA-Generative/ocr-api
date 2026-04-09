@@ -21,8 +21,25 @@ def _rewrite_page_urls(task: TaskModel) -> TaskModel:
         for page in task.output.pages:
             if page.page_url:
                 # Avoid generating a presigned URL if `page_url` is already a full URL
-                if not (page.page_url.startswith("http://") or page.page_url.startswith("https://")):
-                    page.page_url = s3_client_connector.generate_presigned_url(page.page_url)
+                logger.debug(f"Original page URL: {page.page_url}")
+                key = page.page_url
+                if page.page_url.startswith("http://") or page.page_url.startswith(
+                    "https://"
+                ):
+                    logger.debug(
+                        "Page URL is already a full URL, skipping presigned URL generation."
+                    )
+                    key = s3_client_connector.extract_key_from_url(
+                        page.page_url,
+                        bucket_name=s3_client_connector.bucket_name,
+                        s3_endpoint=s3_client_connector.client.meta.endpoint_url,
+                    )
+                    # TODO: save the extracted key back to the database to avoid this step in the future
+
+                page.page_url = s3_client_connector.generate_presigned_url(
+                    key,
+                    expires_in=5,  # URL valable 5 minutes
+                )
     return task
 
 
@@ -58,7 +75,9 @@ def get_tasks_by_user_id(
     tasks = task_table.get_tasks_by_user_id(user_id, page, page_size)
     if tasks is None or len(tasks) == 0:
         return Pagination[TaskModel](total=0, page=page, page_size=page_size, items=[])
-    return Pagination[TaskModel](total=count, page=page, page_size=page_size, items=tasks)
+    return Pagination[TaskModel](
+        total=count, page=page, page_size=page_size, items=tasks
+    )
 
 
 @router.get(
@@ -135,7 +154,9 @@ async def delete_tasks_by_date_and_status(
             status_code=403,
             detail="Only Admin users can delete tasks by date and status",
         )
-    results = task_table.delete_tasks_by_date_and_status(start_date=start_date, end_date=end_date, status=status)
+    results = task_table.delete_tasks_by_date_and_status(
+        start_date=start_date, end_date=end_date, status=status
+    )
     if not results:
         return []
 

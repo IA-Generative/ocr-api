@@ -8,6 +8,7 @@ from ..config.s3 import S3Settings
 from ..schemas.health import Health
 from .base import BaseFileConnector
 from ..logger import logger
+import re
 
 from boto3.s3.transfer import TransferConfig
 
@@ -40,6 +41,20 @@ class S3Connector(BaseFileConnector):
                 self.client.create_bucket(Bucket=self.bucket_name)
             else:
                 raise e
+
+    @staticmethod
+    def extract_key_from_url(
+        url: str,
+        bucket_name: str,
+        s3_endpoint: str,
+    ) -> str:
+        # Assuming the URL is in the format: https://bucket-name.s3.amazonaws.com/key or https://s3.amazonaws.com/bucket-name/key
+        s3_endpoint = s3_endpoint.rstrip("/")
+        pattern = f"{s3_endpoint}/{bucket_name}/(.+)\?.*"
+        match = re.match(pattern, url)
+        if match:
+            return match.group(1)
+        return url
 
     def generate_presigned_url(self, key: str, expires_in: int = 3600) -> str:
         """Generate a presigned URL using the public-facing endpoint (browser-accessible)."""
