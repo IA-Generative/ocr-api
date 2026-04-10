@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.5](https://github.com/IA-Generative/ocr-api/compare/v0.13.4...v0.13.5) (2026-04-10)
+
+
+### Bug Fixes
+
+* **ci:** guard release-please against force-pushes and invalid branch dispatches ([#281](https://github.com/IA-Generative/ocr-api/issues/281)) ([2bf0317](https://github.com/IA-Generative/ocr-api/commit/2bf031762778929f8a9d56f1fca69a051d8126ed))
+* **ci:** update image names to include tags for Docker builds ([#278](https://github.com/IA-Generative/ocr-api/issues/278)) ([#280](https://github.com/IA-Generative/ocr-api/issues/280)) ([5219460](https://github.com/IA-Generative/ocr-api/commit/52194609812107d52e51ebeebd2c3ed3574aabf2))
+
 ## [0.13.4](https://github.com/IA-Generative/ocr-api/compare/v0.13.3...v0.13.4) (2026-04-09)
 
 
