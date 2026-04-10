@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.6](https://github.com/IA-Generative/ocr-api/compare/v0.13.5...v0.13.6) (2026-04-10)
+
+
+### Bug Fixes
+
+* **ci:** set lowercase registry prefix for Docker image tags ([#283](https://github.com/IA-Generative/ocr-api/issues/283)) ([7aa2b85](https://github.com/IA-Generative/ocr-api/commit/7aa2b850a46462846ec253c378e7e4e26fb81ca1))
+
 ## [0.13.5](https://github.com/IA-Generative/ocr-api/compare/v0.13.4...v0.13.5) (2026-04-10)
 
 
