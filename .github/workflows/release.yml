@@ -37,7 +37,12 @@ jobs:
       contents: write
       pull-requests: write
       packages: write
-    if: ${{ !contains(github.event.head_commit.message, '[skip gha]') }}
+    if: >-
+      ${{
+        !contains(github.event.head_commit.message, '[skip gha]') &&
+        !github.event.forced &&
+        (github.ref_name == 'main' || github.ref_name == 'dev')
+      }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -49,7 +54,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
           manifest-file: .release-please-manifest.json
-          config-file: ${{ (github.ref_name == 'main' && 'release-please-config-release.json') || (github.ref_name == 'dev' && 'release-please-config-prerelease.json') }}
+          config-file: ${{ github.ref_name == 'dev' && 'release-please-config-prerelease.json' || 'release-please-config-release.json' }}
 
       - name: Set up Docker Buildx
         if: ${{ steps.release.outputs.release_created == 'true' }}
