@@ -59,6 +59,7 @@ jobs:
       - name: Set registry prefix (lowercase)
         if: ${{ steps.release.outputs.release_created == 'true' }}
         id: registry
+        shell: bash
         run: echo "prefix=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
