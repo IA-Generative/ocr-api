@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.5](https://github.com/IA-Generative/ocr-api/compare/v0.13.4...v0.13.5) (2026-04-10)
+
+
+### Bug Fixes
+
+* **ci:** update image names to include tags for Docker builds ([#278](https://github.com/IA-Generative/ocr-api/issues/278)) ([e118e81](https://github.com/IA-Generative/ocr-api/commit/e118e81f650487d1c7f90d65ae69160454e756ce))
+
 ## [0.13.4](https://github.com/IA-Generative/ocr-api/compare/v0.13.3...v0.13.4) (2026-04-09)
 
 
