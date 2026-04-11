@@ -4,6 +4,7 @@ import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
+from src.services.token_service import get_token_by_user_and_token
 import json
 
 logging.basicConfig(
@@ -28,8 +29,12 @@ class DevToken(BaseVerifyToken):
         super().__init__(verify_token=True, is_fastapi=True)
         warnings.warn(message="YOU USE DEV MODE PLEASE DON'T USE THAT IN PRODUCTION")
         self.user_info = {
-            "token1": RequestContext(user_id="test1", email="r@exemple.com", roles=[], token="token1"),
-            "token2": RequestContext(user_id="test2", email="r@exemple.com", roles=[], token="token2"),
+            "token1": RequestContext(
+                user_id="test1", email="r@exemple.com", roles=[], token="token1"
+            ),
+            "token2": RequestContext(
+                user_id="test2", email="r@exemple.com", roles=[], token="token2"
+            ),
         }
 
     def verify(self, ctx: RequestContext):
@@ -66,8 +71,13 @@ class ApiToken(BaseVerifyToken):
             current_user = self.__api_keys[ctx.token]
             ctx.user_id = current_user.user_id
             ctx.email = current_user.email
-            ctx.roles = current_user.roles
+            ctx.roles: list[str] | None = current_user.roles
             ctx.is_admin = current_user.is_admin
+            return True
+        user_id = ctx.user_id or ""
+        token = ctx.token or ""
+        if get_token_by_user_and_token(user_id=user_id, token_str=token):
+            logging.info(f"Valid token found for user_id={user_id}")
             return True
         return False
 
@@ -87,7 +97,9 @@ class KeycloakToken(BaseVerifyToken):
             realm_name=self.realm_name,
             client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
         )
-        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        logging.debug(
+            f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}"
+        )
         self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
@@ -108,7 +120,11 @@ class KeycloakToken(BaseVerifyToken):
             ctx.groups = user_info.get("groups", [])
 
             # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
+            ctx.roles = (
+                user_info.get("resource_access", {})
+                .get(self.client_id, {})
+                .get("roles", [])
+            )
             # Ou si les rôles sont dans realm_access :
             # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
 
@@ -127,6 +143,8 @@ SECURITY_FACTORY: dict[str, BaseVerifyToken] = {
     "dev": DevToken,
     "keycloak": KeycloakToken,
     "api-token": ApiToken,
-}
+}  # ty:ignore[invalid-assignment]
 
-TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()
+TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[
+    os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")
+]()  # ty:ignore[missing-argument]

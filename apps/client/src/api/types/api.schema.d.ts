@@ -214,23 +214,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/annotations/task/{task_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get all annotations linked to a task */
-        get: operations["get_annotations_by_task_api_annotations_task__task_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/annotations/user/": {
         parameters: {
             query?: never;
@@ -265,16 +248,211 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ocr-chunks/{content_hash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all chunks indexed for a file */
+        get: operations["list_chunks_api_ocr_chunks__content_hash__get"];
+        put?: never;
+        /**
+         * Index (upsert) a batch of vectorised OCR chunks for a file
+         * @description Store or replace vectorised chunks for a given file.
+         *
+         *     Each chunk must carry:
+         *     - ``page_num``: 0-based page index
+         *     - ``bbox_indices``: list of bbox indices from that page that compose the chunk
+         *     - ``text``: raw text of the chunk
+         *     - ``model_name``: name of the embedding model
+         *     - ``vector``: dense embedding (list of floats)
+         *     - ``vector_size``: dimension of the embedding
+         *
+         *     The ``content_hash`` in the URL is used as the scope key; any
+         *     ``content_hash`` value in each chunk payload is overridden by the URL
+         *     parameter to prevent mismatches.
+         */
+        post: operations["upsert_chunks_api_ocr_chunks__content_hash__post"];
+        /** Delete all chunks for a file */
+        delete: operations["delete_chunks_api_ocr_chunks__content_hash__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ocr-chunks/{content_hash}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Semantic search over a file's indexed chunks
+         * @description Return the top-k chunks whose vector is closest to ``query_vector``.
+         *
+         *     The results include ``page_num`` and ``bbox_indices`` so the frontend can
+         *     highlight the exact bounding boxes involved in each answer.
+         */
+        post: operations["search_chunks_api_ocr_chunks__content_hash__search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a conversation to the LLM and get a single reply (stateless)
+         * @description Submit a list of messages and receive the assistant's reply.
+         *
+         *     When ``content_hash`` and ``query_vector`` are provided, the top-K most
+         *     relevant OCR chunks are retrieved via cosine similarity and injected as a
+         *     system message before the conversation.  The matched chunks are returned in
+         *     ``sources`` so the client can highlight the corresponding bboxes.
+         *
+         *     No conversation history is stored server-side.
+         */
+        post: operations["ask_api_chat_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/chat/embed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Return the embedding vector for a text query */
+        post: operations["embed_api_chat_embed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/models/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available OCR models
+         * @description Example response
+         *     ----------------
+         *     {
+         *         "object": "list",
+         *         "data": [
+         *             {"id": "ocr-v1", "object": "model", "created": 1712345678, "owned_by": "ocr-api"},
+         *             {"id": "ocr-v1-fast", "object": "model", "created": 1712345678, "owned_by": "ocr-api"}
+         *         ]
+         *     }
+         */
+        get: operations["list_models_v1_models__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/chat/completions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create a chat completion (OCR)
+         * @description Example request
+         *     ---------------
+         *     POST /v1/chat/completions
+         *     Authorization: Bearer <token>
+         *     {
+         *         "model": "ocr-v1",
+         *         "stream": false,
+         *         "messages": [
+         *             {
+         *                 "role": "user",
+         *                 "content": [
+         *                     {"type": "text", "text": "Extract text from this image."},
+         *                     {"type": "image_url", "image_url": {"url": "https://example.com/doc.png"}}
+         *                 ]
+         *             }
+         *         ]
+         *     }
+         *     or
+         *     {
+         *         "model": "ocr-v1",
+         *         "stream": false,
+         *         "messages": [
+         *             {
+         *                 "role": "user",
+         *                 "content": [
+         *                     {"type": "text", "text": "Extract text from this image."},
+         *                     {"type": "file", "file": {"file_data": "https://example.com/doc.png", "filename": "doc.png", "file_id": "file-abc123"}}
+         *                 ]
+         *             }
+         *         ]
+         *     }
+         *
+         *
+         *     When stream=true the response is a text/event-stream of ChatCompletionChunk objects.
+         *     When stream=false processing runs in the background; poll GET /v1/tasks/{task_id}.
+         */
+        post: operations["chat_completions_v1_chat_completions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Annotation
+         * @description A URL citation when using web search.
+         */
+        Annotation: {
+            /**
+             * Type
+             * @constant
+             */
+            type: "url_citation";
+            url_citation: components["schemas"]["AnnotationURLCitation"];
+        } & {
+            [key: string]: unknown;
+        };
         /** AnnotationModel */
         AnnotationModel: {
             /** Content Hash */
             content_hash: string;
-            /** Task Id */
-            task_id?: string | null;
             /** User Id */
             user_id: string;
             /** Output */
@@ -309,10 +487,24 @@ export interface components {
             /** Total Unique Files */
             total_unique_files: number;
         };
+        /**
+         * AnnotationURLCitation
+         * @description A URL citation when using web search.
+         */
+        AnnotationURLCitation: {
+            /** End Index */
+            end_index: number;
+            /** Start Index */
+            start_index: number;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        } & {
+            [key: string]: unknown;
+        };
         /** AnnotationUpsertForm */
         AnnotationUpsertForm: {
-            /** Task Id */
-            task_id?: string | null;
             /** User Id */
             user_id: string;
             /** Output */
@@ -321,6 +513,40 @@ export interface components {
             extras?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** AskRequest */
+        AskRequest: {
+            /** Messages */
+            messages: components["schemas"]["ChatMessage"][];
+            /**
+             * Model
+             * @default gpt-4o-mini
+             */
+            model: string;
+            /**
+             * Task Id
+             * @description Task ID used to retrieve the document context
+             */
+            task_id: string;
+            /**
+             * Query Vector
+             * @description Embedding of the last user message, used for semantic chunk retrieval
+             */
+            query_vector?: number[] | null;
+            /**
+             * Top K
+             * @default 5
+             */
+            top_k: number;
+        };
+        /** AskResponse */
+        AskResponse: {
+            message: components["schemas"]["ChatMessage"];
+            /**
+             * Sources
+             * @description OCR chunks injected as context, with their page numbers and bbox indices
+             */
+            sources?: components["schemas"]["UsedChunk"][];
         };
         /** Bbox */
         Bbox: {
@@ -339,10 +565,7 @@ export interface components {
         };
         /** Body_upload_file_api_jobs__post */
         Body_upload_file_api_jobs__post: {
-            /**
-             * File
-             * Format: binary
-             */
+            /** File */
             file: string;
             /**
              * Group Id
@@ -360,7 +583,7 @@ export interface components {
              * Index
              * @description Index of the bbox in the original detection list
              */
-            index: number;
+            index?: number | null;
             /** X */
             x: number;
             /** Y */
@@ -378,10 +601,172 @@ export interface components {
             validation?: string | null;
             /**
              * Private
-             * @description Whether the box annotation is private or not
+             * @description Whether the annotation is private or not
              * @default false
              */
-            private?: boolean | null;
+            private: boolean;
+        };
+        /**
+         * ChatCompletion
+         * @description Represents a chat completion response returned by model, based on the provided input.
+         */
+        ChatCompletion: {
+            /** Id */
+            id: string;
+            /** Choices */
+            choices: components["schemas"]["Choice"][];
+            /** Created */
+            created: number;
+            /** Model */
+            model: string;
+            /**
+             * Object
+             * @constant
+             */
+            object: "chat.completion";
+            /** Service Tier */
+            service_tier?: ("auto" | "default" | "flex" | "scale" | "priority") | null;
+            /** System Fingerprint */
+            system_fingerprint?: string | null;
+            usage?: components["schemas"]["CompletionUsage"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChatCompletionAudio
+         * @description If the audio output modality is requested, this object contains data
+         *     about the audio response from the model. [Learn more](https://platform.openai.com/docs/guides/audio).
+         */
+        ChatCompletionAudio: {
+            /** Id */
+            id: string;
+            /** Data */
+            data: string;
+            /** Expires At */
+            expires_at: number;
+            /** Transcript */
+            transcript: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChatCompletionMessage
+         * @description A chat completion message generated by the model.
+         */
+        ChatCompletionMessage: {
+            /** Content */
+            content?: string | null;
+            /** Refusal */
+            refusal?: string | null;
+            /**
+             * Role
+             * @constant
+             */
+            role: "assistant";
+            /** Annotations */
+            annotations?: components["schemas"]["Annotation"][] | null;
+            audio?: components["schemas"]["ChatCompletionAudio"] | null;
+            function_call?: components["schemas"]["FunctionCall"] | null;
+            /** Tool Calls */
+            tool_calls?: (components["schemas"]["ChatCompletionMessageFunctionToolCall"] | components["schemas"]["ChatCompletionMessageCustomToolCall"])[] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChatCompletionMessageCustomToolCall
+         * @description A call to a custom tool created by the model.
+         */
+        ChatCompletionMessageCustomToolCall: {
+            /** Id */
+            id: string;
+            custom: components["schemas"]["Custom"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "custom";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChatCompletionMessageFunctionToolCall
+         * @description A call to a function tool created by the model.
+         */
+        ChatCompletionMessageFunctionToolCall: {
+            /** Id */
+            id: string;
+            function: components["schemas"]["Function"];
+            /**
+             * Type
+             * @constant
+             */
+            type: "function";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChatCompletionRequest
+         * @description Uses openai.types.chat.ChatCompletionMessageParam for messages — the exact
+         *     same TypedDict the official openai client uses.
+         *
+         *     Example request body
+         *     --------------------
+         *     {
+         *         "model": "ocr-v1",
+         *         "stream": false,
+         *         "messages": [
+         *             {
+         *                 "role": "user",
+         *                 "content": [
+         *                     {"type": "text", "text": "Extract text from this image."},
+         *                     {"type": "image_url", "image_url": {"url": "https://example.com/doc.png"}}
+         *                 ]
+         *             }
+         *         ]
+         *     }
+         */
+        ChatCompletionRequest: {
+            /**
+             * Model
+             * @default ocr-v1
+             */
+            model: string;
+            /** Messages */
+            messages: unknown[];
+            /**
+             * Stream
+             * @default false
+             */
+            stream: boolean;
+            /** Temperature */
+            temperature?: number | null;
+            /** Max Tokens */
+            max_tokens?: number | null;
+            /** User */
+            user?: string | null;
+        };
+        /** ChatCompletionTokenLogprob */
+        ChatCompletionTokenLogprob: {
+            /** Token */
+            token: string;
+            /** Bytes */
+            bytes?: number[] | null;
+            /** Logprob */
+            logprob: number;
+            /** Top Logprobs */
+            top_logprobs: components["schemas"]["TopLogprob"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /** ChatMessage */
+        ChatMessage: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant" | "system";
+            /** Content */
+            content: string;
         };
         /** Checkbox */
         Checkbox: {
@@ -398,12 +783,97 @@ export interface components {
             /** Is Checked */
             is_checked: boolean;
         };
+        /** Choice */
+        Choice: {
+            /**
+             * Finish Reason
+             * @enum {string}
+             */
+            finish_reason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
+            /** Index */
+            index: number;
+            logprobs?: components["schemas"]["ChoiceLogprobs"] | null;
+            message: components["schemas"]["ChatCompletionMessage"];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ChoiceLogprobs
+         * @description Log probability information for the choice.
+         */
+        ChoiceLogprobs: {
+            /** Content */
+            content?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+            /** Refusal */
+            refusal?: components["schemas"]["ChatCompletionTokenLogprob"][] | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** ClassificationAnnotation */
         ClassificationAnnotation: {
             /** Label */
             label: string;
             /** Description */
             description?: string | null;
+        };
+        /**
+         * CompletionTokensDetails
+         * @description Breakdown of tokens used in a completion.
+         */
+        CompletionTokensDetails: {
+            /** Accepted Prediction Tokens */
+            accepted_prediction_tokens?: number | null;
+            /** Audio Tokens */
+            audio_tokens?: number | null;
+            /** Reasoning Tokens */
+            reasoning_tokens?: number | null;
+            /** Rejected Prediction Tokens */
+            rejected_prediction_tokens?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * CompletionUsage
+         * @description Usage statistics for the completion request.
+         */
+        CompletionUsage: {
+            /** Completion Tokens */
+            completion_tokens: number;
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Total Tokens */
+            total_tokens: number;
+            completion_tokens_details?: components["schemas"]["CompletionTokensDetails"] | null;
+            prompt_tokens_details?: components["schemas"]["PromptTokensDetails"] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * Custom
+         * @description The custom tool that the model called.
+         */
+        Custom: {
+            /** Input */
+            input: string;
+            /** Name */
+            name: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EmbedRequest */
+        EmbedRequest: {
+            /**
+             * Text
+             * @description Text to embed
+             */
+            text: string;
+        };
+        /** EmbedResponse */
+        EmbedResponse: {
+            /** Vector */
+            vector: number[];
+            /** Model */
+            model: string;
         };
         /** FormEntry */
         FormEntry: {
@@ -427,6 +897,32 @@ export interface components {
              * @description Valeur corrigée (typo, casse, format date, nombres, orthographe…) de value si besoin
              */
             corrected_value?: string | null;
+        };
+        /**
+         * Function
+         * @description The function that the model called.
+         */
+        Function: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * FunctionCall
+         * @description Deprecated and replaced by `tool_calls`.
+         *
+         *     The name and arguments of a function that should be called, as generated by the model.
+         */
+        FunctionCall: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        } & {
+            [key: string]: unknown;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -538,6 +1034,20 @@ export interface components {
             /** Content */
             content?: unknown | null;
         };
+        /**
+         * ModelList
+         * @description Thin list envelope matching the OpenAI /v1/models response.
+         */
+        ModelList: {
+            /**
+             * Object
+             * @default list
+             * @constant
+             */
+            object: "list";
+            /** Data */
+            data: unknown[];
+        };
         /** OCRResult */
         OCRResult: {
             /** Type */
@@ -563,6 +1073,94 @@ export interface components {
              * @default
              */
             text: string | null;
+        };
+        /** OcrChunkBase */
+        OcrChunkBase: {
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Page Nums
+             * @description 0-based page indices covered by this chunk. Usually a single page, but can contain several when a paragraph crosses a page boundary.
+             */
+            page_nums: number[];
+            /** Bbox Indices */
+            bbox_indices?: number[];
+            /** Text */
+            text: string;
+            /** Model Name */
+            model_name: string;
+            /** Vector */
+            vector: number[];
+            /** Vector Size */
+            vector_size: number;
+        };
+        /** OcrChunkModel */
+        OcrChunkModel: {
+            /** Content Hash */
+            content_hash: string;
+            /**
+             * Page Nums
+             * @description 0-based page indices covered by this chunk. Usually a single page, but can contain several when a paragraph crosses a page boundary.
+             */
+            page_nums: number[];
+            /** Bbox Indices */
+            bbox_indices?: number[];
+            /** Text */
+            text: string;
+            /** Model Name */
+            model_name: string;
+            /** Vector */
+            vector: number[];
+            /** Vector Size */
+            vector_size: number;
+            /** Id */
+            id: string;
+            /** Created At */
+            created_at: number;
+        };
+        /**
+         * OcrChunkSearchRequest
+         * @description Payload for semantic search over a file's chunks.
+         */
+        OcrChunkSearchRequest: {
+            /**
+             * Query Vector
+             * @description Dense query embedding
+             */
+            query_vector: number[];
+            /**
+             * Top K
+             * @default 5
+             */
+            top_k: number;
+        };
+        /**
+         * OcrChunkSearchResult
+         * @description A single search hit returned to the client.
+         */
+        OcrChunkSearchResult: {
+            /** Id */
+            id: string;
+            /** Content Hash */
+            content_hash: string;
+            /** Page Nums */
+            page_nums: number[];
+            /** Bbox Indices */
+            bbox_indices: number[];
+            /** Text */
+            text: string;
+            /** Model Name */
+            model_name: string;
+            /** Score */
+            score: number;
+        };
+        /**
+         * OcrChunkUpsertForm
+         * @description Payload sent by the client to index a batch of chunks for a file.
+         */
+        OcrChunkUpsertForm: {
+            /** Chunks */
+            chunks?: components["schemas"]["OcrChunkBase"][];
         };
         /** Page */
         Page: {
@@ -622,7 +1220,7 @@ export interface components {
              * @description Whether the annotation is private or not
              * @default false
              */
-            private?: boolean | null;
+            private: boolean;
         };
         /** Pagination[AnnotationModel] */
         Pagination_AnnotationModel_: {
@@ -645,6 +1243,18 @@ export interface components {
             page_size: number;
             /** Items */
             items?: components["schemas"]["TaskModel"][] | null;
+        };
+        /**
+         * PromptTokensDetails
+         * @description Breakdown of tokens used in the prompt.
+         */
+        PromptTokensDetails: {
+            /** Audio Tokens */
+            audio_tokens?: number | null;
+            /** Cached Tokens */
+            cached_tokens?: number | null;
+        } & {
+            [key: string]: unknown;
         };
         /** RegionOfInterest */
         RegionOfInterest: {
@@ -726,6 +1336,26 @@ export interface components {
          * @enum {string}
          */
         TaskStatus: "created" | "queued" | "started" | "in_progress" | "completed" | "failed" | "retrying" | "canceled" | "timeout";
+        /** TopLogprob */
+        TopLogprob: {
+            /** Token */
+            token: string;
+            /** Bytes */
+            bytes?: number[] | null;
+            /** Logprob */
+            logprob: number;
+        } & {
+            [key: string]: unknown;
+        };
+        /** UsedChunk */
+        UsedChunk: {
+            /** Page Nums */
+            page_nums: number[];
+            /** Bbox Indices */
+            bbox_indices: number[];
+            /** Text */
+            text: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -734,6 +1364,10 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
         /** Vector */
         Vector: {
@@ -1209,37 +1843,6 @@ export interface operations {
             };
         };
     };
-    get_annotations_by_task_api_annotations_task__task_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                task_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AnnotationModel"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_annotations_by_user_api_annotations_user__get: {
         parameters: {
             query?: {
@@ -1288,6 +1891,257 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AnnotationStats"];
+                };
+            };
+        };
+    };
+    list_chunks_api_ocr_chunks__content_hash__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcrChunkModel"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_chunks_api_ocr_chunks__content_hash__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OcrChunkUpsertForm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcrChunkModel"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_chunks_api_ocr_chunks__content_hash__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_chunks_api_ocr_chunks__content_hash__search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OcrChunkSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OcrChunkSearchResult"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_api_chat_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    embed_api_chat_embed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmbedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmbedResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_models_v1_models__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelList"];
+                };
+            };
+        };
+    };
+    chat_completions_v1_chat_completions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatCompletionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatCompletion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.git
+.gitignore
+.vscode
+npm-debug.log
+pnpm-store
+.DS_Store
+
+# exclude local build artifacts
+/build
+
+# lockfiles are fine to copy
