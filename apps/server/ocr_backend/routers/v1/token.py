@@ -34,9 +34,7 @@ async def create_user_token(
 ) -> TokenResponse:
     user_id = ctx.user_id
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     try:
         row = create_token(
             user_id=user_id,
@@ -49,9 +47,7 @@ async def create_user_token(
         return TokenResponse.model_validate(row)
     except Exception as e:
         logger.error(f"Error creating token for user_id={user_id}: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @router.get("/", summary="List tokens for current user")
@@ -60,28 +56,20 @@ async def list_user_tokens(
 ) -> List[TokenResponse]:
     user_id = ctx.user_id
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     rows = get_tokens_by_user(user_id)
     logger.info(f"Retrieved {len(rows)} tokens for user_id={user_id}")
     return [TokenResponse.model_validate(r) for r in rows]
 
 
 @router.delete("/{token_id}", summary="Delete token by id for current user")
-async def delete_user_token(
-    token_id: str, ctx: Annotated[RequestContext, Depends(TokenVerifier)]
-):
+async def delete_user_token(token_id: str, ctx: Annotated[RequestContext, Depends(TokenVerifier)]):
     user_id = ctx.user_id
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     token = get_token_by_id(token_id)
     if not token or token.user_id != user_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Token not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Token not found")
     ok = delete_token_by_id(token_id)
     if not ok:
         raise HTTPException(

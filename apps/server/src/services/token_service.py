@@ -75,11 +75,7 @@ def get_token_by_value(token_str: str) -> Optional[TokenModel]:
 
 def get_token_by_user_and_token(user_id: str, token_str: str) -> Optional[TokenModel]:
     with get_db() as db:
-        row = (
-            db.query(TokenTable)
-            .filter(TokenTable.user_id == user_id, TokenTable.token == token_str)
-            .first()
-        )
+        row = db.query(TokenTable).filter(TokenTable.user_id == user_id, TokenTable.token == token_str).first()
         if not row:
             return None
         token = TokenModel.model_validate(row)

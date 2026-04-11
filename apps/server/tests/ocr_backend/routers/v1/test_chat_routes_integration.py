@@ -8,7 +8,7 @@ import boto3
 
 @pytest.fixture
 def openai_client() -> openai.Client:
-    return openai.Client(base_url="http://localhost:5000/v1", api_key="secret-api")
+    return openai.Client(base_url="http://localhost:5000/api/v1", api_key="secret-api")
 
 
 @pytest.fixture
