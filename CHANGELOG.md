@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.7](https://github.com/IA-Generative/ocr-api/compare/v0.13.6...v0.13.7) (2026-04-11)
+
+
+### Bug Fixes
+
+* **token:** add token approach ([80e0aeb](https://github.com/IA-Generative/ocr-api/commit/80e0aeb7c325bd59dc8aea99501c7e1d563995ca))
+
 ## [0.13.6](https://github.com/IA-Generative/ocr-api/compare/v0.13.5...v0.13.6) (2026-04-10)
 
 
