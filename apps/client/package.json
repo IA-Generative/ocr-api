@@ -32,6 +32,7 @@
     "focus-trap-vue": "^4.1.0",
     "husky": "^9.1.7",
     "keycloak-js": "^26.2.3",
+    "marked": "^18.0.0",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.28",

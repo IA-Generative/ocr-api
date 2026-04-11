@@ -43,6 +43,7 @@ declare module 'vue' {
     StatModel: typeof import('./components/StatModel.vue')['default']
     StatsModel: typeof import('./components/StatsModel.vue')['default']
     TasksTab: typeof import('./components/TasksTab.vue')['default']
+    TokenModal: typeof import('./components/TokenModal.vue')['default']
   }
 }
 
@@ -79,4 +80,5 @@ declare global {
   const StatModel: typeof import('./components/StatModel.vue')['default']
   const StatsModel: typeof import('./components/StatsModel.vue')['default']
   const TasksTab: typeof import('./components/TasksTab.vue')['default']
+  const TokenModal: typeof import('./components/TokenModal.vue')['default']
 }

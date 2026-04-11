@@ -7,6 +7,7 @@ import { getKeycloak } from '@/utils/keycloak'
 import Home from '../views/AppHome.vue'
 import DevOcrViewer from '../views/DevOcrViewer.vue'
 import OcrResultView from '../views/OcrResultView.vue'
+import Documentation from '../views/Documentation.vue'
 
 function redirectToSSO () {
   const loginUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}&redirect_uri=${encodeURIComponent(KEYCLOAK_REDIRECT_URI)}&response_type=code`
@@ -69,6 +70,12 @@ const routes = [
     path: '/dev/ocr-viewer',
     name: 'DevOcrViewer',
     component: DevOcrViewer,
+  },
+  {
+    path: '/docs',
+    name: 'Documentation',
+    component: Documentation,
+    beforeEnter: authGuard('/docs'),
   },
   {
     path: '/:taskId',

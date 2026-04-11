@@ -185,7 +185,7 @@ test-backend-api: build-container-dependencies up-db ## Test ocr backend
 	make down-test
 
 generate-openapi: ## Génère les types TypeScript depuis l'OpenAPI local (backend doit tourner sur localhost:5000)
-	cd apps/client && VITE_OCR_API_URL=http://localhost:5000/api pnpm run generate-openapi
+	docker compose run --rm ocr_frontend sh -c "VITE_OCR_API_URL=http://ocr_backend:5000/api pnpm run generate-openapi"
 
 test-sdk: install-uv ## Test le SDK Python
 	docker compose -f docker-compose.yaml up -d && \

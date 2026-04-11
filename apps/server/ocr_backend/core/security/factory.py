@@ -4,6 +4,7 @@ import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
+from src.services.token_service import get_token_by_user_and_token
 import json
 
 logging.basicConfig(
@@ -66,8 +67,13 @@ class ApiToken(BaseVerifyToken):
             current_user = self.__api_keys[ctx.token]
             ctx.user_id = current_user.user_id
             ctx.email = current_user.email
-            ctx.roles = current_user.roles
+            ctx.roles: list[str] | None = current_user.roles
             ctx.is_admin = current_user.is_admin
+            return True
+        user_id = ctx.user_id or ""
+        token = ctx.token or ""
+        if get_token_by_user_and_token(user_id=user_id, token_str=token):
+            logging.info(f"Valid token found for user_id={user_id}")
             return True
         return False
 
@@ -127,6 +133,6 @@ SECURITY_FACTORY: dict[str, BaseVerifyToken] = {
     "dev": DevToken,
     "keycloak": KeycloakToken,
     "api-token": ApiToken,
-}
+}  # ty:ignore[invalid-assignment]
 
-TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()
+TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()  # ty:ignore[missing-argument]

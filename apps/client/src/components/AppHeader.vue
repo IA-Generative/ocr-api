@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DsfrHeaderProps } from '@gouvminint/vue-dsfr'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { getKeycloak } from '@/utils/keycloak'
 
 const keycloak = getKeycloak()
@@ -30,6 +30,11 @@ const quickLinks = computed<DsfrHeaderProps['quickLinks']>(() => {
     return whenNotLoggedLinks
   }
 })
+
+// Token modal state
+const showTokenModal = ref(false)
+
+import TokenModal from './TokenModal.vue'
 
 function redirectTo (url: string): void {
   window.open(url, '_blank', 'noopener, noreferrer')
@@ -74,6 +79,10 @@ const logoText = ['Ministère', 'de l’intérieur']
           },
         ]"
       />
+      <div class="ml-3 inline-flex items-center">
+        <button class="fr-btn fr-btn--secondary fr-btn--sm" @click="showTokenModal = true">Mes tokens API</button>
+      </div>
+      <TokenModal v-if="showTokenModal" @close="showTokenModal = false" />
     </template>
   </DsfrHeader>
 </template>
