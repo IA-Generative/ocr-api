@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.14.1](https://github.com/IA-Generative/ocr-api/compare/v0.14.0...v0.14.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* **ci:** update image tagging logic in GitLab CI configuration ([#293](https://github.com/IA-Generative/ocr-api/issues/293)) ([b6de937](https://github.com/IA-Generative/ocr-api/commit/b6de937477d8cb2fad88d6001fa42f6395f304ba))
+
 ## [0.14.0](https://github.com/IA-Generative/ocr-api/compare/v0.13.9...v0.14.0) (2026-04-13)
 
 
