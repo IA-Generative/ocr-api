@@ -73,7 +73,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
 
       - name: Build and push server image
         if: ${{ steps.release.outputs.release_created == 'true' }}
