@@ -99,7 +99,7 @@ async function generateAndCreateToken() {
     const expires = computeExpiry(created, tokenType.value, customExpiry.value)
     const payload = { token: value, expired_at: expires ? Math.floor(new Date(expires).getTime() / 1000) : null }
 
-    const { data } = await http.post('/v1/tokens', payload)
+    const { data } = await http.post('/v1/tokens/', payload)
     token.value = data.token ?? value
     setVisibleOnce(8)
     createStatus.value = 'Token créé et enregistré sur le serveur.'
@@ -159,7 +159,7 @@ async function revoke(id: string) {
 
 async function fetchTokensFromServer() {
   try {
-    const { data } = await http.get('/v1/tokens')
+    const { data } = await http.get('/v1/tokens/')
     tokenList.value = (data || [])
       .map((r: any) => ({
         id: r.id,
