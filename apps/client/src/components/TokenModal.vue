@@ -2,7 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { OCR_API_URL } from '@/utils/constants'
-import { getKeycloak } from '@/utils/keycloak'
+import createHttpClient from '@/api/http-client'
+
+const http = createHttpClient(OCR_API_URL)
 
 const emit = defineEmits<{ close: [] }>()
 
@@ -89,14 +91,6 @@ function computeExpiry (created: Date, type: typeof tokenType.value, customDate?
   return d.toISOString()
 }
 
-function buildHeaders(contentType?: string): Record<string, string> {
-  const h: Record<string, string> = { Accept: 'application/json' }
-  if (contentType) h['Content-Type'] = contentType
-  const kc = getKeycloak()
-  if (kc.authenticated && kc.token) h['Authorization'] = `Bearer ${kc.token}`
-  return h
-}
-
 async function generateAndCreateToken() {
   generating.value = true
   try {
@@ -105,24 +99,16 @@ async function generateAndCreateToken() {
     const expires = computeExpiry(created, tokenType.value, customExpiry.value)
     const payload = { token: value, expired_at: expires ? Math.floor(new Date(expires).getTime() / 1000) : null }
 
-    const resp = await fetch(`${OCR_API_URL}/v1/tokens`, {
-      method: 'POST',
-      headers: buildHeaders('application/json'),
-      body: JSON.stringify(payload),
-    })
-    if (resp.ok) {
-      const data = await resp.json()
-      token.value = data.token ?? value
-      setVisibleOnce(8)
-      createStatus.value = 'Token créé et enregistré sur le serveur.'
-      await fetchTokensFromServer()
-    } else if (resp.status === 401) {
-      createStatus.value = 'Non autorisé — vérifiez votre clé API.'
-    } else {
-      createStatus.value = `Erreur serveur (${resp.status}).`
-    }
-  } catch {
-    createStatus.value = 'Serveur indisponible.'
+    const { data } = await http.post('/v1/tokens', payload)
+    token.value = data.token ?? value
+    setVisibleOnce(8)
+    createStatus.value = 'Token créé et enregistré sur le serveur.'
+    await fetchTokensFromServer()
+  } catch (err: any) {
+    const status = err?.response?.status
+    if (status === 401) createStatus.value = 'Non autorisé — vérifiez votre clé API.'
+    else if (status) createStatus.value = `Erreur serveur (${status}).`
+    else createStatus.value = 'Serveur indisponible.'
   } finally {
     generating.value = false
   }
@@ -157,18 +143,15 @@ async function copyToClipboard(text: string) {
 
 async function revoke(id: string) {
   try {
-    const resp = await fetch(`${OCR_API_URL}/v1/tokens/${id}`, {
-      method: 'DELETE',
-      headers: buildHeaders(),
-    })
-    if (!resp.ok && resp.status !== 404) {
-      createStatus.value = `Suppression échouée (${resp.status})`
+    await http.delete(`/v1/tokens/${encodeURIComponent(id)}`)
+    createStatus.value = 'Token supprimé.'
+  } catch (err: any) {
+    if (err?.response?.status === 404) {
+      createStatus.value = 'Token supprimé.'
+    } else {
+      createStatus.value = `Suppression échouée (${err?.response?.status ?? 'réseau'})`
       return
     }
-    createStatus.value = 'Token supprimé.'
-  } catch {
-    createStatus.value = 'Erreur réseau lors de la suppression.'
-    return
   }
   tokenList.value = tokenList.value.filter(t => t.id !== id)
   if (tokenList.value.length === 0) token.value = null
@@ -176,12 +159,7 @@ async function revoke(id: string) {
 
 async function fetchTokensFromServer() {
   try {
-    const resp = await fetch(`${OCR_API_URL}/v1/tokens`, { headers: buildHeaders() })
-    if (!resp.ok) {
-      createStatus.value = `Impossible de récupérer les tokens (${resp.status})`
-      return
-    }
-    const data = await resp.json()
+    const { data } = await http.get('/v1/tokens')
     tokenList.value = (data || [])
       .map((r: any) => ({
         id: r.id,
@@ -192,8 +170,8 @@ async function fetchTokensFromServer() {
       .sort((a: TokenItem, b: TokenItem) => new Date(b.created).getTime() - new Date(a.created).getTime())
     createStatus.value = `${tokenList.value.length} token(s) chargé(s).`
     currentPage.value = 1
-  } catch {
-    createStatus.value = 'Erreur réseau lors de la récupération des tokens.'
+  } catch (err: any) {
+    createStatus.value = `Erreur réseau lors de la récupération des tokens (${err?.response?.status ?? 'réseau'}).`
   }
 }
 
