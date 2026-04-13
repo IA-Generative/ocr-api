@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.8](https://github.com/IA-Generative/ocr-api/compare/v0.13.7...v0.13.8) (2026-04-13)
+
+
+### Bug Fixes
+
+* **ci:** update Docker build rules for ocr-api, ocr-worker, and ocr-f… ([#287](https://github.com/IA-Generative/ocr-api/issues/287)) ([a2d567e](https://github.com/IA-Generative/ocr-api/commit/a2d567eddd05336d38f33398685595078050c4ee))
+
 ## [0.13.7](https://github.com/IA-Generative/ocr-api/compare/v0.13.6...v0.13.7) (2026-04-11)
 
 
