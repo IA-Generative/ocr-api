@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.15.0](https://github.com/IA-Generative/ocr-api/compare/v0.14.4...v0.15.0) (2026-04-13)
+
+
+### Features
+
+* **AppFooter:** add footer component to display application version ([e5cabb0](https://github.com/IA-Generative/ocr-api/commit/e5cabb095dc755fc848cff5524e71e6b627555d8))
+
 ## [0.14.4](https://github.com/IA-Generative/ocr-api/compare/v0.14.3...v0.14.4) (2026-04-13)
 
 
