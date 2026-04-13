@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.9](https://github.com/IA-Generative/ocr-api/compare/v0.13.8...v0.13.9) (2026-04-13)
+
+
+### Bug Fixes
+
+* **release:** update image version deletion logic in GitHub Actions w… ([#289](https://github.com/IA-Generative/ocr-api/issues/289)) ([29bf3e1](https://github.com/IA-Generative/ocr-api/commit/29bf3e1e22278d11f3b08c200b96b8ca259c755d))
+
 ## [0.13.8](https://github.com/IA-Generative/ocr-api/compare/v0.13.7...v0.13.8) (2026-04-13)
 
 
