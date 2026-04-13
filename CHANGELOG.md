@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.14.2](https://github.com/IA-Generative/ocr-api/compare/v0.14.1...v0.14.2) (2026-04-13)
+
+
+### Bug Fixes
+
+* **ci:** update image tagging logic to always include branch tags ([#295](https://github.com/IA-Generative/ocr-api/issues/295)) ([5a9204c](https://github.com/IA-Generative/ocr-api/commit/5a9204c5fcc12598500578f41ec09562d11b312e))
+
 ## [0.14.1](https://github.com/IA-Generative/ocr-api/compare/v0.14.0...v0.14.1) (2026-04-13)
 
 
