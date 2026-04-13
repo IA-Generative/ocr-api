@@ -29,6 +29,7 @@ docker-build-ocr-api:
   variables:
     DOCKERFILE: "apps/server/ocr_backend/Dockerfile"
     IMAGE_NAMES: ""  # Overridden in before_script
+    EXTRA_BUILD_ARGS: "--build-arg HARBOR_PROXY_URL=${HARBOR_PROXY_URL}"
   rules:
     - when: always
   before_script:
@@ -53,6 +54,7 @@ docker-build-ocr-worker:
   variables:
     DOCKERFILE: "apps/server/business/paddleocr2/Dockerfile"
     IMAGE_NAMES: ""  # Overridden in before_script
+    EXTRA_BUILD_ARGS: "--build-arg HARBOR_PROXY_URL=${HARBOR_PROXY_URL}"
   rules:
     - when: always
   before_script:
@@ -78,6 +80,7 @@ docker-build-ocr-frontend:
     DOCKERFILE: "./apps/client/Dockerfile"
     WORKING_DIR: "./apps/client"
     IMAGE_NAMES: ""  # Overridden in before_script
+    EXTRA_BUILD_ARGS: "--build-arg HARBOR_PROXY_URL=${HARBOR_PROXY_URL}"
   rules:
     - when: always
   before_script:
