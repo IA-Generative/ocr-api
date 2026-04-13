@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppFooter: typeof import('./components/AppFooter.vue')['default']
     AppHeader: typeof import('./components/AppHeader.vue')['default']
     AppToaster: typeof import('./components/AppToaster.vue')['default']
     BboxDetailPanel: typeof import('./components/BboxDetailPanel.vue')['default']
@@ -49,6 +50,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AppFooter: typeof import('./components/AppFooter.vue')['default']
   const AppHeader: typeof import('./components/AppHeader.vue')['default']
   const AppToaster: typeof import('./components/AppToaster.vue')['default']
   const BboxDetailPanel: typeof import('./components/BboxDetailPanel.vue')['default']

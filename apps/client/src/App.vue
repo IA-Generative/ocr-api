@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import useToaster from './composables/use-toaster'
+import AppFooter from './components/AppFooter.vue'
 
 const toaster = useToaster()
 </script>
@@ -14,4 +15,7 @@ const toaster = useToaster()
     :messages="toaster.messages"
     @close-message="toaster.removeMessage($event)"
   />
+
+  <AppFooter />
 </template>
+
