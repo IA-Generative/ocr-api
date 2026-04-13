@@ -73,33 +73,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Delete existing server image versions (pre-push)
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ocr-api
-          package-type: container
-          min-versions-to-keep: 0
-          delete-only-untagged-versions: false
-
-      - name: Delete existing client image versions (pre-push)
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ocr-frontend
-          package-type: container
-          min-versions-to-keep: 0
-          delete-only-untagged-versions: false
-
-      - name: Delete existing paddleocr2 image versions (pre-push)
-        if: ${{ steps.release.outputs.release_created == 'true' }}
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: ocr-worker
-          package-type: container
-          min-versions-to-keep: 0
-          delete-only-untagged-versions: false
+      
 
       - name: Build and push server image
         if: ${{ steps.release.outputs.release_created == 'true' }}
