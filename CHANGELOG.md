@@ -29,6 +29,15 @@
 - code clean
 - :art: change minio vars
 
+## [0.14.4](https://github.com/IA-Generative/ocr-api/compare/v0.14.3...v0.14.4) (2026-04-13)
+
+
+### Bug Fixes
+
+* **ci:** add HARBOR_PROXY_URL build argument to Docker build configurations ([6ed5d12](https://github.com/IA-Generative/ocr-api/commit/6ed5d12f695401d6dfec832d7ca491b82be97ac3))
+* **TokenModal:** refactor token management to use HTTP client for API requests ([12f89df](https://github.com/IA-Generative/ocr-api/commit/12f89dfc0a653fb0d4cff3a10c1a1f0daf21eb16))
+* **TokenModal:** update API endpoint to include trailing slash for token requests ([d6e6fd2](https://github.com/IA-Generative/ocr-api/commit/d6e6fd202b07bb63634b9c49a68f694307e0ec8b))
+
 ## [0.14.3](https://github.com/IA-Generative/ocr-api/compare/v0.14.2...v0.14.3) (2026-04-13)
 
 
