@@ -8,6 +8,7 @@ WORKDIR /app
 
 RUN apt update -qy && apt install -qy \
   curl \
+  git \
   ffmpeg \
   libsm6 \
   libxext6 \
@@ -16,9 +17,10 @@ RUN apt update -qy && apt install -qy \
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/models/paddle/
 ENV PADDLE_PDX_CACHE_HOME=/app/models/paddle/
-ENV TORCH_HOME=/app/.cache/torch/
+ENV TORCH_HOME=/app/models/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 ENV TORCHINDUCTOR_CACHE_DIR=/tmp
+ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=true
 
 COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version  /app/
 RUN uv sync --no-cache --group business-forms \
@@ -26,25 +28,14 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group ocr-service-paddle \
-  --group ocr-docling \
   --group services \
   && uv cache clean
 
 ENV PYTHONPATH=/app
 # Download PaddleOCR models
-COPY apps/server/business/paddleocr2 /app/business/paddleocr2
+COPY apps/server/business /app/business/
 RUN uv run business/paddleocr2/utils/download_paddle_models_v3.py
-
-# Copy application code
-COPY apps/server/business/__init__.py /app/business/__init__.py
-COPY apps/server/business/cache /app/business/cache
-COPY apps/server/business/checkbox_service /app/business/checkbox_service
-COPY apps/server/business/forms /app/business/forms
-COPY apps/server/business/features /app/business/features
-COPY apps/server/business/llm /app/business/llm
-COPY apps/server/business/docling_inference /app/business/docling_inference
-COPY apps/server/business/extractions /app/business/extractions
-COPY apps/server/business/chunks /app/business/chunks
+# RUN uv run business/classification/utils/dl_models.py
 
 # Copy common code
 COPY apps/server/src /app/src
@@ -60,7 +51,7 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group ocr-service-paddle \
-  --group ocr-docling \
   --group services \
   --group test \
+  --group ocr-service-features \
   && uv cache clean

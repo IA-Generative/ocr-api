@@ -1,0 +1,126 @@
+from datetime import datetime
+from enum import StrEnum
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, ConfigDict
+from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String
+
+from src.connector.db_connector import Base
+from src.schemas.input import InputForm
+from src.schemas.output import OCRResult
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+
+    id = Column(String, primary_key=True)
+    type = Column(String, nullable=False, primary_key=True)
+    status = Column(String, default="queued")
+    user_id = Column(String, nullable=False)
+    group_id = Column(String, nullable=True)
+    percentage = Column(FLOAT, nullable=False)
+    input = Column(JSON, nullable=True)
+    output = Column(JSON, nullable=True)
+    position = Column(Integer, nullable=True)
+    created_at = Column(BigInteger, default=lambda: int(datetime.now().timestamp()))
+    updated_at = Column(
+        BigInteger,
+        default=lambda: int(datetime.now().timestamp()),
+        onupdate=lambda: int(datetime.now().timestamp()),
+    )
+    parameters = Column(JSON, nullable=True)
+
+    extras = Column(JSON, nullable=True)
+    content_hash = Column(String, nullable=True, index=True, unique=False)
+
+
+class TaskModel(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    user_id: str
+    group_id: Optional[str] = None
+    type: str
+    status: str = "queued"
+    percentage: Optional[float] = 0.0
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
+    created_at: int
+    updated_at: int
+    extras: Optional[Dict[str, Any]] = None
+    position: Optional[int] = None
+    content_hash: Optional[str] = None
+    parameters: Optional[dict[str, Any]] = None
+
+
+class TaskForm(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    group_id: Optional[str] = None
+    type: Optional[str] = None
+    status: str
+    percentage: Optional[float] = 0.0
+    extras: Optional[dict] = None
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
+    content_hash: Optional[str] = None
+    parameters: Optional[dict[str, Any]] = None
+
+
+class TaskUpdateForm(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    group_id: Optional[str] = None
+    type: Optional[str] = None
+    status: Optional[str] = None
+    percentage: Optional[float] = 0.0
+    extras: Optional[dict] = None
+    input: Optional[InputForm] = None
+    output: Optional[OCRResult] = None
+    content_hash: Optional[str] = None
+    parameters: Optional[dict[str, Any]] = None
+
+
+class TaskStatus(StrEnum):
+    CREATED = "created"  # Tâche instanciée mais pas encore mise en file
+    QUEUED = "queued"  # En attente dans une file de traitement
+    STARTED = "started"  # A commencé à être traitée
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"  # Traitée avec succès
+    FAILED = "failed"  # Erreur fatale
+    RETRYING = "retrying"  # En cours de nouvelle tentative après échec
+    CANCELED = "canceled"  # Annulée manuellement ou par logique métier
+    TIMEOUT = "timeout"  # N’a pas pu terminer dans le temps imparti
+
+
+class TaskOperation(StrEnum):
+    OCR = "ocr"
+    DEFAULT = "default"
+    SAVE_TEMPLATE = "save_template"
+    FORMS = "forms"
+    VECTORIZE = "vectorize"
+    VLM_OCR = "vlm_ocr"
+    PAGE_CLASSIFICATION = "page_classification"
+
+
+class CeleryTaskName(StrEnum):
+    OCR_TASK = "worker.tasks.ocr"
+    PAGE_CLASSIFICATION_TASK = "tasks.page_classification"
+
+
+class TaskStatsGlobal(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    total_tasks: int
+    # Clé = status, Valeur = nombre de tâches
+    tasks_stats: Dict[TaskStatus, int]
+
+
+class TaskStatsUser(TaskStatsGlobal):
+    model_config = ConfigDict(from_attributes=True)
+    user_id: str
+
+
+class TaskStats(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    global_stats: TaskStatsGlobal
+    user_stats: TaskStatsUser
+    # all_users_stats: Pagination[TaskStatsUser] = Field(
+    #     None, description="Statistiques paginées pour tous les utilisateurs"
+    # )

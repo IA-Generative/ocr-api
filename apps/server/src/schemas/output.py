@@ -5,6 +5,7 @@ from src.schemas.layout import Layout
 from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
 from src.schemas.template import LLMFormField, ImageFormDetector, FormEntry
 from src.schemas.vector import Vector
+from src.schemas.classification import ClassificationResult
 
 
 class Page(BaseModel):
@@ -21,6 +22,9 @@ class Page(BaseModel):
     vector: Optional[Vector] = Field(None, description="Vector representation of the page")
     similar_template_ids: List[tuple[str, float]] = Field(
         default_factory=list, description="List of similar template IDs"
+    )
+    classifications: list[ClassificationResult] = Field(
+        default_factory=list, description="List of classification results for the page"
     )
 
 

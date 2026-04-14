@@ -3,11 +3,12 @@ from typing import List
 from time import time
 from PIL import Image
 
-from paddleocr import PaddleOCR
+from paddleocr import PaddleOCR, LayoutDetection
 import numpy as np
 
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
+from src.schemas.layout import Layout
 from src.schemas.box import Bbox
 from src.logger import logger
 
@@ -79,4 +80,31 @@ class PaddleInferOCR2(BaseModelPrediction):
             page = Page(page=i, boxes=page_boxes)
             result.append(page)
 
+        return result
+
+
+class LayoutModel(BaseModelPrediction):
+    def __init__(self, model_name: str = "PP-DocLayoutV2"):
+        # Placeholder for future layout model initialization
+        self.model = LayoutDetection(model_name=model_name)  # Hypothetical layout detection model
+
+    def batch_predict(self, images: list[Image.Image], pages: list[Page] = [], *args, **kwargs) -> list[Page]:
+        # Placeholder for future layout model prediction logic
+        result: list[Page] = []
+        if len(pages):
+            assert len(images) == len(pages), "Number of images and pages must match"
+
+        for i, image in enumerate(images):
+            npimage = np.array(image)
+            output = self.model.predict(
+                npimage,
+                batch_size=1,
+                layout_nms=True,
+            )
+            layouts: list[Layout] = []
+            for res in output:
+                for box in res["boxes"]:
+                    layouts.append(Layout.model_validate(box))
+            pages[i].layouts = layouts
+            result.append(pages[i])
         return result

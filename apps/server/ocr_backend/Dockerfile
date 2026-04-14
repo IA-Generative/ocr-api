@@ -8,6 +8,12 @@ WORKDIR /app
 
 COPY apps/server/pyproject.toml /app/pyproject.toml
 COPY apps/server/uv.lock /app/uv.lock
+
+# Install git (required by uv to fetch git+ dependencies)
+RUN apt update -qy \
+    && apt install -qy git ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN uv sync --no-cache --group ocr-backend --group migration \
     && uv cache clean
 

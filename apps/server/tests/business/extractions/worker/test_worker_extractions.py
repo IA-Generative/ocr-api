@@ -1,7 +1,7 @@
 import boto3
 import pytest
 
-from src.schemas.task import task_table, TaskForm, TaskModel
+from src.schemas.task import TaskForm, TaskModel
 from src.schemas.input import InputForm
 from src.connector.base import BaseFileConnector
 from src.connector.s3_connector import S3Connector
@@ -16,11 +16,17 @@ from business.extractions.worker.file_worker import (
     OdsWorker,
     OdpWorker,
 )
+from services.client.server import ServerClient
+
+server_client = ServerClient()
 
 
 @pytest.fixture
 def dummy_task() -> TaskModel:
-    return task_table.insert_new_task(user_id="123", form_data=TaskForm(user_id="123", type="ocr", status="created"))
+    task_dct = server_client.create_task(
+        task_data=TaskForm(type="ocr", status="created").model_dump(),
+    )
+    return TaskModel(**task_dct)
 
 
 @pytest.fixture(scope="module")

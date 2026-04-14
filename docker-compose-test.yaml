@@ -21,14 +21,14 @@ services:
     # no env_file referenced
 
   paddleocr2_service:
-    image: paddleocr2_service
+    image: ocr_service
     build:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
       target: test
       args:
         HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
-    container_name: paddleocr2_service
+    container_name: ocr_service
     command:
       [
         "uv",
@@ -38,7 +38,7 @@ services:
         "--cov=./business/",
         "--cov=./services",
         "--cov-report=term-missing",
-        "tests/business/",
+        "tests/business",
         "tests/services",
         "--ignore=tests/business/features",
         "-ra",
@@ -51,7 +51,7 @@ services:
       - ./apps/server/services/:/app/services/
       - ./apps/server/business/:/app/business/
       - ./apps/server/configs/:/app/configs/
-      - test_cache:/app/models/paddle/
+      - test_cache:/app/models
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -70,6 +70,52 @@ services:
       WORKER_NAME: "worker.tasks.ocr"
       PADDLE_PDX_CACHE_HOME: /app/models/paddle/
       PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "true"
+      SERVER_BASE_URL: http://api:5000
+    depends_on:
+      api:
+        condition: service_healthy
+    # no env_file referenced
+
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: apps/server/ocr_backend/Dockerfile
+      target: test
+      args:
+        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    container_name: api
+    ports:
+      - 5000:5000
+    command:
+      [
+        "uvicorn",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "5000",
+        "ocr_backend.main:app",
+        "--reload",
+      ]
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_ENDPOINT_URL: http://minio:9000
+      S3_BUCKET_NAME: test
+      DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
+      DATABASE_ASYNC_URL: postgresql+asyncpg://postgres:secret@db:5432/example_db
+      REDIS_HOST: redis
+      OPENAI_API_KEY: dummy-key-for-tests
+      VERIFY_TOKEN_MODEL: full-access
+
     depends_on:
       redis:
         condition: service_started
@@ -79,7 +125,6 @@ services:
         condition: service_started
       migration:
         condition: service_completed_successfully
-    # no env_file referenced
 
   ocr_backend:
     image: ocr_backend
@@ -93,7 +138,7 @@ services:
     command:
       - "sh"
       - "-c"
-      - "uvicorn ocr_backend.main:app --host 0.0.0.0 --port 5000 & sleep 2 && pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend/ tests/src/ -ra -v"
+      - "pytest -s --cov=./ocr_backend --cov=./src --cov-report=term-missing tests/ocr_backend/ tests/src/ -ra -v"
     volumes:
       - ./apps/server/src/:/app/src/
       - ./apps/server/tests/src:/app/tests/src
@@ -108,18 +153,13 @@ services:
       AWS_ENDPOINT_URL: http://minio:9000
       S3_BUCKET_NAME: test
       DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
+      DATABASE_ASYNC_URL: postgresql+asyncpg://postgres:secret@db:5432/example_db
       REDIS_HOST: redis
       OPENAI_API_KEY: dummy-key-for-tests
       VERIFY_TOKEN_MODEL: full-access
     depends_on:
-      redis:
-        condition: service_started
-      db:
+      api:
         condition: service_healthy
-      minio:
-        condition: service_started
-      migration:
-        condition: service_completed_successfully
     # no env_file referenced
 
   migration:
@@ -137,6 +177,7 @@ services:
       - ./apps/server/migration/:/app/migration
     environment:
       DATABASE_URL: postgresql://postgres:secret@db:5432/example_db
+      DATABASE_ASYNC_URL: postgresql+asyncpg://postgres:secret@db:5432/example_db
     depends_on:
       db:
         condition: service_healthy

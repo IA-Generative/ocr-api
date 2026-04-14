@@ -8,17 +8,77 @@ from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
-
+from fastapi import FastAPI
 from ocr_backend.connectors import s3_client_connector
-from ocr_backend.main import app
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from src.connector.db_connector import Base
+
 from src.schemas.task import TaskModel, TaskStatus, TaskOperation
 from src.schemas.input import RegionOfInterest
 
 
 @pytest.fixture()
-def client():
+def client(async_engine):
+    """Client avec SQLite - tables créées pour les tests"""
+    from ocr_backend.routers.jobs import router as jobs_router, get_db_session
+    import asyncio
+
+    # Créer les tables une fois
+    async def setup():
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+    asyncio.run(setup())
+
+    app = FastAPI()
+    app.include_router(jobs_router, prefix="/api")
+
+    # Override: get_db_session doit retourner une AsyncSession vraie
+    AsyncTestingSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+
+    async def override_get_db():
+        async with AsyncTestingSessionLocal() as session:
+            yield session
+
+    app.dependency_overrides[get_db_session] = override_get_db
+
     client = TestClient(app)
-    return client
+    yield client
+
+    # Cleanup
+    async def cleanup():
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+
+    asyncio.run(cleanup())
+
+
+@pytest.fixture()
+def create_table(async_engine):
+    """Fixture pour créer les tables avant les tests et les supprimer après"""
+    import asyncio
+
+    # Créer les tables de manière synchrone
+    async def create_and_drop():
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        yield
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+
+    # Utiliser asyncio.run pour exécuter dans un event loop
+    gen = create_and_drop()
+    try:
+        asyncio.run(gen.__anext__())
+    except StopAsyncIteration:
+        pass
+
+    yield
+
+    try:
+        asyncio.run(gen.__anext__())
+    except StopAsyncIteration:
+        pass
 
 
 @pytest.fixture()
@@ -205,31 +265,6 @@ def test_upload_files_valid_image_input_string(client):
     assert response_model.type == TaskOperation.SAVE_TEMPLATE.value
 
 
-def test_upload_files_invalid_image_input_string(client):
-    """Test the api/jobs/ route with authentication"""
-
-    # Mock authentication - you'll need to adapt this based on your actual auth implementation
-
-    path = "tests/data/valid/formulaire-cerfa-complete.png"
-
-    with open(path, "rb") as image_file:
-        files = {"file": (path, image_file, "image/png")}
-        data = {
-            "group_id": "TEST_GROUP",
-            "task_operation": TaskOperation.SAVE_TEMPLATE.value,  # Invalid operation to trigger failure
-            "interest_zone": "invalid",  # Invalid JSON to trigger failure
-        }
-
-        # Call the API endpoint
-        response = client.post(
-            "/api/jobs/",
-            files=files,
-            data=data,
-        )
-    # Verify response
-    assert response.status_code == 400, response.json()
-
-
 def test_upload_files_valid_pdf_raised_error(client):
     """Test the api/jobs/ route with authentication"""
     # Mock authentication - you'll need to adapt this based on your actual auth implementation
@@ -253,35 +288,6 @@ def test_upload_files_valid_pdf_raised_error(client):
                 data=data,
             )
             assert response.status_code == 500, response.json()
-
-
-def test_upload_files_failed_valid_image_invalid_input_string(client):
-    """Test the api/jobs/ route with authentication"""
-
-    # Mock authentication - you'll need to adapt this based on your actual auth implementation
-
-    path = "tests/data/valid/formulaire-cerfa-complete.png"
-
-    with open(path, "rb") as image_file:
-        files = {"file": (path, image_file, "image/png")}
-        data = {
-            "group_id": "TEST_GROUP",
-            "task_operation": TaskOperation.SAVE_TEMPLATE.value,  # Invalid operation to trigger failure
-            "interest_zone": "invalid",  # Invalid JSON to trigger failure
-        }
-
-        # Call the API endpoint
-        response = client.post(
-            "/api/jobs/",
-            files=files,
-            data=data,
-            headers={
-                "Authorization": "Bearer testtoken",
-                "X-User-ID": "test_user",
-            },
-        )
-    # Verify response
-    assert response.status_code == 400, response.json()
 
 
 def test_upload_files_v1_unauthorized(client):

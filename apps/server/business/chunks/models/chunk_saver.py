@@ -14,11 +14,15 @@ When ``replace=True`` (the default) any existing chunks for the same
 
 from __future__ import annotations
 
+
 import time
 from typing import List
 
 from src.logger import logger
-from src.schemas.ocr_chunks import OcrChunkBase, OcrChunkModel, ocr_chunk_repo
+from src.schemas.ocr_chunks import OcrChunkBase, OcrChunkModel
+from services.client.server import ServerClient
+
+server_client = ServerClient()
 
 
 class OcrChunkSaver:
@@ -62,14 +66,15 @@ class OcrChunkSaver:
         t0 = time.perf_counter()
 
         if replace:
-            ocr_chunk_repo.delete_by_content_hash(content_hash)
+            server_client.delete_by_content_hash(content_hash)
             logger.debug(f"[OcrChunkSaver] Cleared existing chunks for content_hash={content_hash!r}")
-
-        ocr_chunk_repo.upsert_bulk(chunks)
-        saved = ocr_chunk_repo.get_by_content_hash(content_hash)
+        chunk_to_dicts = [c.model_dump() for c in chunks]
+        server_client.upsert_chunks(chunk_to_dicts, content_hash, replace=replace)
+        saved = server_client.get_by_content_hash(content_hash)
+        saved_models = [OcrChunkModel.model_validate(c) for c in saved]
 
         elapsed = time.perf_counter() - t0
         logger.info(
-            f"[OcrChunkSaver] Saved {len(saved)} chunks for content_hash={content_hash!r} in {elapsed * 1000:.1f} ms"
+            f"[OcrChunkSaver] Saved {len(saved_models)} chunks for content_hash={content_hash!r} in {elapsed * 1000:.1f} ms"
         )
-        return saved
+        return saved_models
