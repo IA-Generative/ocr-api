@@ -15,8 +15,10 @@ from src.schemas.task import (
     TaskStatus,
     TaskUpdateForm,
     TaskOperation,
-    task_table,
 )
+from services.client.server import ServerClient
+
+server_client = ServerClient()
 
 
 # TODO: need to be refactored to simplify the worker and use the new BaseWorker
@@ -73,22 +75,16 @@ class PDFFormsExtractorWorker(BaseWorker):
         return is_form
 
     def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
-        extra_log = {
-            "task_id": task.id,
-            "user_id": task.user_id,
-            "worker_name": self.name,
-        }
+
         if task.input.content_type != "application/pdf":
             logger.error(
                 f"Invalid content type {task.input.content_type} for task {task.id}. Expected application/pdf.",
-                extra=extra_log,
             )
             return task
         t = time.time()
         doc: fitz.Document = self._get_cached_document(task)
         logger.debug(
             f"Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
-            extra=extra_log,
         )
         if not doc.is_form_pdf:
             return task
@@ -99,7 +95,6 @@ class PDFFormsExtractorWorker(BaseWorker):
         task.output.pages = [Page(page=i) for i in range(len(pages))]
         logger.debug(
             f"[worker {self.name}][Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
-            extra=extra_log,
         )
 
         form_bboxs, forms_entries = self.process(task=task)
@@ -112,7 +107,6 @@ class PDFFormsExtractorWorker(BaseWorker):
             page.boxes = bbox
             logger.debug(
                 f"[worker {self.name}][task-id {task.id}][page {page.page}][boxes {len(bbox)}][{len(form_entry)}]",
-                extra=extra_log,
             )
             page.form_entries = form_entry
             page.page_url = None
@@ -123,19 +117,16 @@ class PDFFormsExtractorWorker(BaseWorker):
             batch = pages[i : i + self.batch_size]
             logger.debug(
                 f"{filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
-                extra=extra_log,
             )
             partial_result = task.output.pages[i : i + self.batch_size]
             for model in self.models:
                 logger.debug(
                     f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
-                    extra=extra_log,
                 )
                 t = time.time()
                 partial_result: list[Page] = model.batch_predict(images=batch, pages=partial_result)
                 logger.debug(
                     f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
-                    extra=extra_log,
                 )
 
             for j, image in enumerate(batch):
@@ -146,7 +137,6 @@ class PDFFormsExtractorWorker(BaseWorker):
                 client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
                 logger.debug(
                     f"[worker {self.name}]Uploaded page {i + j} to {key}",
-                    extra=extra_log,
                 )
                 # signed_url = self.file_connector.generate_presigned_url(key)
                 partial_result[j].page_url = key
@@ -156,27 +146,27 @@ class PDFFormsExtractorWorker(BaseWorker):
             page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + self.batch_size}"
             logger.debug(
                 f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s",
-                extra=extra_log,
             )
 
             percentage = (i + len(batch)) / task.output.total_pages
             logger.debug(
                 f"[worker {self.name}][Current percentage {100 * percentage:.2f}%]",
-                extra=extra_log,
             )
-            task.output.set_text()
-            task = task_table.update_task(
+            if task.output:
+                task.output.set_text()
+            task_dict = server_client.update_task_by_id(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
+                task_type=task.type,
+                update_data=TaskUpdateForm(
                     status=TaskStatus.IN_PROGRESS.value,
                     percentage=percentage * self.worker_weight,
                     output=task.output,
                     extras=task.extras,
-                ),
+                ).model_dump(exclude_none=True),
             )
+            task = TaskModel.model_validate(task_dict)
             logger.debug(
                 task.extras,
-                extra=extra_log,
             )
 
         # Nettoyer le cache du document après traitement
@@ -188,7 +178,6 @@ class PDFFormsExtractorWorker(BaseWorker):
         doc: fitz.Document = self._get_cached_document(task)
         logger.debug(
             f"[worker {self.name}]Time to open PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
-            extra={"task_id": task.id, "user_id": task.user_id},
         )
 
         # dpi = 150
@@ -207,7 +196,6 @@ class PDFFormsExtractorWorker(BaseWorker):
 
             logger.debug(
                 f"[worker {self.name}]Processing page {page_num + 1}/{len(doc)} for task {task.id}",
-                extra={"task_id": task.id, "user_id": task.user_id},
             )
 
             for widget in page.widgets():
@@ -263,7 +251,6 @@ class PDFFormsExtractorWorker(BaseWorker):
             forms_entries.append(page_forms)
         logger.debug(
             f"[worker {self.name}]Time to process PDF {task.input.raw_filename} for task {task.id}: {time.time() - t:.2f}s",
-            extra={"task_id": task.id, "user_id": task.user_id},
         )
         # Nettoyer le cache du document après traitement
         self._clear_cached_document()

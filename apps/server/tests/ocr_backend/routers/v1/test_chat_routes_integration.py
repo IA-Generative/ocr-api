@@ -31,6 +31,7 @@ def test_models_stream_integration(openai_client: openai.Client):
     assert hasattr(models, "list")
 
 
+@pytest.mark.skip(reason="Integration test requires API server running - run with: make test-integration")
 def test_chat_completion_integration(openai_client: openai.Client, test_image_url: tuple[Path, str]):
     """
     Test the full flow of sending a chat completion request with an image, and receiving the extracted text.

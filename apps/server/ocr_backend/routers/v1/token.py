@@ -14,7 +14,7 @@ from typing import Annotated
 from ocr_backend.core.security.factory import TokenVerifier
 from ocr_backend.core.security.token import RequestContext
 
-from src.schemas.token import TokenCreate, TokenResponse
+from src.models.token import TokenCreate, TokenResponse
 from src.services.token_service import (
     create_token,
     get_token_by_id,

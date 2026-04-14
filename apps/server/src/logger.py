@@ -1,60 +1,31 @@
-import logging
-import logging.config
-import yaml
+from loguru import logger as _logger
 import os
-from pathlib import Path
+import sys
 from typing import Optional
+from logging import Logger
 
 
-def load_logging_config(config_path: str = "../configs/logging.yaml", environment: Optional[str] = None) -> dict:
+def setup_logger(name: str = "ocr_api", level: Optional[str] = None, *, serialize: bool = True) -> Logger:
+    """Configure et retourne un logger `loguru` lié au service.
+
+    - Utilise `ENVIRONMENT` pour choisir le niveau par défaut (development -> DEBUG, else INFO).
+    - Remplace les handlers existants et ajoute une sortie console (stderr).
+    - Si `log_file` est fourni ou `LOG_FILE` env var est définie, ajoute aussi un sink fichier.
     """
-    Charge la configuration de logging depuis un fichier YAML
+    env = os.getenv("ENVIRONMENT", "production")
+    default_level = "DEBUG" if env == "development" else "INFO"
+    level = level or os.getenv("LOG_LEVEL") or default_level
 
-    Args:
-        config_path: Chemin vers le fichier de configuration
-        environment: Environnement spécifique (development, production, testing)
+    # Clear existing handlers and add our sinks
+    _logger.remove()
+    _logger.add(
+        sys.stderr,
+        level=level,
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level} | {extra[service]} | {message}",
+        serialize=serialize,
+    )
 
-    Returns:
-        Configuration de logging
-    """
-    config_file = Path(__file__).parent / config_path
-
-    with open(config_file, "r", encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-
-    # Applique la configuration spécifique à l'environnement si fournie
-    if environment and environment in config.get("environments", {}):
-        env_config = config["environments"][environment]
-        # Merge la configuration d'environnement avec la configuration de base
-        for key, value in env_config.items():
-            if key in config:
-                if isinstance(config[key], dict) and isinstance(value, dict):
-                    config[key].update(value)
-                else:
-                    config[key] = value
-
-    return config
-
-
-def setup_logger(name: str = "ocr_api", config_path: str = "../configs/logging.yaml") -> logging.Logger:
-    """
-    Configure et retourne un logger basé sur la configuration YAML
-
-    Args:
-        name: Nom du logger
-        config_path: Chemin vers le fichier de configuration
-
-    Returns:
-        Logger configuré
-    """
-    # Détermine l'environnement depuis les variables d'environnement
-    environment = os.getenv("ENVIRONMENT", "production")
-
-    # Charge et applique la configuration
-    config = load_logging_config(config_path, environment)
-    logging.config.dictConfig(config)
-
-    return logging.getLogger(name)
+    return _logger.bind(service=name)
 
 
 # Initialise le logger principal

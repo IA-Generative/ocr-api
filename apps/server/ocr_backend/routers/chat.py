@@ -1,15 +1,24 @@
 import logging
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Annotated
+
 
 from fastapi import APIRouter, Depends
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ocr_backend.core.security.factory import TokenVerifier
 from ocr_backend.core.security.token import RequestContext
 from src.config.openai import OpenAISettings
-from src.schemas.ocr_chunks import OcrChunkSearchResult, ocr_chunk_repo
-from src.schemas.task import task_table
+from src.models.ocr_chunks import OcrChunkSearchResult, ocr_chunk_repo
+from src.services.task_service import TaskService
+from src.schemas.task import TaskOperation
+from src.connector.db_connector import get_async_session
+
+
+TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
+TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
+DbSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 
 router = APIRouter(tags=["Chat"])
 
@@ -68,7 +77,9 @@ class AskResponse(BaseModel):
 )
 async def ask(
     body: AskRequest,
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
+    task_service: TaskServiceDep,
+    db_session: DbSessionDep,
 ):
     """Submit a list of messages and receive the assistant's reply.
 
@@ -79,7 +90,7 @@ async def ask(
 
     No conversation history is stored server-side.
     """
-    task = task_table.get_task_by_id(task_id=body.task_id)
+    task = await task_service.get_task_by_id(task_id=body.task_id, db=db_session, task_type=TaskOperation.OCR)
     if not task or task.user_id != ctx.user_id:
         return AskResponse(
             message=ChatMessage(
@@ -156,7 +167,7 @@ class EmbedResponse(BaseModel):
 )
 async def embed(
     body: EmbedRequest,
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
 ):
     res = await _client.embeddings.create(
         input=body.text,

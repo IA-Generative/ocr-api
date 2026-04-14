@@ -16,4 +16,5 @@ class Layout(BaseModel):
         ...,
         description="Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]",
     )
+    order: Optional[int] = None
     content: Optional[Any] = None

@@ -8,7 +8,7 @@ import uuid
 from typing import List, Optional
 
 from src.connector.db_connector import get_db
-from src.schemas.token import Token as TokenTable, TokenModel
+from src.models.token import Token as TokenTable, TokenModel
 
 
 def create_token(

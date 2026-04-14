@@ -9,8 +9,8 @@ from src.schemas.ocr_chunks import (
     OcrChunkSearchRequest,
     OcrChunkSearchResult,
     OcrChunkUpsertForm,
-    ocr_chunk_repo,
 )
+from src.models.ocr_chunks import ocr_chunk_repo
 
 router = APIRouter(tags=["OCR Chunks"])
 

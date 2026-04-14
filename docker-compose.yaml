@@ -66,6 +66,8 @@ services:
       - CELERY_APP_NAME=default
       - SERVICE_NAME=ocr_worker
       - ENVIRONMENT=development
+      - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=true
+      - SERVER_BASE_URL=http://ocr_backend:5000
     env_file:
       - .env
     develop:

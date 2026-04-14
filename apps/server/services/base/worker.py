@@ -16,8 +16,8 @@ from src.schemas.task import (
     TaskStatus,
     TaskUpdateForm,
     TaskOperation,
-    task_table,
 )
+from services.client.server import ServerClient
 from src.utils.file import hash_file
 from io import BytesIO
 
@@ -26,6 +26,9 @@ class EmptyContentException(Exception): ...
 
 
 class FileNotSupported(Exception): ...
+
+
+service_client = ServerClient()
 
 
 class BaseWorker(ABC):
@@ -54,6 +57,8 @@ class BaseWorker(ABC):
 
     def get_content_file(self, task: TaskModel) -> str:
         task = self.set_output(task=task)
+        if not task.extras:
+            task.extras = {}
         try:
             logger.info(f"{task.id} load file ")
             content = self.file_connector.get_by_task_id(user_id=task.user_id, task_id=task.id)
@@ -61,16 +66,20 @@ class BaseWorker(ABC):
 
         except Exception as e:
             task.extras["error"] = str(e)
-            task = task_table.update_task(
+            task_dict = service_client.update_task_by_id(
                 task_id=task.id,
-                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
+                task_type=task.type,
+                update_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras).model_dump(
+                    exclude_none=True
+                ),
             )
+            task = TaskModel.model_validate(task_dict)
             logger.error(str(e))
             raise
 
         # if content is None:
         #     task.extras["error"] = f"No content found for task : {task.id}"
-        #     task = task_table.update_task(
+        #     task = service_client.update_task(
         #         task_id=task.id,
         #         form_data=TaskUpdateForm(
         #             status=TaskStatus.FAILED.value, percentage=0, extras=task.extras
@@ -80,8 +89,13 @@ class BaseWorker(ABC):
         #     raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
-    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image | bytes]:
+    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image | bytes] | LazyPdfImageList:
         task = self.set_output(task=task)
+        if not task.input:
+            raise ValueError("Task input is required to transform content")
+
+        if not task.extras:
+            task.extras = {}
 
         content_type: str = task.input.content_type
         logger.debug(f"content-type : {content_type}")
@@ -102,23 +116,29 @@ class BaseWorker(ABC):
         else:
             logger.error(f"[worker {self.name}] Unsupported file type {task.extras}")
             task.extras["error"] = f"Unsupported file type {task.extras}"
-            task = task_table.update_task(
+            service_client.update_task_by_id(
                 task_id=task.id,
-                form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras),
+                task_type=task.type,
+                update_data=TaskUpdateForm(status=TaskStatus.FAILED.value, percentage=0, extras=task.extras).model_dump(
+                    exclude_none=True
+                ),
             )
+
             raise FileNotSupported(f"Unsupported file type {content_type}")
 
-        return pages
+        return pages  # ty:ignore[invalid-return-type]
 
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image], save_image: bool = True) -> TaskModel:
-        extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task, total_pages=len(pages))
+        if not task.input:
+            raise ValueError("Task input is required to predict on pages")
+        if not task.output:
+            raise ValueError("Task output is required to predict on pages")
         filename = task.input.raw_filename
         client_s3 = self.file_connector.client
         task.output.pages = [Page(page=i) for i in range(len(pages))]
         logger.debug(
             f"[worker {self.name}] [Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
-            extra=extra_log,
         )
 
         task.output.text = ""
@@ -127,7 +147,6 @@ class BaseWorker(ABC):
             batch = pages[i : i + self.batch_size]
             logger.debug(
                 f"[worker {self.name}] {filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
-                extra=extra_log,
             )
 
             partial_result: List[Page] = task.output.pages[i : i + self.batch_size]
@@ -135,14 +154,15 @@ class BaseWorker(ABC):
             for model in self.models:
                 logger.debug(
                     f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
-                    extra=extra_log,
                 )
                 model.set_current_task(task)
                 t = time.time()
-                partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
+                partial_result: List[Page] = model.batch_predict(
+                    images=batch,  # ty:ignore[invalid-argument-type]
+                    pages=partial_result,
+                )
                 logger.debug(
                     f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
-                    extra=extra_log,
                 )
             if save_image:
                 for j, image in enumerate(batch):
@@ -153,7 +173,6 @@ class BaseWorker(ABC):
                     client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
                     logger.debug(
                         f"[worker {self.name}] Uploaded page {i + j} to {key}",
-                        extra=extra_log,
                     )
                     # signed_url = self.file_connector.generate_presigned_url(key)
                     partial_result[j].page_url = key
@@ -163,27 +182,26 @@ class BaseWorker(ABC):
             page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + self.batch_size}"
             logger.debug(
                 f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s",
-                extra=extra_log,
             )
 
             percentage = (i + len(batch)) / task.output.total_pages
             logger.debug(
                 f"[worker {self.name}] [Current percentage {100 * percentage:.2f}%]",
-                extra=extra_log,
             )
             task.output.set_text()
-            task = task_table.update_task(
+            task_dict = service_client.update_task_by_id(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
+                task_type=task.type,
+                update_data=TaskUpdateForm(
                     status=TaskStatus.IN_PROGRESS.value,
                     percentage=percentage * self.worker_weight,
                     output=task.output,
                     extras=task.extras,
-                ),
+                ).model_dump(exclude_none=True),
             )
+            task = TaskModel.model_validate(task_dict)
             logger.debug(
                 task.extras,
-                extra=extra_log,
             )
         return task
 
@@ -202,100 +220,125 @@ class BaseWorker(ABC):
         return task
 
     def _process_task(self, task: TaskModel) -> TaskModel:
-        extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task)
 
-        task = task_table.update_task(
+        task_dict = service_client.update_task_by_id(
             task_id=task.id,
-            form_data=TaskUpdateForm(
+            task_type=task.type,
+            update_data=TaskUpdateForm(
                 status=TaskStatus.IN_PROGRESS.value,
                 percentage=0,
                 extras=task.extras,
                 input=task.input,
                 output=task.output,
-            ),
+            ).model_dump(exclude_none=True),
         )
+        task = TaskModel.model_validate(task_dict)
+        if not task.input:
+            raise ValueError("Task input is required to process task")
+        if not task.extras:
+            task.extras = {}
 
         filename = task.input.raw_filename
-        logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras} ", extra=extra_log)
+        logger.debug(f"{task.id} - {task.user_id} - {filename} - {task.extras}")
         content = self.get_content_file(task=task)
         content_hash = hash_file(content)
         task.content_hash = content_hash
-        logger.debug(f"{task.id} - {content}", extra=extra_log)
-        pages = self.transform_content(task=task, content=content)
+        logger.debug(f"{task.id} - {content}")
+        pages = self.transform_content(
+            task=task,
+            content=content,  # ty:ignore[invalid-argument-type]
+        )
         logger.debug(
             f"[worker {self.name}] Start to process - {filename} - {len(pages)}",
-            extra=extra_log,
         )
         if self.cache:
-            logger.debug(f"[worker {self.name}] Search into cache ", extra=extra_log)
+            logger.debug(f"[worker {self.name}] Search into cache ")
             if self.cache.is_in_cache(task=task):
                 cache_task = self.cache.get_task_from_cache(task=task)
                 logger.debug(
                     f"[worker {self.name}] found into cache with status {cache_task.status} ",
-                    extra=extra_log,
                 )
-                task.output.updated_at = int(time.time())
-                task = task_table.update_task(
+                if not task.output:
+                    task.output = cache_task.output
+                task.output.updated_at = int(  # ty:ignore[invalid-assignment]
+                    time.time()
+                )
+                task_dict = service_client.update_task_by_id(
                     task_id=task.id,
-                    form_data=TaskUpdateForm(
+                    task_type=task.type,
+                    update_data=TaskUpdateForm(
                         status=cache_task.status,
                         percentage=cache_task.percentage,
                         extras=cache_task.extras,
                         output=cache_task.output,
                         content_hash=content_hash,
-                    ),
+                    ).model_dump(exclude_none=True),
                 )
+                task = TaskModel.model_validate(task_dict)
                 return task
+        if not task.output:
+            raise ValueError("Task output is required to process task")
 
         task.output.total_pages = len(pages)
         task.output.updated_at = int(time.time())
-        task = task_table.update_task(
+        task_dict = service_client.update_task_by_id(
             task_id=task.id,
-            form_data=TaskUpdateForm(
+            task_type=task.type,
+            update_data=TaskUpdateForm(
                 status=TaskStatus.IN_PROGRESS.value,
                 percentage=0,
                 extras=task.extras,
                 output=task.output,
                 content_hash=content_hash,
-            ),
+            ).model_dump(exclude_none=True),
         )
+        task = TaskModel.model_validate(task_dict)
 
         try:
-            task = self.predict_on_pages(task=task, pages=pages)
+            task = self.predict_on_pages(
+                task=task,
+                pages=pages,  # ty:ignore[invalid-argument-type]
+            )
         except Exception as e:
-            task.extras["error"] = str(e)
-            task = task_table.update_task(
+            task.extras["error"] = str(e)  # ty:ignore[invalid-assignment]
+            service_client.update_task_by_id(
                 task_id=task.id,
-                form_data=TaskUpdateForm(
+                task_type=task.type,
+                update_data=TaskUpdateForm(
                     status=TaskStatus.FAILED.value,
                     percentage=task.percentage,
                     extras=task.extras,
                     content_hash=content_hash,
-                ),
+                ).model_dump(exclude_none=True),
             )
+
             raise
 
-        task = task_table.update_task(
+        task_dict = service_client.update_task_by_id(
             task_id=task.id,
-            form_data=TaskUpdateForm(
+            task_type=task.type,
+            update_data=TaskUpdateForm(
                 status=TaskStatus.COMPLETED.value,
                 percentage=task.percentage,
                 extras=task.extras,
                 content_hash=content_hash,
-            ),
+            ).model_dump(exclude_none=True),
         )
+        task = TaskModel.model_validate(task_dict)
         logger.debug(f"[worker {self.name}] {task.id} - done")
 
-        task = task_table.update_task(
+        task_dict = service_client.update_task_by_id(
             task_id=task.id,
-            form_data=TaskUpdateForm(
+            task_type=task.type,
+            update_data=TaskUpdateForm(
                 status=TaskStatus.COMPLETED.value,
                 percentage=task.percentage,
                 extras=task.extras,
                 content_hash=content_hash,
-            ),
+            ).model_dump(exclude_none=True),
         )
+        task = TaskModel.model_validate(task_dict)
 
         try:
             self.file_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
@@ -318,6 +361,8 @@ class BaseWorker(ABC):
 
 class AnyFileProcessWorker(BaseWorker):
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
         return task.input.content_type.startswith("image/") or task.input.content_type == "application/pdf"
 
 

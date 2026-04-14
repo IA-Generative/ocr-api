@@ -3,12 +3,20 @@ from json import JSONDecodeError
 import os
 import aiofiles
 import traceback
-from typing import Optional
+from typing import Optional, Annotated, AsyncGenerator
 
-from fastapi import APIRouter, File, HTTPException, UploadFile, status, Depends, Form
+from fastapi import (
+    APIRouter,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+    Depends,
+    Form,
+)
 import fitz
 
-from src.connector.broker_connector import celery_app, celery_config
+from src.connector.broker_connector import celery_app
 from src.logger import logger
 from src.schemas.input import InputForm, RegionOfInterest
 from src.schemas.task import (
@@ -17,15 +25,28 @@ from src.schemas.task import (
     TaskOperation,
     TaskStatus,
     TaskUpdateForm,
-    task_table,
+    CeleryTaskName,
 )
+from src.services.task_service import TaskService
+from src.connector.db_connector import AsyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
 
 from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Jobs"])
-WORKER_NAME = "worker.tasks.ocr"
+TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
+TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dépendance pour obtenir une session async"""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 def _handle_pdf_interest_zone(file_path: str, interest_zone: Optional[str]) -> list[RegionOfInterest]:
@@ -78,24 +99,42 @@ def verify_interest_zone(
         )
 
 
-@router.post("/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+@router.post("/jobs/", status_code=status.HTTP_201_CREATED)
 async def upload_file(
-    file: UploadFile = File(...),
-    group_id: str = Form("DEFAULT"),
-    interest_zone: Optional[str] = Form(None),
-    task_operation: TaskOperation = Form(TaskOperation.DEFAULT.value),
-    ctx: RequestContext = Depends(TokenVerifier),
-):
+    file: Annotated[UploadFile, File(...)],
+    ctx: TokenDep,
+    task_service: TaskServiceDep,
+    db_session: DbSessionDep,
+    group_id: Annotated[str, Form()] = "DEFAULT",
+    parameter: Annotated[Optional[str], Form()] = None,
+    task_operation: Annotated[TaskOperation, Form()] = TaskOperation.DEFAULT,
+    task_name: Annotated[Optional[CeleryTaskName], Form()] = CeleryTaskName.OCR_TASK,
+) -> TaskModel:
+    if ctx.user_id is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    parameter_dict = {}
+    if parameter:
+        try:
+            parameter_dict = json.loads(parameter)
+        except JSONDecodeError as e:
+            logger.error(
+                f"HTTPException for user {ctx.user_id}: Invalid JSON in parameter - {e} - {traceback.format_exc()}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid JSON format for parameter: {e} {traceback.format_exc()}",
+            )
     extras = {}
-    task_data = task_table.insert_new_task(
+    task_data = await task_service.insert_new_task(
+        db=db_session,
         user_id=ctx.user_id,
         form_data=TaskForm(
-            user_id=ctx.user_id,
             type=task_operation,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
             group_id=group_id,
+            parameters=parameter_dict,
         ),
     )
     try:
@@ -106,18 +145,13 @@ async def upload_file(
             chunk_size = 8192  # 8KB chunks
             while chunk := await file.read(chunk_size):
                 await temp_file.write(chunk)
-        if interest_zone:
-            interest_zone = verify_interest_zone(
-                file_path=temp_file_path,
-                content_type=file.content_type,
-                interest_zone=interest_zone,
-            )
-        else:
-            interest_zone = None
+
     except Exception as e:
         logger.error(f"HTTPException for user {ctx.user_id}, task {task_data.id}: {e} - {traceback.format_exc()}")
-        task_table.update_task(
+        await task_service.update_task(
+            db=db_session,
             task_id=task_data.id,
+            task_type=task_operation,
             form_data=TaskUpdateForm(
                 type=task_operation,
                 status=TaskStatus.FAILED.value,
@@ -142,11 +176,13 @@ async def upload_file(
             content_type=file.content_type,
             ext=extension,
             size=file.size,
-            interest_zone=interest_zone,
+            parameters=parameter_dict,
         )
 
-        task_data = task_table.update_task(
+        task_data = await task_service.update_task(
+            db=db_session,
             task_id=task_data.id,
+            task_type=task_operation,
             form_data=TaskUpdateForm(
                 status=TaskStatus.QUEUED.value,
                 input=input_form,
@@ -154,12 +190,12 @@ async def upload_file(
             ),
         )
 
-        task_data.position = task_table.get_position_in_queue(task_id=task_data.id)
+        task_data.position = await task_service.get_position_in_queue(
+            db=db_session, task_id=task_data.id, task_type=task_operation
+        )
         os.remove(temp_file_path)
 
-        logger.debug(f"{task_data.id} worker name {WORKER_NAME} - {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*")
-
-        celery_app.send_task(WORKER_NAME, args=[json.dumps(task_data.model_dump())], task_id=task_data.id)
+        celery_app.send_task(task_name, args=[json.dumps(task_data.model_dump())], task_id=task_data.id)
 
         return task_data
 
@@ -167,8 +203,10 @@ async def upload_file(
         logger.error(
             f"Failed to upload file for user {ctx.user_id}, task {task_data.id}: {e} - {traceback.format_exc()}"
         )
-        task_table.update_task(
+        await task_service.update_task(
+            db=db_session,
             task_id=task_data.id,
+            task_type=task_operation,
             form_data=TaskUpdateForm(
                 type=task_operation,
                 status=TaskStatus.FAILED.value,

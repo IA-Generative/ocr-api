@@ -10,6 +10,7 @@ import InfoBulle from '@/components/InfoBulle.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
 import TasksTab from '@/components/TasksTab.vue'
+import Classification from '@/components/Classification.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 const store = useOcrStore()
@@ -112,6 +113,12 @@ onBeforeUnmount(() => {
           @click="currentTab = 'ocr'"
         />
         <DsfrButton
+          label="Classification"
+          :priority="currentTab === 'classification' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'classification'"
+        />
+        <DsfrButton
           label="Mes tâches"
           :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
           size="sm"
@@ -155,6 +162,9 @@ onBeforeUnmount(() => {
                 />
               </div>
             </div>
+          </div>
+          <div v-else-if="currentTab === 'classification'">
+            <Classification />
           </div>
 
           <div v-else>

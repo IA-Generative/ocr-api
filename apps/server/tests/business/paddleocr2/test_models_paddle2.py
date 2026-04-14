@@ -2,7 +2,7 @@ import os
 import pytest
 from PIL import Image
 from src.schemas.output import Page
-from business.paddleocr2.models.paddle import PaddleInferOCR2
+from business.paddleocr2.models.paddle import PaddleInferOCR2, LayoutModel
 from pathlib import Path
 
 
@@ -40,3 +40,15 @@ def test_size_pages_not_align(cache_dir: str):
     image = Image.open(image_path).convert("RGB")
     with pytest.raises(AssertionError):
         obj.batch_predict(images=[image], pages=[Page(page=0), Page(page=1)])
+
+
+def test_layout_model_initialization():
+
+    layout_model = LayoutModel(model_name="PP-DocLayoutV2")
+    image_path = "tests/data/valid/identite.jpg"
+    image = Image.open(image_path).convert("RGB")
+    result = layout_model.batch_predict(images=[image], pages=[Page(page=0)])
+    assert len(result) == 1
+    assert isinstance(result[0], Page)
+    assert result[0].layouts is not None
+    assert len(result[0].layouts) > 0

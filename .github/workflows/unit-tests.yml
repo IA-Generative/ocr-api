@@ -65,7 +65,7 @@ jobs:
 
       - name: Install dependencies and run tests
         run: |
-          make test-services-paddleocr2.10.0
+          make test-services-business
   # run-tests-service-paddle3:
   #   runs-on: actions-runner-controller
   #   permissions:

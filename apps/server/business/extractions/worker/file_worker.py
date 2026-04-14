@@ -36,7 +36,7 @@ class BaseFileWorker(BaseWorker):
         file_connector: S3Connector,
         models: list[BaseModelPrediction] = [],
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -53,7 +53,7 @@ class BaseFileWorker(BaseWorker):
         task: TaskModel,
         pages: list,
         save_image: bool = False,
-    ) -> list:
+    ) -> TaskModel:
         # For file workers, we ignore the pages input and process the whole file
         return super().predict_on_pages(task, pages=pages, save_image=save_image)
 
@@ -78,7 +78,7 @@ class CSVWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -91,6 +91,8 @@ class CSVWorker(BaseFileWorker):
         )
 
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
         is_applicable = task.type in [TaskOperation.DEFAULT] and task.input.content_type in CSV_CONTENT_TYPE
         logger.debug(
             f"[{self.__class__.__name__}]Task {task.id} is_applicable: {is_applicable} for process type {task.type}"
@@ -105,7 +107,7 @@ class DocxWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -118,6 +120,8 @@ class DocxWorker(BaseFileWorker):
         )
 
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
         is_applicable = task.type in [TaskOperation.DEFAULT] and task.input.content_type in DOCX_CONTENT_TYPE
         logger.debug(
             f"[{self.__class__.__name__}]Task {task.id} is_applicable: {is_applicable} for process type {task.type}"
@@ -132,7 +136,7 @@ class OdtWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -159,7 +163,7 @@ class OdpWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -172,6 +176,8 @@ class OdpWorker(BaseFileWorker):
         )
 
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
         is_applicable = task.type in [TaskOperation.DEFAULT] and task.input.content_type in ODP_CONTENT_TYPE
         logger.debug(
             f"[{self.__class__.__name__}]Task {task.id} is_applicable: {is_applicable} for process type {task.type}"
@@ -186,7 +192,7 @@ class OdsWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -199,6 +205,9 @@ class OdsWorker(BaseFileWorker):
         )
 
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
+
         is_applicable = task.type in [TaskOperation.DEFAULT] and task.input.content_type in ODS_CONTENT_TYPE
         logger.debug(
             f"[{self.__class__.__name__}]Task {task.id} is_applicable: {is_applicable} for process type {task.type}"
@@ -213,7 +222,7 @@ class XlsxWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -226,6 +235,8 @@ class XlsxWorker(BaseFileWorker):
         )
 
     def is_applicable(self, task: TaskModel) -> bool:
+        if not task.input or not task.input.content_type:
+            return False
         is_applicable = task.type in [TaskOperation.DEFAULT] and task.input.content_type in EXCEL_CONTENT_TYPE
         logger.debug(
             f"[{self.__class__.__name__}]Task {task.id} is_applicable: {is_applicable} for process type {task.type}"

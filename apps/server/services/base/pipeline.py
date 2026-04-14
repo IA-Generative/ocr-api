@@ -9,8 +9,10 @@ class Pipeline:
 
     def process(self, task: TaskModel) -> TaskModel:
         for worker in self.workers:
-            logger.info(f"{Colors.CYAN}Processing task {task.id} with worker {worker.name}{Colors.RESET}")
-            if worker.is_applicable(task):
-                logger.info(f"{Colors.GREEN}Worker {worker.name} is applicable for task {task.id}{Colors.RESET}")
-                return worker.process_task(task)
+            with logger.contextualize(  # ty:ignore[unresolved-attribute]
+                worker=worker.name
+            ):
+                if worker.is_applicable(task):
+                    logger.info(f"{Colors.GREEN}Worker {worker.name} is applicable for task {task.id}{Colors.RESET}")
+                    return worker.process_task(task)
         return task

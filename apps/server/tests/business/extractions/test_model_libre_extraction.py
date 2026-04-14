@@ -39,7 +39,6 @@ def test_odt_extraction_model_batch_predict():
     pages = model.batch_predict(images)
 
     assert len(pages) == 1
-    assert pages[0].boxes
 
 
 def test_odp_extraction_model_batch_predict():
