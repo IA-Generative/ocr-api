@@ -1,9 +1,10 @@
 import os
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime
 
 import sqlalchemy
 from sqlalchemy import create_engine, text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
@@ -11,11 +12,23 @@ from src.schemas.health import Health
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./example.db")
 
+# Configuration synchrone
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 Base = declarative_base()
 Session = scoped_session(SessionLocal)
+
+
+# Configuration asynchrone
+SQLALCHEMY_ASYNC_DATABASE_URL = os.environ.get("DATABASE_ASYNC_URL", "sqlite+aiosqlite:///./example.db")
+async_engine = create_async_engine(
+    SQLALCHEMY_ASYNC_DATABASE_URL,
+    echo=False,
+    future=True,
+    connect_args={"timeout": 30},
+)
+AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
 
 
 def get_session():
@@ -27,6 +40,19 @@ def get_session():
 
 
 get_db = contextmanager(get_session)
+
+
+@asynccontextmanager
+async def get_async_session():
+    """Async context manager pour les sessions asynchrones"""
+    async with AsyncSessionLocal() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
+
+get_async_db = asynccontextmanager(get_async_session)
 
 
 class DbConnector:

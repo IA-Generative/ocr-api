@@ -17,7 +17,7 @@ def client():
     return TestClient(app)
 
 
-@patch("src.schemas.templates.template_table.get_template_by_id")
+@patch("src.models.templates.template_table.get_template_by_id")
 def test_get_template_by_id(mock_get_template_by_id, client: TestClient):
     # Simulate a template returned by the mock
     mock_template = TemplateModel(
@@ -40,7 +40,7 @@ def test_get_template_by_id(mock_get_template_by_id, client: TestClient):
     assert response.json() == mock_template.model_dump()
 
 
-@patch("src.schemas.templates.template_table.get_templates_by_user_id")
+@patch("src.models.templates.template_table.get_templates_by_user_id")
 def test_get_templates_by_user_id(mock_get_templates_by_user_id, client: TestClient):
     # Simulate a template returned by the mock
     mock_template = TemplateModel(
@@ -63,7 +63,7 @@ def test_get_templates_by_user_id(mock_get_templates_by_user_id, client: TestCli
     assert response.json() == [mock_template.model_dump()]
 
 
-@patch("src.schemas.templates.template_table.get_templates_by_group_id")
+@patch("src.models.templates.template_table.get_templates_by_group_id")
 def test_get_templates_by_group_id(mock_get_templates_by_group_id, client: TestClient):
     # Simulate a template returned by the mock
     mock_template = TemplateModel(
@@ -86,7 +86,7 @@ def test_get_templates_by_group_id(mock_get_templates_by_group_id, client: TestC
     assert response.json() == [mock_template.model_dump()]
 
 
-@patch("src.schemas.templates.template_table.delete_template_by_id")
+@patch("src.models.templates.template_table.delete_template_by_id")
 def test_delete_template_not_allowed(mock_delete_template_by_id, client: TestClient):
     mock_delete_template_by_id.return_value = None
 
@@ -94,7 +94,7 @@ def test_delete_template_not_allowed(mock_delete_template_by_id, client: TestCli
     assert response.status_code == 403
 
 
-@patch("src.schemas.templates.template_table.delete_template_by_id")
+@patch("src.models.templates.template_table.delete_template_by_id")
 def test_delete_template(mock_delete_template_by_id, client: TestClient):
     mock_template = TemplateModel(
         id="1",
@@ -119,7 +119,7 @@ def test_delete_template(mock_delete_template_by_id, client: TestClient):
     assert response.json() == mock_template.model_dump()
 
 
-@patch("src.schemas.templates.template_table.delete_templates_by_user_id")
+@patch("src.models.templates.template_table.delete_templates_by_user_id")
 def test_delete_template_by_user(mock_delete_templates_by_user_id, client: TestClient):
     mock_template = TemplateModel(
         id="1",
@@ -158,7 +158,7 @@ def test_delete_template_by_user(mock_delete_templates_by_user_id, client: TestC
     assert response.json() == [mock_template.model_dump()]
 
 
-@patch("src.schemas.templates.template_table.delete_templates_by_group_id")
+@patch("src.models.templates.template_table.delete_templates_by_group_id")
 def test_delete_templates_by_group_id(mock_delete_templates_by_group_id, client: TestClient):
     mock_template = TemplateModel(
         id="1",

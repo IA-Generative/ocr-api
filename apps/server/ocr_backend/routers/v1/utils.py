@@ -7,8 +7,20 @@ from ocr_backend.connectors import s3_client_connector
 from typing import Any
 from loguru import logger
 import sys
+from src.services.task_service import TaskService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .schemas import ChatCompletionRequest
+from src.schemas.task import (
+    TaskForm,
+    TaskModel,
+    TaskUpdateForm,
+    TaskStatus,
+)
+
+from src.schemas.input import InputForm
+from src.connector.broker_connector import celery_app
+
 
 ALLOWED_MIME_TYPES: list[str] = [
     "image/png",
@@ -122,23 +134,16 @@ def retrieve_file_or_image_from_chat_message(message: ChatCompletionRequest) -> 
     return retrieve_file_or_image_from_message_content(content)  # type: ignore
 
 
-def sending_file_to_ocr_service(
+async def sending_file_to_ocr_service(
     user_id: str,
     group_id: str,
+    task_service: TaskService,
+    db: AsyncSession,
     task_operation: str,
     file_path: Path,
     worker_name: str = "ocr",
 ) -> dict[str, Any]:
     """Simulate sending the file to an OCR service and getting back extracted text."""
-    from src.schemas.task import (
-        TaskForm,
-        TaskModel,
-        TaskUpdateForm,
-        TaskStatus,
-        task_table,
-    )
-    from src.schemas.input import InputForm
-    from src.connector.broker_connector import celery_app
 
     input_form = InputForm(
         storage_file_path=str(file_path),
@@ -149,7 +154,8 @@ def sending_file_to_ocr_service(
         interest_zone=None,
     )
 
-    task_data: TaskModel | None = task_table.insert_new_task(
+    task_data: TaskModel | None = await task_service.insert_new_task(
+        db=db,
         user_id=user_id,
         form_data=TaskForm(
             type=task_operation,
@@ -169,7 +175,9 @@ def sending_file_to_ocr_service(
         task_id=task_data.id,
     )
 
-    task_data = task_table.update_task(
+    task_data = await task_service.update_task(
+        db=db,
+        task_type=task_operation,
         task_id=task_data.id,
         form_data=TaskUpdateForm(
             status=TaskStatus.QUEUED.value,
@@ -181,11 +189,13 @@ def sending_file_to_ocr_service(
     return task_data.model_dump()
 
 
-def get_latest_task_status(task_id: str) -> dict[str, Any]:
+async def get_latest_task_status(
+    task_id: str, task_type: str, task_service: TaskService, db: AsyncSession
+) -> dict[str, Any]:
     """Simulate retrieving the latest status of a task."""
-    from src.schemas.task import TaskModel, task_table
+    from src.schemas.task import TaskModel
 
-    task_data: TaskModel | None = task_table.get_task_by_id(task_id)
+    task_data: TaskModel | None = await task_service.get_task_by_id(db=db, task_id=task_id, task_type=task_type)
     if not task_data:
         raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found.")
     return task_data.model_dump()

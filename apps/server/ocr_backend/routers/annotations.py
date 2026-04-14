@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from ocr_backend.core.security.factory import TokenVerifier
 from ocr_backend.core.security.token import RequestContext
-from src.schemas.annotations import (
+from src.models.annotations import (
     AnnotationModel,
     AnnotationStats,
     AnnotationUpsertForm,

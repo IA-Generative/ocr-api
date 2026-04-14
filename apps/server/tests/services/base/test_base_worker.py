@@ -6,8 +6,13 @@ from src.schemas.output import Page
 from src.connector.s3_connector import S3Connector
 from services.base.worker import FileNotSupported, AnyFileProcessWorker, hash_file
 from src.schemas.input import InputForm
-from src.schemas.task import TaskForm, TaskModel, task_table, TaskStatus
+from src.schemas.task import TaskForm, TaskModel, TaskStatus
+
+from services.client.server import ServerClient
 from src.schemas.output import OCRResult
+
+
+server_client = ServerClient()
 
 
 class MockeBaseModelPrediction(BaseModelPrediction):
@@ -20,7 +25,8 @@ class MockeBaseModelPrediction(BaseModelPrediction):
 
 @pytest.fixture
 def dummy_task() -> TaskModel:
-    return task_table.insert_new_task(user_id="123", form_data=TaskForm(user_id="123", type="ocr", status="created"))
+    task_dct = server_client.create_task(task_data=TaskForm(type="ocr", status="created").model_dump())
+    return TaskModel(**task_dct)
 
 
 @pytest.fixture

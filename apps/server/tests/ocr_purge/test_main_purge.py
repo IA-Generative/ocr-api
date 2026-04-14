@@ -8,7 +8,8 @@ from ocr_purge.main import (
     process_batch,
     main,
 )
-from src.schemas.task import task_table, TaskForm, TaskStatus
+from src.schemas.task import TaskForm, TaskStatus
+from src.services.task_service import task_table
 
 
 def test_get_cutoff_timestamp():

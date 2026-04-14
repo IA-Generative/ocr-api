@@ -8,7 +8,7 @@ from src.schemas.task import TaskModel
 
 class BaseModelPrediction(ABC):
     def __init__(self):
-        self.current_task: TaskModel = None
+        self.current_task: TaskModel | None = None
 
     def set_current_task(self, task: TaskModel):
         self.current_task = task

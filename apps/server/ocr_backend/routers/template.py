@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
-from src.schemas.templates import template_table, TemplateModel
+from src.schemas.templates import TemplateModel
+from src.models.templates import template_table
 
 
 template_router = APIRouter(tags=["Template"])

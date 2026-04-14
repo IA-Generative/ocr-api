@@ -1,7 +1,10 @@
-from typing import Literal
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Literal, Annotated
+from fastapi import APIRouter, HTTPException, Depends, status as http_status
 from fastapi.responses import PlainTextResponse, Response
-from src.schemas.task import task_table
+from src.services.task_service import TaskService
+from src.connector.db_connector import get_async_session
+from src.schemas.task import TaskOperation
+from sqlalchemy.ext.asyncio import AsyncSession
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
 import io
@@ -9,19 +12,25 @@ import csv
 
 
 text_router = APIRouter(tags=["Text"])
+TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
+TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
+DbSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 @text_router.get("/text-task/{task_id}", response_class=PlainTextResponse, response_model=None)
 async def download_text_content_new(
     task_id: str,
-    ctx: RequestContext = Depends(TokenVerifier),
+    ctx: TokenDep,
+    task_service: TaskServiceDep,
+    db_session: DbSessionDep,
+    task_type: TaskOperation = TaskOperation.OCR,
 ) -> PlainTextResponse:
-    task = task_table.get_task_by_id(task_id)
+    task = await task_service.get_task_by_id(task_id=task_id, db=db_session, task_type=task_type)
 
     if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
     if task.user_id != ctx.user_id:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     content = ""
     if task.output is not None:
@@ -36,16 +45,19 @@ async def download_text_content_new(
 )
 async def download_task_form(
     task_id: str,
+    ctx: TokenDep,
+    task_service: TaskServiceDep,
+    db_session: DbSessionDep,
     transform: Literal["text", "form", "form-csv", "only-result"] = "text",
-    ctx: RequestContext = Depends(TokenVerifier),
+    task_type: TaskOperation = TaskOperation.OCR,
 ):
-    task = task_table.get_task_by_id(task_id)
+    task = await task_service.get_task_by_id(task_id=task_id, db=db_session, task_type=task_type)
 
     if task is None or task.user_id != ctx.user_id:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     if task.output is None:
-        raise HTTPException(status_code=404, detail="Task output not found")
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task output not found")
 
     if transform == "text":
         return PlainTextResponse(content=task.output.text, status_code=200, media_type="text/plain")
@@ -76,9 +88,10 @@ async def download_task_form(
         # Si pas d'entrée, on retourne un CSV vide avec juste l'en-tête
         if not content:
             content = ""
+        filename = f"{task.input.raw_filename}.csv" if task.input and task.input.raw_filename else "output.csv"
         return Response(
             content=content,
             status_code=200,
             media_type="text/csv",
-            headers={"Content-Disposition": f'attachment; filename="{task.input.raw_filename}.csv"'},
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
         )

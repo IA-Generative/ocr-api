@@ -2,16 +2,17 @@
 
 import asyncio
 import time
-from typing import AsyncGenerator, Union, Literal
+from typing import AsyncGenerator, Union, Literal, Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status as http_status
 from fastapi.responses import StreamingResponse
 from openai.types import CompletionUsage
 from openai.types.chat import ChatCompletion, ChatCompletionChunk, ChatCompletionMessage
 from openai.types.chat.chat_completion import Choice
 from openai.types.chat.chat_completion_chunk import Choice as ChunkChoice, ChoiceDelta
-
-from ocr_backend.core.security.factory import ApiToken
+from sqlalchemy.ext.asyncio import AsyncSession
+from src.connector.db_connector import AsyncSessionLocal
+from src.services.task_service import TaskService
 from ocr_backend.core.security.token import RequestContext
 
 from .schemas import ChatCompletionRequest, _AVAILABLE_MODELS
@@ -21,8 +22,23 @@ from .utils import (
     sending_file_to_ocr_service,
 )
 import json
+from ocr_backend.core.security.factory import TokenVerifier
+
 
 router = APIRouter(tags=["Chat"], prefix="/chat")
+
+TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
+TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dépendance pour obtenir une session async"""
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+
 
 _TERMINAL_SUCCESS = {"done", "success"}
 _TERMINAL_ERROR = {"failed", "error"}
@@ -63,6 +79,8 @@ def _build_completion(model: str, content: str, completion_id: str) -> ChatCompl
 async def _stream_response(
     model: str,
     task_id: str,
+    task_service: TaskService,
+    db: AsyncSession,
     poll_interval: float = 1.0,
 ) -> AsyncGenerator[str, None]:
     """Poll the task until terminal state, then stream the OCR text word by word."""
@@ -93,7 +111,7 @@ async def _stream_response(
 
     # Poll until the task reaches a terminal state
     while True:
-        task = get_latest_task_status(task_id)  # raises HTTP 404 if task deleted
+        task = await get_latest_task_status(task_id, "ocr", task_service, db)  # raises HTTP 404 if task deleted
         status = task.get("status", "")
 
         if status in _TERMINAL_SUCCESS:
@@ -130,7 +148,9 @@ async def _stream_response(
 )
 async def chat_completions(
     request: ChatCompletionRequest,
-    ctx: RequestContext = Depends(ApiToken()),
+    ctx: TokenDep,
+    task_service: TaskServiceDep,
+    db: DbSessionDep,
 ) -> Union[ChatCompletion, StreamingResponse]:
     """
     Example request
@@ -171,13 +191,18 @@ async def chat_completions(
     """
 
     if request.model not in [model.id for model in _AVAILABLE_MODELS]:
-        raise HTTPException(status_code=400, detail=f"Unsupported model {request.model}")
+        raise HTTPException(
+            status_code=http_status.HTTP_400_BAD_REQUEST,
+            detail=f"Unsupported model {request.model}",
+        )
 
     try:
         file_path = retrieve_file_or_image_from_chat_message(request)  # raises 422 if no valid image/file found
     except ValueError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-    task = sending_file_to_ocr_service(
+        raise HTTPException(status_code=http_status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+    task = await sending_file_to_ocr_service(
+        task_service=task_service,
+        db=db,
         user_id=ctx.user_id,  # type: ignore
         group_id=ctx.groups[0] if ctx.groups else "DEFAULT",  # type: ignore
         task_operation="ocr",
@@ -190,7 +215,7 @@ async def chat_completions(
 
     if request.stream:
         return StreamingResponse(
-            _stream_response(model=request.model, task_id=task_id),
+            _stream_response(model=request.model, task_id=task_id, task_service=task_service, db=db),
             media_type="text/event-stream",
             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
         )

@@ -67,4 +67,3 @@ class TaskOperation(StrEnum):
     FORMS = "forms"
     VECTORIZE = "vectorize"
     VLM_OCR = "vlm_ocr"
-    DOCLING = "docling"

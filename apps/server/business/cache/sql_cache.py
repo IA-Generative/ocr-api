@@ -2,12 +2,18 @@ from PIL import Image
 import time
 from io import BytesIO
 from services.base.cache import BaseCache
-from src.schemas.task import TaskModel, task_table, TaskStatus
+from src.schemas.task import TaskModel, TaskStatus
+
 from src.connector.s3_connector import S3Connector
 from services.utils.lazy_pdf import LazyPdfImageList
 from src.logger import logger
+from fastapi import HTTPException
+from services.client.server import ServerClient
+from requests.exceptions import HTTPError
 
 # logger.setLevel(logging.DEBUG)
+
+server_client = ServerClient()
 
 
 class TaskCache(BaseCache):
@@ -15,13 +21,28 @@ class TaskCache(BaseCache):
         self.file_connector = file_connector
 
     def is_in_cache(self, task: TaskModel) -> bool:
-        found_task = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
+        if not task.content_hash:
+            return False
+        try:
+            found_task = server_client.get_task_by_content_hash(content_hash_value=task.content_hash)
+            found_task = TaskModel.model_validate(found_task) if found_task else None
+
+        except HTTPError as e:
+            logger.error(f"Error checking cache for task {task.id}: {e}")
+            return False
+
         return (
             found_task is not None and found_task.status == TaskStatus.COMPLETED.value and found_task.type == task.type
         )
 
     def update_get_obj(self, task: TaskModel) -> TaskModel:
         if not self.file_connector:
+            return task
+        if not task.extras:
+            task.extras = {}
+        if not task.input:
+            return task
+        if not task.output:
             return task
         filename = task.input.raw_filename
         content_type = task.input.content_type
@@ -58,11 +79,18 @@ class TaskCache(BaseCache):
         return task
 
     def get_task_from_cache(self, task: TaskModel) -> TaskModel:
-        task_found = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
-        if task_found:
-            task_found.input = task.input
-            task_found.id = task.id
-            task_found.user_id = task.user_id
-            task_found = self.update_get_obj(task=task_found)
+        if not task.content_hash:
+            return task
+        try:
+            task_found = server_client.get_task_by_content_hash(content_hash_value=task.content_hash)
+        except HTTPException as e:
+            logger.error(f"Error retrieving task from cache for task {task.id}: {e}")
+            return task
+        task_found = TaskModel.model_validate(task_found)
+
+        task_found.input = task.input
+        task_found.id = task.id
+        task_found.user_id = task.user_id
+        task_found = self.update_get_obj(task=task_found)
 
         return task_found

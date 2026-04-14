@@ -28,7 +28,6 @@ class TaskOperation(str, Enum):
     FORMS = "forms"
     VECTORIZE = "vectorize"
     VLM_OCR = "vlm_ocr"
-    DOCLING = "docling"
 
 
 class BaseBox(BaseModel):

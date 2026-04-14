@@ -2,12 +2,12 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from contextlib import contextmanager
-from src.schemas import Base
+from src.models import Base
 from src.schemas.templates import (
-    TemplateTable,
     TemplateForm,
     TemplateUpdateForm,
 )
+from src.models.templates import TemplateTable
 
 
 @pytest.fixture

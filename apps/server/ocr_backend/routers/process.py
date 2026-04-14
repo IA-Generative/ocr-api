@@ -67,7 +67,6 @@ async def process_document(
         task_result = await upload_file(
             file=upload_file_obj,
             group_id="OWUI_EXTERNAL",
-            interest_zone=None,
             task_operation=TaskOperation.DEFAULT,
             ctx=ctx,
         )

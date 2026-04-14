@@ -8,7 +8,7 @@ from src.connector.collection_manager import init_qdrant_vector_store
 from qdrant_client import QdrantClient
 from src.connector.vector_store_interface import DistanceMetric
 from src.logger import logger
-from src.schemas.templates import template_table
+from src.models.templates import template_table
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
 

@@ -161,7 +161,7 @@ stress-stats: install-uv ## Affiche les statistiques du test de charge
 up-db: ## Lance l'environnement de développement avec la base de données
 	docker compose -f docker-compose-test.yaml up -d db minio redis migration
 
-test-services-paddleocr2.10.0: build-container-dependencies up-db ## Test PaddleOCR 2.10.0
+test-services-business: build-container-dependencies up-db ## Test PaddleOCR 2.10.0
 	docker compose -f docker-compose-test.yaml up paddleocr2_service --exit-code-from paddleocr2_service
 	make down-test
 
