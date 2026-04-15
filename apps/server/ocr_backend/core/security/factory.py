@@ -6,6 +6,8 @@ from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
 from src.services.token_service import get_token_by_user_and_token
 import json
+from hashlib import sha256
+
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -58,16 +60,18 @@ class ApiToken(BaseVerifyToken):
                 try:
                     request_context = RequestContext.model_validate(value)
                     if request_context.token:
-                        self.__api_keys[request_context.token] = request_context
+                        token_hash = sha256(request_context.token.encode()).hexdigest()
+                        self.__api_keys[token_hash] = request_context
                 except Exception as e:
                     logging.error(f"Error validating API key: {e}")
 
     def verify(self, ctx: RequestContext) -> bool:
-        if ctx.token in self.__api_keys:
-            current_user = self.__api_keys[ctx.token]
+        query_token = sha256((ctx.token or "").encode()).hexdigest()
+        if query_token in self.__api_keys:
+            current_user = self.__api_keys[query_token]
             ctx.user_id = current_user.user_id
             ctx.email = current_user.email
-            ctx.roles: list[str] | None = current_user.roles
+            ctx.roles = current_user.roles
             ctx.is_admin = current_user.is_admin
             return True
         user_id = ctx.user_id or ""

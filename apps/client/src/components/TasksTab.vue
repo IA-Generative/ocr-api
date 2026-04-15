@@ -6,7 +6,8 @@
     <table class="fr-table task-table">
       <thead>
         <tr>
-          <th @click="sortBy('type')">Type ⬍</th>
+          <th @click="sortBy('type')">Tâche ⬍</th>
+          <th>Fichier</th>
           <th @click="sortBy('percentage')">Pourcentage ⬍</th>
           <th @click="sortBy('created_at')">Créé le ⬍</th>
           <th @click="sortBy('updated_at')">Mis à jour le ⬍</th>
@@ -18,8 +19,11 @@
       <tbody>
         <tr v-for="task in displayedTasks" :key="task.id">
           <td>
+            <span>{{ MapTaskTypeToLabel(task.type) }}</span>
+          </td>
+          <td>
             <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
-            <span v-else>Inconnu</span>
+            <span v-else>—</span>
           </td>
 
           <td>
@@ -143,6 +147,19 @@ const data_task_mock = {"total": 0, "page": 1, "page_size": 10, "items": []}
 // ----- TRI -----
 const sortKey = ref('')
 const sortAsc = ref(true)
+
+function MapTaskTypeToLabel(type: string) {
+  const map: Record<string, string> = {
+    ocr: 'OCR',
+    default: 'Défaut',
+    save_template: 'Modèle',
+    forms: 'Formulaires',
+    vectorize: 'Vectorisation',
+    vlm_ocr: 'VLM OCR',
+    page_classification: 'Classification',
+  }
+  return map[type] ?? type
+}
 
 function MapStatusToLabel(status: string) {
   const map: Record<string,string> = {
