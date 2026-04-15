@@ -8,6 +8,9 @@ from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.logger import logger
 from src.schemas.classification import ClassificationResult, LabelDefinition, Model
+from business.paddleocr2.configs.paddle import PaddleSetting
+
+settings = PaddleSetting()
 
 
 class OpenAIClipModel(BaseModelPrediction):
@@ -15,7 +18,7 @@ class OpenAIClipModel(BaseModelPrediction):
         # Charger modèle
         self.model_name = model_name
         self.device = device
-        self.model, self.preprocess = clip.load(model_name, device=device)
+        self.model, self.preprocess = clip.load(model_name, device=device, download_root=settings.CLIP_MODEL_DIR)
         self.model_definition = Model(name=model_name, version="1.0")
         self.labels: list[LabelDefinition] | None = None
 

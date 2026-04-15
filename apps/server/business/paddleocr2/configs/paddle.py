@@ -11,5 +11,6 @@ class PaddleSetting(BaseSettings):
     RECOGNITION_BATCH_SIZE: int = 4
     OCR_VERSION: str = "PP-OCRv5"
     DEVICE: str = "cpu"
+    CLIP_MODEL_DIR: str = "/app/models/clip"
     OCR_LANG: str | None = None
     model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")
