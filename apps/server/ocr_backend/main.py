@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 
@@ -11,6 +11,7 @@ from .routers.annotations import router as annotations_router
 from .routers.ocr_chunks import router as ocr_chunks_router
 from .routers.chat import router as chat_router
 from .routers.v1 import router as v1_router
+from ocr_backend.core.security.factory import TokenVerifier
 
 # from .routers.template import template_router
 from src import __name__, __version__
@@ -33,13 +34,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(task_router, prefix="/api")
+_secure = [Depends(TokenVerifier)]
+
+app.include_router(task_router, prefix="/api", dependencies=_secure)
 app.include_router(health_router, prefix="/api")
-app.include_router(job_router, prefix="/api")
-app.include_router(text_router, prefix="/api")
-app.include_router(process_router, prefix="/api")
-app.include_router(annotations_router, prefix="/api")
-app.include_router(ocr_chunks_router, prefix="/api")
-app.include_router(chat_router, prefix="/api")
-app.include_router(v1_router, prefix="/api/v1")
+app.include_router(job_router, prefix="/api", dependencies=_secure)
+app.include_router(text_router, prefix="/api", dependencies=_secure)
+app.include_router(process_router, prefix="/api", dependencies=_secure)
+app.include_router(annotations_router, prefix="/api", dependencies=_secure)
+app.include_router(ocr_chunks_router, prefix="/api", dependencies=_secure)
+app.include_router(chat_router, prefix="/api", dependencies=_secure)
+app.include_router(v1_router, prefix="/api/v1", dependencies=_secure)
 # app.include_router(template_router, prefix="/api")
