@@ -59,7 +59,7 @@ def _rewrite_page_urls(task: TaskModel) -> TaskModel:
 
                 page.page_url = s3_client_connector.generate_presigned_url(
                     key,
-                    expires_in=5,  # URL valable 5 minutes
+                    expires_in=300,  # URL valable 5 minutes
                 )
     return task
 

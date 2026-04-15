@@ -10,7 +10,7 @@ from logging import getLogger
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import Annotated
-
+import json
 from ocr_backend.core.security.factory import TokenVerifier
 from ocr_backend.core.security.token import RequestContext
 
@@ -21,6 +21,7 @@ from src.services.token_service import (
     get_tokens_by_user,
     delete_token_by_id,
 )
+from hashlib import sha256
 
 logger = getLogger(__name__)
 
@@ -38,9 +39,9 @@ async def create_user_token(
     try:
         row = create_token(
             user_id=user_id,
-            token_str=payload.token,
+            token_str=sha256(payload.token.encode()).hexdigest(),
             expires=payload.expired_at,
-            roles=payload.roles,
+            roles=json.dumps(ctx.roles) if ctx.roles else None,
         )
         # Return token metadata (response model may hide token value)
         logger.info(f"Token created for user_id={user_id}")

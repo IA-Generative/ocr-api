@@ -51,13 +51,17 @@ class BaseVerifyToken:
     @abstractmethod
     def verify(self, ctx: RequestContext) -> bool: ...
 
-    def __call__(self, request: Request) -> RequestContext:
+    def __call__(
+        self,
+        request: Request,
+    ) -> RequestContext:
         ctx = parse_header_context(request, is_fastapi=self.is_fastapi)
 
         if self.verify_token and not self.verify(ctx=ctx):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="UNAUTHORIZED",
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
         return ctx
