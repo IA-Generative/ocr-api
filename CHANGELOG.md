@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [2.1.0](https://github.com/IA-Generative/ocr-api/compare/v2.0.0...v2.1.0) (2026-04-15)
+
+
+### Features
+
+* **Classification:** refactor classification model settings and update model loading ([080dfd0](https://github.com/IA-Generative/ocr-api/commit/080dfd0ee165e6d6299df2b7ebf3a82b6410d68c))
+
 ## [2.0.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v2.0.0) (2026-04-15)
 
 
