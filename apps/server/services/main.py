@@ -17,12 +17,17 @@ from business.chunks.worker import ChunkWorker
 from business.classification.models.openai_clip import OpenAIClipModel
 from src.connector.s3_connector import S3Connector, s3_settings
 from src.schemas.classification import ParameterClassification
+from business.paddleocr2.configs.classification import ClassificationSettings
 from business.classification.worker import ClassificationWorker
 
 s3_client = boto3.client("s3", verify=s3_settings.VERIFY_SSL)
-
-
-model = OpenAIClipModel()
+classification_settings = ClassificationSettings()
+model = None
+if classification_settings.ENABLED:
+    model = OpenAIClipModel(
+        model_name=classification_settings.MODEL_NAME,
+        download_root=classification_settings.CLIP_MODEL_DIR,
+    )
 file_connector = S3Connector(s3_client=s3_client, bucket_name=s3_settings.S3_BUCKET_NAME)
 server_client = ServerClient()
 
@@ -33,7 +38,7 @@ page_classification_worker = ClassificationWorker(
     name="page-classification-worker",
     batch_size=1,
     worker_weight=1,
-    models=[model],
+    models=[model] if model else [],
     file_connector=file_connector,
     cache=None,
 )
@@ -84,6 +89,19 @@ def launch_task(self, task_info: dict):
 @celery_app.task(name=CeleryTaskName.PAGE_CLASSIFICATION_TASK.value, bind=True)
 def parocess_page_classification(self, task_info: dict | str) -> dict:
     task = validate_task(task_info)
+    if not model:
+        task.extras = task.extras if task.extras else {}
+        task.extras["error"] = "Model is not enabled."
+        server_client.update_task_by_id(
+            task_id=task.id,
+            task_type=task.type,
+            update_data=TaskForm(
+                type=task.type,
+                status=TaskStatus.FAILED.value,
+                extras=task.extras,
+            ).model_dump(exclude_unset=True),
+        )
+        raise ValueError("Model is not enabled.")
 
     try:
         if not task.parameters:
@@ -108,7 +126,8 @@ def parocess_page_classification(self, task_info: dict | str) -> dict:
             ).model_dump(exclude_unset=True),
         )
         raise
-    page_classification_worker.models[0] = model
+    if model:
+        page_classification_worker.models[0] = model
     process_pipeline: Pipeline = Pipeline(workers=[page_classification_worker])
     try:
         task = process_pipeline.process(task=task)
