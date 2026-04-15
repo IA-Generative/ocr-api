@@ -1,5 +1,6 @@
 import logging
 from paddleocr import PaddleOCR
+import clip
 from business.paddleocr2.configs.paddle import PaddleSetting
 import os
 
@@ -25,3 +26,4 @@ if __name__ == "__main__":
         lang="fr",
         ocr_version="PP-OCRv3",
     )
+    clip.load("ViT-L/14", device="cpu", download_root=PaddleSetting().CLIP_MODEL_DIR)
