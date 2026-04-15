@@ -24,6 +24,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Task
+         * @description Crée une nouvelle tâche
+         */
+        post: operations["create_task_api_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tasks/{task_id}": {
         parameters: {
             query?: never;
@@ -31,12 +51,42 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Task By Id User */
+        /**
+         * Get Task By Id User
+         * @description Récupère une tâche par son ID (utilisateur)
+         */
         get: operations["get_task_by_id_user_api_tasks__task_id__get"];
         put?: never;
         post?: never;
-        /** Delete Task By Id */
+        /**
+         * Delete Task By Id
+         * @description Supprime une tâche
+         */
         delete: operations["delete_task_by_id_api_tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Task By Id
+         * @description Met à jour une tâche par son ID (utilisateur)
+         */
+        patch: operations["update_task_by_id_api_tasks__task_id__patch"];
+        trace?: never;
+    };
+    "/api/tasks/content/{content_hash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Task By Content Hash
+         * @description Récupère une tâche par son hash de contenu (utilisateur)
+         */
+        get: operations["get_task_by_content_hash_api_tasks_content__content_hash__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -49,7 +99,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Tasks By User */
+        /**
+         * Get Tasks By User
+         * @description Récupère les tâches d'un utilisateur avec pagination
+         */
         get: operations["get_tasks_by_user_api_tasks_user__get"];
         put?: never;
         post?: never;
@@ -66,7 +119,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Tasks Stats */
+        /**
+         * Get Tasks Stats
+         * @description Récupère les statistiques des tâches
+         */
         get: operations["get_tasks_stats_api_stats_tasks_get"];
         put?: never;
         post?: never;
@@ -83,7 +139,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Count Users Today */
+        /**
+         * Count Users Today
+         * @description Compte le nombre d'utilisateurs uniques avec des tâches aujourd'hui
+         */
         get: operations["count_users_today_api_users_count_users_today_get"];
         put?: never;
         post?: never;
@@ -103,7 +162,10 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Delete Tasks By Date And Status */
+        /**
+         * Delete Tasks By Date And Status
+         * @description Supprime les tâches avec un statut donné dans une plage de dates (admin)
+         */
         delete: operations["delete_tasks_by_date_and_status_api_v1_tasks__delete"];
         options?: never;
         head?: never;
@@ -349,7 +411,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/models/": {
+    "/api/v1/models/": {
         parameters: {
             query?: never;
             header?: never;
@@ -368,7 +430,7 @@ export interface paths {
          *         ]
          *     }
          */
-        get: operations["list_models_v1_models__get"];
+        get: operations["list_models_api_v1_models__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -377,7 +439,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/chat/completions": {
+    "/api/v1/chat/completions": {
         parameters: {
             query?: never;
             header?: never;
@@ -424,8 +486,43 @@ export interface paths {
          *     When stream=true the response is a text/event-stream of ChatCompletionChunk objects.
          *     When stream=false processing runs in the background; poll GET /v1/tasks/{task_id}.
          */
-        post: operations["chat_completions_v1_chat_completions_post"];
+        post: operations["chat_completions_api_v1_chat_completions_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tokens/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tokens for current user */
+        get: operations["list_user_tokens_api_v1_tokens__get"];
+        put?: never;
+        /** Create a token for the current user */
+        post: operations["create_user_token_api_v1_tokens__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tokens/{token_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete token by id for current user */
+        delete: operations["delete_user_token_api_v1_tokens__token_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -572,10 +669,12 @@ export interface components {
              * @default DEFAULT
              */
             group_id: string;
-            /** Interest Zone */
-            interest_zone?: string | null;
+            /** Parameter */
+            parameter?: string | null;
             /** @default default */
             task_operation: components["schemas"]["TaskOperation"];
+            /** @default worker.tasks.ocr */
+            task_name: components["schemas"]["CeleryTaskName"] | null;
         };
         /** BoxAnnotation */
         BoxAnnotation: {
@@ -606,6 +705,11 @@ export interface components {
              */
             private: boolean;
         };
+        /**
+         * CeleryTaskName
+         * @enum {string}
+         */
+        CeleryTaskName: "worker.tasks.ocr" | "tasks.page_classification";
         /**
          * ChatCompletion
          * @description Represents a chat completion response returned by model, based on the provided input.
@@ -816,6 +920,18 @@ export interface components {
             /** Description */
             description?: string | null;
         };
+        /** ClassificationResult */
+        ClassificationResult: {
+            /** @description Label of the classification result */
+            label: components["schemas"]["LabelDefinition"];
+            /**
+             * Confidence
+             * @description Confidence score of the classification result
+             */
+            confidence: number;
+            /** @description Model used for classification */
+            model: components["schemas"]["Model"];
+        };
         /**
          * CompletionTokensDetails
          * @description Breakdown of tokens used in a completion.
@@ -980,6 +1096,10 @@ export interface components {
             group_id?: string | null;
             /** Interest Zone */
             interest_zone?: components["schemas"]["RegionOfInterest"][] | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** LLMFormField */
         LLMFormField: {
@@ -1009,6 +1129,19 @@ export interface components {
              */
             filled?: boolean | null;
         };
+        /** LabelDefinition */
+        LabelDefinition: {
+            /**
+             * Label
+             * @description Label name
+             */
+            label: string;
+            /**
+             * Definition
+             * @description Definition or description of the label
+             */
+            definition: string;
+        };
         /** Layout */
         Layout: {
             /**
@@ -1031,8 +1164,29 @@ export interface components {
              * @description Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]
              */
             coordinate: number[];
+            /** Order */
+            order?: number | null;
             /** Content */
             content?: unknown | null;
+        };
+        /** Model */
+        Model: {
+            /**
+             * Name
+             * @description Name of the model
+             */
+            name: string;
+            /**
+             * Version
+             * @description Version of the model
+             */
+            version: string;
+            /**
+             * Device
+             * @description Device used for the model (e.g., 'cpu', 'cuda')
+             * @default cpu
+             */
+            device: string;
         };
         /**
          * ModelList
@@ -1200,6 +1354,11 @@ export interface components {
                 string,
                 number
             ][];
+            /**
+             * Classifications
+             * @description List of classification results for the page
+             */
+            classifications?: components["schemas"]["ClassificationResult"][];
         };
         /** PageAnnotation */
         PageAnnotation: {
@@ -1266,6 +1425,32 @@ export interface components {
             /** Labels */
             labels?: string | null;
         };
+        /** TaskForm */
+        TaskForm: {
+            /** Group Id */
+            group_id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Status */
+            status: string;
+            /**
+             * Percentage
+             * @default 0
+             */
+            percentage: number | null;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            input?: components["schemas"]["InputForm"] | null;
+            output?: components["schemas"]["OCRResult"] | null;
+            /** Content Hash */
+            content_hash?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** TaskModel */
         TaskModel: {
             /** Id */
@@ -1300,12 +1485,16 @@ export interface components {
             position?: number | null;
             /** Content Hash */
             content_hash?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
         };
         /**
          * TaskOperation
          * @enum {string}
          */
-        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "docling";
+        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "page_classification";
         /** TaskStats */
         TaskStats: {
             global_stats: components["schemas"]["TaskStatsGlobal"];
@@ -1336,6 +1525,60 @@ export interface components {
          * @enum {string}
          */
         TaskStatus: "created" | "queued" | "started" | "in_progress" | "completed" | "failed" | "retrying" | "canceled" | "timeout";
+        /** TaskUpdateForm */
+        TaskUpdateForm: {
+            /** Group Id */
+            group_id?: string | null;
+            /** Type */
+            type?: string | null;
+            /** Status */
+            status?: string | null;
+            /**
+             * Percentage
+             * @default 0
+             */
+            percentage: number | null;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            input?: components["schemas"]["InputForm"] | null;
+            output?: components["schemas"]["OCRResult"] | null;
+            /** Content Hash */
+            content_hash?: string | null;
+            /** Parameters */
+            parameters?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TokenCreate */
+        TokenCreate: {
+            /** Token */
+            token: string;
+            /** Expired At */
+            expired_at?: number | null;
+            /** Roles */
+            roles?: string | null;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TokenResponse */
+        TokenResponse: {
+            /** Id */
+            id: string;
+            /** User Id */
+            user_id: string;
+            /** Token */
+            token?: string | null;
+            /** Roles */
+            roles?: string | null;
+            /** Created At */
+            created_at: number;
+            /** Expired At */
+            expired_at?: number | null;
+        };
         /** TopLogprob */
         TopLogprob: {
             /** Token */
@@ -1420,9 +1663,44 @@ export interface operations {
             };
         };
     };
-    get_task_by_id_user_api_tasks__task_id__get: {
+    create_task_api_tasks_post: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskForm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_by_id_user_api_tasks__task_id__get: {
+        parameters: {
+            query?: {
+                task_type?: components["schemas"]["TaskOperation"] | null;
+            };
             header?: never;
             path: {
                 task_id: string;
@@ -1468,6 +1746,74 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_task_by_id_api_tasks__task_id__patch: {
+        parameters: {
+            query: {
+                task_type: components["schemas"]["TaskOperation"];
+            };
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskUpdateForm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_by_content_hash_api_tasks_content__content_hash__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"] | null;
+                };
             };
             /** @description Validation Error */
             422: {
@@ -1650,7 +1996,9 @@ export interface operations {
     };
     download_text_content_new_api_text_task__task_id__get: {
         parameters: {
-            query?: never;
+            query?: {
+                task_type?: components["schemas"]["TaskOperation"];
+            };
             header?: never;
             path: {
                 task_id: string;
@@ -1683,6 +2031,7 @@ export interface operations {
         parameters: {
             query?: {
                 transform?: "text" | "form" | "form-csv" | "only-result";
+                task_type?: components["schemas"]["TaskOperation"];
             };
             header?: never;
             path: {
@@ -2093,7 +2442,7 @@ export interface operations {
             };
         };
     };
-    list_models_v1_models__get: {
+    list_models_api_v1_models__get: {
         parameters: {
             query?: never;
             header?: never;
@@ -2113,7 +2462,7 @@ export interface operations {
             };
         };
     };
-    chat_completions_v1_chat_completions_post: {
+    chat_completions_api_v1_chat_completions_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -2133,6 +2482,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChatCompletion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_user_tokens_api_v1_tokens__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"][];
+                };
+            };
+        };
+    };
+    create_user_token_api_v1_tokens__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_user_token_api_v1_tokens__token_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
