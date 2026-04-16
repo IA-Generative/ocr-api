@@ -43,7 +43,7 @@ page_classification_worker = ClassificationWorker(
     cache=None,
 )
 
-tracing = get_tracing_service(tracing_name=os.environ.get("TRACING_SERVICE", "logging"))
+tracing = get_tracing_service("logging")
 
 
 def validate_task(task_info: dict | str) -> TaskModel:

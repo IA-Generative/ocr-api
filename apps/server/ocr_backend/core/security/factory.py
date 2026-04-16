@@ -1,5 +1,4 @@
 import os
-import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
@@ -10,12 +9,7 @@ from src.services.token_service import (
 )
 import json
 from hashlib import sha256
-from loguru import logger
-
-environment = os.environ.get("ENVIRONMENT", "production")
-log_level = "INFO" if environment == "production" else "DEBUG"
-logger.remove()  # Remove default logger
-logger.add(sys.stdout, level=log_level, format="{time} - {level} - {message}", colorize=True)
+from src.logger import logger
 
 
 def pre_create_default_token() -> None:

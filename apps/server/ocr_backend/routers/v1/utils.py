@@ -5,8 +5,7 @@ import requests
 from fastapi import HTTPException
 from ocr_backend.connectors import s3_client_connector
 from typing import Any
-from loguru import logger
-import sys
+from src.logger import logger
 from src.services.task_service import TaskService
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,9 +34,6 @@ _MIME_TO_SUFFIX: dict[str, str] = {
     "application/pdf": ".pdf",
     "binary/octet-stream": "",  # No extension, will rely on original filename or content-based detection
 }
-
-logger.remove()  # Remove default logger to avoid duplicate logs
-logger.add(sys.stdout, level="DEBUG", format="{time} - {level} - {message}")
 
 
 def _write_to_tempfile(data: bytes, suffix: str = "") -> Path:
