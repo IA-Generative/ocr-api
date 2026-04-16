@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.5](https://github.com/IA-Generative/ocr-api/compare/v1.2.4...v1.2.5) (2026-04-16)
+
+
+### Bug Fixes
+
+* **api-token:** update token validation to set user roles and admin status ([99da27c](https://github.com/IA-Generative/ocr-api/commit/99da27c2db2046898dfb8714ca65d057e6b64292))
+
 ## [1.2.4](https://github.com/IA-Generative/ocr-api/compare/v1.2.3...v1.2.4) (2026-04-16)
 
 
