@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.1](https://github.com/IA-Generative/ocr-api/compare/v1.2.0...v1.2.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **docs:** update demo OCR GIF to reflect recent changes ([7a28063](https://github.com/IA-Generative/ocr-api/commit/7a28063a2fcc2f4565ca9e540ab01e058719bd2a))
+
 ## [1.2.0](https://github.com/IA-Generative/ocr-api/compare/v1.1.3...v1.2.0) (2026-04-16)
 
 
