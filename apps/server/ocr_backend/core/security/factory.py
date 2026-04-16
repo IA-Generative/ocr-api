@@ -3,7 +3,11 @@ import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
-from src.services.token_service import get_token_by_user_and_token, create_token
+from src.services.token_service import (
+    get_token_by_user_and_token,
+    create_token,
+    get_token_by_value,
+)
 import json
 from hashlib import sha256
 from loguru import logger
@@ -84,7 +88,7 @@ class ApiToken(BaseVerifyToken):
         logger.debug(f"Verifying API token for user_id={ctx.user_id}")
         query_token = sha256((ctx.token or "").encode()).hexdigest()
         user_id = ctx.user_id or ""
-        if get_token_by_user_and_token(user_id=user_id, token_str=query_token):
+        if get_token_by_value(token_str=query_token):
             logger.info(f"Valid token found for user_id={user_id}")
             return True
         return False
