@@ -29,6 +29,17 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.4](https://github.com/IA-Generative/ocr-api/compare/v1.2.3...v1.2.4) (2026-04-16)
+
+
+### Bug Fixes
+
+* **docker:** remove conditional for uv image stage in Dockerfiles ([53019e7](https://github.com/IA-Generative/ocr-api/commit/53019e787534a8aae1285105175b493e2dbe7815))
+* **release:** add bootstrap-sha to prevent old breaking change from bumping major version ([fd8c346](https://github.com/IA-Generative/ocr-api/commit/fd8c346c70e1ca17ec145fbaacd5336e324baa03))
+* **release:** add last-release-sha to force release-please start point [skip gha] ([564e0c6](https://github.com/IA-Generative/ocr-api/commit/564e0c6cbfe54ca0fe2fce97cbc34fd1b4b664e9))
+* **release:** remove bootstrap/last-release-sha, fix v1.2.3 tag placement ([15a9544](https://github.com/IA-Generative/ocr-api/commit/15a954493a17d52f86ba12b8c9906666b5a10ff3))
+* **release:** update manifest file handling for dev branch and add prerelease manifest ([8c06cff](https://github.com/IA-Generative/ocr-api/commit/8c06cff3fbdec73def54688e4866bf891330304f))
+
 ## [1.2.3](https://github.com/IA-Generative/ocr-api/compare/v1.2.2...v1.2.3) (2026-04-16)
 
 
