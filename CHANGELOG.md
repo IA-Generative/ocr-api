@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.2](https://github.com/IA-Generative/ocr-api/compare/v1.2.1...v1.2.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* **server:** update default headers to use environment variable for API key ([5374506](https://github.com/IA-Generative/ocr-api/commit/5374506295844c881050ab245dac556ab70d11ce))
+
 ## [1.2.1](https://github.com/IA-Generative/ocr-api/compare/v1.2.0...v1.2.1) (2026-04-16)
 
 
