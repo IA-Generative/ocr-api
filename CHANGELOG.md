@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.1.2](https://github.com/IA-Generative/ocr-api/compare/v1.1.1...v1.1.2) (2026-04-16)
+
+
+### Bug Fixes
+
+* **ui:** add experimental feature warning banner to Classification components ([f99d762](https://github.com/IA-Generative/ocr-api/commit/f99d76257e3325332e4cab066745d86d478f71e6))
+
 ## [1.1.1](https://github.com/IA-Generative/ocr-api/compare/v1.1.0...v1.1.1) (2026-04-16)
 
 
