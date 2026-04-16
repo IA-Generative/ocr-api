@@ -29,6 +29,15 @@
 - code clean
 - :art: change minio vars
 
+## [1.1.1](https://github.com/IA-Generative/ocr-api/compare/v1.1.0...v1.1.1) (2026-04-16)
+
+
+### Bug Fixes
+
+* **config:** update path for uv.lock in release configuration ([30059f8](https://github.com/IA-Generative/ocr-api/commit/30059f82e04ed0a85acf18a7ec4943598b41f00d))
+* **Dockerfile, download_paddle_models_v3.py:** comment out ocr-service-features group and clip model loading ([e040774](https://github.com/IA-Generative/ocr-api/commit/e0407740f117aee88415ef88e491d0567b6742fc))
+* **release:** fix release ([41f5c4c](https://github.com/IA-Generative/ocr-api/commit/41f5c4c319f25433c65b83976d1c92181ec35d38))
+
 ## [2.0.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v2.0.0) (2026-04-15)
 
 
