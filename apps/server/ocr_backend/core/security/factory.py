@@ -1,19 +1,51 @@
-import logging
 import os
 import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
-from src.services.token_service import get_token_by_user_and_token
+from src.services.token_service import get_token_by_user_and_token, create_token
 import json
 from hashlib import sha256
+from loguru import logger
 
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout,
-)
+logger.remove()  # Remove default logger
+logger.add(sys.stdout, level="DEBUG", format="{time} - {level} - {message}", colorize=True)
+
+
+def pre_create_default_token() -> None:
+    api_json = os.environ.get(
+        "API_KEYS",
+        None,
+    )
+    if not api_json:
+        logger.warning("No API keys provided, using default key: secret-api")
+    else:
+        api_keys = json.loads(api_json)
+        for value in api_keys:
+            try:
+                request_context = RequestContext.model_validate(value)
+                hash_token = sha256((request_context.token or "").encode()).hexdigest()
+                if (
+                    request_context.user_id
+                    and request_context.token
+                    and not get_token_by_user_and_token(
+                        user_id=request_context.user_id,
+                        token_str=hash_token,
+                    )
+                ):
+                    create_token(
+                        user_id=request_context.user_id,
+                        token_str=hash_token,
+                        roles=(json.dumps(request_context.roles) if request_context.roles else None),
+                    )
+                else:
+                    logger.info(f"Token for user_id={request_context.user_id} already exists, skipping creation")
+            except Exception as e:
+                logger.error(f"Error validating API key: {e}")
+
+
+pre_create_default_token()
 
 
 class AllowAllAccess(BaseVerifyToken):
@@ -46,38 +78,14 @@ class DevToken(BaseVerifyToken):
 class ApiToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using API Token for verification")
-        api_json = os.environ.get(
-            "API_KEYS",
-            '[{"user_id": "api_user", "email": "api_user@example.com", "roles": ["user"], "is_admin": false, "token": "secret-api"}]',
-        )
-        self.__api_keys: dict[str, RequestContext] = {}
-        if not api_json:
-            logging.warning("No API keys provided, using default key: secret-api")
-        else:
-            api_keys = json.loads(api_json)
-            for value in api_keys:
-                try:
-                    request_context = RequestContext.model_validate(value)
-                    if request_context.token:
-                        token_hash = sha256(request_context.token.encode()).hexdigest()
-                        self.__api_keys[token_hash] = request_context
-                except Exception as e:
-                    logging.error(f"Error validating API key: {e}")
+        logger.info("Using API Token for verification")
 
     def verify(self, ctx: RequestContext) -> bool:
+        logger.debug(f"Verifying API token for user_id={ctx.user_id}")
         query_token = sha256((ctx.token or "").encode()).hexdigest()
-        if query_token in self.__api_keys:
-            current_user = self.__api_keys[query_token]
-            ctx.user_id = current_user.user_id
-            ctx.email = current_user.email
-            ctx.roles = current_user.roles
-            ctx.is_admin = current_user.is_admin
-            return True
         user_id = ctx.user_id or ""
-        token = ctx.token or ""
-        if get_token_by_user_and_token(user_id=user_id, token_str=token):
-            logging.info(f"Valid token found for user_id={user_id}")
+        if get_token_by_user_and_token(user_id=user_id, token_str=query_token):
+            logger.info(f"Valid token found for user_id={user_id}")
             return True
         return False
 
@@ -85,7 +93,7 @@ class ApiToken(BaseVerifyToken):
 class KeycloakToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using Keycloak for token verification")
+        logger.info("Using Keycloak for token verification")
 
         # Configuration Keycloak depuis les variables d'environnement
         self.keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8080")
@@ -97,23 +105,23 @@ class KeycloakToken(BaseVerifyToken):
             realm_name=self.realm_name,
             client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
         )
-        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        logger.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
         self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
         """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
         if self.__api_token_verifier.verify(ctx):
-            logging.info("API token valid, skipping Keycloak verification")
+            logger.info("API token valid, skipping Keycloak verification")
             return True
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
-            logging.debug(f"Token info: {user_info.keys()}")
+            logger.debug(f"Token info: {user_info.keys()}")
             if user_info.get("active") is False:
                 return False
 
             # Remplir le contexte avec les informations récupérées
             ctx.user_id = user_info.get("sub", "")  # Subject = user ID
-            logging.info(f"User ID: {ctx.user_id} is connected")
+            logger.info(f"User ID: {ctx.user_id} is connected")
             ctx.email = user_info.get("email", "")
             ctx.groups = user_info.get("groups", [])
 
@@ -128,7 +136,7 @@ class KeycloakToken(BaseVerifyToken):
             return True
 
         except Exception as e:
-            logging.error(f"Erreur lors de la vérification du token: {e}")
+            logger.error(f"Erreur lors de la vérification du token: {e}")
             return False
 
 
@@ -139,4 +147,4 @@ SECURITY_FACTORY: dict[str, BaseVerifyToken] = {
     "api-token": ApiToken,
 }  # ty:ignore[invalid-assignment]
 
-TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()  # ty:ignore[missing-argument]
+TokenVerifier: BaseVerifyToken = SECURITY_FACTORY[os.environ.get("VERIFY_TOKEN_MODEL", "keycloak")]()  # ty:ignore[missing-argument, invalid-assignment]
