@@ -1,7 +1,7 @@
 """GET /v1/models — list available OCR models."""
 
 from fastapi import APIRouter, Depends
-
+from typing import Annotated
 
 from ocr_backend.core.security.factory import ApiToken
 from ocr_backend.core.security.token import RequestContext
@@ -19,7 +19,7 @@ router = APIRouter(
     summary="List available OCR models",
 )
 def list_models(
-    _ctx: RequestContext = Depends(ApiToken()),
+    _ctx: Annotated[RequestContext, Depends(ApiToken())],
 ) -> ModelList:
     """
     Example response

@@ -28,7 +28,7 @@ class TokenModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     user_id: str
-    token: str
+    token: str | None = None
     roles: Optional[str] = None
     created_at: int
     expired_at: Optional[int] = None

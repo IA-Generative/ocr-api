@@ -16,7 +16,10 @@ def client() -> TestClient:
 
 
 def test_list_models(client: TestClient) -> None:
-    response = client.get("/models", headers={"Authorization": "Bearer secret-api"})
+    response = client.get(
+        "/models",
+        headers={"Authorization": "Bearer secret-api", "X-User-Id": "test_user"},
+    )
 
     assert response.status_code == 200
     data = response.json()

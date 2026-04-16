@@ -11,9 +11,7 @@ import os
 # settings = ClassificationSettings()
 
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 
 def _maybe_dir(p: str, sub: str):
