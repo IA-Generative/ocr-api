@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.0](https://github.com/IA-Generative/ocr-api/compare/v1.1.3...v1.2.0) (2026-04-16)
+
+
+### Features
+
+* **security:** enhance token verification and logging; update API keys in docker-compose for testing ([6d9f426](https://github.com/IA-Generative/ocr-api/commit/6d9f426aa887bd8ba5b9126e855209f020d318a5))
+
 ## [1.1.3](https://github.com/IA-Generative/ocr-api/compare/v1.1.2...v1.1.3) (2026-04-16)
 
 
