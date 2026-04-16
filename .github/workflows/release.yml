@@ -53,7 +53,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
-          manifest-file: .release-please-manifest.json
+          manifest-file: ${{ github.ref_name == 'dev' && '.release-please-manifest-prerelease.json' || '.release-please-manifest.json' }}
           config-file: ${{ github.ref_name == 'dev' && 'release-please-config-prerelease.json' || 'release-please-config-release.json' }}
 
       - name: Set registry prefix (lowercase)
