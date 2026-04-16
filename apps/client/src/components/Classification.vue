@@ -1,6 +1,11 @@
 <template>
   <div class="flex flex-col gap-8">
 
+    <!-- Experimental banner -->
+    <div class="fr-alert fr-alert--warning fr-alert--sm" role="alert">
+      <p>Fonctionnalité expérimentale — les résultats peuvent être inexacts et sont susceptibles d'évoluer.</p>
+    </div>
+
     <!-- SECTION PRINCIPALE : Upload + Types -->
     <div class="flex flex-col gap-6 md:flex-row md:gap-10">
 
