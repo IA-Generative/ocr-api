@@ -4,7 +4,7 @@ ARG DOCKERHUB_MIRROR_URL
 FROM ${DOCKERHUB_MIRROR_URL:-docker.io}/nvidia/cuda:11.8.0-devel-ubuntu22.04 AS paddle_model
 
 # Add a build stage for uv image
-FROM ${DOCKERHUB_MIRROR_URL:-ghcr.io}/astral-sh/uv:latest AS uv_stage
+FROM ghcr.io/astral-sh/uv:latest AS uv_stage
 
 FROM paddle_model AS paddle_model_with_uv
 COPY --from=uv_stage /uv /uvx /bin/
