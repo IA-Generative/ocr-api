@@ -29,14 +29,7 @@
 - code clean
 - :art: change minio vars
 
-## [1.1.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v1.1.0) (2026-04-15)
-
-
-### Features
-
-* **Classification:** refactor classification model settings and update model loading ([080dfd0](https://github.com/IA-Generative/ocr-api/commit/080dfd0ee165e6d6299df2b7ebf3a82b6410d68c))
-
-## [1.0.0](https://github.com/IA-Generative/ocr-api/compare/v0.15.0...v1.0.0) (2026-04-15)
+## [2.0.0](https://github.com/IA-Generative/ocr-api/compare/v1.0.0...v2.0.0) (2026-04-15)
 
 
 ### ⚠ BREAKING CHANGES
@@ -156,6 +149,26 @@
 * update release workflow to correct manifest and config file paths ([93de8cc](https://github.com/IA-Generative/ocr-api/commit/93de8cc4636c41e568bec0a069972c37dc020388))
 * update SDK test cases and improve Makefile for testing ([#242](https://github.com/IA-Generative/ocr-api/issues/242)) ([e00afd8](https://github.com/IA-Generative/ocr-api/commit/e00afd832068a76b072ddc3cb9a363a9a92a31b9))
 * use resource_access and client_id to get roles ([d22ac16](https://github.com/IA-Generative/ocr-api/commit/d22ac162de5acddd0700e8c45482c56bb9b0cb3c))
+
+## [1.0.0](https://github.com/IA-Generative/ocr-api/compare/v0.15.0...v1.0.0) (2026-04-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* **services:** refacto add token, classification
+
+### Features
+
+* **api:** enhance task and token management endpoints with detailed descriptions and new operations ([24aae9a](https://github.com/IA-Generative/ocr-api/commit/24aae9a8f2edb755b2ac486fa4cb7c00f8468825))
+* **Classification:** implement classification result component and integrate into classification view ([4b9c17a](https://github.com/IA-Generative/ocr-api/commit/4b9c17a19e9a4db32e2736ddffdb858f4a810020))
+* **services:** refacto add token, classification ([3966214](https://github.com/IA-Generative/ocr-api/commit/396621402161b2a8c36613143903eaf5184d39b5))
+* **TasksTab:** enhance task display with file information and improved task type labels ([4b9c17a](https://github.com/IA-Generative/ocr-api/commit/4b9c17a19e9a4db32e2736ddffdb858f4a810020))
+
+
+### Bug Fixes
+
+* **router:** extend token expiration time for presigned URLs ([4b9c17a](https://github.com/IA-Generative/ocr-api/commit/4b9c17a19e9a4db32e2736ddffdb858f4a810020))
+* **security:** hash API tokens for secure storage and verification ([4b9c17a](https://github.com/IA-Generative/ocr-api/commit/4b9c17a19e9a4db32e2736ddffdb858f4a810020))
 
 ## [0.15.0](https://github.com/IA-Generative/ocr-api/compare/v0.14.4...v0.15.0) (2026-04-13)
 
