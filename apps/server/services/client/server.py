@@ -1,12 +1,7 @@
 import requests
-from loguru import logger
-import sys
+from src.logger import logger
 import time
 import os
-
-logger.remove()
-
-logger.add(sys.stdout, level="DEBUG", format="{time} {level} {message}")
 
 
 class ServerClient:
