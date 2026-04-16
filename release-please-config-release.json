@@ -3,7 +3,8 @@
   "packages": {
     ".": {
       "release-type": "simple",
-      "prerelease": false, 
+      "prerelease": false,
+      "include-component-in-tag": false,
       "extra-files": [
         {
           "type": "toml",
