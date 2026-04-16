@@ -85,8 +85,12 @@ class ApiToken(BaseVerifyToken):
         )
         query_token = sha256((ctx.token or "").encode()).hexdigest()
         user_id = ctx.user_id or ""
-        if get_token_by_value(token_str=query_token):
+        token_record = get_token_by_value(token_str=query_token)
+        if token_record:
             logger.info(f"Valid token found for user_id={user_id}")
+            ctx.user_id = token_record.user_id
+            ctx.roles = json.loads(token_record.roles) if token_record.roles else []
+            ctx.is_admin = "admin" in ctx.roles
             return True
         return False
 
