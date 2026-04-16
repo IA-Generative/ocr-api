@@ -8,7 +8,10 @@ class ServerClient:
     def __init__(
         self,
         base_url: str = os.getenv("SERVER_BASE_URL", "http://localhost:5000"),
-        headers: dict[str, str] | None = {"Authorization": f"Bearer {os.getenv('SERVER_API_KEY', 'secret-api')}"},
+        headers: dict[str, str] | None = {
+            "Authorization": f"Bearer {os.getenv('SERVER_API_KEY', 'secret-api')}",
+            "X-User-Id": os.getenv("SERVER_USER_ID", "test_user"),
+        },
         blocking: bool = True,
     ):
         self.base_url = base_url

@@ -68,6 +68,8 @@ services:
       - ENVIRONMENT=development
       - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=true
       - SERVER_BASE_URL=http://ocr_backend:5000
+      - SERVER_API_KEY=secret-api
+
     env_file:
       - .env
     develop:
@@ -105,6 +107,9 @@ services:
       - CELERY_APP_NAME=default
       - SERVICE_NAME=ocr_api
       - ENVIRONMENT=development
+      - VERIFY_TOKEN_MODEL=api-token
+      - |
+        API_KEYS=[{"user_id": "test_user", "email": "test_user@example.com", "roles": ["user"], "is_admin": false, "token": "secret-api"}]
     depends_on:
       - redis
       - db
