@@ -1,6 +1,6 @@
 ARG DOCKERHUB_MIRROR_URL
 
-FROM ${DOCKERHUB_MIRROR_URL:-ghcr.io}/astral-sh/uv:latest AS uv_stage
+FROM ghcr.io/astral-sh/uv:latest AS uv_stage
 
 FROM ${DOCKERHUB_MIRROR_URL:-docker.io}/python:3.13-slim AS builder
 
