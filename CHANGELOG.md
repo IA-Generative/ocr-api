@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.1.3](https://github.com/IA-Generative/ocr-api/compare/v1.1.2...v1.1.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* **docs:** update documentation for token management and job submission parameters ([b811ece](https://github.com/IA-Generative/ocr-api/commit/b811eceaed87fd96c228a2dfdfe67b9077fc69aa))
+
 ## [1.1.2](https://github.com/IA-Generative/ocr-api/compare/v1.1.1...v1.1.2) (2026-04-16)
 
 
