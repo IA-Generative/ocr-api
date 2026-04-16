@@ -2805,7 +2805,7 @@ wheels = [
 
 [[package]]
 name = "ocr-api"
-version = "1.2.2"
+version = "1.2.3"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },

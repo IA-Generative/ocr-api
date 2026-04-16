@@ -1,8 +1,10 @@
-ARG HARBOR_PROXY_URL
+ARG DOCKERHUB_MIRROR_URL
 
-FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.13-slim AS builder
+FROM ${DOCKERHUB_MIRROR_URL:-ghcr.io}/astral-sh/uv:latest AS uv_stage
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+FROM ${DOCKERHUB_MIRROR_URL:-docker.io}/python:3.13-slim AS builder
+
+COPY --from=uv_stage /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 

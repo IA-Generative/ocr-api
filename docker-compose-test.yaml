@@ -27,7 +27,7 @@ services:
       dockerfile: apps/server/business/paddleocr2/Dockerfile
       target: test
       args:
-        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
+        DOCKERHUB_MIRROR_URL: ${DOCKERHUB_MIRROR_URL}
     container_name: ocr_service
     command:
       [
@@ -83,7 +83,7 @@ services:
       dockerfile: apps/server/ocr_backend/Dockerfile
       target: test
       args:
-        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
+        DOCKERHUB_MIRROR_URL: ${DOCKERHUB_MIRROR_URL}
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:5000/api/health || exit 1"]
       interval: 5s
@@ -133,7 +133,7 @@ services:
       dockerfile: apps/server/ocr_backend/Dockerfile
       target: test
       args:
-        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
+        DOCKERHUB_MIRROR_URL: ${DOCKERHUB_MIRROR_URL}
     container_name: ocr_backend
     command:
       - "sh"
@@ -170,7 +170,7 @@ services:
       dockerfile: apps/server/ocr_backend/Dockerfile
       target: test
       args:
-        HARBOR_PROXY_URL: ${HARBOR_PROXY_URL}
+        DOCKERHUB_MIRROR_URL: ${DOCKERHUB_MIRROR_URL}
     container_name: ocr-migration
     command: ["alembic", "upgrade", "head"]
     volumes:

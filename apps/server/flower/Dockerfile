@@ -1,6 +1,6 @@
-ARG HARBOR_PROXY_URL
+ARG DOCKERHUB_MIRROR_URL
 
-FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.11-slim
+FROM ${DOCKERHUB_MIRROR_URL:-docker.io}/python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 

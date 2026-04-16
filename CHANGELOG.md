@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.2.3](https://github.com/IA-Generative/ocr-api/compare/v1.2.2...v1.2.3) (2026-04-16)
+
+
+### Bug Fixes
+
+* **security:** update token verification logic to use get_token_by_value ([f6fd504](https://github.com/IA-Generative/ocr-api/commit/f6fd5041cc71584b4d3c3a8400cd82b6e0eb2b79))
+
 ## [1.2.2](https://github.com/IA-Generative/ocr-api/compare/v1.2.1...v1.2.2) (2026-04-16)
 
 

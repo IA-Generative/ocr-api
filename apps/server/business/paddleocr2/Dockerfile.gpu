@@ -1,8 +1,13 @@
-ARG HARBOR_PROXY_URL
 
-FROM ${HARBOR_PROXY_URL:-docker.io}/nvidia/cuda:11.8.0-devel-ubuntu22.04 AS paddle_model
+# Use ARG in the FROM line and for the uv image stage
+ARG DOCKERHUB_MIRROR_URL
+FROM ${DOCKERHUB_MIRROR_URL:-docker.io}/nvidia/cuda:11.8.0-devel-ubuntu22.04 AS paddle_model
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+# Add a build stage for uv image
+FROM ${DOCKERHUB_MIRROR_URL:-ghcr.io}/astral-sh/uv:latest AS uv_stage
+
+FROM paddle_model AS paddle_model_with_uv
+COPY --from=uv_stage /uv /uvx /bin/
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app

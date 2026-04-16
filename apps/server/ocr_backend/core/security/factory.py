@@ -12,9 +12,10 @@ import json
 from hashlib import sha256
 from loguru import logger
 
-
+environment = os.environ.get("ENVIRONMENT", "production")
+log_level = "INFO" if environment == "production" else "DEBUG"
 logger.remove()  # Remove default logger
-logger.add(sys.stdout, level="DEBUG", format="{time} - {level} - {message}", colorize=True)
+logger.add(sys.stdout, level=log_level, format="{time} - {level} - {message}", colorize=True)
 
 
 def pre_create_default_token() -> None:
@@ -25,7 +26,7 @@ def pre_create_default_token() -> None:
     if not api_json:
         logger.warning("No API keys provided, using default key: secret-api")
     else:
-        api_keys = json.loads(api_json)
+        api_keys = json.loads(api_json.strip("'\""))
         for value in api_keys:
             try:
                 request_context = RequestContext.model_validate(value)
@@ -85,7 +86,9 @@ class ApiToken(BaseVerifyToken):
         logger.info("Using API Token for verification")
 
     def verify(self, ctx: RequestContext) -> bool:
-        logger.debug(f"Verifying API token for user_id={ctx.user_id}")
+        logger.info(
+            f"Verifying API token for user_id={ctx.user_id} token available={bool(ctx.token)}: {ctx.token[:3] + '...' if ctx.token else 'No token provided'}"
+        )
         query_token = sha256((ctx.token or "").encode()).hexdigest()
         user_id = ctx.user_id or ""
         if get_token_by_value(token_str=query_token):
@@ -117,6 +120,7 @@ class KeycloakToken(BaseVerifyToken):
         if self.__api_token_verifier.verify(ctx):
             logger.info("API token valid, skipping Keycloak verification")
             return True
+        logger.info(f"Verifying token for user_id={ctx.user_id} with Keycloak")
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
             logger.debug(f"Token info: {user_info.keys()}")
