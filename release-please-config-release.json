@@ -5,8 +5,6 @@
       "release-type": "simple",
       "prerelease": false,
       "include-component-in-tag": false,
-      "bootstrap-sha": "751f3dca521a389f79ce9e77f41355aa0a4b4462",
-      "last-release-sha": "751f3dca521a389f79ce9e77f41355aa0a4b4462",
       "extra-files": [
         {
           "type": "toml",
