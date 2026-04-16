@@ -1,14 +1,19 @@
 import logging
 from paddleocr import PaddleOCR
-import clip
+
+
 from business.paddleocr2.configs.paddle import PaddleSetting
-from business.paddleocr2.configs.classification import ClassificationSettings
+
 import os
 
-settings = ClassificationSettings()
+# import clip
+# from business.paddleocr2.configs.classification import ClassificationSettings
+# settings = ClassificationSettings()
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 def _maybe_dir(p: str, sub: str):
@@ -30,4 +35,4 @@ if __name__ == "__main__":
         lang="fr",
         ocr_version="PP-OCRv3",
     )
-    clip.load(settings.MODEL_NAME, device="cpu", download_root=settings.CLIP_MODEL_DIR)
+    # clip.load(settings.MODEL_NAME, device="cpu", download_root=settings.CLIP_MODEL_DIR)
