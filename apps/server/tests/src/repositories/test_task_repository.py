@@ -118,7 +118,7 @@ async def test_insert_new_task_persisted_in_db(db_session: AsyncSession, sample_
     )
 
     # Assert - Vérifier que la tâche existe dans la BD
-    db_task = await db_session.get(Task, (result.id, result.type))
+    db_task = await db_session.get(Task, result.id)
     assert db_task is not None
     assert db_task.id == result.id
     assert db_task.user_id == sample_user_id
@@ -265,11 +265,10 @@ async def test_get_tasks_by_id_multiple_tasks_same_id(db_session: AsyncSession, 
     """Test que get_tasks_by_id retourne plusieurs tâches avec le même ID mais des types différents"""
 
     task_repository = TaskRepository()
-    shared_task_id = str(uuid.uuid4())
 
-    # Créer les tâches manuellement avec le même ID
+    # Avec id comme seule PK, chaque tâche a un ID unique
     task_model_1 = TaskModel(
-        id=shared_task_id,
+        id=str(uuid.uuid4()),
         user_id=sample_user_id,
         type="document_analysis",
         status=TaskStatus.IN_PROGRESS.value,
@@ -278,7 +277,7 @@ async def test_get_tasks_by_id_multiple_tasks_same_id(db_session: AsyncSession, 
         updated_at=int(time.time()),
     )
     task_model_2 = TaskModel(
-        id=shared_task_id,
+        id=str(uuid.uuid4()),
         user_id=sample_user_id,
         type="image_processing",
         status=TaskStatus.CREATED.value,
@@ -293,19 +292,26 @@ async def test_get_tasks_by_id_multiple_tasks_same_id(db_session: AsyncSession, 
     db_session.add(task_2)
     await db_session.flush()
 
-    # Act
-    result = await task_repository.get_tasks_by_id(
+    # Act - chaque ID ne renvoie qu'une seule tâche
+    result_1 = await task_repository.get_tasks_by_id(
         db=db_session,
-        task_id=shared_task_id,
+        task_id=task_model_1.id,
+    )
+    result_2 = await task_repository.get_tasks_by_id(
+        db=db_session,
+        task_id=task_model_2.id,
     )
 
     # Assert
-    assert isinstance(result, list)
-    assert len(result) == 2
-    assert result[0].id == shared_task_id
-    assert result[1].id == shared_task_id
-    assert result[0].type == "document_analysis"
-    assert result[1].type == "image_processing"
+    assert isinstance(result_1, list)
+    assert len(result_1) == 1
+    assert result_1[0].id == task_model_1.id
+    assert result_1[0].type == "document_analysis"
+
+    assert isinstance(result_2, list)
+    assert len(result_2) == 1
+    assert result_2[0].id == task_model_2.id
+    assert result_2[0].type == "image_processing"
 
 
 @pytest.mark.asyncio
@@ -715,7 +721,7 @@ async def test_get_task_by_content_hash_success(db_session: AsyncSession, sample
     )
 
     # Mettre à jour le hash manuellement
-    created_task_db = await db_session.get(Task, (created_task.id, created_task.type))
+    created_task_db = await db_session.get(Task, created_task.id)
     created_task_db.content_hash = content_hash  # type: ignore
     await db_session.flush()
 

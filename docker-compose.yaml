@@ -152,7 +152,7 @@ services:
     image: postgres:15
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 5432" ]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -178,6 +178,7 @@ services:
       - .env
     environment:
       - VITE_SSO_BYPASS=true
+      - VITE_DEV_API_TOKEN=secret-api
     ports:
       - 8081:5173
     volumes:

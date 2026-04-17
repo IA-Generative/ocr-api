@@ -8,6 +8,7 @@ from src.schemas.task import (
     TaskOperation,
     TaskUpdateForm,
     TaskForm,
+    CeleryTaskName,
 )
 from src.services.task_service import TaskService
 from src.schemas.pagination import Pagination
@@ -17,6 +18,7 @@ from datetime import datetime
 from src.logger import logger
 from ..connectors import s3_client_connector
 from src.connector.db_connector import AsyncSessionLocal
+from src.connector.broker_connector import celery_app
 
 router = APIRouter(tags=["Tasks"])
 
@@ -164,7 +166,7 @@ async def get_task_by_content_hash(
 @router.patch("/tasks/{task_id}", response_model=TaskModel)
 async def update_task_by_id(
     task_id: str,
-    task_type: TaskOperation,
+    task_type: str,
     update_data: TaskUpdateForm,
     ctx: TokenDep,
     db: DbSessionDep,
@@ -289,3 +291,76 @@ async def delete_tasks_by_date_and_status(
             s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
         except Exception as e:
             logger.error(f"Error occurred while deleting task from S3: {e}")
+
+
+@router.get("/tasks/{task_id}/children", response_model=list[TaskModel])
+async def get_task_children(
+    task_id: str,
+    ctx: TokenDep,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+):
+    """Récupère les tâches enfants directes d'une tâche"""
+    parent = await get_task_by_id_internal(task_id, db, task_service)
+    if parent.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    children = await task_service.get_tasks_by_parent_id(db, task_id)
+    return children
+
+
+@router.get("/tasks/{task_id}/tree", response_model=list[TaskModel])
+async def get_task_tree(
+    task_id: str,
+    ctx: TokenDep,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+):
+    """Récupère une tâche et toutes ses sous-tâches"""
+    parent = await get_task_by_id_internal(task_id, db, task_service)
+    if parent.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    return await task_service.get_task_tree(db, task_id)
+
+
+@router.post("/v1/tasks/submit", status_code=http_status.HTTP_201_CREATED)
+async def submit_task(
+    task_data: TaskForm,
+    ctx: TokenDep,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+    task_name: CeleryTaskName = CeleryTaskName.OCR_TASK,
+) -> TaskModel:
+    """Crée une nouvelle tâche et la soumet immédiatement pour traitement"""
+    if ctx.user_id is None:
+        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+
+    new_task = await task_service.insert_new_task(
+        db=db,
+        user_id=ctx.user_id,
+        form_data=task_data,
+    )
+
+    return new_task
+
+
+@router.delete("/v1/tasks/revoke/{task_id}", status_code=http_status.HTTP_204_NO_CONTENT)
+async def delete_tasks_by_user_id(
+    task_id: str,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+    ctx: TokenDep,
+):
+    """Révoque une tâche en cours d'exécution"""
+    task = await get_task_by_id_internal(task_id, db, task_service)
+    if task.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    celery_app.control.revoke(task_id, terminate=True)
+    await task_service.update_task(
+        db,
+        task_id,
+        task.type,
+        form_data=TaskUpdateForm(status=TaskStatus.REVOKED.value),
+    )

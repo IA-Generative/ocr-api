@@ -77,11 +77,6 @@ function addFreeLabel () {
       >{{ modelValue.length }}</span>
     </div>
 
-    <!-- Experimental banner -->
-    <div class="fr-alert fr-alert--warning fr-alert--sm" role="alert">
-      <p>Fonctionnalité expérimentale — les résultats peuvent être inexacts et sont susceptibles d'évoluer.</p>
-    </div>
-
     <div class="p-3 flex flex-col gap-3">
 
       <!-- Consentement : toggle -->

@@ -22,7 +22,7 @@ from src.models.task import Task
 
 class TaskRepository:
     async def insert_new_task(self, db: AsyncSession, user_id: str, form_data: TaskForm) -> TaskModel:
-        _id = str(uuid.uuid4())
+        _id = str(uuid.uuid4()) if not form_data.id else form_data.id
 
         result = Task(
             id=_id,
@@ -45,7 +45,7 @@ class TaskRepository:
         return TaskModel.model_validate(result)
 
     async def get_task_by_id(self, db: AsyncSession, task_id: str, task_type: str) -> TaskModel:
-        task = await db.get(Task, (task_id, task_type))
+        task = await db.get(Task, task_id)
         if not task:
             logger.warning(f"Task with id {task_id} not found.")
             raise HTTPException(
@@ -64,7 +64,7 @@ class TaskRepository:
 
     async def update_task(self, db: AsyncSession, task_id: str, task_type: str, form_data: TaskUpdateForm) -> TaskModel:
 
-        task = await db.get(Task, (task_id, task_type))
+        task = await db.get(Task, task_id)
         if not task:
             logger.warning(f"Task with id {task_id} not found.")
             raise HTTPException(
@@ -90,7 +90,7 @@ class TaskRepository:
         return TaskModel.model_validate(task)
 
     async def delete_task_by_id(self, db: AsyncSession, task_id: str, task_type: str) -> TaskModel:
-        task = await db.get(Task, (task_id, task_type))
+        task = await db.get(Task, task_id)
         if not task:
             logger.warning(f"Task with id {task_id} not found.")
             raise HTTPException(
@@ -106,13 +106,19 @@ class TaskRepository:
     ) -> list[TaskModel]:
         offset = (page - 1) * page_size
 
-        result = await db.execute(select(Task).filter(Task.user_id == user_id).offset(offset).limit(page_size))
+        result = await db.execute(
+            select(Task)
+            .filter(Task.user_id == user_id, Task.parent_id.is_(None))
+            .order_by(Task.created_at.desc())
+            .offset(offset)
+            .limit(page_size)
+        )
         tasks = result.scalars().all()
 
         return [TaskModel.model_validate(task) for task in tasks]
 
     async def count_tasks_by_user_id(self, db: AsyncSession, user_id: str) -> int:
-        result = await db.execute(select(func.count(Task.id)).filter(Task.user_id == user_id))
+        result = await db.execute(select(func.count(Task.id)).filter(Task.user_id == user_id, Task.parent_id.is_(None)))
         count = result.scalar_one()
         return count
 
@@ -128,7 +134,7 @@ class TaskRepository:
 
     async def get_position_in_queue(self, db: AsyncSession, task_id: str, task_type: str) -> int | None:
 
-        task = await db.get(Task, (task_id, task_type))
+        task = await db.get(Task, task_id)
         if not task:
             return None
 
@@ -242,3 +248,28 @@ class TaskRepository:
         )
         unique_users = result.scalar_one()
         return unique_users
+
+    async def fetch_tasks_by_parent_id(self, db: AsyncSession, parent_id: str) -> list[TaskModel]:
+        """Récupère les tâches enfants d'une tâche par son ID parent"""
+        result = await db.execute(select(Task).filter(Task.parent_id == parent_id))
+        child_tasks = result.scalars().all()
+        return [TaskModel.model_validate(task) for task in child_tasks]
+
+    async def get_task_tree(self, db: AsyncSession, task_id: str) -> list[TaskModel]:
+        """Récupère une tâche et toutes ses tâches enfants récursivement"""
+        result = await db.execute(select(Task).filter(Task.id == task_id))
+        root_task = result.scalars().first()
+        if not root_task:
+            logger.warning(f"Task with id {task_id} not found.")
+            raise HTTPException(
+                status_code=http_status.HTTP_404_NOT_FOUND,
+                detail=f"Task with id {task_id} not found.",
+            )
+
+        tasks_tree = []
+
+        tasks_tree.append(TaskModel.model_validate(root_task))
+        child_tasks = await self.fetch_tasks_by_parent_id(db, task_id)
+        tasks_tree.extend(child_tasks)
+
+        return tasks_tree

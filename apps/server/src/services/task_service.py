@@ -94,3 +94,11 @@ class TaskService:
     async def count_unique_users_between_dates(self, db: AsyncSession, start_date: int, end_date: int) -> int:
         """Compte le nombre d'utilisateurs uniques entre deux dates"""
         return await self.task_repo.count_unique_users_between_dates(db, start_date, end_date)
+
+    async def get_tasks_by_parent_id(self, db: AsyncSession, parent_id: str) -> list[TaskModel]:
+        """Récupère les tâches enfants directes d'une tâche"""
+        return await self.task_repo.fetch_tasks_by_parent_id(db, parent_id)
+
+    async def get_task_tree(self, db: AsyncSession, task_id: str) -> list[TaskModel]:
+        """Récupère une tâche et toutes ses tâches enfants"""
+        return await self.task_repo.get_task_tree(db, task_id)

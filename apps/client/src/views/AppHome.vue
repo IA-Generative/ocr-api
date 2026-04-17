@@ -11,12 +11,13 @@ import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
 import TasksTab from '@/components/TasksTab.vue'
 import Classification from '@/components/Classification.vue'
+import EntityExtraction from '@/components/EntityExtraction.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 const store = useOcrStore()
 const router = useRouter()
 const route = useRoute()
-const currentTab = ref<'ocr' | 'tasks'>(route.name === 'Tasks' ? 'tasks' : 'ocr')
+const currentTab = ref<'ocr' | 'classification' | 'entity' | 'tasks'>(route.name === 'Tasks' ? 'tasks' : 'ocr')
 const selectedFile = ref<File | null>(null)
 const pdfUrl = ref<string | null>(null)
 const uploadError = computed(() => store.error)
@@ -119,6 +120,12 @@ onBeforeUnmount(() => {
           @click="currentTab = 'classification'"
         />
         <DsfrButton
+          label="Extraction d'entités"
+          :priority="currentTab === 'entity' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'entity'"
+        />
+        <DsfrButton
           label="Mes tâches"
           :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
           size="sm"
@@ -165,6 +172,10 @@ onBeforeUnmount(() => {
           </div>
           <div v-else-if="currentTab === 'classification'">
             <Classification />
+          </div>
+
+          <div v-else-if="currentTab === 'entity'">
+            <EntityExtraction />
           </div>
 
           <div v-else>

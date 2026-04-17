@@ -3,13 +3,17 @@ import type { components } from '@/api/types/api.schema'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import useToaster from '@/composables/use-toaster'
 import BboxDetailPanel from '@/components/BboxDetailPanel.vue'
+import BboxModal from '@/components/BboxModal.vue'
 import OcrImageViewer from '@/components/OcrImageViewer.vue'
 import OcrMetricsModal from '@/components/OcrMetricsModal.vue'
+import OcrSearchPanel from '@/components/OcrSearchPanel.vue'
+import OcrViewModeToggle from '@/components/OcrViewModeToggle.vue'
 import OcrChatbot from '@/components/OcrChatbot.vue'
 import OcrTutorial from '@/components/OcrTutorial.vue'
-import InfoTooltip from '@/components/InfoTooltip.vue'
 import PageClassificationPanel from '@/components/PageClassificationPanel.vue'
 import { useOcrReview } from '@/composables/use-ocr-review'
+import { useOcrViewer } from '@/composables/use-ocr-viewer'
+import type { EntityPrediction } from '@/composables/use-ocr-viewer'
 import { useOcrChatbot } from '@/composables/use-ocr-chatbot'
 import type { ChatSource } from '@/composables/use-ocr-chatbot'
 import type { PageLabel } from '@/interfaces/classification'
@@ -19,18 +23,13 @@ import { useAnnotationsStore } from '@/stores/annotations'
 import type { PageAnnotation } from '@/stores/annotations'
 
 type ClassificationAnnotation = components['schemas']['ClassificationAnnotation']
+type Layout = components['schemas']['Layout']
 
 // Re-export for consumers that import types from this component
 export type { ValidationState, BboxReview }
 
 type Page = components['schemas']['Page']
 type Bbox = components['schemas']['Bbox']
-
-interface PaginationPage {
-  href?: string
-  label: string
-  title: string
-}
 
 const props = defineProps<{
   data: {
@@ -47,16 +46,11 @@ const { addErrorMessage, addSuccessMessage } = useToaster()
 const pages = props.data.pages
 const currentPage = ref(0)
 
-const paginationPages = computed<PaginationPage[]>(() =>
-  pages.map((p: Page, idx: number) => ({
-    href: p.page_url ?? undefined,
-    label: String(idx + 1),
-    title: `Page ${idx + 1}`,
-  })),
-)
-
 const imageUrl = computed(() => pages[currentPage.value].page_url ?? undefined)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
+const layouts = computed<Layout[]>(() => (pages[currentPage.value]?.layouts ?? []) as Layout[])
+const hasLayouts = computed(() => pages.some((p: Page) => p.layouts && p.layouts.length > 0))
+const entities = computed<EntityPrediction[]>(() => (pages[currentPage.value]?.entities ?? []) as EntityPrediction[])
 
 const showImage = ref(true)
 const drawingMode = ref(false)
@@ -69,6 +63,24 @@ const {
   selectBox, onSave, onBoxDrawn, deleteDrawnBox,
   setPageLabels, setPageConsent, loadAnnotations, resetPage,
 } = useOcrReview(() => boxes.value, () => currentPage.value)
+
+const {
+  viewMode,
+  searchQuery,
+  searchMatchIndices,
+  isSearchActive,
+  crossPageResults,
+  goToSearchPage,
+  entitySearchQuery,
+  entitySearchMatchIndices,
+  isEntitySearchActive,
+  crossPageEntityResults,
+} = useOcrViewer(
+  pages,
+  currentPage,
+  () => allBoxes.value,
+  () => entities.value,
+)
 
 watch(currentPage, resetPage)
 
@@ -222,7 +234,7 @@ async function submitAnnotations () {
 <template>
   <div class="w-full max-w-6xl mx-auto">
     <!-- Toolbar -->
-    <div data-tour="toolbar" class="my-6 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+    <div data-tour="toolbar" class="my-6 flex flex-wrap items-center justify-center gap-2 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
       <!-- Image toggle -->
       <button
         data-tour="toggle-image"
@@ -261,7 +273,7 @@ async function submitAnnotations () {
 
       <span class="hidden md:block w-px h-5 bg-slate-200" />
 
-      <!-- Métriques -->
+
       <button
         data-tour="metrics"
         class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
@@ -284,9 +296,9 @@ async function submitAnnotations () {
         Aide
       </button>
 
-      <!-- Télécharger — pushed right -->
+      <!-- Télécharger -->
       <button
-        class="ml-auto inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
         @click="onDownloadText"
       >
         <span class="fr-icon-download-line" style="font-size: 14px;" aria-hidden="true" />
@@ -297,6 +309,31 @@ async function submitAnnotations () {
     <div class="md:flex gap-4 items-start hidden">
       <!-- Image + Boxes -->
       <div class="flex-1">
+        <!-- Navigation de page au-dessus de l'image -->
+        <div
+          v-if="pages.length > 1"
+          data-tour="pagination"
+          class="mb-3 flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-3 py-2 shadow-sm"
+        >
+          <button
+            class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-arrow-left-s-line"
+            type="button"
+            aria-label="Page précédente"
+            :disabled="currentPage === 0"
+            @click="currentPage > 0 && currentPage--"
+          />
+          <span class="text-sm text-slate-600 font-medium tabular-nums">
+            Page {{ currentPage + 1 }} / {{ pages.length }}
+          </span>
+          <button
+            class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-arrow-right-s-line"
+            type="button"
+            aria-label="Page suivante"
+            :disabled="currentPage === pages.length - 1"
+            @click="currentPage < pages.length - 1 && currentPage++"
+          />
+        </div>
+
         <!-- Revision bar -->
         <div data-tour="progress-bar" class="mb-4 rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm flex items-center gap-4">
           <div class="flex-1 rounded-full overflow-hidden h-1.5 bg-slate-100">
@@ -315,7 +352,6 @@ async function submitAnnotations () {
           </div>
         </div>
 
-
         <OcrImageViewer
           data-tour="image-viewer"
           :all-boxes="allBoxes"
@@ -324,27 +360,69 @@ async function submitAnnotations () {
           :drawing-mode="drawingMode"
           :selected-box-idx="selectedBoxIdx"
           :image-url="imageUrl"
-          :highlighted-box-indices="chatHighlightedBoxes"
+          :highlighted-box-indices="isSearchActive ? searchMatchIndices : chatHighlightedBoxes"
+          :dimmed-when-search="isSearchActive"
+          :view-mode="viewMode"
+          :layout-boxes="layouts"
+          :entity-boxes="entities"
+          :entity-search-match-indices="isEntitySearchActive ? entitySearchMatchIndices : undefined"
           @select="selectBox"
           @toggle-visibility="toggleBoxVisibility"
           @drawn="onBoxDrawn"
         />
       </div>
 
-      <!-- Detail panel -->
-      <Transition name="slide">
-        <BboxDetailPanel
-          v-if="selectedBox"
-          :box="selectedBox"
-          :saved-state="selectedBoxIdx !== null ? savedStateFor(selectedBoxIdx) : undefined"
-          :is-hidden="selectedBoxIdx !== null ? isBoxHidden(selectedBoxIdx) : false"
-          @close="selectedBoxIdx = null"
-          @save="(review) => { onSave(review); if (contentHash) submitAnnotations() }"
-          @delete="deleteDrawnBox"
-          @toggle-visibility="selectedBoxIdx !== null && toggleBoxVisibility(selectedBoxIdx)"
+      <!-- Right sidebar : classification toujours visible -->
+      <div data-tour="sidebar" class="w-72 shrink-0 sticky top-4 flex flex-col gap-3">
+        <!-- Toggle OCR / Layout / Entités -->
+        <OcrViewModeToggle data-tour="view-mode-toggle" v-model="viewMode" />
+
+        <!-- Barre de recherche OCR -->
+        <OcrSearchPanel
+          v-if="viewMode === 'ocr'"
+          v-model="searchQuery"
+          placeholder="Rechercher dans le texte…"
+          :results="crossPageResults"
+          :current-page="currentPage"
+          accent-color="amber"
+          :quote-samples="true"
+          @go-to-page="goToSearchPage"
         />
-      </Transition>
+
+        <!-- Barre de recherche Entités -->
+        <OcrSearchPanel
+          v-if="viewMode === 'entity'"
+          v-model="entitySearchQuery"
+          placeholder="Rechercher une entité…"
+          :results="crossPageEntityResults"
+          :current-page="currentPage"
+          accent-color="rose"
+          @go-to-page="currentPage = $event"
+        />
+
+        <PageClassificationPanel
+          data-tour="classification"
+          :model-value="currentPageLabels"
+          :predefined-labels="predefinedLabels"
+          :consent-for-training="currentPageConsent"
+          @update:model-value="setPageLabels"
+          @update:consent-for-training="(v) => { setPageConsent(v); if (contentHash) submitAnnotations() }"
+          @save="submitAnnotations"
+        />
+      </div>
     </div>
+
+    <!-- Modal bbox : détail de la zone sélectionnée -->
+    <BboxModal
+      v-if="selectedBox"
+      :box="selectedBox"
+      :saved-state="selectedBoxIdx !== null ? savedStateFor(selectedBoxIdx) : undefined"
+      :is-hidden="selectedBoxIdx !== null ? isBoxHidden(selectedBoxIdx) : false"
+      @close="selectedBoxIdx = null"
+      @save="(review) => { onSave(review); if (contentHash) submitAnnotations() }"
+      @delete="deleteDrawnBox"
+      @toggle-visibility="selectedBoxIdx !== null && toggleBoxVisibility(selectedBoxIdx)"
+    />
 
     <div class="my-4">
       <DsfrAlert>
@@ -360,34 +438,6 @@ async function submitAnnotations () {
         <strong>Les données marquées comme privées sont toujours exclues.</strong>
         Utilisez les contrôles ci-dessous pour indiquer votre consentement page par page.
       </span>
-    </div>
-
-    <!-- Classification de la page -->
-    <div data-tour="classification" class="my-4">
-      <div class="flex items-center gap-1.5 mb-1">
-        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Classification de la page</span>
-        <InfoTooltip text="Étiquetez cette page par thème et indiquez si vous autorisez son usage pour réentraîner le modèle. Les données privées ne sont jamais transmises." />
-      </div>
-      <PageClassificationPanel
-        :model-value="currentPageLabels"
-        :predefined-labels="predefinedLabels"
-        :consent-for-training="currentPageConsent"
-        @update:model-value="setPageLabels"
-        @update:consent-for-training="(v) => { setPageConsent(v); if (contentHash) submitAnnotations() }"
-        @save="submitAnnotations"
-      />
-    </div>
-    <!-- DSFR Pagination Controls (hidden on mobile/tablet) -->
-    <div data-tour="pagination" class="mt-4 hidden md:flex flex-col items-center gap-1">
-      <div class="flex items-center gap-1.5 text-xs text-slate-400">
-        Navigation entre pages
-        <InfoTooltip text="Parcourez les pages du document. Vos annotations et classifications sont conservées lors du changement de page." />
-      </div>
-      <DsfrPagination
-        v-model:current-page="currentPage"
-        :pages="paginationPages"
-        :trunc-limit="5"
-      />
     </div>
 
     <!-- Metrics modal -->
@@ -417,6 +467,14 @@ async function submitAnnotations () {
 </template>
 
 <style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 .slide-enter-active,
 .slide-leave-active {
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -425,5 +483,15 @@ async function submitAnnotations () {
 .slide-leave-to {
   opacity: 0;
   transform: translateX(12px);
+}
+
+.drawer-enter-active,
+.drawer-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.drawer-enter-from,
+.drawer-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>

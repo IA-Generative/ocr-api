@@ -2,6 +2,7 @@ import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConf
 import axios from 'axios'
 
 import { getKeycloak } from '@/utils/keycloak'
+import { DEV_API_TOKEN } from '@/utils/constants'
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
@@ -24,6 +25,10 @@ function createHttpClient (baseURL: string): AxiosInstance {
       if (keycloak.authenticated && keycloak.token) {
         if (config.headers && typeof config.headers.set === 'function') {
           config.headers.set('Authorization', `${keycloak.tokenParsed?.typ || 'Bearer'} ${keycloak.token}`)
+        }
+      } else if (DEV_API_TOKEN) {
+        if (config.headers && typeof config.headers.set === 'function') {
+          config.headers.set('Authorization', `Bearer ${DEV_API_TOKEN}`)
         }
       }
       return config

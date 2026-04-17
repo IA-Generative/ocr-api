@@ -1,27 +1,41 @@
-from PIL import Image
-
 import openai
 from openai.types.responses.parsed_response import ParsedResponse
 
-from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.logger import logger
+from src.schemas.task import TaskModel
 from src.schemas.classification import (
     ClassificationResult,
     LabelDefinition,
     Model,
     BatchPredictionsOutput,
 )
-from business.paddleocr2.configs.classification import ClassificationSettings
+from src.config.openai import OpenAISettings
+from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxes
+from src.schemas.classification import ParameterClassification
+from services.client.tools import server_client
+from src.schemas.task import TaskStatus
 
-settings = ClassificationSettings()
+settings = OpenAISettings()
 
 
-class TextClassificationModel(BaseModelPrediction):
+def set_page_text(page: Page, delta_y: float = 0.005) -> str:
+    page_lines_content = []
+
+    sorted_bboxes = sort_bboxes_reading_order(bboxes=page.boxes, delta_y=delta_y)
+    for line_sorted_boxes in sorted_bboxes:
+        text_line = get_text_from_list_bboxes(line_sorted_boxes)
+        page_lines_content.append(text_line)
+
+    page_content = "\n".join(page_lines_content)
+    return page_content
+
+
+class TextClassificationModel:
     def __init__(
         self,
-        client: openai.OpenAI,
-        model_name: str = settings.MODEL_NAME,
+        client: openai.OpenAI = openai.OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL),
+        model_name: str = settings.OPENAI_MODEL,
     ):
         # Charger modèle
         self.model_name = model_name
@@ -41,49 +55,66 @@ class TextClassificationModel(BaseModelPrediction):
     def set_labels(self, labels: list[LabelDefinition]):
         self.labels = labels
 
-    def batch_predict(
+    def query_llm(self, page_text: str, labels: list[LabelDefinition]) -> ParsedResponse[BatchPredictionsOutput]:
+        batch_label_str = ", ".join([f"{label.label} ({label.definition})" for label in labels])
+
+        result: ParsedResponse[BatchPredictionsOutput] = self.client.responses.parse(
+            model=self.model_name,
+            input=[
+                {
+                    "role": "system",
+                    "content": self.prompt.format(labels=batch_label_str),
+                },
+                {
+                    "role": "user",
+                    "content": page_text,
+                },
+            ],
+            text_format=BatchPredictionsOutput,
+        )
+        return result
+
+    def process(
         self,
-        images: list[Image.Image],
-        pages: list = [],
-        labels: list[LabelDefinition] = [],
+        task: TaskModel,
         *args,
         **kwargs,
-    ) -> list[Page]:
-        label_mapper = {label.label: label for label in labels}
-        if len(pages):
-            assert len(images) == len(pages), "Number of images and pages must match"
-        if len(labels):
-            self.set_labels(labels)
-        else:
+    ) -> TaskModel:
+
+        server_client.update_task_by_id(
+            task_id=task.id,
+            task_type=task.type,
+            update_data={"status": TaskStatus.IN_PROGRESS.value, "percentage": 0.0},
+        )
+
+        parameters = task.parameters
+        if not parameters:
+            raise ValueError("Task parameters are required for classification.")
+
+        parameters = ParameterClassification.model_validate(parameters)
+
+        labels = parameters.labels if parameters and parameters.labels else []
+        if not labels:
             raise ValueError("No labels provided for classification.")
 
-        if not self.labels:
-            logger.warning("No labels provided for classification. Skipping classification step.")
-            return pages  # Pas de classification possible sans labels
+        label_mapper = {label.label: label for label in labels}
+        if not task.output or not task.output.pages:
+            raise ValueError("Task output with pages is required for classification.")
 
-        for batch_page_index in range(0, len(pages), self.batch_page_size):
-            pages_batch = pages[batch_page_index : batch_page_index + self.batch_page_size]
+        for batch_page_index in range(0, len(task.output.pages), self.batch_page_size):
+            pages_batch: list[Page] = task.output.pages[batch_page_index : batch_page_index + self.batch_page_size]
 
             page_indices = range(batch_page_index, batch_page_index + self.batch_page_size)
 
-            page_text = [f"Page {page_number}: {page.text}" for page_number, page in zip(page_indices, pages_batch)]
+            page_text = [
+                f"Page {page_number}: {set_page_text(page)}" for page_number, page in zip(page_indices, pages_batch)
+            ]
             for batch_label_index in range(0, len(labels), self.batch_classification_size):
                 batch_label = labels[batch_label_index : batch_label_index + self.batch_classification_size]
-                batch_label_str = ", ".join([f"{label.label} ({label.definition})" for label in batch_label])
 
-                result: ParsedResponse[BatchPredictionsOutput] = self.client.responses.parse(
-                    model=self.model_name,
-                    input=[
-                        {
-                            "role": "system",
-                            "content": self.prompt.format(labels=batch_label_str),
-                        },
-                        {
-                            "role": "user",
-                            "content": "\n".join(page_text),
-                        },
-                    ],
-                    text_format=BatchPredictionsOutput,
+                result: ParsedResponse[BatchPredictionsOutput] = self.query_llm(
+                    page_text="\n".join(page_text),
+                    labels=batch_label,
                 )
                 if not result.output_parsed or not result.output_parsed.predictions:
                     logger.warning(
@@ -93,8 +124,8 @@ class TextClassificationModel(BaseModelPrediction):
                 for page_result in result.output_parsed.predictions:
                     page_index = page_result.page_number
                     predicted_labels = page_result.predictions
-                    if page_index < len(pages):
-                        pages[page_index].classification = [
+                    if page_index < len(task.output.pages):
+                        task.output.pages[page_index].classifications = [
                             ClassificationResult(
                                 label=label_mapper.get(
                                     pred.label,
@@ -105,5 +136,17 @@ class TextClassificationModel(BaseModelPrediction):
                             )
                             for pred in predicted_labels
                         ]
-
-        return pages
+            server_client.update_task_by_id(
+                task_id=task.id,
+                task_type=task.type,
+                update_data={
+                    "status": TaskStatus.IN_PROGRESS.value,
+                    "percentage": min(
+                        0.99,
+                        (batch_page_index + self.batch_page_size) / len(task.output.pages),
+                    ),
+                },
+            )
+        logger.info(f"Classification completed for {len(task.output.pages)} pages.")
+        logger.debug(79 * "-")
+        return task
