@@ -1,4 +1,5 @@
 import json
+from celery import chain
 from json import JSONDecodeError
 import os
 import aiofiles
@@ -194,8 +195,32 @@ async def upload_file(
             db=db_session, task_id=task_data.id, task_type=task_operation
         )
         os.remove(temp_file_path)
+        if task_name is None:
+            task_name = CeleryTaskName.OCR_TASK
 
-        celery_app.send_task(task_name, args=[json.dumps(task_data.model_dump())], task_id=task_data.id)
+        if task_name == CeleryTaskName.PAGE_TEXT_CLASSIFICATION_TASK:
+            await task_service.insert_new_task(
+                db=db_session,
+                user_id=ctx.user_id,
+                form_data=TaskForm(
+                    type=TaskOperation.OCR.value,
+                    status=TaskStatus.CREATED.value,
+                    percentage=0.0,
+                    extras=extras,
+                    group_id=group_id,
+                    parameters=parameter_dict,
+                ),
+            )
+            chain(
+                celery_app.signature(CeleryTaskName.OCR_TASK.value, args=[task_data.model_dump()]),
+                celery_app.signature(task_name.value),
+            ).apply_async(task_id=str(task_data.id))
+        else:
+            celery_app.send_task(
+                task_name.value,
+                args=[task_data.model_dump()],
+                task_id=str(task_data.id),
+            )
 
         return task_data
 
