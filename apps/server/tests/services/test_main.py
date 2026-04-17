@@ -48,7 +48,7 @@ def test_task_process_paddle(
     mocked_pipeline: Pipeline,
 ):
     with patch("services.factory.load_worker", return_value=mocked_pipeline):
-        from services.main import launch_task
+        from services.tasks.ocr_tasks import launch_task
 
         user_id = "test_user"
         task_dict = server_client.create_task(

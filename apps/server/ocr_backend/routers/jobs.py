@@ -1,5 +1,4 @@
 import json
-from celery import chain
 from json import JSONDecodeError
 import os
 import aiofiles
@@ -28,6 +27,7 @@ from src.schemas.task import (
     TaskUpdateForm,
     CeleryTaskName,
 )
+from celery import chain
 from src.services.task_service import TaskService
 from src.connector.db_connector import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -130,7 +130,7 @@ async def upload_file(
         db=db_session,
         user_id=ctx.user_id,
         form_data=TaskForm(
-            type=task_operation,
+            type=task_operation.value,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
@@ -152,9 +152,9 @@ async def upload_file(
         await task_service.update_task(
             db=db_session,
             task_id=task_data.id,
-            task_type=task_operation,
+            task_type=CeleryTaskName.OCR_TASK.value,
             form_data=TaskUpdateForm(
-                type=task_operation,
+                type=CeleryTaskName.OCR_TASK.value,
                 status=TaskStatus.FAILED.value,
                 extras={"error": str(e)},
             ),
@@ -169,21 +169,20 @@ async def upload_file(
         logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
-
         extras = task_data.extras
         input_form = InputForm(
             storage_file_path=saved_path,
             raw_filename=os.path.basename(file.filename),
             content_type=file.content_type,
             ext=extension,
-            size=file.size,
+            size=file.size if file.size is not None else 0,
             parameters=parameter_dict,
         )
 
         task_data = await task_service.update_task(
             db=db_session,
             task_id=task_data.id,
-            task_type=task_operation,
+            task_type=CeleryTaskName.OCR_TASK.value,
             form_data=TaskUpdateForm(
                 status=TaskStatus.QUEUED.value,
                 input=input_form,
@@ -192,35 +191,19 @@ async def upload_file(
         )
 
         task_data.position = await task_service.get_position_in_queue(
-            db=db_session, task_id=task_data.id, task_type=task_operation
+            db=db_session, task_id=task_data.id, task_type=CeleryTaskName.OCR_TASK.value
         )
         os.remove(temp_file_path)
-        if task_name is None:
-            task_name = CeleryTaskName.OCR_TASK
 
-        if task_name == CeleryTaskName.PAGE_TEXT_CLASSIFICATION_TASK:
-            await task_service.insert_new_task(
-                db=db_session,
-                user_id=ctx.user_id,
-                form_data=TaskForm(
-                    type=TaskOperation.OCR.value,
-                    status=TaskStatus.CREATED.value,
-                    percentage=0.0,
-                    extras=extras,
-                    group_id=group_id,
-                    parameters=parameter_dict,
-                ),
-            )
-            chain(
-                celery_app.signature(CeleryTaskName.OCR_TASK.value, args=[task_data.model_dump()]),
-                celery_app.signature(task_name.value),
-            ).apply_async(task_id=str(task_data.id))
+        ocr_sig = celery_app.signature(
+            CeleryTaskName.OCR_TASK.value,
+            args=[task_data.model_dump()],
+            task_id=str(task_data.id),
+        )
+        if task_name and task_name != CeleryTaskName.OCR_TASK:
+            chain(ocr_sig, celery_app.signature(task_name.value)).apply_async()
         else:
-            celery_app.send_task(
-                task_name.value,
-                args=[task_data.model_dump()],
-                task_id=str(task_data.id),
-            )
+            ocr_sig.apply_async()
 
         return task_data
 
@@ -231,9 +214,9 @@ async def upload_file(
         await task_service.update_task(
             db=db_session,
             task_id=task_data.id,
-            task_type=task_operation,
+            task_type=CeleryTaskName.OCR_TASK.value,
             form_data=TaskUpdateForm(
-                type=task_operation,
+                type=CeleryTaskName.OCR_TASK.value,
                 status=TaskStatus.FAILED.value,
                 extras={"error": str(e)},
             ),

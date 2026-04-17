@@ -4,8 +4,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import OcrViewer from '@/components/OcrViewer.vue'
 import OcrTextModal from '@/components/OcrTextModal.vue'
-import ClassificationResult from '@/components/ClassificationResult.vue'
-import type { ClassificationPage } from '@/components/ClassificationResult.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 type TaskModel = components['schemas']['TaskModel']
@@ -19,28 +17,6 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 const resolvedTaskId = ref<string>('')
 const showTextModal = ref(false)
-
-const isClassification = computed(() => task.value?.type === 'page_classification')
-
-const classificationPages = computed<ClassificationPage[]>(() => {
-  const pages = task.value?.output?.pages ?? []
-  return pages
-    .filter((p: any) => p.classifications?.length > 0)
-    .map((p: any) => {
-      const classifications = p.classifications.map((c: any) => ({
-        label: c.label,
-        confidence: c.confidence,
-        scorePercent: Math.round(Math.max(0, Math.min(100, ((c.confidence + 1) / 2) * 100))),
-      }))
-      classifications.sort((a: any, b: any) => b.scorePercent - a.scorePercent)
-      return {
-        page: p.page,
-        pageUrl: p.page_url ?? null,
-        topLabel: classifications[0]?.label?.label ?? null,
-        classifications,
-      }
-    })
-})
 
 onMounted(async () => {
   const taskId = route.params.taskId as string
@@ -99,11 +75,11 @@ onMounted(async () => {
     </div>
 
     <!-- Résultat non disponible -->
-    <div v-else-if="!task?.output || (isClassification && classificationPages.length === 0)">
+    <div v-else-if="!task?.output">
       <DsfrAlert
         type="warning"
         title="Résultats non disponibles"
-        :description="isClassification ? 'Cette tâche ne contient pas encore de résultats de classification.' : 'Cette tâche n\'a pas encore de résultats OCR.'"
+        description="Cette tâche n'a pas encore de résultats."
       />
       <DsfrButton
         class="mt-4"
@@ -111,13 +87,6 @@ onMounted(async () => {
         @click="router.push('/')"
       />
     </div>
-
-    <!-- Résultat Classification -->
-    <template v-else-if="isClassification">
-      <div class="border border-[var(--border-default-grey)] p-5">
-        <ClassificationResult :pages="classificationPages" />
-      </div>
-    </template>
 
     <!-- Viewer OCR -->
     <template v-else>

@@ -71,6 +71,19 @@ class ServerClient:
         response = self.request("GET", f"/api/ocr_chunks/content/{content_hash}")
         return response.json()
 
+    def submit_task(
+        self,
+        task_data: dict,
+        task_name: str,
+    ) -> dict:
+        response = self.request(
+            "POST",
+            "/api/v1/tasks/submit",
+            params={"task_name": task_name},
+            json=task_data,
+        )
+        return response.json()
+
 
 if __name__ == "__main__":
     client = ServerClient(

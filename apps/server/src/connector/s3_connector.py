@@ -48,10 +48,9 @@ class S3Connector(BaseFileConnector):
         bucket_name: str,
         s3_endpoint: str,
     ) -> str:
-        # Assuming the URL is in the format: https://bucket-name.s3.amazonaws.com/key or https://s3.amazonaws.com/bucket-name/key
-        s3_endpoint = s3_endpoint.rstrip("/")
-        pattern = f"{s3_endpoint}/{bucket_name}/(.+)\?.*"
-        match = re.match(pattern, url)
+        # Match /<bucket_name>/<key> regardless of the hostname (handles localhost vs minio mismatches)
+        pattern = rf"/{re.escape(bucket_name)}/([^?]+)"
+        match = re.search(pattern, url)
         if match:
             return match.group(1)
         return url

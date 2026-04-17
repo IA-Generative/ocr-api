@@ -10,6 +10,9 @@ export const OCR_API_URL = (window as any).VITE_OCR_API_URL ?? import.meta.env.V
 export const MATOMO_SITE_URL = (window as any).VITE_MATOMO_SITE_URL ?? import.meta.env.VITE_MATOMO_SITE_URL
 export const MATOMO_SITE_ID = (window as any).VITE_MATOMO_SITE_ID ?? import.meta.env.VITE_MATOMO_SITE_ID
 
+// DEV
+export const DEV_API_TOKEN = (window as any).VITE_DEV_API_TOKEN ?? import.meta.env.VITE_DEV_API_TOKEN
+
 // KEYCLOAK
 export const KEYCLOAK_URL = (window as any).VITE_KEYCLOAK_URL ?? import.meta.env.VITE_KEYCLOAK_URL
 export const KEYCLOAK_CLIENT_ID = (window as any).VITE_KEYCLOAK_CLIENT_ID ?? import.meta.env.VITE_KEYCLOAK_CLIENT_ID

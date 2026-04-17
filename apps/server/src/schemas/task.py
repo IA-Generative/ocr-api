@@ -22,10 +22,12 @@ class TaskModel(BaseModel):
     position: Optional[int] = None
     content_hash: Optional[str] = None
     parameters: Optional[dict[str, Any]] = None
+    parent_id: Optional[str] = None
 
 
 class TaskForm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    id: Optional[str] = None
     group_id: Optional[str] = None
     type: Optional[str] = None
     status: str
@@ -35,6 +37,7 @@ class TaskForm(BaseModel):
     output: Optional[OCRResult] = None
     content_hash: Optional[str] = None
     parameters: Optional[dict[str, Any]] = None
+    parent_id: Optional[str] = None
 
 
 class TaskUpdateForm(BaseModel):
@@ -48,6 +51,7 @@ class TaskUpdateForm(BaseModel):
     output: Optional[OCRResult] = None
     content_hash: Optional[str] = None
     parameters: Optional[dict[str, Any]] = None
+    parent_id: Optional[str] = None
 
 
 class TaskStatus(StrEnum):
@@ -60,6 +64,7 @@ class TaskStatus(StrEnum):
     RETRYING = "retrying"  # En cours de nouvelle tentative après échec
     CANCELED = "canceled"  # Annulée manuellement ou par logique métier
     TIMEOUT = "timeout"  # N’a pas pu terminer dans le temps imparti
+    REVOKED = "revoked"  # Révoquée via Celery
 
 
 class TaskOperation(StrEnum):
@@ -76,6 +81,7 @@ class CeleryTaskName(StrEnum):
     OCR_TASK = "worker.tasks.ocr"
     PAGE_CLASSIFICATION_TASK = "tasks.page_classification"
     PAGE_TEXT_CLASSIFICATION_TASK = "tasks.page_text_classification"
+    DISPATCH_TASK = "tasks.dispatch"
 
 
 class TaskStatsGlobal(BaseModel):

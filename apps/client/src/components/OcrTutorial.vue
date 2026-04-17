@@ -14,50 +14,62 @@ const steps: Step[] = [
   {
     selector: '[data-tour="toolbar"]',
     title: 'Barre d\'outils',
-    description: 'Cette barre regroupe tous les outils de navigation et d\'annotation du document.',
+    description: 'Regroupe tous les outils principaux : affichage de l\'image, annotation, métriques, aide et téléchargement.',
     position: 'bottom',
   },
   {
     selector: '[data-tour="toggle-image"]',
     title: 'Afficher / Masquer l\'image',
-    description: 'Basculez entre l\'image originale et le texte OCR extrait pour comparer facilement les résultats.',
+    description: 'Bascule entre l\'image originale et les zones OCR seules, utile pour comparer et corriger sans distraction visuelle.',
     position: 'bottom',
   },
   {
     selector: '[data-tour="drawing-mode"]',
     title: 'Annoter une zone',
-    description: 'Activez ce mode pour dessiner manuellement de nouvelles zones de texte sur la page (zones manquées par l\'OCR).',
+    description: 'Dessinez manuellement une zone sur la page pour capturer du texte que l\'OCR aurait manqué.',
     position: 'bottom',
   },
   {
     selector: '[data-tour="metrics"]',
     title: 'Métriques OCR',
-    description: 'Visualisez les statistiques de qualité de l\'extraction : taux de confiance, nombre de zones, couverture, etc.',
+    description: 'Consultez les statistiques de qualité de l\'extraction : taux de confiance moyen, distribution des scores, zones problématiques.',
+    position: 'bottom',
+  },
+  {
+    selector: '[data-tour="pagination"]',
+    title: 'Navigation entre pages',
+    description: 'Parcourez les pages du document. Toutes vos corrections et annotations sont conservées lors du changement de page.',
     position: 'bottom',
   },
   {
     selector: '[data-tour="progress-bar"]',
     title: 'Progression de la révision',
-    description: 'Suivez en temps réel le nombre de zones déjà révisées par rapport au total. L\'objectif est d\'atteindre 100 %.',
+    description: 'Suivez en temps réel le nombre de zones révisées. Cliquez sur une zone colorée dans l\'image pour la corriger et faire avancer la barre.',
     position: 'bottom',
   },
   {
     selector: '[data-tour="image-viewer"]',
-    title: 'Visualiseur OCR',
-    description: 'Chaque cadre coloré correspond à une zone détectée. Cliquez sur un cadre pour l\'éditer : corriger le texte, valider ou invalider la détection, marquer comme privé.',
-    position: 'right',
+    title: 'Visualiseur',
+    description: 'Chaque cadre correspond à une zone détectée. Cliquez dessus pour corriger le texte, valider ou invalider la détection, ou la marquer comme privée.',
+    position: 'left',
+  },
+  {
+    selector: '[data-tour="view-mode-toggle"]',
+    title: 'Modes de visualisation',
+    description: 'Basculez entre trois vues : OCR (zones de texte), Layout (blocs structurels du document), et Entités (données extraites comme dates, noms, montants).',
+    position: 'left',
+  },
+  {
+    selector: '[data-tour="sidebar"]',
+    title: 'Recherche & filtrage',
+    description: 'En mode OCR, cherchez un mot pour mettre en surbrillance les zones correspondantes sur toutes les pages. En mode Entités, filtrez par nom ou valeur d\'entité.',
+    position: 'left',
   },
   {
     selector: '[data-tour="classification"]',
     title: 'Classification de la page',
-    description: 'Ajoutez des étiquettes thématiques à cette page et indiquez votre consentement pour l\'utilisation de ces données dans le réentraînement du modèle.',
-    position: 'top',
-  },
-  {
-    selector: '[data-tour="pagination"]',
-    title: 'Navigation entre pages',
-    description: 'Parcourez les différentes pages du document. Vos annotations sont conservées lors du changement de page.',
-    position: 'top',
+    description: 'Ajoutez des étiquettes thématiques à la page et indiquez votre consentement pour l\'utilisation de ces données dans le réentraînement du modèle.',
+    position: 'left',
   },
 ]
 
@@ -215,8 +227,8 @@ function next () {
       <p class="text-xs text-slate-600 leading-relaxed">{{ step.description }}</p>
 
       <!-- Progress dots + nav -->
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex gap-1">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-1 flex-wrap">
           <div
             v-for="(_, i) in steps"
             :key="i"
@@ -224,7 +236,7 @@ function next () {
             :class="i === currentStep ? 'w-4 h-2 bg-blue-600' : 'w-2 h-2 bg-slate-200'"
           />
         </div>
-        <div class="flex gap-2">
+        <div class="flex justify-end gap-2">
           <button
             v-if="!isFirst"
             class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"

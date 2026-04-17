@@ -33,6 +33,26 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
+  async function fetchTaskChildren (taskId: string): Promise<TaskModel[]> {
+    try {
+      const { data } = await http.get(`/tasks/${encodeURIComponent(taskId)}/children`)
+      return data ?? []
+    }
+    catch {
+      return []
+    }
+  }
+
+  async function fetchTaskTree (taskId: string): Promise<TaskModel[]> {
+    try {
+      const { data } = await http.get(`/tasks/${encodeURIComponent(taskId)}/tree`)
+      return data ?? []
+    }
+    catch {
+      return []
+    }
+  }
+
   async function deleteTask (taskId: string) {
     if (!taskId) throw new Error('taskId required')
     try {
@@ -59,6 +79,8 @@ export const useTasksStore = defineStore('tasks', () => {
     loading,
     error,
     fetchUserTasks,
+    fetchTaskChildren,
+    fetchTaskTree,
     deleteTask,
     stopPollingUserTasks,
   }

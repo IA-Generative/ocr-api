@@ -340,10 +340,10 @@ class BaseWorker(ABC):
         )
         task = TaskModel.model_validate(task_dict)
 
-        try:
-            self.file_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
-        except Exception as e:
-            logger.warning(str(e))
+        # try:
+        #     self.file_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
+        # except Exception as e:
+        #     logger.warning(str(e))
 
         return task
 

@@ -6,6 +6,7 @@
     <table class="fr-table task-table">
       <thead>
         <tr>
+          <th style="width:2rem"></th>
           <th @click="sortBy('type')">Tâche ⬍</th>
           <th>Fichier</th>
           <th @click="sortBy('percentage')">Pourcentage ⬍</th>
@@ -17,30 +18,44 @@
       </thead>
 
       <tbody>
-        <tr v-for="task in displayedTasks" :key="task.id">
-          <td>
-            <span>{{ MapTaskTypeToLabel(task.type) }}</span>
+        <tr
+          v-for="row in flatRows"
+          :key="row._rowKey"
+          :class="{ 'row-parent': row._isParent, 'row-child': !row._isParent, 'row-empty': row._isEmpty }"
+        >
+          <td class="expand-cell">
+            <button
+              v-if="row._isParent"
+              class="expand-btn"
+              :aria-label="expandedIds.includes(row.id) ? 'Réduire' : 'Développer'"
+              @click="toggleExpand(row)"
+            >
+              <span v-if="loadingChildren.includes(row.id)">⏳</span>
+              <span v-else-if="expandedIds.includes(row.id)">▾</span>
+              <span v-else>▸</span>
+            </button>
+            <span v-else class="child-indent">└</span>
           </td>
           <td>
-            <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
+            <span :class="{ 'child-label': !row._isParent }">{{ MapTaskTypeToLabel(row.type) }}</span>
+          </td>
+          <td>
+            <span v-if="row.input?.raw_filename">{{ row.input.raw_filename }}</span>
             <span v-else>—</span>
           </td>
-
           <td>
-            <ProgressBar :visible="true" :progress="(task.percentage ?? 0) * 100" :text="MapStatusToLabel(task.status)" />
+            <ProgressBar v-if="!row._isEmpty" :visible="true" :progress="(row.percentage ?? 0) * 100" :text="MapStatusToLabel(row.status)" />
+            <span v-else class="no-children">Aucune sous-tâche</span>
           </td>
-
-          <td>{{ formatDate(task.created_at) }}</td>
-          <td>{{ formatDate(task.updated_at) }}</td>
-
+          <td>{{ row._isEmpty ? '' : formatDate(row.created_at) }}</td>
+          <td>{{ row._isEmpty ? '' : formatDate(row.updated_at) }}</td>
           <td>
-            <DsfrButton size="sm" priority="secondary" :disabled="task.status !== 'completed'" @click="goToTask(task)">
+            <DsfrButton v-if="!row._isEmpty" size="sm" priority="secondary" :disabled="row.status !== 'completed'" @click="goToTask(row)">
               Voir le contenu
             </DsfrButton>
           </td>
-
           <td>
-            <DsfrButton size="sm" priority="tertiary" @click="removeTask(task.id)">Supprimer</DsfrButton>
+            <DsfrButton v-if="!row._isEmpty" size="sm" priority="tertiary" @click="removeTask(row.id)">Supprimer</DsfrButton>
           </td>
         </tr>
       </tbody>
@@ -51,65 +66,20 @@
       <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === 1" @click="loadPage(paginatedDataSafe.page - 1)">
         Précédent
       </DsfrButton>
-
       <span class="fr-ml-2 fr-mr-2">Page {{ paginatedDataSafe.page }} / {{ totalPages }}</span>
-
       <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === totalPages" @click="loadPage(paginatedDataSafe.page + 1)">
         Suivant
       </DsfrButton>
     </div>
 
-    <!-- Modal -->
-    <div v-if="selectedTask" class="modal-overlay" @click.self="selectedTask = null">
-      <div class="modal fr-card" @click.stop>
-        <header class="modal-header fr-card">
-          <h3 class="fr-h3">Résumer</h3>  
-        </header>
-
-
-        <section class="modal-section fr-card">
-          <div class="section-title">Source</div>
-          <div class="section-content">
-            <div v-if="selectedTask.input?.url">
-              <a :href="selectedTask.input.url" target="_blank" rel="noopener noreferrer">{{ selectedTask.input.url }}</a>
-            </div>
-            <div v-else-if="selectedTask.input?.raw_filename">{{ selectedTask.input.raw_filename }}</div>
-            <div v-else>—</div>
-          </div>
-        </section>
-
-        <section class="modal-section fr-card">
-          <div class="section-title">Contenu</div>
-          <div class="section-content">
-            <div v-if="selectedTask.output?.text">
-              <textarea readonly class="extracted-text" :value="selectedTask.output.text"></textarea>
-            </div>
-            <div v-else>
-              <div>Contenu indisponible</div>
-            </div>
-          </div>
-        </section>
-
-        <section class="modal-section modal-actions">
-          <div class="section-content">
-            <DsfrButton v-if="selectedTask.output?.text" size="sm" priority="tertiary" @click="copyToClipboard(selectedTask.output.text)">Copier le contenu</DsfrButton>
-            <DsfrButton v-else-if="selectedTask.input?.raw_filename" size="sm" priority="tertiary" @click="copyToClipboard(selectedTask.input.raw_filename)">Copier le nom</DsfrButton>
-            <span v-if="copySuccess" class="copy-success">Copié&nbsp;!</span>
-          </div>
-        </section>
-
-      </div>
-    </div>
-    
     <!-- Stats Modal -->
     <StatModel v-if="statsVisible" @close="statsVisible = false" />
 
-      <!-- Connected users badge -->
-      <div class="connected-badge" title="Utilisateurs qu'ont utilisé le service aujourd'hui">
-        <span class="badge-emoji">👥</span>
-        <span class="badge-number">{{ connectedUsers ?? '—' }}</span>
-      </div>
-
+    <!-- Connected users badge -->
+    <div class="connected-badge" title="Utilisateurs qu'ont utilisé le service aujourd'hui">
+      <span class="badge-emoji">👥</span>
+      <span class="badge-number">{{ connectedUsers ?? '—' }}</span>
+    </div>
   </div>
 </template>
 
@@ -122,11 +92,25 @@ import { useTasksStore } from '@/stores/tasks'
 import StatModel from './StatModel.vue'
 import ProgressBar from './ProgressBar.vue'
 
+type TaskModel = {
+  id: string
+  type: string
+  status: string
+  percentage?: number | null
+  parent_id?: string | null
+  input?: any
+  output?: any
+  created_at: number
+  updated_at: number
+  [k: string]: any
+}
+
+type FlatRow = TaskModel & { _rowKey: string; _isParent: boolean; _isEmpty?: boolean }
+
 const store = useTasksStore()
 const router = useRouter()
 const paginatedData = store.userTasksPaginated
 
-// connected users today badge
 const connectedUsers = ref<number | null>(null)
 const http = createHttpClient(OCR_API_URL)
 
@@ -135,14 +119,12 @@ const fetchConnectedUsers = async () => {
     const { data } = await http.get('/users/count-users-today')
     connectedUsers.value = data?.users_today ?? null
   }
-  catch (e) {
+  catch {
     connectedUsers.value = null
   }
 }
 
-
-const data_task_mock = {"total": 0, "page": 1, "page_size": 10, "items": []}
-
+const data_task_mock = { total: 0, page: 1, page_size: 10, items: [] as TaskModel[] }
 
 // ----- TRI -----
 const sortKey = ref('')
@@ -157,14 +139,18 @@ function MapTaskTypeToLabel(type: string) {
     vectorize: 'Vectorisation',
     vlm_ocr: 'VLM OCR',
     page_classification: 'Classification',
+    'tasks.page_text_classification': 'Classification texte',
+    'tasks.page_classification': 'Classification page',
+    'worker.tasks.ocr': 'OCR',
   }
   return map[type] ?? type
 }
 
 function MapStatusToLabel(status: string) {
-  const map: Record<string,string> = {
+  const map: Record<string, string> = {
     queued: 'En attente',
     in_progress: 'En cours',
+    started: 'Démarré',
     completed: 'Terminé',
     failed: 'Échoué',
   }
@@ -180,25 +166,65 @@ function sortBy(key: string) {
   }
 }
 
+// ----- TREE -----
+const expandedIds = ref<string[]>([])
+const loadingChildren = ref<string[]>([])
+const childrenCache = ref<Record<string, TaskModel[]>>({})
+
+async function toggleExpand(task: TaskModel) {
+  const id = task.id
+  if (expandedIds.value.includes(id)) {
+    expandedIds.value = expandedIds.value.filter(x => x !== id)
+    return
+  }
+  if (!(id in childrenCache.value)) {
+    loadingChildren.value = [...loadingChildren.value, id]
+    try {
+      const children = await store.fetchTaskChildren(id)
+      childrenCache.value = { ...childrenCache.value, [id]: children }
+    } catch (e) {
+      console.error('Failed to fetch children for', id, e)
+    } finally {
+      loadingChildren.value = loadingChildren.value.filter(x => x !== id)
+    }
+  }
+  expandedIds.value = [...expandedIds.value, id]
+}
+
 const paginatedTasks = computed(() => {
   const resolved = unref(paginatedData)
-  console.log('Resolved paginated data for sorting:', resolved)
   const items = resolved?.items ?? []
   if (!sortKey.value) return items
   return [...items].sort((a: any, b: any) => {
-    const key = sortKey.value
-    const valA = a[key]
-    const valB = b[key]
+    const valA = a[sortKey.value]
+    const valB = b[sortKey.value]
     if (valA === valB) return 0
     return sortAsc.value ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1)
   })
 })
 
-// If API returns no tasks, use the provided mock so the table is visible for dev
-const displayedTasks = computed(() => {
+const rootTasks = computed((): TaskModel[] => {
   const items = paginatedTasks.value || []
-  if (items.length > 0) return items
-  return (data_task_mock?.items ?? [])
+  const roots = items.filter((t: TaskModel) => !t.parent_id)
+  return roots.length > 0 ? roots : data_task_mock.items
+})
+
+const flatRows = computed((): FlatRow[] => {
+  const rows: FlatRow[] = []
+  for (const task of rootTasks.value) {
+    rows.push({ ...task, _rowKey: task.id, _isParent: true })
+    if (expandedIds.value.includes(task.id)) {
+      const children = childrenCache.value[task.id] ?? []
+      if (children.length === 0) {
+        rows.push({ ...task, _rowKey: `${task.id}__empty`, _isParent: false, _isEmpty: true })
+      } else {
+        for (const child of children) {
+          rows.push({ ...child, _rowKey: `${task.id}__${child.id}`, _isParent: false })
+        }
+      }
+    }
+  }
+  return rows
 })
 
 const paginatedDataSafe = computed(() => {
@@ -210,7 +236,9 @@ const paginatedDataSafe = computed(() => {
 const loadPage = async (page = 1, overridePageSize?: number) => {
   const pageSize = overridePageSize ?? unref(paginatedData)?.page_size ?? 10
   await store.fetchUserTasks(page, pageSize)
-  try { await fetchConnectedUsers() } catch (e) { }
+  expandedIds.value = []
+  childrenCache.value = {}
+  try { await fetchConnectedUsers() } catch { }
 }
 
 onMounted(() => {
@@ -232,17 +260,10 @@ const totalPages = computed(() => {
 })
 
 // ----- MODAL -----
-const selectedTask = ref<any|null>(null)
 const statsVisible = ref(false)
-
-const openModal = (task: any) => {
-  if (!task || task.status !== 'completed') return
-  selectedTask.value = task
-}
 
 const goToTask = (task: any) => {
   if (!task || !task.id) return
-  // navigate to OCR result / annotation view
   router.push(`/${task.id}`)
 }
 
@@ -250,16 +271,8 @@ const removeTask = async (taskId: string) => {
   if (!taskId) return
   try {
     await store.deleteTask(taskId)
-
-    // Try to update UI locally first (store.deleteTask already removes the item locally).
-    // If the current page became empty after deletion, load the previous page.
     const resolved = unref(paginatedData)
-
-    const currentPage = resolved?.page ?? 1
-    const pageSize = resolved?.page_size ?? 10
-
-    // Refresh the current page to ensure UI reflects server state (and pagination)
-    await loadPage(currentPage, pageSize)
+    await loadPage(resolved?.page ?? 1, resolved?.page_size ?? 10)
   }
   catch (e) {
     console.error('Failed to remove task', e)
@@ -273,44 +286,12 @@ const formatDate = (ts: any) => {
     if (Number.isNaN(n)) return String(ts)
     if (n < 1e12) n = n * 1000
     return new Date(n).toLocaleString()
-  } catch (e) { return String(ts) }
+  } catch { return String(ts) }
 }
 
-const copySuccess = ref(false)
-let _copyTimeout: any = null
-
-const copyToClipboard = async (text: string) => {
-  try {
-    if (navigator && (navigator as any).clipboard && (navigator as any).clipboard.writeText) {
-      await (navigator as any).clipboard.writeText(text)
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = text
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.focus()
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-
-    copySuccess.value = true
-    if (_copyTimeout) clearTimeout(_copyTimeout)
-    _copyTimeout = setTimeout(() => (copySuccess.value = false), 2000)
-  } catch (e) { console.error('Copy failed', e) }
-}
-
-const _escHandler = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' || e.key === 'Esc') selectedTask.value = null
-}
-
-onMounted(() => { window.addEventListener('keydown', _escHandler) })
-onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (_copyTimeout) clearTimeout(_copyTimeout) })
 </script>
 
 <style scoped>
-/* (Keep the styles from the user's template) */
 .task-container {
   padding: 20px;
   position: relative;
@@ -319,17 +300,7 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
 .task-table {
   width: 100%;
   border-collapse: collapse;
-}
-
-.task-table {
   table-layout: fixed;
-}
-
-.task-table th,
-.task-table td {
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
 }
 
 .task-table th,
@@ -337,8 +308,32 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
   border: 1px solid #ddd;
   padding: 8px;
   text-align: center;
-  cursor: pointer;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
 }
+
+.task-table th { cursor: pointer; }
+
+.row-child { background-color: #f5f7ff; }
+.row-child td { border-left: 3px solid #0b6bff; }
+.row-empty td { color: #999; font-style: italic; }
+.child-label { font-size: 0.875rem; color: #444; }
+
+.expand-cell { width: 2rem; text-align: center; padding: 4px; }
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+.expand-btn:hover { background: #e8f0fe; }
+.child-indent { color: #0b6bff; font-size: 1rem; }
+.no-children { color: #888; font-style: italic; }
 
 .pagination {
   margin-top: 15px;
@@ -349,12 +344,9 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -365,44 +357,32 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', _escHandler); if (
   padding: 1.25rem;
   border-radius: 12px;
   width: min(900px, 95%);
-  max-width: 900px;
   max-height: 80vh;
   overflow: auto;
-  box-sizing: border-box;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   z-index: 10000;
 }
 
 .modal .modal-header,
-.modal .modal-section,
-.modal .modal-footer {
-  padding-left: 1rem;
-  padding-right: 1rem;
+.modal .modal-section { padding-left: 1rem; padding-right: 1rem; }
+
+.extracted-text { width: 100%; min-height: 6rem; resize: vertical; box-sizing: border-box; padding: 0.5rem; }
+
+.modal-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+.modal-section { border-top: 1px solid #eee; padding: 0.75rem 0; }
+.section-title { font-weight: 600; margin-bottom: 0.5rem; }
+.section-content { display: block; }
+.modal-actions .section-content > * { margin-right: 0.5rem; }
+.copy-success { color: #0b6623; margin-left: 0.75rem; font-weight: 600; }
+
+.connected-badge {
+  position: absolute; right: 12px; bottom: 12px;
+  background: #0b6bff; color: white;
+  padding: 6px 10px; border-radius: 999px;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 6px 18px rgba(11, 107, 255, 0.15);
+  font-weight: 600;
 }
-
-.extracted-text {
-  width: 100%;
-  min-height: 6rem;
-  resize: vertical;
-  box-sizing: border-box;
-  padding: 0.5rem;
-}
-
-.summary-block { margin-top: 1rem }
-.summary-block > div { max-height: 50vh; overflow: auto; padding-right: 0.5rem }
-
-.modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.5rem }
-.modal-close { background:transparent; border:none; font-size:1.25rem; cursor:pointer }
-.modal-section { border-top:1px solid #eee; padding:0.75rem 0 }
-.section-title { font-weight:600; margin-bottom:0.5rem }
-.section-content { display:block }
-.extracted-text { width:100%; min-height:6rem; resize:vertical }
-.modal-actions .section-content > * { margin-right:0.5rem }
-.modal-meta .meta-grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:0.5rem 1rem }
-.modal-footer { margin-top:1rem; display:flex; justify-content:flex-end }
-.copy-success { color:#0b6623; margin-left:0.75rem; font-weight:600 }
-
-.connected-badge { position:absolute; right:12px; bottom:12px; background:#0b6bff; color:white; padding:6px 10px; border-radius:999px; display:flex; align-items:center; gap:8px; box-shadow:0 6px 18px rgba(11,107,255,0.15); font-weight:600 }
-.connected-badge .badge-emoji { font-size:14px }
-.connected-badge .badge-number { min-width:32px; text-align:center }
+.connected-badge .badge-emoji { font-size: 14px; }
+.connected-badge .badge-number { min-width: 32px; text-align: center; }
 </style>
