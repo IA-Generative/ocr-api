@@ -34,7 +34,13 @@ class OcrChunkSearchRequest(BaseModel):
     """Payload for semantic search over a file\'s chunks."""
 
     query_vector: List[float] = Field(..., description="Dense query embedding")
-    top_k: int = Field(default=5, ge=1, le=50)
+    top_k: int | None = Field(default=None, ge=1, le=50)
+    threshold: float | None = Field(
+        default=None,
+        ge=-1.0,
+        le=1.0,
+        description="Minimum cosine similarity score for a chunk to be included in results",
+    )
 
 
 class OcrChunkSearchResult(BaseModel):

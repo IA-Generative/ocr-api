@@ -1,8 +1,8 @@
-from typing import Literal, Annotated
+from typing import Literal, Annotated, AsyncGenerator
 from fastapi import APIRouter, HTTPException, Depends, status as http_status
 from fastapi.responses import PlainTextResponse, Response
 from src.services.task_service import TaskService
-from src.connector.db_connector import get_async_session
+from src.connector.db_connector import AsyncSessionLocal
 from src.schemas.task import TaskOperation
 from sqlalchemy.ext.asyncio import AsyncSession
 from ocr_backend.core.security.token import RequestContext
@@ -14,7 +14,14 @@ import csv
 text_router = APIRouter(tags=["Text"])
 TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
 TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
-DbSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 @text_router.get("/text-task/{task_id}", response_class=PlainTextResponse, response_model=None)

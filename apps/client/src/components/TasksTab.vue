@@ -1,89 +1,160 @@
 <template>
-  <div class="task-container fr-container">
-    <h2 class="fr-h2">Liste des tâches</h2>
-    <DsfrButton size="sm" priority="secondary" class="fr-ml-1" @click="statsVisible = true">Voir les statistiques</DsfrButton>
+  <div class="tasks-page">
 
-    <table class="fr-table task-table">
-      <thead>
-        <tr>
-          <th style="width:2rem"></th>
-          <th>ID</th>
-          <th @click="sortBy('type')">Tâche ⬍</th>
-          <th>Fichier</th>
-          <th @click="sortBy('percentage')">Pourcentage ⬍</th>
-          <th @click="sortBy('created_at')">Créé le ⬍</th>
-          <th @click="sortBy('updated_at')">Mis à jour le ⬍</th>
-          <th>Voir résumé</th>
-          <th>Supprimer</th>
-        </tr>
-      </thead>
+    <!-- Header -->
+    <div class="tasks-header">
+      <div>
+        <h2 class="tasks-title">Tâches</h2>
+        <p class="tasks-subtitle">{{ paginatedDataSafe.total ?? 0 }} tâche{{ (paginatedDataSafe.total ?? 0) !== 1 ? 's' : '' }} au total</p>
+      </div>
+      <div class="tasks-header-actions">
+        <button class="action-btn" @click="statsVisible = true">
+          <span class="fr-icon-bar-chart-box-line" aria-hidden="true" />
+          Statistiques
+        </button>
+        <div class="users-pill" title="Utilisateurs actifs aujourd'hui">
+          <span class="fr-icon-user-line" style="font-size:13px" aria-hidden="true" />
+          <span>{{ connectedUsers ?? '—' }}</span>
+        </div>
+      </div>
+    </div>
 
-      <tbody>
-        <tr
-          v-for="row in flatRows"
-          :key="row._rowKey"
-          :class="{ 'row-parent': row._isParent, 'row-child': !row._isParent, 'row-empty': row._isEmpty }"
+    <!-- Sort bar -->
+    <div class="sort-bar">
+      <span class="sort-label">Trier par</span>
+      <button :class="['sort-btn', sortKey === 'created_at' ? 'sort-active' : '']" @click="sortBy('created_at')">
+        Date <span>{{ sortKey === 'created_at' ? (sortAsc ? '↑' : '↓') : '' }}</span>
+      </button>
+      <button :class="['sort-btn', sortKey === 'type' ? 'sort-active' : '']" @click="sortBy('type')">
+        Type <span>{{ sortKey === 'type' ? (sortAsc ? '↑' : '↓') : '' }}</span>
+      </button>
+      <button :class="['sort-btn', sortKey === 'percentage' ? 'sort-active' : '']" @click="sortBy('percentage')">
+        Avancement <span>{{ sortKey === 'percentage' ? (sortAsc ? '↑' : '↓') : '' }}</span>
+      </button>
+    </div>
+
+    <!-- Task list -->
+    <div class="task-list">
+      <template v-for="row in flatRows" :key="row._rowKey">
+
+        <!-- Empty state placeholder -->
+        <div
+          v-if="row._isEmpty"
+          class="task-empty-row"
+          :style="{ marginLeft: `${row._depth * 32 + 16}px` }"
         >
-          <td class="expand-cell">
-            <button
-              v-if="row._isParent"
-              class="expand-btn"
-              :aria-label="expandedIds.includes(row.id) ? 'Réduire' : 'Développer'"
-              @click="toggleExpand(row)"
-            >
-              <span v-if="loadingChildren.includes(row.id)">⏳</span>
-              <span v-else-if="expandedIds.includes(row.id)">▾</span>
-              <span v-else>▸</span>
-            </button>
-            <span v-else class="child-indent">└</span>
-          </td>
-          <td>
-            <code v-if="!row._isEmpty" class="text-xs text-slate-500 select-all" :title="row.id">{{ row.id.slice(0, 8) }}…</code>
-          </td>
-          <td>
-            <span :class="{ 'child-label': !row._isParent }">{{ MapTaskTypeToLabel(row.type) }}</span>
-          </td>
-          <td>
-            <span v-if="row.input?.raw_filename">{{ row.input.raw_filename }}</span>
-            <span v-else>—</span>
-          </td>
-          <td>
-            <ProgressBar v-if="!row._isEmpty" :visible="true" :progress="(row.percentage ?? 0) * 100" :text="MapStatusToLabel(row.status)" />
-            <span v-else class="no-children">Aucune sous-tâche</span>
-          </td>
-          <td>{{ row._isEmpty ? '' : formatDate(row.created_at) }}</td>
-          <td>{{ row._isEmpty ? '' : formatDate(row.updated_at) }}</td>
-          <td>
-            <DsfrButton v-if="!row._isEmpty" size="sm" priority="secondary" :disabled="row.status !== 'completed'" @click="goToTask(row)">
-              Voir le contenu
-            </DsfrButton>
-          </td>
-          <td>
-            <DsfrButton v-if="!row._isEmpty" size="sm" priority="tertiary" @click="removeTask(row.id)">Supprimer</DsfrButton>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          <span class="fr-icon-list-unordered" style="font-size:13px" aria-hidden="true" />
+          Aucune sous-tâche
+        </div>
+
+        <!-- Task card -->
+        <div
+          v-else
+          class="task-card"
+          :class="[`depth-${Math.min(row._depth, 3)}`, `status-${row.status}`]"
+          :style="{ marginLeft: `${row._depth * 32}px` }"
+        >
+          <!-- Connector line for children -->
+          <div v-if="row._depth > 0" class="connector-line" />
+
+          <div class="task-card-inner">
+            <!-- Left: expand + status dot -->
+            <div class="task-card-left">
+              <button
+                class="expand-toggle"
+                :class="{ 'is-expanded': expandedIds.includes(row.id) }"
+                :aria-label="expandedIds.includes(row.id) ? 'Réduire' : 'Développer'"
+                @click="toggleExpand(row)"
+              >
+                <span v-if="loadingChildren.includes(row.id)" class="spinner" />
+                <span v-else class="fr-icon-arrow-right-s-line expand-icon" aria-hidden="true" />
+              </button>
+              <div class="status-dot" :class="`dot-${row.status}`" :title="MapStatusToLabel(row.status)" />
+            </div>
+
+            <!-- Center: main info -->
+            <div class="task-card-body">
+              <div class="task-card-top">
+                <span class="task-type-badge" :class="`badge-${row.type?.replace(/[^a-z]/g, '-')}`">
+                  {{ MapTaskTypeToLabel(row.type) }}
+                </span>
+                <code class="task-id" :title="row.id">{{ row.id.slice(0, 8) }}…</code>
+                <span v-if="row.input?.raw_filename" class="task-filename">
+                  <span class="fr-icon-file-line" style="font-size:11px" aria-hidden="true" />
+                  {{ row.input.raw_filename }}
+                </span>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="task-progress-row">
+                <div class="task-progress-track">
+                  <div
+                    class="task-progress-fill"
+                    :class="`fill-${row.status}`"
+                    :style="{ width: `${(row.percentage ?? 0) * 100}%` }"
+                  />
+                </div>
+                <span class="task-progress-pct">{{ Math.round((row.percentage ?? 0) * 100) }}%</span>
+                <span class="task-status-label" :class="`label-${row.status}`">{{ MapStatusToLabel(row.status) }}</span>
+              </div>
+
+              <!-- Dates -->
+              <div class="task-dates">
+                <span>
+                  <span class="fr-icon-calendar-line" style="font-size:11px" aria-hidden="true" />
+                  {{ formatDate(row.created_at) }}
+                </span>
+                <span v-if="row.updated_at !== row.created_at" class="task-date-sep">·</span>
+                <span v-if="row.updated_at !== row.created_at">
+                  <span class="fr-icon-refresh-line" style="font-size:11px" aria-hidden="true" />
+                  {{ formatDate(row.updated_at) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Right: actions -->
+            <div class="task-card-actions">
+              <button
+                class="task-action-btn primary"
+                :disabled="row.status !== 'completed'"
+                :title="row.status !== 'completed' ? 'Disponible une fois terminé' : 'Voir le résultat'"
+                @click="goToTask(row)"
+              >
+                <span class="fr-icon-eye-line" aria-hidden="true" />
+              </button>
+              <button
+                class="task-action-btn danger"
+                title="Supprimer"
+                @click="removeTask(row.id)"
+              >
+                <span class="fr-icon-delete-line" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </template>
+
+      <!-- Empty list -->
+      <div v-if="flatRows.length === 0" class="tasks-empty">
+        <span class="fr-icon-time-line" style="font-size:32px; color:#cbd5e1" aria-hidden="true" />
+        <p>Aucune tâche pour le moment</p>
+      </div>
+    </div>
 
     <!-- Pagination -->
-    <div class="pagination fr-mt-2">
-      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === 1" @click="loadPage(paginatedDataSafe.page - 1)">
-        Précédent
-      </DsfrButton>
-      <span class="fr-ml-2 fr-mr-2">Page {{ paginatedDataSafe.page }} / {{ totalPages }}</span>
-      <DsfrButton size="sm" priority="tertiary" :disabled="paginatedDataSafe.page === totalPages" @click="loadPage(paginatedDataSafe.page + 1)">
-        Suivant
-      </DsfrButton>
+    <div class="tasks-pagination">
+      <button class="page-btn" :disabled="paginatedDataSafe.page === 1" @click="loadPage(paginatedDataSafe.page - 1)">
+        <span class="fr-icon-arrow-left-s-line" aria-hidden="true" />
+      </button>
+      <span class="page-info">Page <strong>{{ paginatedDataSafe.page }}</strong> / {{ totalPages }}</span>
+      <button class="page-btn" :disabled="paginatedDataSafe.page === totalPages" @click="loadPage(paginatedDataSafe.page + 1)">
+        <span class="fr-icon-arrow-right-s-line" aria-hidden="true" />
+      </button>
     </div>
 
     <!-- Stats Modal -->
     <StatModel v-if="statsVisible" @close="statsVisible = false" />
-
-    <!-- Connected users badge -->
-    <div class="connected-badge" title="Utilisateurs qu'ont utilisé le service aujourd'hui">
-      <span class="badge-emoji">👥</span>
-      <span class="badge-number">{{ connectedUsers ?? '—' }}</span>
-    </div>
   </div>
 </template>
 
@@ -110,7 +181,7 @@ type TaskModel = {
   [k: string]: any
 }
 
-type FlatRow = TaskModel & { _rowKey: string; _isParent: boolean; _isEmpty?: boolean }
+type FlatRow = TaskModel & { _rowKey: string; _isParent: boolean; _isEmpty?: boolean; _depth: number }
 
 const store = useTasksStore()
 const router = useRouter()
@@ -147,6 +218,8 @@ function MapTaskTypeToLabel(type: string) {
     'tasks.page_text_classification': 'Classification texte',
     'tasks.page_classification': 'Classification page',
     'worker.tasks.ocr': 'OCR',
+    'tasks.ocr_chunk': 'Vectorisation chunks',
+    'tasks.entity_extraction': 'Extraction entités',
   }
   return map[type] ?? type
 }
@@ -213,21 +286,30 @@ const rootTasks = computed((): TaskModel[] => {
   return roots.length > 0 ? roots : data_task_mock.items
 })
 
-const flatRows = computed((): FlatRow[] => {
-  const rows: FlatRow[] = []
-  for (const task of rootTasks.value) {
-    rows.push({ ...task, _rowKey: task.id, _isParent: true })
-    if (expandedIds.value.includes(task.id)) {
+function buildRows(tasks: TaskModel[], depth: number, rows: FlatRow[]) {
+  for (const task of tasks) {
+    const hasKnownChildren = (childrenCache.value[task.id]?.length ?? 0) > 0
+    const isExpanded = expandedIds.value.includes(task.id)
+    rows.push({
+      ...task,
+      _rowKey: `${task.id}__d${depth}`,
+      _isParent: true,
+      _depth: depth,
+    })
+    if (isExpanded) {
       const children = childrenCache.value[task.id] ?? []
       if (children.length === 0) {
-        rows.push({ ...task, _rowKey: `${task.id}__empty`, _isParent: false, _isEmpty: true })
+        rows.push({ ...task, _rowKey: `${task.id}__empty`, _isParent: false, _isEmpty: true, _depth: depth + 1 })
       } else {
-        for (const child of children) {
-          rows.push({ ...child, _rowKey: `${task.id}__${child.id}`, _isParent: false })
-        }
+        buildRows(children, depth + 1, rows)
       }
     }
   }
+}
+
+const flatRows = computed((): FlatRow[] => {
+  const rows: FlatRow[] = []
+  buildRows(rootTasks.value, 0, rows)
   return rows
 })
 
@@ -302,97 +384,363 @@ const formatDate = (ts: any) => {
 </script>
 
 <style scoped>
-.task-container {
-  padding: 20px;
-  position: relative;
-}
-
-.task-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.task-table th,
-.task-table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
-}
-
-.task-table th { cursor: pointer; }
-
-.row-child { background-color: #f5f7ff; }
-.row-child td { border-left: 3px solid #0b6bff; }
-.row-empty td { color: #999; font-style: italic; }
-.child-label { font-size: 0.875rem; color: #444; }
-
-.expand-cell { width: 2rem; text-align: center; padding: 4px; }
-.expand-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 2px 4px;
-  border-radius: 4px;
-  line-height: 1;
-  transition: background 0.15s;
-}
-.expand-btn:hover { background: #e8f0fe; }
-.child-indent { color: #0b6bff; font-size: 1rem; }
-.no-children { color: #888; font-style: italic; }
-
-.pagination {
-  margin-top: 15px;
+/* ── Layout ── */
+.tasks-page {
+  padding: 24px 32px;
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
-  justify-content: center;
-  gap: 15px;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+/* ── Header ── */
+.tasks-header {
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tasks-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+.tasks-subtitle {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+.tasks-header-actions {
+  display: flex;
   align-items: center;
+  gap: 8px;
 }
-
-.modal {
-  background: white;
-  padding: 1.25rem;
-  border-radius: 12px;
-  width: min(900px, 95%);
-  max-height: 80vh;
-  overflow: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  z-index: 10000;
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
-
-.modal .modal-header,
-.modal .modal-section { padding-left: 1rem; padding-right: 1rem; }
-
-.extracted-text { width: 100%; min-height: 6rem; resize: vertical; box-sizing: border-box; padding: 0.5rem; }
-
-.modal-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
-.modal-section { border-top: 1px solid #eee; padding: 0.75rem 0; }
-.section-title { font-weight: 600; margin-bottom: 0.5rem; }
-.section-content { display: block; }
-.modal-actions .section-content > * { margin-right: 0.5rem; }
-.copy-success { color: #0b6623; margin-left: 0.75rem; font-weight: 600; }
-
-.connected-badge {
-  position: absolute; right: 12px; bottom: 12px;
-  background: #0b6bff; color: white;
-  padding: 6px 10px; border-radius: 999px;
-  display: flex; align-items: center; gap: 8px;
-  box-shadow: 0 6px 18px rgba(11, 107, 255, 0.15);
+.action-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+.users-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 999px;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
-.connected-badge .badge-emoji { font-size: 14px; }
-.connected-badge .badge-number { min-width: 32px; text-align: center; }
+
+/* ── Sort bar ── */
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sort-label {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-right: 4px;
+}
+.sort-btn {
+  padding: 4px 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-btn:hover { background: #f8fafc; }
+.sort-active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  font-weight: 600;
+}
+
+/* ── Task List ── */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Task Card ── */
+.task-card {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.task-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border-color: #cbd5e1;
+}
+
+/* depth tinting */
+.depth-1 { background: #fafbff; border-color: #dde5ff; }
+.depth-2 { background: #f8f8ff; border-color: #c5ceff; }
+.depth-3 { background: #f5f5ff; border-color: #b0b8ff; }
+
+/* status left accent */
+.status-completed { border-left: 3px solid #10b981; }
+.status-failed    { border-left: 3px solid #ef4444; }
+.status-in_progress, .status-started { border-left: 3px solid #3b82f6; }
+.status-queued, .status-created { border-left: 3px solid #94a3b8; }
+
+/* connector line */
+.connector-line {
+  position: absolute;
+  left: -20px;
+  top: 50%;
+  width: 16px;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.task-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+/* ── Left ── */
+.task-card-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.expand-toggle {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.expand-toggle:hover { background: #f1f5f9; border-color: #cbd5e1; }
+.expand-toggle.is-expanded .expand-icon { transform: rotate(90deg); }
+.expand-icon { transition: transform 0.2s; font-size: 14px; }
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-completed  { background: #10b981; }
+.dot-failed     { background: #ef4444; }
+.dot-in_progress, .dot-started { background: #3b82f6; animation: pulse 1.5s infinite; }
+.dot-queued, .dot-created { background: #94a3b8; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Body ── */
+.task-card-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.task-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.task-type-badge {
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: #eff6ff;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
+.task-id {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  font-family: monospace;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.task-filename {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  color: #64748b;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+
+.task-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.task-progress-track {
+  flex: 1;
+  height: 4px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.task-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s ease;
+  background: #94a3b8;
+}
+.fill-completed  { background: #10b981; }
+.fill-failed     { background: #ef4444; }
+.fill-in_progress, .fill-started { background: #3b82f6; }
+.task-progress-pct {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #64748b;
+  width: 30px;
+  text-align: right;
+  white-space: nowrap;
+}
+.task-status-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  color: #64748b;
+}
+.label-completed  { color: #059669; }
+.label-failed     { color: #dc2626; }
+.label-in_progress, .label-started { color: #2563eb; }
+
+.task-dates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+.task-date-sep { color: #cbd5e1; }
+
+/* ── Actions ── */
+.task-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.task-action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  color: #64748b;
+  transition: all 0.15s;
+}
+.task-action-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+.task-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.task-action-btn.primary:not(:disabled):hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.task-action-btn.danger:hover:not(:disabled)  { background: #fff1f2; border-color: #fecaca; color: #dc2626; }
+
+/* ── Empty & placeholder ── */
+.task-empty-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+.tasks-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 0;
+  color: #94a3b8;
+  font-size: 0.875rem;
+}
+
+/* ── Pagination ── */
+.tasks-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.page-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+.page-btn:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.page-info {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
 </style>

@@ -35,9 +35,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.BigInteger(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_ocr_chunks_content_hash"), "ocr_chunks", ["content_hash"], unique=False
-    )
+    op.create_index(op.f("ix_ocr_chunks_content_hash"), "ocr_chunks", ["content_hash"], unique=False)
     # ### end Alembic commands ###
 
 

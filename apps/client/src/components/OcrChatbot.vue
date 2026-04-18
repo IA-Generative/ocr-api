@@ -37,6 +37,25 @@ const emit = defineEmits<{
 const isOpen = ref(false)
 const input = ref('')
 const messagesEl = ref<HTMLElement | null>(null)
+const feedback = ref<Map<number, 'up' | 'down'>>(new Map())
+const copiedId = ref<number | null>(null)
+
+function setFeedback (msgId: number, vote: 'up' | 'down') {
+  const current = feedback.value.get(msgId)
+  const next = new Map(feedback.value)
+  if (current === vote) {
+    next.delete(msgId)
+  } else {
+    next.set(msgId, vote)
+  }
+  feedback.value = next
+}
+
+function copyMessage (msgId: number, text: string) {
+  navigator.clipboard.writeText(text)
+  copiedId.value = msgId
+  setTimeout(() => { if (copiedId.value === msgId) copiedId.value = null }, 2000)
+}
 
 async function submit () {
   const value = input.value.trim()
@@ -74,23 +93,14 @@ function onKeydown (e: KeyboardEvent) {
           <!-- Header -->
           <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50 shrink-0">
             <DotLottieVue :src="CAT_LOTTIE" :loop="true" :autoplay="true" style="width:32px;height:32px;" />
-            <span class="text-sm font-semibold text-slate-700">Assistant OCR</span>
-            <span class="ml-auto text-xs text-slate-400 italic">Démo</span>
+            <span class="text-sm font-semibold text-slate-700 flex-1">Assistant OCR</span>
             <button
-              class="ml-2 flex items-center justify-center w-6 h-6 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+              class="shrink-0 flex items-center justify-center w-6 h-6 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
               aria-label="Fermer"
               @click="isOpen = false"
             >
-              <span class="fr-icon-close-line" style="font-size: 12px;" aria-hidden="true" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
-          </div>
-
-          <!-- Experimental banner -->
-          <div class="px-4 pt-3 pb-1">
-            <div class="flex items-center gap-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
-              <span class="fr-icon-flashlight-line shrink-0" aria-hidden="true" />
-              <span>⚠️ Fonctionnalité expérimentale — les réponses peuvent être inexactes ou défaillantes.</span>
-            </div>
           </div>
 
           <!-- Messages -->
@@ -153,6 +163,38 @@ function onKeydown (e: KeyboardEvent) {
                     <span class="fr-icon-map-pin-2-line" style="font-size: 10px;" aria-hidden="true" />
                     {{ src.pageLabel }} · {{ (src.boxIndices?.length ?? 1) > 1 ? `${src.boxIndices.length} zones` : '1 zone' }}
                     <span v-if="src.score != null" class="opacity-60 ml-0.5">{{ Math.round(src.score * 100) }}%</span>
+                  </button>
+                </div>
+
+                <!-- Action buttons (bot only, after sources) -->
+                <div
+                  v-if="msg.role === 'bot' && !msg.isLoading"
+                  class="flex items-center gap-0 mt-1"
+                >
+                  <button
+                    class="w-5 h-5 flex items-center justify-center rounded transition-colors"
+                    :class="feedback.get(msg.id) === 'up' ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-500'"
+                    title="Bonne réponse"
+                    @click="setFeedback(msg.id, 'up')"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+                  </button>
+                  <button
+                    class="w-5 h-5 flex items-center justify-center rounded transition-colors"
+                    :class="feedback.get(msg.id) === 'down' ? 'text-red-400' : 'text-slate-300 hover:text-slate-500'"
+                    title="Mauvaise réponse"
+                    @click="setFeedback(msg.id, 'down')"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
+                  </button>
+                  <button
+                    class="w-5 h-5 flex items-center justify-center rounded transition-colors"
+                    :class="copiedId === msg.id ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-500'"
+                    :title="copiedId === msg.id ? 'Copié !' : 'Copier'"
+                    @click="copyMessage(msg.id, msg.content)"
+                  >
+                    <svg v-if="copiedId === msg.id" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><path d="M20 6 9 17l-5-5"/></svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3 h-3"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                   </button>
                 </div>
               </div>
