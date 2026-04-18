@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.4.0](https://github.com/IA-Generative/ocr-api/compare/v1.3.0...v1.4.0) (2026-04-18)
+
+
+### Features
+
+* **entity:** entity extraction ([3ded0f6](https://github.com/IA-Generative/ocr-api/commit/3ded0f64cf284f83502b6f94bac09fc55df0cce2))
+
 ## [1.3.0](https://github.com/IA-Generative/ocr-api/compare/v1.2.5...v1.3.0) (2026-04-18)
 
 
