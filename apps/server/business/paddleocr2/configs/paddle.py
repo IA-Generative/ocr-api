@@ -9,7 +9,8 @@ class PaddleSetting(BaseSettings):
     CLASSIFICATION_FOLDER: str = "classification"
     DETECTION_BATCH_SIZE: int = 2
     RECOGNITION_BATCH_SIZE: int = 4
-    OCR_VERSION: str = "PP-OCRv5"
+    OCR_VERSION: str = "PP-OCRv3"
+    LAYOUT_MODEL_NAME: str = "PP-DocLayoutV2"
     DEVICE: str = "cpu"
     CLIP_MODEL_DIR: str = "/app/models/clip"
     OCR_LANG: str | None = None

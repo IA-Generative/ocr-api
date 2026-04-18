@@ -1,5 +1,5 @@
 import logging
-from paddleocr import PaddleOCR
+from paddleocr import PaddleOCR, LayoutDetection
 
 
 from business.paddleocr2.configs.paddle import PaddleSetting
@@ -21,8 +21,9 @@ def _maybe_dir(p: str, sub: str):
     return d if os.path.exists(d) else None
 
 
-det_dir = _maybe_dir(PaddleSetting().PADDLE_PDX_CACHE_HOME, "detection")
-rec_dir = _maybe_dir(PaddleSetting().PADDLE_PDX_CACHE_HOME, "recognition")
+paddle_settings = PaddleSetting()
+det_dir = _maybe_dir(paddle_settings.PADDLE_PDX_CACHE_HOME, "detection")
+rec_dir = _maybe_dir(paddle_settings.PADDLE_PDX_CACHE_HOME, "recognition")
 
 if __name__ == "__main__":
     PaddleOCR(
@@ -31,6 +32,7 @@ if __name__ == "__main__":
         use_textline_orientation=False,
         use_doc_unwarping=False,
         lang="fr",
-        ocr_version="PP-OCRv3",
+        ocr_version=paddle_settings.OCR_VERSION,
     )
     # clip.load(settings.MODEL_NAME, device="cpu", download_root=settings.CLIP_MODEL_DIR)
+    LayoutDetection(model_name=paddle_settings.LAYOUT_MODEL_NAME)

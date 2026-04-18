@@ -7,6 +7,7 @@
       <thead>
         <tr>
           <th style="width:2rem"></th>
+          <th>ID</th>
           <th @click="sortBy('type')">Tâche ⬍</th>
           <th>Fichier</th>
           <th @click="sortBy('percentage')">Pourcentage ⬍</th>
@@ -35,6 +36,9 @@
               <span v-else>▸</span>
             </button>
             <span v-else class="child-indent">└</span>
+          </td>
+          <td>
+            <code v-if="!row._isEmpty" class="text-xs text-slate-500 select-all" :title="row.id">{{ row.id.slice(0, 8) }}…</code>
           </td>
           <td>
             <span :class="{ 'child-label': !row._isParent }">{{ MapTaskTypeToLabel(row.type) }}</span>
@@ -84,8 +88,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, unref } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 import { useTasksStore } from '@/stores/tasks'
@@ -109,7 +114,7 @@ type FlatRow = TaskModel & { _rowKey: string; _isParent: boolean; _isEmpty?: boo
 
 const store = useTasksStore()
 const router = useRouter()
-const paginatedData = store.userTasksPaginated
+const { userTasksPaginated: paginatedData } = storeToRefs(store)
 
 const connectedUsers = ref<number | null>(null)
 const http = createHttpClient(OCR_API_URL)
@@ -192,8 +197,7 @@ async function toggleExpand(task: TaskModel) {
 }
 
 const paginatedTasks = computed(() => {
-  const resolved = unref(paginatedData)
-  const items = resolved?.items ?? []
+  const items = paginatedData.value?.items ?? []
   if (!sortKey.value) return items
   return [...items].sort((a: any, b: any) => {
     const valA = a[sortKey.value]
@@ -228,13 +232,12 @@ const flatRows = computed((): FlatRow[] => {
 })
 
 const paginatedDataSafe = computed(() => {
-  const resolved = unref(paginatedData)
-  if ((resolved?.items ?? []).length > 0) return resolved
+  if ((paginatedData.value?.items ?? []).length > 0) return paginatedData.value
   return data_task_mock
 })
 
 const loadPage = async (page = 1, overridePageSize?: number) => {
-  const pageSize = overridePageSize ?? unref(paginatedData)?.page_size ?? 10
+  const pageSize = overridePageSize ?? paginatedData.value?.page_size ?? 10
   await store.fetchUserTasks(page, pageSize)
   expandedIds.value = []
   childrenCache.value = {}
@@ -271,11 +274,18 @@ const removeTask = async (taskId: string) => {
   if (!taskId) return
   try {
     await store.deleteTask(taskId)
-    const resolved = unref(paginatedData)
-    await loadPage(resolved?.page ?? 1, resolved?.page_size ?? 10)
   }
   catch (e) {
     console.error('Failed to remove task', e)
+  }
+  finally {
+    // Nettoyer le cache des enfants pour cette tâche
+    delete childrenCache.value[taskId]
+    expandedIds.value = expandedIds.value.filter(x => x !== taskId)
+    // Toujours recharger la page, même en cas d'erreur
+    const currentPage = paginatedData.value?.page ?? 1
+    const pageSize = paginatedData.value?.page_size ?? 10
+    await loadPage(currentPage, pageSize)
   }
 }
 

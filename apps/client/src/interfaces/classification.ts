@@ -5,6 +5,14 @@ export interface PageLabel {
   definition: string
   /** true = label issu de la liste prédéfinie */
   predefined: boolean
+  /** true = label issu d'une prédiction automatique, non supprimable manuellement */
+  readonly?: boolean
+  /** Score de confiance de la prédiction (0-1), uniquement pour les labels readonly */
+  confidence?: number
+  /** Modèle ayant produit la prédiction */
+  model?: { name: string; version: string; device?: string }
+  /** Avis utilisateur sur la prédiction : valid, invalid ou null (non évalué) */
+  validation?: 'valid' | 'invalid' | null
 }
 
 export type PageClassifications = Map<number, PageLabel[]>

@@ -20,9 +20,7 @@ from typing import List
 
 from src.logger import logger
 from src.schemas.ocr_chunks import OcrChunkBase, OcrChunkModel
-from services.client.server import ServerClient
-
-server_client = ServerClient()
+from services.client.tools import server_client
 
 
 class OcrChunkSaver:
@@ -69,7 +67,7 @@ class OcrChunkSaver:
             server_client.delete_by_content_hash(content_hash)
             logger.debug(f"[OcrChunkSaver] Cleared existing chunks for content_hash={content_hash!r}")
         chunk_to_dicts = [c.model_dump() for c in chunks]
-        server_client.upsert_chunks(chunk_to_dicts, content_hash, replace=replace)
+        server_client.upsert_chunks(chunk_to_dicts, content_hash, replace=False)
         saved = server_client.get_by_content_hash(content_hash)
         saved_models = [OcrChunkModel.model_validate(c) for c in saved]
 

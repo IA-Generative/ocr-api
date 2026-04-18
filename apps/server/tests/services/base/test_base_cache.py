@@ -1,6 +1,9 @@
 from services.base.cache import BaseCache
 from src.schemas.task import TaskModel, TaskStatus
 from src.schemas.output import OCRResult
+from services.client.server import ServerClient
+import pytest
+from requests.exceptions import HTTPError
 
 
 class MockeCache(BaseCache):
@@ -65,3 +68,26 @@ def test_update_task():
     cache = MockeCache()
     new_task = cache.get_task_from_cache(task=task)
     assert new_task.output == output_found
+
+
+def test_not_in_cache_raise_error(monkeypatch: pytest.MonkeyPatch):
+    def mock_get_task_by_content_hash(self, content_hash_value) -> TaskModel:
+        raise HTTPError("Not found")
+
+    monkeypatch.setattr(ServerClient, "get_task_by_content_hash", mock_get_task_by_content_hash)
+
+    task = TaskModel(
+        id="123",
+        user_id="123",
+        type="mock",
+        status=TaskStatus.IN_PROGRESS,
+        percentage=0,
+        input=None,
+        output=None,
+        created_at=0,
+        updated_at=1,
+        extras={},
+        content_hash="5678",
+    )
+    cache = MockeCache()
+    assert not cache.is_in_cache(task=task)

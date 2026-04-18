@@ -15,6 +15,7 @@ from src.utils.bboxes import sort_bboxes_reading_order, get_text_from_list_bboxe
 from src.schemas.classification import ParameterClassification
 from services.client.tools import server_client
 from src.schemas.task import TaskStatus
+import instructor
 
 settings = OpenAISettings()
 
@@ -27,7 +28,7 @@ def set_page_text(page: Page, delta_y: float = 0.005) -> str:
         text_line = get_text_from_list_bboxes(line_sorted_boxes)
         page_lines_content.append(text_line)
 
-    page_content = "\n".join(page_lines_content)
+    page_content = f"Page {page.page}:" + "\n".join(page_lines_content)
     return page_content
 
 
@@ -55,7 +56,7 @@ class TextClassificationModel:
     def set_labels(self, labels: list[LabelDefinition]):
         self.labels = labels
 
-    def query_llm(self, page_text: str, labels: list[LabelDefinition]) -> ParsedResponse[BatchPredictionsOutput]:
+    def query_llm(self, page_text: str, labels: list[LabelDefinition]) -> BatchPredictionsOutput:
         batch_label_str = ", ".join([f"{label.label} ({label.definition})" for label in labels])
 
         result: ParsedResponse[BatchPredictionsOutput] = self.client.responses.parse(
@@ -72,7 +73,9 @@ class TextClassificationModel:
             ],
             text_format=BatchPredictionsOutput,
         )
-        return result
+        if not result.output_parsed or not result.output_parsed.predictions:
+            raise ValueError(f"LLM did not return valid predictions: {result}")
+        return result.output_parsed
 
     def process(
         self,
@@ -101,52 +104,85 @@ class TextClassificationModel:
         if not task.output or not task.output.pages:
             raise ValueError("Task output with pages is required for classification.")
 
-        for batch_page_index in range(0, len(task.output.pages), self.batch_page_size):
+        total_pages = len(task.output.pages)
+        for batch_page_index in range(0, total_pages, self.batch_page_size):
             pages_batch: list[Page] = task.output.pages[batch_page_index : batch_page_index + self.batch_page_size]
-
-            page_indices = range(batch_page_index, batch_page_index + self.batch_page_size)
-
-            page_text = [
-                f"Page {page_number}: {set_page_text(page)}" for page_number, page in zip(page_indices, pages_batch)
-            ]
+            page_mapper = {page.page: page for page in pages_batch}
+            page_text = [set_page_text(page) for page in pages_batch]
             for batch_label_index in range(0, len(labels), self.batch_classification_size):
                 batch_label = labels[batch_label_index : batch_label_index + self.batch_classification_size]
 
-                result: ParsedResponse[BatchPredictionsOutput] = self.query_llm(
+                result: BatchPredictionsOutput = self.query_llm(
                     page_text="\n".join(page_text),
                     labels=batch_label,
                 )
-                if not result.output_parsed or not result.output_parsed.predictions:
-                    logger.warning(
-                        f"Model did not return valid predictions for batch starting at page index {batch_page_index} with labels batch starting at index {batch_label_index}."
-                    )
-                    continue
-                for page_result in result.output_parsed.predictions:
+                logger.debug(79 * "*")
+                logger.debug(result)
+                logger.debug(79 * "*")
+
+                for page_result in result.predictions:
                     page_index = page_result.page_number
                     predicted_labels = page_result.predictions
-                    if page_index < len(task.output.pages):
-                        task.output.pages[page_index].classifications = [
-                            ClassificationResult(
-                                label=label_mapper.get(
-                                    pred.label,
-                                    LabelDefinition(label=pred.label, definition=""),
-                                ),
-                                confidence=pred.confidence,
-                                model=self.model_definition,
-                            )
-                            for pred in predicted_labels
-                        ]
-            server_client.update_task_by_id(
+                    if page_index not in page_mapper:
+                        logger.warning(
+                            f"LLM returned page_number={page_index} not in current batch {list(page_mapper.keys())}, skipping."
+                        )
+                        continue
+                    page = page_mapper[page_index]
+                    page.classifications = page.classifications + [
+                        ClassificationResult(
+                            label=label_mapper.get(
+                                pred.label,
+                                LabelDefinition(label=pred.label, definition=""),
+                            ),
+                            confidence=pred.confidence,
+                            model=self.model_definition,
+                        )
+                        for pred in predicted_labels
+                    ]
+
+            updated = server_client.update_task_by_id(
                 task_id=task.id,
                 task_type=task.type,
                 update_data={
                     "status": TaskStatus.IN_PROGRESS.value,
                     "percentage": min(
                         0.99,
-                        (batch_page_index + self.batch_page_size) / len(task.output.pages),
+                        (batch_page_index + self.batch_page_size) / total_pages,
                     ),
+                    "output": task.output.model_dump(exclude_none=True),
                 },
             )
+            if updated.get("output"):
+                task = task.model_copy(update={"output": type(task.output).model_validate(updated["output"])})
         logger.info(f"Classification completed for {len(task.output.pages)} pages.")
         logger.debug(79 * "-")
         return task
+
+
+class InstructorTextClassificationModel(TextClassificationModel):
+    def __init__(
+        self,
+        client: openai.OpenAI = openai.OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL),
+        model_name: str = settings.OPENAI_MODEL,
+    ):
+        super().__init__(client=client, model_name=model_name)
+        self.client_instructor = instructor.from_openai(client, mode=instructor.Mode.MD_JSON)
+
+    def query_llm(self, page_text: str, labels: list[LabelDefinition]) -> BatchPredictionsOutput:  # ty:ignore[invalid-method-override]
+        batch_label_str = "\n".join([f"{label.label}: {label.definition}" for label in labels])
+
+        return self.client_instructor.create(
+            model=self.model_name,
+            messages=[
+                {
+                    "role": "system",
+                    "content": self.prompt.format(labels=batch_label_str),
+                },
+                {
+                    "role": "user",
+                    "content": page_text,
+                },
+            ],
+            response_model=BatchPredictionsOutput,
+        )

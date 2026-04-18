@@ -56,19 +56,18 @@ class ServerClient:
 
     def upsert_chunks(self, chunks: list[dict], content_hash: str, replace: bool = False) -> list[dict]:
         if replace:
-            self.request("DELETE", f"/api/ocr_chunks/content/{content_hash}")
-            logger.debug(f"[ServerClient] Cleared existing chunks for content_hash={content_hash!r}")
+            self.delete_by_content_hash(content_hash)
 
-        self.request("POST", "/api/ocr_chunks/bulk_upsert", json={"chunks": chunks})
-        response = self.request("GET", f"/api/ocr_chunks/content/{content_hash}")
+        self.request("POST", f"/api/ocr-chunks/{content_hash}", json={"chunks": chunks})
+        response = self.request("GET", f"/api/ocr-chunks/{content_hash}")
         return response.json()
 
     def delete_by_content_hash(self, content_hash: str) -> int:
-        response = self.request("DELETE", f"/api/ocr_chunks/content/{content_hash}")
-        return response.status_code  # ty:ignore[invalid-return-type]
+        response = self.request("DELETE", f"/api/ocr-chunks/{content_hash}")
+        return response.json().get("deleted", 0)
 
     def get_by_content_hash(self, content_hash: str) -> list[dict]:
-        response = self.request("GET", f"/api/ocr_chunks/content/{content_hash}")
+        response = self.request("GET", f"/api/ocr-chunks/{content_hash}")
         return response.json()
 
     def submit_task(

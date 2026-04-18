@@ -12,7 +12,7 @@ class ChunkWorker(BaseWorker):
             models=[],
             batch_size=batch_size,
             worker_weight=worker_weight,
-            file_connector=None,
+            file_connector=None,  # ty:ignore[invalid-argument-type]
             cache=None,
         )
         self.ocr_chunker = OcrChunker()  # You can specify models if needed
@@ -29,10 +29,17 @@ class ChunkWorker(BaseWorker):
         if not condition:
             logger.warning(f"Task {task.id} is not applicable for chunking. Skipping.")
             return task
+        if not task.output or not task.output.pages:
+            logger.warning(f"Task {task.id} has no output. Skipping.")
+            raise ValueError("Task output is required for chunking.")
+        if not task.content_hash:
+            logger.warning(f"Task {task.id} has no content hash. Skipping.")
+            raise ValueError("Task content hash is required for chunking.")
+
         logger.info(f"Processing task {task.id} with {len(task.output.pages)} pages for chunking.")
         chunks = self.ocr_chunker.chunk_pages(
             content_hash=task.content_hash,
-            pages=task.output.pages,  # type: ignore
+            pages=task.output.pages,
         )
         self.ocr_chunk_saver.save(chunks=chunks)
 

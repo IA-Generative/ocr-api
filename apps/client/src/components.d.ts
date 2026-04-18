@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AnnotationLabelModal: typeof import('./components/AnnotationLabelModal.vue')['default']
     AppFooter: typeof import('./components/AppFooter.vue')['default']
     AppHeader: typeof import('./components/AppHeader.vue')['default']
     AppToaster: typeof import('./components/AppToaster.vue')['default']
@@ -35,6 +36,7 @@ declare module 'vue' {
     EntityExtraction: typeof import('./components/EntityExtraction.vue')['default']
     InfoBulle: typeof import('./components/InfoBulle.vue')['default']
     InfoTooltip: typeof import('./components/InfoTooltip.vue')['default']
+    LayoutDetailModal: typeof import('./components/LayoutDetailModal.vue')['default']
     OcrChatbot: typeof import('./components/OcrChatbot.vue')['default']
     OcrImageViewer: typeof import('./components/OcrImageViewer.vue')['default']
     OcrMetricsModal: typeof import('./components/OcrMetricsModal.vue')['default']
@@ -45,6 +47,7 @@ declare module 'vue' {
     OcrViewerModal: typeof import('./components/OcrViewerModal.vue')['default']
     OcrViewModeToggle: typeof import('./components/OcrViewModeToggle.vue')['default']
     PageClassificationPanel: typeof import('./components/PageClassificationPanel.vue')['default']
+    PredictionDetailModal: typeof import('./components/PredictionDetailModal.vue')['default']
     ProgressBar: typeof import('./components/ProgressBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
@@ -58,6 +61,7 @@ declare module 'vue' {
 
 // For TSX support
 declare global {
+  const AnnotationLabelModal: typeof import('./components/AnnotationLabelModal.vue')['default']
   const AppFooter: typeof import('./components/AppFooter.vue')['default']
   const AppHeader: typeof import('./components/AppHeader.vue')['default']
   const AppToaster: typeof import('./components/AppToaster.vue')['default']
@@ -81,6 +85,7 @@ declare global {
   const EntityExtraction: typeof import('./components/EntityExtraction.vue')['default']
   const InfoBulle: typeof import('./components/InfoBulle.vue')['default']
   const InfoTooltip: typeof import('./components/InfoTooltip.vue')['default']
+  const LayoutDetailModal: typeof import('./components/LayoutDetailModal.vue')['default']
   const OcrChatbot: typeof import('./components/OcrChatbot.vue')['default']
   const OcrImageViewer: typeof import('./components/OcrImageViewer.vue')['default']
   const OcrMetricsModal: typeof import('./components/OcrMetricsModal.vue')['default']
@@ -91,6 +96,7 @@ declare global {
   const OcrViewerModal: typeof import('./components/OcrViewerModal.vue')['default']
   const OcrViewModeToggle: typeof import('./components/OcrViewModeToggle.vue')['default']
   const PageClassificationPanel: typeof import('./components/PageClassificationPanel.vue')['default']
+  const PredictionDetailModal: typeof import('./components/PredictionDetailModal.vue')['default']
   const ProgressBar: typeof import('./components/ProgressBar.vue')['default']
   const RouterLink: typeof import('vue-router')['RouterLink']
   const RouterView: typeof import('vue-router')['RouterView']

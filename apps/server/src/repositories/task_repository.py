@@ -36,6 +36,7 @@ class TaskRepository:
             group_id=form_data.group_id,
             parameters=form_data.parameters,
             content_hash=form_data.content_hash,
+            parent_id=form_data.parent_id,
             created_at=int(time.time()),
             updated_at=int(time.time()),
         )

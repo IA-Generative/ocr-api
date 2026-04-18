@@ -142,11 +142,20 @@ export function useOcrReview (
       // page.private === false means either not set or explicitly shared — leave consent as null (neutral)
 
       if (page.classifications && page.classifications.length > 0) {
-        newClassifications.set(pageIdx, page.classifications.map(c => ({
+        // Preserve existing readonly (auto-predicted) labels for this page
+        const existingReadonly = (pageClassifications.value.get(pageIdx) ?? []).filter(l => l.readonly)
+        const annotationLabels: PageLabel[] = page.classifications.map(c => ({
           key: c.label,
           definition: c.description ?? '',
           predefined: false,
-        })))
+        }))
+        // Merge: readonly first, then annotation labels not already present
+        const readonlyKeys = new Set(existingReadonly.map(l => l.key))
+        const merged = [
+          ...existingReadonly,
+          ...annotationLabels.filter(l => !readonlyKeys.has(l.key)),
+        ]
+        newClassifications.set(pageIdx, merged)
       }
 
       // Separate original-bbox corrections from free drawn boxes (index === null)
@@ -194,6 +203,13 @@ export function useOcrReview (
     }
 
     corrections.value = newCorrections
+    // Merge: keep readonly labels from pages not covered by annotations
+    for (const [pageIdx, labels] of pageClassifications.value) {
+      const readonlyLabels = labels.filter(l => l.readonly)
+      if (readonlyLabels.length > 0 && !newClassifications.has(pageIdx)) {
+        newClassifications.set(pageIdx, readonlyLabels)
+      }
+    }
     pageClassifications.value = newClassifications
     pageConsents.value = newConsents
     pageDrawnBoxes.value = newDrawnBoxes

@@ -64,127 +64,146 @@ function onSave () {
 </script>
 
 <template>
-  <div class="w-72 shrink-0 rounded-2xl border border-slate-200 bg-white shadow-xl text-sm flex flex-col sticky top-4">
-    <!-- Header compact -->
-    <div class="flex items-center justify-between px-3 py-2.5 border-b border-slate-100">
+  <div class="w-72 shrink-0 rounded-2xl border border-slate-100 bg-white shadow-xl text-sm flex flex-col sticky top-4 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
       <div class="flex items-center gap-2">
         <span
           v-if="isDrawn"
-          class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700"
-        >✏️ Annotée</span>
-        <span v-else class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-          OCR
-        </span>
+          class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-600 tracking-wide uppercase"
+        >Annotée</span>
+        <span v-else class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 tracking-wide uppercase">OCR</span>
         <span
           class="font-bold tabular-nums text-sm"
           :class="confidenceColor(box.confidence)"
         >{{ (box.confidence * 100).toFixed(0) }}%</span>
       </div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-0.5">
         <button
-          class="rounded-lg p-1.5 transition-colors"
-          :class="isHidden ? 'bg-slate-700 text-white' : 'text-slate-400 hover:bg-slate-100'"
+          class="w-7 h-7 flex items-center justify-center rounded-lg transition-colors"
+          :class="isHidden ? 'bg-slate-800 text-white' : 'text-slate-400 hover:bg-slate-100'"
           :title="isHidden ? 'Afficher' : 'Masquer'"
           @click="emit('toggleVisibility')"
         >
-          <span :class="isHidden ? 'fr-icon-eye-line' : 'fr-icon-eye-off-line'" style="font-size:13px" aria-hidden="true" />
+          <span :class="isHidden ? 'fr-icon-eye-line' : 'fr-icon-eye-off-line'" style="font-size:12px" aria-hidden="true" />
         </button>
         <button
-          class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 transition-colors"
+          class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-colors"
           aria-label="Fermer"
           @click="emit('close')"
         >
-          <span class="fr-icon-close-line" style="font-size:13px" aria-hidden="true" />
+          <span class="fr-icon-close-line" style="font-size:12px" aria-hidden="true" />
         </button>
       </div>
     </div>
 
-    <div class="flex flex-col gap-3 p-3">
-      <!-- Texte original (non dessiné) -->
-      <div v-if="!isDrawn" class="rounded-lg bg-slate-50 border border-slate-100 px-2.5 py-2 flex items-start justify-between gap-2">
-        <p class="text-slate-500 italic text-xs leading-snug line-clamp-2 flex-1">{{ box.text || '—' }}</p>
+    <div class="flex flex-col gap-3 p-4">
+
+      <!-- Texte original -->
+      <div v-if="!isDrawn" class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 flex items-start justify-between gap-2">
+        <p class="text-slate-400 italic text-xs leading-relaxed line-clamp-2 flex-1">{{ box.text || '—' }}</p>
         <button
-          class="shrink-0 text-slate-300 hover:text-blue-500 transition-colors"
+          class="shrink-0 text-slate-300 hover:text-blue-400 transition-colors mt-0.5"
           title="Copier"
           @click="copyText()"
         >
-          <span class="fr-icon-draft-line" style="font-size:12px" aria-hidden="true" />
+          <span class="fr-icon-draft-line" style="font-size:11px" aria-hidden="true" />
         </button>
       </div>
 
-      <!-- Correction / saisie -->
+      <!-- Correction -->
       <textarea
         v-model="correctedText"
         rows="2"
-        class="w-full resize-none rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-slate-700 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition"
-        :placeholder="isDrawn ? 'Texte de la zone...' : 'Corriger le texte...'"
+        class="w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-700 text-xs outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition leading-relaxed"
+        :placeholder="isDrawn ? 'Texte de la zone…' : 'Corriger le texte…'"
       />
 
-      <!-- Toggles : privée + validation -->
-      <div class="rounded-xl border border-slate-100 bg-slate-50 divide-y divide-slate-100">
-        <!-- Privée -->
-        <div class="flex items-center justify-between px-3 py-2.5">
-          <div>
-            <p class="text-xs font-semibold text-slate-700">{{ isPrivate ? '🔒 Privée' : '🔓 Publique' }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">{{ isPrivate ? 'Exclue du réentraînement' : 'Partagée pour améliorer le modèle' }}</p>
-          </div>
-          <div
-            class="relative shrink-0 cursor-pointer rounded-full transition-colors duration-200"
-            style="width:40px;height:22px"
-            :style="{ backgroundColor: isPrivate ? '#f43f5e' : '#10b981' }"
-            @click.stop="isPrivate = !isPrivate"
-          >
-            <div
-              class="absolute top-px rounded-full bg-white shadow transition-transform duration-200"
-              style="width:18px;height:18px;top:2px"
-              :style="{ transform: isPrivate ? 'translateX(20px)' : 'translateX(2px)' }"
-            />
-          </div>
-        </div>
-        <!-- Validation OCR -->
-        <div v-if="!isDrawn" class="flex items-center justify-between px-3 py-2.5">
-          <div>
-            <p class="text-xs font-semibold text-slate-700">{{ validation === 'valid' ? '✅ Valide' : '❌ Invalide' }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">Qualité de la détection OCR</p>
-          </div>
-          <div
-            class="relative shrink-0 cursor-pointer rounded-full transition-colors duration-200"
-            style="width:40px;height:22px"
-            :style="{ backgroundColor: validation === 'valid' ? '#10b981' : '#ef4444' }"
-            @click.stop="validation = validation === 'valid' ? 'invalid' : 'valid'"
-          >
-            <div
-              class="absolute rounded-full bg-white shadow transition-transform duration-200"
-              style="width:18px;height:18px;top:2px"
-              :style="{ transform: validation === 'valid' ? 'translateX(20px)' : 'translateX(2px)' }"
-            />
+      <!-- Segment controls -->
+      <div class="flex flex-col gap-2">
+
+        <!-- Données -->
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 w-16 shrink-0">Données</span>
+          <div class="flex flex-1 rounded-xl overflow-hidden border border-slate-200 text-[11px] font-semibold">
+            <button
+              class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors"
+              :class="!isPrivate
+                ? 'bg-emerald-500 text-white'
+                : 'bg-white text-slate-400 hover:bg-slate-50'"
+              @click.stop="isPrivate = false"
+            >
+              <span class="fr-icon-lock-unlock-line" style="font-size:10px" aria-hidden="true" />
+              Publique
+            </button>
+            <button
+              class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors border-l border-slate-200"
+              :class="isPrivate
+                ? 'bg-rose-500 text-white'
+                : 'bg-white text-slate-400 hover:bg-slate-50'"
+              @click.stop="isPrivate = true"
+            >
+              <span class="fr-icon-lock-line" style="font-size:10px" aria-hidden="true" />
+              Privée
+            </button>
           </div>
         </div>
+
+        <!-- Détection -->
+        <div v-if="!isDrawn" class="flex items-center gap-3">
+          <span class="text-xs text-slate-400 w-16 shrink-0">Détection</span>
+          <div class="flex flex-1 rounded-xl overflow-hidden border border-slate-200 text-[11px] font-semibold">
+            <button
+              class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors"
+              :class="validation === 'valid'
+                ? 'bg-emerald-500 text-white'
+                : 'bg-white text-slate-400 hover:bg-slate-50'"
+              @click.stop="validation = 'valid'"
+            >
+              <span class="fr-icon-checkbox-circle-line" style="font-size:10px" aria-hidden="true" />
+              Valide
+            </button>
+            <button
+              class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors border-l border-slate-200"
+              :class="validation === 'invalid'
+                ? 'bg-red-500 text-white'
+                : 'bg-white text-slate-400 hover:bg-slate-50'"
+              @click.stop="validation = 'invalid'"
+            >
+              <span class="fr-icon-close-circle-line" style="font-size:10px" aria-hidden="true" />
+              Invalide
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <!-- Actions -->
-      <div class="flex gap-2">
+      <div class="flex gap-2 pt-1">
         <button
           class="flex-1 flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all"
           :class="justSaved
             ? 'bg-emerald-500 text-white'
             : isDirty
               ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-slate-100 text-slate-400 cursor-default'"
+              : 'bg-slate-100 text-slate-300 cursor-default'"
           :disabled="!isDirty && !justSaved"
           @click="onSave"
         >
-          <span :class="justSaved ? 'fr-icon-check-line' : 'fr-icon-save-line'" style="font-size:12px" aria-hidden="true" />
+          <span :class="justSaved ? 'fr-icon-check-line' : 'fr-icon-save-line'" style="font-size:11px" aria-hidden="true" />
           {{ justSaved ? 'Enregistré !' : 'Enregistrer' }}
         </button>
         <button
           v-if="isDrawn"
-          class="flex items-center justify-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-50 hover:border-red-400 transition-all"
+          class="w-9 flex items-center justify-center rounded-xl border border-red-100 text-red-300 hover:bg-red-50 hover:border-red-300 hover:text-red-500 transition-all"
+          title="Supprimer"
           @click="emit('delete')"
         >
           <span class="fr-icon-delete-line" style="font-size:12px" aria-hidden="true" />
         </button>
       </div>
+
     </div>
   </div>
 </template>
