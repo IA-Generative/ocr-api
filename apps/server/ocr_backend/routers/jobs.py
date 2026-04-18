@@ -27,7 +27,7 @@ from src.schemas.task import (
     TaskUpdateForm,
     CeleryTaskName,
 )
-from celery import chain
+from celery import chain, group
 from src.services.task_service import TaskService
 from src.connector.db_connector import AsyncSessionLocal
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -130,7 +130,7 @@ async def upload_file(
         db=db_session,
         user_id=ctx.user_id,
         form_data=TaskForm(
-            type=task_operation.value,
+            type=CeleryTaskName.OCR_TASK.value,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
             extras=extras,
@@ -200,10 +200,21 @@ async def upload_file(
             args=[task_data.model_dump()],
             task_id=str(task_data.id),
         )
-        if task_name and task_name != CeleryTaskName.OCR_TASK:
-            chain(ocr_sig, celery_app.signature(task_name.value)).apply_async()
+        ocr_chunk_sig = celery_app.signature(CeleryTaskName.OCR_CHUNK_TASK.value)
+
+        if task_name and task_name == CeleryTaskName.PAGE_TEXT_CLASSIFICATION_TASK:
+            # Classification et chunk en parallèle après l'OCR
+            classification_sig = celery_app.signature(task_name.value)
+            chain(ocr_sig, group(ocr_chunk_sig, classification_sig)).apply_async()
+        elif task_name and task_name not in (
+            CeleryTaskName.OCR_TASK,
+            CeleryTaskName.OCR_CHUNK_TASK,
+        ):
+            # Entity extraction (ou autre) dépend du chunk
+            chain(ocr_sig, ocr_chunk_sig, celery_app.signature(task_name.value)).apply_async()
         else:
-            ocr_sig.apply_async()
+            # OCR seul → toujours suivi du chunk
+            chain(ocr_sig, ocr_chunk_sig).apply_async()
 
         return task_data
 

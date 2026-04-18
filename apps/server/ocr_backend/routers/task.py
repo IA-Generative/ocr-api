@@ -250,10 +250,19 @@ async def delete_task_by_id(
     db: DbSessionDep,
     task_service: TaskServiceDep,
 ):
-    """Supprime une tâche"""
+    """Supprime une tâche et ses sous-tâches"""
     task = await get_task_by_id_internal(task_id, db, task_service)
     if task.user_id != ctx.user_id and not ctx.is_admin:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    # Supprimer les tâches enfants d'abord
+    children = await task_service.get_tasks_by_parent_id(db, task.id)
+    for child in children:
+        await task_service.delete_task_by_id(db, child.id, child.type)
+        try:
+            s3_client_connector.delete_by_task_id(user_id=child.user_id, task_id=child.id)
+        except Exception as e:
+            logger.error(f"Error occurred while deleting child task {child.id} from S3: {e}")
 
     await task_service.delete_task_by_id(db, task.id, task.type)
 

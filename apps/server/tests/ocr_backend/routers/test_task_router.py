@@ -17,9 +17,7 @@ app.include_router(task_router)
 client = TestClient(app)
 
 
-def create_mock_context(
-    is_admin: bool = False, user_id: str = "test-user-id"
-) -> RequestContext:
+def create_mock_context(is_admin: bool = False, user_id: str = "test-user-id") -> RequestContext:
     """Helper pour créer un contexte mocké"""
     ctx = MagicMock(spec=RequestContext)
     ctx.is_admin = is_admin
@@ -165,9 +163,7 @@ def test_get_task_by_user(mock_token_verifier, mock_get_service):
 
     # Configure les mocks
     mock_service = MagicMock(spec=TaskService)
-    mock_service.get_tasks_by_user_id = AsyncMock(
-        return_value=[mock_task_1, mock_task_2]
-    )
+    mock_service.get_tasks_by_user_id = AsyncMock(return_value=[mock_task_1, mock_task_2])
     mock_service.count_tasks_by_user_id = AsyncMock(return_value=2)
     mock_get_service.return_value = mock_service
 
@@ -255,9 +251,7 @@ def test_delete_tasks_by_date_and_status_success(
 
         assert response.status_code == 204
         for task in mock_tasks:
-            mock_s3.delete_by_task_id.assert_any_call(
-                user_id=task.user_id, task_id=task.id
-            )
+            mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
 
         # Test avec rôle user (pas admin) - 403
         mock_ctx.is_admin = False

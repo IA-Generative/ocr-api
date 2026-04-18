@@ -9,36 +9,22 @@ from src.schemas.task import (
 from celery import Task as CeleryTask
 
 
-from business.classification.models.text import (
-    InstructorTextClassificationModel,
-)
-from business.classification.worker import ClassificationWorker
+from business.chunks.worker import ChunkWorker
 
 from services.utils.validation import validate_task
 from services.client.tools import (
-    openai_client,
-    file_connector,
-    openai_settings,
     server_client,
 )
 
 
-model = InstructorTextClassificationModel(
-    client=openai_client,
-    model_name=openai_settings.OPENAI_MODEL,
-)
-
-page_classification_worker = ClassificationWorker(
-    name="page-text-classification-worker",
+chunk_worker = ChunkWorker(
+    name="chunk-ocr-worker",
     batch_size=1,
     worker_weight=1,
-    models=[model],
-    file_connector=file_connector,
-    cache=None,
 )
 
 
-class ClassificationTask(CeleryTask):
+class ChunkerWorker(CeleryTask):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         logger.error(f"Task {task_id} failed with error: {exc}")
         logger.error(f"Traceback: {einfo.traceback}")
@@ -48,11 +34,11 @@ class ClassificationTask(CeleryTask):
 
 
 @celery_app.task(
-    name=CeleryTaskName.PAGE_TEXT_CLASSIFICATION_TASK.value,
+    name=CeleryTaskName.OCR_CHUNK_TASK.value,
     bind=True,
-    base=ClassificationTask,
+    base=ChunkerWorker,
 )
-def process_text_page_classification(self: ClassificationTask, task_info: dict | str) -> dict:
+def process_ocr_chunk(self: ChunkerWorker, task_info: dict | str) -> dict:
     task = validate_task(task_info)
     celery_task_id = self.request.id
     ocr_task_id = task.id  # L'ID de la tâche OCR parente
@@ -64,7 +50,7 @@ def process_text_page_classification(self: ClassificationTask, task_info: dict |
         server_client.create_task(
             TaskForm(
                 id=celery_task_id,
-                type=CeleryTaskName.PAGE_TEXT_CLASSIFICATION_TASK.value,
+                type=CeleryTaskName.OCR_CHUNK_TASK.value,
                 group_id=task.group_id,
                 status=TaskStatus.STARTED.value,
                 percentage=0.0,
@@ -80,11 +66,11 @@ def process_text_page_classification(self: ClassificationTask, task_info: dict |
     task.id = celery_task_id  # type: ignore
 
     try:
-        result = model.process(task=task)
+        result = chunk_worker.process_task(task=task)
         # Update parent OCR task with completed status and classification output
         server_client.update_task_by_id(
             task_id=ocr_task_id,
-            task_type=TaskOperation.PAGE_CLASSIFICATION.value,
+            task_type=TaskOperation.CHUNK_OCR.value,
             update_data={
                 "status": TaskStatus.COMPLETED.value,
                 "percentage": 1.0,
@@ -95,7 +81,7 @@ def process_text_page_classification(self: ClassificationTask, task_info: dict |
     except Exception as e:
         server_client.update_task_by_id(
             task_id=ocr_task_id,
-            task_type=TaskOperation.PAGE_CLASSIFICATION.value,
+            task_type=TaskOperation.CHUNK_OCR.value,
             update_data={
                 "status": TaskStatus.FAILED.value,
                 "extras": {"error": str(e)},

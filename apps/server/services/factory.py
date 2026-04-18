@@ -4,7 +4,7 @@ from services.base.pipeline import Pipeline
 from business.cache.sql_cache import TaskCache
 
 # Models
-from business.paddleocr2.models.paddle import PaddleInferOCR2
+from business.paddleocr2.models.paddle import PaddleInferOCR2, LayoutModel
 from business.llm.models.template import FormFieldExtractor
 
 # Workers
@@ -53,6 +53,7 @@ def load_worker(
 
     #################    MODELS   ####################
     ocr_model = PaddleInferOCR2(PaddleSetting().PADDLE_PDX_CACHE_HOME)
+    layout_model = LayoutModel()
     from_text_field_extractor = FormFieldExtractor(client=openai_client, model_name=vision_model_name)
     ##################################################
 
@@ -60,7 +61,7 @@ def load_worker(
     default_worker = DefaultFileProcessWorker(
         name="default-worker",
         file_connector=s3_client_connector,
-        models=[ocr_model],
+        models=[ocr_model, layout_model],
         batch_size=2,
         worker_weight=worker_weight,
         cache=cache,
@@ -90,7 +91,7 @@ def load_worker(
     any_file_worker = AnyFileProcessWorker(
         name="any-file-worker",
         file_connector=s3_client_connector,
-        models=[ocr_model],
+        models=[ocr_model, layout_model],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,

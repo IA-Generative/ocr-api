@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import type { PageLabel } from '@/interfaces/classification'
 import { isValidSlug, toSlug } from '@/interfaces/classification'
+import PredictionDetailModal from '@/components/PredictionDetailModal.vue'
+import AnnotationLabelModal from '@/components/AnnotationLabelModal.vue'
 
 const props = defineProps<{
   modelValue: PageLabel[]
@@ -14,6 +16,10 @@ const emit = defineEmits<{
   'update:consentForTraining': [value: boolean | null]
   'save': []
 }>()
+
+// --- Detail modal ---
+const detailLabel = ref<PageLabel | null>(null)
+const editLabel = ref<PageLabel | null>(null)
 
 // --- Free-form form state ---
 const freeKey = ref('')
@@ -53,6 +59,22 @@ function removeLabel (key: string) {
   emit('update:modelValue', props.modelValue.filter(l => l.key !== key))
 }
 
+function onAnnotationSave (oldKey: string, updated: PageLabel) {
+  emit('update:modelValue', props.modelValue.map(l => l.key === oldKey ? updated : l))
+  editLabel.value = null
+}
+
+function onAnnotationDelete (key: string) {
+  emit('update:modelValue', props.modelValue.filter(l => l.key !== key))
+  editLabel.value = null
+}
+
+function onPredictionValidate (key: string, validation: 'valid' | 'invalid' | null) {
+  emit('update:modelValue', props.modelValue.map(l =>
+    l.key === key ? { ...l, validation } : l,
+  ))
+}
+
 function addFreeLabel () {
   if (!canAddFree.value) return
   emit('update:modelValue', [
@@ -79,54 +101,82 @@ function addFreeLabel () {
 
     <div class="p-3 flex flex-col gap-3">
 
-      <!-- Consentement : toggle -->
-      <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 flex items-center justify-between gap-3">
-        <div class="min-w-0">
-          <p class="text-xs font-semibold text-slate-700">
-            {{ consentForTraining === true ? '✅ Partage autorisé' : consentForTraining === false ? '🚫 Page exclue' : '⏳ Consentement non défini' }}
-          </p>
-          <p class="text-xs text-slate-400 mt-0.5">
-            {{ consentForTraining === true
-              ? 'Utilisée pour améliorer le modèle'
-              : consentForTraining === false
-                ? 'Exclue du réentraînement'
-                : 'Indiquez si cette page peut être partagée' }}
-          </p>
-        </div>
-        <div
-          class="relative shrink-0 cursor-pointer rounded-full transition-colors duration-200"
-          style="width:40px;height:22px"
-          :style="{ backgroundColor: consentForTraining === true ? '#10b981' : consentForTraining === false ? '#f43f5e' : '#cbd5e1' }"
-          @click.stop="emit('update:consentForTraining', consentForTraining === true ? false : true)"
-        >
-          <div
-            class="absolute rounded-full bg-white shadow transition-transform duration-200"
-            style="width:18px;height:18px;top:2px"
-            :style="{ transform: consentForTraining === true ? 'translateX(20px)' : 'translateX(2px)' }"
-          />
+      <!-- Consentement : segment control -->
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-400 w-16 shrink-0">Consentement</span>
+        <div class="flex flex-1 rounded-xl overflow-hidden border border-slate-200 text-[11px] font-semibold">
+          <button
+            class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors"
+            :class="consentForTraining === true ? 'bg-emerald-500 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'"
+            @click.stop="emit('update:consentForTraining', consentForTraining === true ? null : true)"
+          >
+            <span class="fr-icon-lock-unlock-line" style="font-size:10px" aria-hidden="true" />
+            Autorisé
+          </button>
+          <button
+            class="flex-1 py-1.5 flex items-center justify-center gap-1 transition-colors border-l border-slate-200"
+            :class="consentForTraining === false ? 'bg-rose-500 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'"
+            @click.stop="emit('update:consentForTraining', consentForTraining === false ? null : false)"
+          >
+            <span class="fr-icon-lock-line" style="font-size:10px" aria-hidden="true" />
+            Exclu
+          </button>
         </div>
       </div>
+      <p class="text-[10px] pl-[76px] -mt-1.5">
+        <span v-if="consentForTraining === true" class="text-emerald-600 font-medium">✓ Page partagée pour améliorer le modèle</span>
+        <span v-else-if="consentForTraining === false" class="text-rose-500 font-medium">✗ Page exclue du réentraînement</span>
+        <span v-else class="text-slate-400 italic">Aucun consentement défini</span>
+      </p>
 
       <!-- Labels actifs -->
       <div v-if="modelValue.length" class="flex flex-wrap gap-1.5">
         <div
           v-for="label in modelValue"
           :key="label.key"
-          class="group flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium"
-          :class="label.predefined ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-violet-50 border-violet-200 text-violet-700'"
-          :title="label.definition"
+          class="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium"
+          :class="[
+            label.readonly
+              ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100 cursor-pointer'
+              : label.predefined
+                ? 'group bg-blue-50 border-blue-200 text-blue-700 cursor-pointer hover:bg-blue-100'
+                : 'group bg-violet-50 border-violet-200 text-violet-700 cursor-pointer hover:bg-violet-100',
+          ]"
+          :title="label.readonly ? 'Prédiction automatique — cliquez pour les détails' : 'Cliquez pour modifier'"
+          @click="label.readonly ? (detailLabel = label) : (editLabel = label)"
         >
+          <span v-if="label.readonly" class="fr-icon-robot-2-line shrink-0" style="font-size:9px" aria-hidden="true" />
+          <span v-if="label.readonly && label.validation === 'valid'" class="text-emerald-500 shrink-0" style="font-size:9px" aria-hidden="true">✓</span>
+          <span v-if="label.readonly && label.validation === 'invalid'" class="text-red-400 shrink-0" style="font-size:9px" aria-hidden="true">✗</span>
           <span>{{ label.key }}</span>
           <button
+            v-if="!label.readonly"
             class="opacity-40 group-hover:opacity-100 hover:text-red-500 transition-opacity"
             aria-label="Retirer"
-            @click="removeLabel(label.key)"
+            @click.stop="removeLabel(label.key)"
           >
             <span class="fr-icon-close-line" style="font-size:9px" aria-hidden="true" />
           </button>
         </div>
       </div>
       <p v-else class="text-slate-400 italic text-xs text-center py-1">Aucune classification</p>
+
+      <!-- Modal détail prédiction (hors flux DOM via Teleport interne) -->
+      <PredictionDetailModal
+        v-if="detailLabel"
+        :label="detailLabel"
+        @close="detailLabel = null"
+        @validate="onPredictionValidate"
+      />
+
+      <!-- Modal édition annotation manuelle -->
+      <AnnotationLabelModal
+        v-if="editLabel"
+        :label="editLabel"
+        @close="editLabel = null"
+        @save="onAnnotationSave"
+        @delete="onAnnotationDelete"
+      />
 
       <!-- Labels prédéfinis -->
       <div v-if="predefinedLabels?.length" class="flex flex-wrap gap-1.5">

@@ -90,6 +90,26 @@ const totalBoxes = computed(() =>
 
 // Load existing annotations from API on mount
 onMounted(async () => {
+  // Pre-populate classifications from page data (e.g. after automatic classification)
+  const initialClassifications = new Map<number, PageLabel[]>()
+  for (const page of pages) {
+    const classifs = (page as any).classifications
+    if (classifs && classifs.length > 0) {
+      const mapped = classifs.map((c: any) => ({
+          key: c.label?.label ?? c.label,
+          definition: c.label?.definition ?? '',
+          predefined: false,
+          readonly: true,
+          confidence: c.confidence,
+          model: c.model ?? undefined,
+        }))
+      initialClassifications.set(page.page, mapped)
+    }
+  }
+  if (initialClassifications.size > 0) {
+    pageClassifications.value = initialClassifications
+  }
+
   if (!props.contentHash) return
   const existing = await annotationsStore.fetchByHash(props.contentHash)
   if (existing) loadAnnotations(existing)

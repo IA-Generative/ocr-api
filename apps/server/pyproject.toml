@@ -25,6 +25,7 @@ dependencies = [
     "pydantic>=2.13.0",
     "loguru>=0.7.3",
     "fastapi>=0.135.3",
+    "instructor>=1.15.1",
 ]
 
 [dependency-groups]

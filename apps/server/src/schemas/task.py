@@ -75,6 +75,8 @@ class TaskOperation(StrEnum):
     VECTORIZE = "vectorize"
     VLM_OCR = "vlm_ocr"
     PAGE_CLASSIFICATION = "page_classification"
+    CHUNK_OCR = "chunk_ocr"
+    ENTITY_EXTRACTION = "entity_extraction"
 
 
 class CeleryTaskName(StrEnum):
@@ -82,6 +84,7 @@ class CeleryTaskName(StrEnum):
     PAGE_CLASSIFICATION_TASK = "tasks.page_classification"
     PAGE_TEXT_CLASSIFICATION_TASK = "tasks.page_text_classification"
     DISPATCH_TASK = "tasks.dispatch"
+    OCR_CHUNK_TASK = "tasks.ocr_chunk"
 
 
 class TaskStatsGlobal(BaseModel):

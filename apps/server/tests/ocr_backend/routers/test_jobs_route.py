@@ -13,7 +13,7 @@ from ocr_backend.connectors import s3_client_connector
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 from src.connector.db_connector import Base
 
-from src.schemas.task import TaskModel, TaskStatus, TaskOperation
+from src.schemas.task import TaskModel, TaskStatus, TaskOperation, CeleryTaskName
 from src.schemas.input import RegionOfInterest
 
 
@@ -144,7 +144,7 @@ def test_upload_files_success(client):
     assert response_model.status == TaskStatus.QUEUED.value
     assert response_model.user_id == user_id
     assert response_model.group_id == "TEST_GROUP"
-    assert response_model.type == TaskOperation.DEFAULT.value
+    assert response_model.type == CeleryTaskName.OCR_TASK.value
 
     # Verify file is saved in Minio
     task_id = response_model.id
@@ -230,7 +230,7 @@ def test_upload_files_valid_pdf_input_string(client):
     assert response_model.status == TaskStatus.QUEUED.value
     assert response_model.user_id == user_id
     assert response_model.group_id == "TEST_GROUP"
-    assert response_model.type == TaskOperation.SAVE_TEMPLATE.value
+    assert response_model.type == CeleryTaskName.OCR_TASK.value
 
 
 def test_upload_files_valid_image_input_string(client):
@@ -262,7 +262,7 @@ def test_upload_files_valid_image_input_string(client):
     assert response_model.status == TaskStatus.QUEUED.value
     assert response_model.user_id == "test_user"
     assert response_model.group_id == "TEST_GROUP"
-    assert response_model.type == TaskOperation.SAVE_TEMPLATE.value
+    assert response_model.type == CeleryTaskName.OCR_TASK.value
 
 
 def test_upload_files_valid_pdf_raised_error(client):

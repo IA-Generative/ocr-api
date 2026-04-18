@@ -4,6 +4,7 @@ from time import time
 from PIL import Image
 
 from paddleocr import PaddleOCR, LayoutDetection
+from business.paddleocr2.configs.paddle import PaddleSetting
 import numpy as np
 
 from services.base.model import BaseModelPrediction
@@ -13,8 +14,11 @@ from src.schemas.box import Bbox
 from src.logger import logger
 
 
+paddle_settings = PaddleSetting()
+
+
 class PaddleInferOCR2(BaseModelPrediction):
-    def __init__(self, path_model: str):
+    def __init__(self, path_model: str = paddle_settings.PADDLE_PDX_CACHE_HOME):
         def _maybe_dir(p: str, sub: str):
             if not p:
                 return None
@@ -32,7 +36,7 @@ class PaddleInferOCR2(BaseModelPrediction):
             use_textline_orientation=False,
             use_doc_unwarping=False,
             lang="fr",
-            ocr_version="PP-OCRv3",
+            ocr_version=paddle_settings.OCR_VERSION,
         )
 
     def batch_predict(self, images: list[Image.Image], pages: list = [], *args, **kwargs) -> list[Page]:
@@ -84,7 +88,7 @@ class PaddleInferOCR2(BaseModelPrediction):
 
 
 class LayoutModel(BaseModelPrediction):
-    def __init__(self, model_name: str = "PP-DocLayoutV2"):
+    def __init__(self, model_name: str = paddle_settings.LAYOUT_MODEL_NAME):
         # Placeholder for future layout model initialization
         self.model = LayoutDetection(model_name=model_name)  # Hypothetical layout detection model
 

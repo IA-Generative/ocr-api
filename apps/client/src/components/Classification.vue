@@ -96,8 +96,9 @@
       </div>
     </div>
 
-    <!-- Résultat CLASSIFICATION : viewer OCR -->
-    <div v-if="taskOutput && !isPolling">
+    <!-- Résultat CLASSIFICATION -->
+    <div v-if="taskOutput && !isPolling" class="flex flex-col gap-6">
+      <ClassificationResult v-if="classificationPages.length > 0" :pages="classificationPages" />
       <OcrViewer :data="taskOutput" />
     </div>
 
@@ -116,6 +117,8 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
+import ClassificationResult from '@/components/ClassificationResult.vue'
+import type { ClassificationPage } from '@/components/ClassificationResult.vue'
 import DocTypeModal from '@/components/DocTypeModal.vue'
 import type { DocumentType } from '@/components/DocTypeModal.vue'
 import createHttpClient from '@/api/http-client'
@@ -175,7 +178,7 @@ async function pollTask(taskId: string) {
     const { data: task } = await http.get<any>(`/tasks/${taskId}`)
     status.value = task.status
 
-    if (task.status === 'in_progress') {
+    if (task.status === 'in_progress' || task.status === 'started') {
       progressPercent.value = Math.round((task.percentage ?? 0) * 100)
       pollingTimer = setTimeout(() => pollTask(taskId), 2000)
     }
@@ -245,4 +248,27 @@ onBeforeUnmount(() => {
 const uploadLabel = 'Téléverser un document'
 const uploadHint = 'Formats acceptés : PDF, JPG, PNG'
 const uploadAccept = '.pdf,.jpg,.png'
+
+const classificationPages = computed<ClassificationPage[]>(() => {
+  if (!taskOutput.value) return []
+  return taskOutput.value.pages
+    .filter((p: any) => p.classifications && p.classifications.length > 0)
+    .map((p: any) => {
+      const classifications = p.classifications.map((c: any) => ({
+        label: c.label,
+        confidence: c.confidence,
+        scorePercent: Math.round(c.confidence * 100),
+      }))
+      const topLabel = classifications.reduce(
+        (best: any, c: any) => (c.confidence > (best?.confidence ?? -1) ? c : best),
+        null as any,
+      )?.label?.label ?? null
+      return {
+        page: p.page,
+        pageUrl: p.page_url ?? null,
+        topLabel,
+        classifications,
+      }
+    })
+})
 </script>

@@ -3,12 +3,10 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
-import useToaster from '@/composables/use-toaster'
 
 type TaskModel = components['schemas']['TaskModel']
 
 const http = createHttpClient(OCR_API_URL)
-const { addErrorMessage, addSuccessMessage } = useToaster()
 
 export const useTasksStore = defineStore('tasks', () => {
   // paginated shape: { items: TaskModel[], page, page_size, total }
@@ -55,18 +53,10 @@ export const useTasksStore = defineStore('tasks', () => {
 
   async function deleteTask (taskId: string) {
     if (!taskId) throw new Error('taskId required')
-    try {
-      // Attempt to delete; API may not support delete — handle errors gracefully
-      await http.delete(`/tasks/${encodeURIComponent(taskId)}`)
-      addSuccessMessage({ title: 'Supprimé', description: `Tâche ${taskId} supprimée` })
-      // remove locally if present
-      const items = userTasksPaginated.value?.items ?? []
-      userTasksPaginated.value = { ...userTasksPaginated.value, items: items.filter((t: any) => t.id !== taskId), total: Math.max(0, (userTasksPaginated.value.total || items.length) - 1) }
-    }
-    catch (err: any) {
-      addErrorMessage({ title: 'Erreur :', description: `Impossible de supprimer la tâche: ${err?.message ?? err}` })
-      throw err
-    }
+    await http.delete(`/tasks/${encodeURIComponent(taskId)}`)
+    // remove locally if present
+    const items = userTasksPaginated.value?.items ?? []
+    userTasksPaginated.value = { ...userTasksPaginated.value, items: items.filter((t: any) => t.id !== taskId), total: Math.max(0, (userTasksPaginated.value.total || items.length) - 1) }
   }
 
   function stopPollingUserTasks () {

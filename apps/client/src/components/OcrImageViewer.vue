@@ -3,6 +3,7 @@ import type { CSSProperties } from 'vue'
 import type { components } from '@/api/types/api.schema'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import BboxDrawingOverlay from '@/components/BboxDrawingOverlay.vue'
+import LayoutDetailModal from '@/components/LayoutDetailModal.vue'
 import type { DrawnBox } from '@/composables/use-box-drawing'
 import type { BoxMeta } from '@/composables/use-ocr-review'
 
@@ -131,6 +132,8 @@ function getLayoutColor (label: string) {
   return LAYOUT_COLORS[label?.toLowerCase()] ?? LAYOUT_DEFAULT_COLOR
 }
 
+const selectedLayout = ref<Layout | null>(null)
+
 onMounted(() => {
   if (!imgRef.value) return
   imgDimensions.value = { width: imgRef.value.clientWidth, height: imgRef.value.clientHeight }
@@ -208,8 +211,9 @@ onBeforeUnmount(() => {
           backgroundColor: getLayoutColor(layout.label).bg,
           border: `1.5px solid ${getLayoutColor(layout.label).border}`,
         }"
-        class="layout-box group"
+        class="layout-box group cursor-pointer"
         :title="`${layout.label} — score : ${Math.round(layout.score * 100)} %`"
+        @click.stop="selectedLayout = layout"
       >
         <span
           class="layout-label-badge"
@@ -244,6 +248,12 @@ onBeforeUnmount(() => {
     <BboxDrawingOverlay
       v-if="drawingMode && (!viewMode || viewMode === 'ocr')"
       @drawn="emit('drawn', $event)"
+    />
+
+    <LayoutDetailModal
+      v-if="selectedLayout"
+      :layout="selectedLayout"
+      @close="selectedLayout = null"
     />
   </div>
 </template>

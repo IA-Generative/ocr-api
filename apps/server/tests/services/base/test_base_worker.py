@@ -4,9 +4,14 @@ from PIL import Image
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.connector.s3_connector import S3Connector
-from services.base.worker import FileNotSupported, AnyFileProcessWorker, hash_file
+from services.base.worker import (
+    FileNotSupported,
+    AnyFileProcessWorker,
+    hash_file,
+    DefaultFileProcessWorker,
+)
 from src.schemas.input import InputForm
-from src.schemas.task import TaskForm, TaskModel, TaskStatus
+from src.schemas.task import TaskForm, TaskModel, TaskStatus, TaskOperation
 
 from services.client.server import ServerClient
 from src.schemas.output import OCRResult
@@ -102,7 +107,10 @@ def test_transform_content_content_type_image(
 
     worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     with open("tests/data/valid/identite.jpg", "rb") as f:
-        actual = worker.transform_content(task=dummy_task, content=f)
+        actual = worker.transform_content(
+            task=dummy_task,
+            content=f,  # ty:ignore[invalid-argument-type]
+        )
         assert isinstance(actual[0], Image.Image)
 
 
@@ -123,7 +131,7 @@ def test_transform_content_content_type_pdf(
         models=[mock_model],
     )
 
-    actual = worker.transform_content(task=dummy_task, content="tests/data/valid/cerfa_13750-05-1.pdf")
+    actual = worker.transform_content(task=dummy_task, content=b"tests/data/valid/cerfa_13750-05-1.pdf")
     assert isinstance(actual[0], Image.Image)
     assert len(actual) == 1
 
@@ -205,7 +213,7 @@ def test_worker_predict_on_pages_raise_exception(
     mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
 ):
     class MockeExceptionWorker(AnyFileProcessWorker):
-        def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:
+        def predict_on_pages(self, task: TaskModel, pages: list[Image.Image]) -> TaskModel:  # ty:ignore[invalid-method-override]
             raise Exception("Mocked exception")
 
     worker = MockeExceptionWorker(name="test", file_connector=mock_minio, models=[mock_model])
@@ -258,3 +266,95 @@ def test_base_worker_is_applicable(
 
     dummy_task.input.content_type = "text/plain"
     assert worker.is_applicable(task=dummy_task) is False
+
+
+def test_base_worker_transform_content_no_input(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
+    dummy_task.input = None
+    with pytest.raises(ValueError):
+        worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+        worker.transform_content(task=dummy_task, content=b"fake-content")
+
+
+def test_predict_on_pages_no_input_or_no_output(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    dummy_task.output = None
+    with pytest.raises(ValueError):
+        worker.predict_on_pages(task=dummy_task, pages=[])
+
+    dummy_task.input = None
+
+    with pytest.raises(ValueError):
+        worker.predict_on_pages(task=dummy_task, pages=[])
+
+
+def test__process_task_no_input(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    dummy_task.input = None
+    with pytest.raises(ValueError):
+        worker._process_task(task=dummy_task)
+
+
+def test__process_task_no_output(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    dummy_task.output = None
+    with pytest.raises(ValueError):
+        worker._process_task(task=dummy_task)
+
+
+def test__process_task(
+    mock_minio: S3Connector,
+    mock_model: MockeBaseModelPrediction,
+    dummy_task: TaskModel,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    monkeypatch.setattr(
+        mock_minio,
+        "get_by_task_id",
+        lambda user_id, task_id: "tests/data/valid/identite.jpg",
+    )
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    dummy_task.input = InputForm(
+        storage_file_path="tests/data/valid/identite.jpg",
+        raw_filename="identite.jpg",
+        ext=".jpg",
+        size=123456,
+        content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
+    )
+    dummy_task.output = OCRResult(
+        type="mix",
+        model_name="1",
+        created_at=2,
+        updated_at=3,
+        version="1",
+        total_pages=1,
+        pages=[],
+    )
+
+    actual = worker._process_task(task=dummy_task)
+    assert actual is not None
+
+
+def test_any_file_process_worker_set_extras(
+    mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel
+):
+    worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    actual = worker.is_applicable(task=dummy_task)
+    assert not actual
+
+    dummy_task.input = None
+    actual = worker.is_applicable(task=dummy_task)
+    assert not actual
+
+
+def test_default_file_processor(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
+    worker = DefaultFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
+    actual = worker.is_applicable(task=dummy_task)
+    assert not actual
+
+    dummy_task.type = TaskOperation.DEFAULT.value
+    actual = worker.is_applicable(task=dummy_task)
+    assert actual
