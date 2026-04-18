@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.4.1](https://github.com/IA-Generative/ocr-api/compare/v1.4.0...v1.4.1) (2026-04-18)
+
+
+### Bug Fixes
+
+* **task:** add user_id to task forms and processing functions ([4f8457c](https://github.com/IA-Generative/ocr-api/commit/4f8457cd9466f6a687f9671536597250c69f3db8))
+
 ## [1.4.0](https://github.com/IA-Generative/ocr-api/compare/v1.3.0...v1.4.0) (2026-04-18)
 
 
