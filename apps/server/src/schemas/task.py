@@ -38,6 +38,7 @@ class TaskForm(BaseModel):
     content_hash: Optional[str] = None
     parameters: Optional[dict[str, Any]] = None
     parent_id: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 class TaskUpdateForm(BaseModel):
@@ -52,6 +53,7 @@ class TaskUpdateForm(BaseModel):
     content_hash: Optional[str] = None
     parameters: Optional[dict[str, Any]] = None
     parent_id: Optional[str] = None
+    user_id: Optional[str] = None
 
 
 class TaskStatus(StrEnum):

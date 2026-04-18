@@ -29,7 +29,7 @@ class TaskRepository:
             type=form_data.type,
             status=TaskStatus.CREATED.value,
             percentage=0.0,
-            user_id=user_id,
+            user_id=user_id if not form_data.user_id else form_data.user_id,
             input=form_data.input.model_dump() if form_data.input else None,
             output=form_data.output.model_dump() if form_data.output else None,
             extras=form_data.extras,
