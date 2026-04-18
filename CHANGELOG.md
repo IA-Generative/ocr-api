@@ -29,6 +29,15 @@
 - code clean
 - :art: change minio vars
 
+## [1.3.0](https://github.com/IA-Generative/ocr-api/compare/v1.2.5...v1.3.0) (2026-04-18)
+
+
+### Features
+
+* **classification:** add classification and layout ([882a9a6](https://github.com/IA-Generative/ocr-api/commit/882a9a64a35905c2f0960f630261276eaf4f1a6b))
+* **classification:** add classification part ([788cf14](https://github.com/IA-Generative/ocr-api/commit/788cf1448a5f49abb4535cb32d28ba6b3467795d))
+* **classification:** implement text classification model and related tasks ([3ef3e51](https://github.com/IA-Generative/ocr-api/commit/3ef3e516e3a9aad56c1f90979da3fce36274c731))
+
 ## [1.2.5](https://github.com/IA-Generative/ocr-api/compare/v1.2.4...v1.2.5) (2026-04-16)
 
 
