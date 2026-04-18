@@ -74,6 +74,7 @@ def process_text_page_classification(self: ClassificationTask, task_info: dict |
                 parent_id=ocr_task_id,
                 extras=task.extras,
                 content_hash=task.content_hash,
+                user_id=task.user_id,
             ).model_dump(exclude_none=True),
         )
 

@@ -60,6 +60,7 @@ def process_ocr_chunk(self: ChunkerWorker, task_info: dict | str) -> dict:
                 parent_id=ocr_task_id,
                 extras=task.extras,
                 content_hash=task.content_hash,
+                user_id=task.user_id,
             ).model_dump(exclude_none=True),
         )
 

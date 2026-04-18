@@ -57,6 +57,7 @@ def process_entity_extraction(self: EntityExtractionTask, task_info: dict | str)
                 parent_id=chunk_task_id,
                 extras=task.extras,
                 content_hash=task.content_hash,
+                user_id=task.user_id,
             ).model_dump(exclude_none=True),
         )
 
