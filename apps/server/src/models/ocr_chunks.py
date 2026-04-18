@@ -153,7 +153,8 @@ class OcrChunkRepository:
         self,
         content_hash: str,
         query_vector: List[float],
-        top_k: int = 5,
+        top_k: int | None = 5,
+        threshold: float | None = None,
     ) -> List[OcrChunkSearchResult]:
         """Return the top-k most similar chunks for a given file.
 
@@ -176,6 +177,11 @@ class OcrChunkRepository:
 
         scored.sort(key=lambda x: x[0], reverse=True)
 
+        if threshold is not None:
+            scored = [(score, chunk) for score, chunk in scored if score >= threshold]
+        if top_k is not None:
+            scored = scored[:top_k]
+
         return [
             OcrChunkSearchResult(
                 id=c.id,
@@ -186,7 +192,7 @@ class OcrChunkRepository:
                 model_name=c.model_name,
                 score=round(score, 6),
             )
-            for score, c in scored[:top_k]
+            for score, c in scored
         ]
 
 

@@ -10,6 +10,7 @@ export type EntityPrediction = {
   confidence: number
   value?: string | null
   bbox?: Bbox[] | null
+  pages?: number[] | null
 }
 
 export type PageSearchResult = { pageIdx: number; count: number; samples: string[] }
@@ -20,6 +21,7 @@ export function useOcrViewer(
   currentPage: Ref<number>,
   getAllBoxes: () => (Bbox | DrawnBox)[],
   getEntities: () => EntityPrediction[],
+  allEntities?: EntityPrediction[],
 ) {
   const viewMode = ref<'ocr' | 'layout' | 'entity'>('ocr')
 
@@ -76,6 +78,31 @@ export function useOcrViewer(
   const crossPageEntityResults = computed<PageEntitySearchResult[]>(() => {
     const q = entitySearchQuery.value.trim().toLowerCase()
     if (!q) return []
+
+    // Si les entités sont au niveau racine (avec champ pages), les regrouper par page
+    if (allEntities && allEntities.length > 0) {
+      const byPage = new Map<number, EntityPrediction[]>()
+      for (const e of allEntities) {
+        const hay = `${e.entity_name} ${e.value ?? ''}`.toLowerCase()
+        if (!hay.includes(q)) continue
+        const entityPages = e.pages?.length ? e.pages : [0]
+        for (const p of entityPages) {
+          if (!byPage.has(p)) byPage.set(p, [])
+          byPage.get(p)!.push(e)
+        }
+      }
+      return Array.from(byPage.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([pageIdx, matched]) => ({
+          pageIdx,
+          count: matched.length,
+          samples: matched
+            .slice(0, 3)
+            .map((e: EntityPrediction) => `${e.entity_name}${e.value ? ` : ${e.value}` : ''}`),
+        }))
+    }
+
+    // Fallback : entités au niveau page (legacy)
     return pages
       .map((page, pageIdx) => {
         const matching = ((page as any).entities ?? [] as EntityPrediction[]).filter(

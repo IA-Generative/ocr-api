@@ -83,6 +83,20 @@ class ServerClient:
         )
         return response.json()
 
+    def search_chunks(
+        self,
+        content_hash: str,
+        query_vector: list[float],
+        top_k: int | None = 5,
+        threshold: float | None = None,
+    ) -> list[dict]:
+        response = self.request(
+            "POST",
+            f"/api/ocr-chunks/{content_hash}/search",
+            json={"query_vector": query_vector, "top_k": top_k, "threshold": threshold},
+        )
+        return response.json()
+
 
 if __name__ == "__main__":
     client = ServerClient(

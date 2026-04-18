@@ -1,7 +1,8 @@
 import logging
-from typing import List, Literal, Optional, Annotated
+from typing import List, Literal, Optional, Annotated, AsyncGenerator
 
 
+import instructor
 from fastapi import APIRouter, Depends
 from openai import AsyncOpenAI
 from pydantic import BaseModel, Field
@@ -13,12 +14,19 @@ from src.config.openai import OpenAISettings
 from src.models.ocr_chunks import OcrChunkSearchResult, ocr_chunk_repo
 from src.services.task_service import TaskService
 from src.schemas.task import TaskOperation
-from src.connector.db_connector import get_async_session
+from src.connector.db_connector import AsyncSessionLocal
 
 
 TokenDep = Annotated[RequestContext, Depends(TokenVerifier)]
 TaskServiceDep = Annotated[TaskService, Depends(TaskService)]
-DbSessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+
+
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 router = APIRouter(tags=["Chat"])
 
@@ -27,6 +35,7 @@ _client = AsyncOpenAI(
     api_key=_openai_settings.OPENAI_API_KEY,
     base_url=_openai_settings.OPENAI_BASE_URL,
 )
+_instructor_client = instructor.from_openai(_client)
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +71,16 @@ class AskResponse(BaseModel):
     sources: List[UsedChunk] = Field(
         default_factory=list,
         description="OCR chunks injected as context, with their page numbers and bbox indices",
+    )
+
+
+class StructuredReply(BaseModel):
+    """Structured LLM response with source attribution."""
+
+    content: str = Field(description="La réponse à la question de l'utilisateur")
+    used_sources: List[int] = Field(
+        default_factory=list,
+        description="Indices (0-based) des sources effectivement utilisées pour formuler la réponse. Liste vide si aucune source n'est pertinente.",
     )
 
 
@@ -114,34 +133,49 @@ async def ask(
             f"Sources: {[{'page_nums': s.page_nums, 'bbox_indices': s.bbox_indices, 'text': s.text[:50]} for s in sources]}"
         )
         if sources:
-            context_text = "\n\n".join(f"[Pages {s.page_nums}, bboxes {s.bbox_indices}]\n{s.text}" for s in sources)
+            context_text = "\n\n".join(
+                f"[Source {i}] (Pages {s.page_nums}, bboxes {s.bbox_indices})\n{s.text}" for i, s in enumerate(sources)
+            )
             context_msg = {
                 "role": "system",
                 "content": (
-                    "Voici des extraits du document OCR pertinents pour répondre à la question :\n\n" + context_text
+                    "Voici des extraits du document OCR. Chaque extrait est identifié par un numéro de source.\n"
+                    "Utilise uniquement les extraits pertinents pour répondre.\n"
+                    "Dans used_sources, indique les indices des sources que tu as utilisées.\n\n" + context_text
                 ),
             }
             # Insert context right before the first user message
             first_user = next((i for i, m in enumerate(messages) if m["role"] == "user"), 0)
             messages.insert(first_user, context_msg)
     try:
-        completion = await _client.chat.completions.create(
+        structured_reply: StructuredReply = await _instructor_client.chat.completions.create(
             model=body.model,
             messages=messages,
+            response_model=StructuredReply,
         )
-        reply = completion.choices[0].message
+        reply_content = structured_reply.content
+        used_indices = [i for i in structured_reply.used_sources if isinstance(i, int) and 0 <= i < len(sources)]
     except Exception as e:
-        reply = ChatMessage(role="assistant", content=f"Error generating response: {str(e)}")
-        return AskResponse(message=reply, sources=[])
+        logger.error(f"LLM error: {e}")
+        return AskResponse(
+            message=ChatMessage(
+                role="assistant",
+                content=f"Error generating response: {str(e)}",
+            ),
+            sources=[],
+        )
+
+    filtered_sources = [sources[i] for i in used_indices]
+
     return AskResponse(
-        message=ChatMessage(role=reply.role, content=reply.content or ""),
+        message=ChatMessage(role="assistant", content=reply_content),
         sources=[
             UsedChunk(
                 page_nums=s.page_nums,
                 bbox_indices=s.bbox_indices,
                 text=s.text,
             )
-            for s in sources
+            for s in filtered_sources
         ],
     )
 

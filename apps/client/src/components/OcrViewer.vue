@@ -35,6 +35,7 @@ const props = defineProps<{
   data: {
     id?: string
     pages: Page[]
+    entities?: EntityPrediction[]
   }
   contentHash?: string
   predefinedLabels?: PageLabel[]
@@ -50,7 +51,15 @@ const imageUrl = computed(() => pages[currentPage.value].page_url ?? undefined)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
 const layouts = computed<Layout[]>(() => (pages[currentPage.value]?.layouts ?? []) as Layout[])
 const hasLayouts = computed(() => pages.some((p: Page) => p.layouts && p.layouts.length > 0))
-const entities = computed<EntityPrediction[]>(() => (pages[currentPage.value]?.entities ?? []) as EntityPrediction[])
+const entities = computed<EntityPrediction[]>(() => {
+  // Entités au niveau page (legacy)
+  const pageEntities = (pages[currentPage.value]?.entities ?? []) as EntityPrediction[]
+  if (pageEntities.length > 0) return pageEntities
+  // Entités au niveau racine, filtrées par page courante
+  return (props.data.entities ?? []).filter(
+    (e: EntityPrediction) => !e.pages || e.pages.length === 0 || e.pages.includes(currentPage.value),
+  )
+})
 
 const showImage = ref(true)
 const drawingMode = ref(false)
@@ -80,6 +89,7 @@ const {
   currentPage,
   () => allBoxes.value,
   () => entities.value,
+  props.data.entities,
 )
 
 watch(currentPage, resetPage)

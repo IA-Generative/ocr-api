@@ -50,6 +50,10 @@ onMounted(async () => {
         @click="router.back()"
       />
       <span class="text-sm text-slate-400 truncate">{{ resolvedTaskId }}</span>
+      <span
+        v-if="task?.type"
+        class="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600"
+      >{{ task.type }}</span>
     </div>
 
     <!-- Chargement -->
@@ -91,7 +95,7 @@ onMounted(async () => {
     <!-- Viewer OCR -->
     <template v-else>
       <OcrViewer
-        :data="{ id: task.id, pages: task.output.pages }"
+        :data="{ id: task.id, pages: task.output.pages, entities: (task.output as any).entities ?? [] }"
         :content-hash="task.content_hash ?? undefined"
       >
         <template v-if="task.output.text" #extra-actions>

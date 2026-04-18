@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 from src.schemas.box import Bbox
+from src.schemas.classification import Model
 from enum import StrEnum
 
 
@@ -40,3 +41,13 @@ class EntityPrediction(BaseModel):
     confidence: float
     value: Optional[str] = None
     bbox: Optional[list[Bbox]] = Field(default_factory=list)
+    pages: Optional[list[int]] = Field(default_factory=list)
+
+
+class EntityExtractionResult(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    entities: list[EntityPrediction] = Field(default_factory=list)
+
+
+class EntityExtractionResultWithModel(EntityExtractionResult):
+    model: Model

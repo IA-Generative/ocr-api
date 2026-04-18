@@ -85,6 +85,7 @@ class CeleryTaskName(StrEnum):
     PAGE_TEXT_CLASSIFICATION_TASK = "tasks.page_text_classification"
     DISPATCH_TASK = "tasks.dispatch"
     OCR_CHUNK_TASK = "tasks.ocr_chunk"
+    ENTITY_EXTRACTION_TASK = "tasks.entity_extraction"
 
 
 class TaskStatsGlobal(BaseModel):

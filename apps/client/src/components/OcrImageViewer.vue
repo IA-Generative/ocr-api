@@ -3,6 +3,7 @@ import type { CSSProperties } from 'vue'
 import type { components } from '@/api/types/api.schema'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import BboxDrawingOverlay from '@/components/BboxDrawingOverlay.vue'
+import EntityDetailModal from '@/components/EntityDetailModal.vue'
 import LayoutDetailModal from '@/components/LayoutDetailModal.vue'
 import type { DrawnBox } from '@/composables/use-box-drawing'
 import type { BoxMeta } from '@/composables/use-ocr-review'
@@ -133,6 +134,7 @@ function getLayoutColor (label: string) {
 }
 
 const selectedLayout = ref<Layout | null>(null)
+const selectedEntity = ref<{ entity: EntityPrediction; colorIndex: number } | null>(null)
 
 onMounted(() => {
   if (!imgRef.value) return
@@ -234,8 +236,9 @@ onBeforeUnmount(() => {
             border: `1.5px solid ${getEntityColor(entity.entity_name).border}`,
             opacity: entitySearchMatchIndices && !entitySearchMatchIndices.has(eIdx) ? 0.15 : 1,
           }"
-          class="entity-box group transition-opacity duration-150"
+          class="entity-box group transition-opacity duration-150 cursor-pointer"
           :title="`${entity.entity_name}${entity.value ? ' : ' + entity.value : ''} (${Math.round(entity.confidence * 100)} %)`"
+          @click.stop="selectedEntity = { entity, colorIndex: eIdx }"
         >
           <span
             class="entity-label-badge"
@@ -254,6 +257,13 @@ onBeforeUnmount(() => {
       v-if="selectedLayout"
       :layout="selectedLayout"
       @close="selectedLayout = null"
+    />
+
+    <EntityDetailModal
+      v-if="selectedEntity"
+      :entity="selectedEntity.entity"
+      :color-index="selectedEntity.colorIndex"
+      @close="selectedEntity = null"
     />
   </div>
 </template>

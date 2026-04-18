@@ -165,7 +165,7 @@ onBeforeUnmount(() => {
               <div class="flex justify-center">
                 <OcrViewer
                   v-if="taskData?.output && !isPolling"
-                  :data="{ id: taskData.id, pages: taskData.output.pages }"
+                  :data="{ id: taskData.id, pages: taskData.output.pages, entities: (taskData.output as any).entities ?? [] }"
                 />
               </div>
             </div>

@@ -29,9 +29,6 @@ class Page(BaseModel):
     classifications: list[ClassificationResult] = Field(
         default_factory=list, description="List of classification results for the page"
     )
-    entities: list[EntityPrediction] = Field(
-        default_factory=list, description="List of entity predictions for the page"
-    )
 
 
 class OCRResult(BaseModel):
@@ -45,6 +42,9 @@ class OCRResult(BaseModel):
     pages: List[Page]
     extras: Optional[dict] = None
     text: Optional[str] = ""
+    entities: list[EntityPrediction] = Field(
+        default_factory=list, description="List of entity predictions for the page"
+    )
 
     def set_page_text(self, page: Page, delta_y: float = 0.005) -> str:
         page_lines_content = []
