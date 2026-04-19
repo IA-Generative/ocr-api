@@ -8,7 +8,9 @@ class PaddleSetting(BaseSettings):
     RECOGNITION_FOLDER: str = "recognition"
     CLASSIFICATION_FOLDER: str = "classification"
     DETECTION_BATCH_SIZE: int = 2
-    RECOGNITION_BATCH_SIZE: int = 4
+    RECOGNITION_BATCH_SIZE: int = 8
+    CPU_THREADS: int = 2
+    ENABLE_MKLDNN: bool = True
     OCR_VERSION: str = "PP-OCRv3"
     LAYOUT_MODEL_NAME: str = "PP-DocLayoutV2"
     DEVICE: str = "cpu"
