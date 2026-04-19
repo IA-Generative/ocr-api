@@ -10,9 +10,58 @@ const props = defineProps<{
   box: Bbox | DrawnBox
   savedState?: BboxReview
   isHidden?: boolean
+  imageUrl?: string
 }>()
 
 const isDrawn = computed(() => 'isDrawn' in props.box && props.box.isDrawn)
+
+// --- Thumbnail crop ---
+const naturalSize = ref({ w: 0, h: 0 })
+
+function onImageLoaded(e: Event) {
+  const img = e.target as HTMLImageElement
+  naturalSize.value = { w: img.naturalWidth, h: img.naturalHeight }
+}
+
+const thumbMaxH = 80
+const thumbPad = 20 // extra pixels around the crop
+const thumbStyle = computed(() => {
+  const nw = naturalSize.value.w
+  const nh = naturalSize.value.h
+  if (!nw || !nh) return null
+  // Expand crop area by thumbPad pixels (clamped to image bounds)
+  const pxX = Math.max(0, props.box.x * nw - thumbPad)
+  const pxY = Math.max(0, props.box.y * nh - thumbPad)
+  const pxRight = Math.min(nw, (props.box.x + props.box.width) * nw + thumbPad)
+  const pxBottom = Math.min(nh, (props.box.y + props.box.height) * nh + thumbPad)
+  const pxW = pxRight - pxX
+  const pxH = pxBottom - pxY
+  if (pxW <= 0 || pxH <= 0) return null
+  const scale = Math.min(thumbMaxH / pxH, 200 / pxW, 1)
+  const displayW = Math.round(pxW * scale)
+  const displayH = Math.round(pxH * scale)
+  const imgScale = displayW / pxW
+  return {
+    container: {
+      width: `${displayW}px`,
+      height: `${displayH}px`,
+      overflow: 'hidden',
+      position: 'relative' as const,
+      borderRadius: '8px',
+      border: '1px solid #e2e8f0',
+      flexShrink: '0',
+    },
+    img: {
+      position: 'absolute' as const,
+      left: `${-pxX * imgScale}px`,
+      top: `${-pxY * imgScale}px`,
+      width: `${nw * imgScale}px`,
+      height: `${nh * imgScale}px`,
+      maxWidth: 'none',
+      maxHeight: 'none',
+    },
+  }
+})
 
 const emit = defineEmits<{
   close: []
@@ -99,6 +148,14 @@ function onSave () {
     </div>
 
     <div class="flex flex-col gap-3 p-4">
+
+      <!-- Thumbnail -->
+      <div v-if="imageUrl && thumbStyle" class="flex justify-center">
+        <div :style="thumbStyle.container">
+          <img :src="imageUrl" :style="thumbStyle.img" @load="onImageLoaded" />
+        </div>
+      </div>
+      <img v-if="imageUrl && !naturalSize.w" :src="imageUrl" style="display:none" @load="onImageLoaded" />
 
       <!-- Texte original -->
       <div v-if="!isDrawn" class="rounded-xl bg-slate-50 border border-slate-100 px-3 py-2.5 flex items-start justify-between gap-2">

@@ -138,7 +138,7 @@ function copyValue () {
                   <span>{{ bbox.width.toFixed(3) }} × {{ bbox.height.toFixed(3) }}</span>
                 </div>
               </div>
-            </div>
+                </div>
           </div>
 
         </div>

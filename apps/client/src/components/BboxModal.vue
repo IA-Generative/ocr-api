@@ -10,6 +10,7 @@ defineProps<{
   box: Bbox | DrawnBox
   savedState?: BboxReview
   isHidden?: boolean
+  imageUrl?: string
 }>()
 
 const emit = defineEmits<{
@@ -36,6 +37,7 @@ const emit = defineEmits<{
           :box="box"
           :saved-state="savedState"
           :is-hidden="isHidden"
+          :image-url="imageUrl"
           class="!bg-transparent !shadow-none !border-0"
           @close="emit('close')"
           @save="(review) => emit('save', review)"
