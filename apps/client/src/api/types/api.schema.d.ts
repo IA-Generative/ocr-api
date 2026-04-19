@@ -60,7 +60,7 @@ export interface paths {
         post?: never;
         /**
          * Delete Task By Id
-         * @description Supprime une tâche
+         * @description Supprime une tâche et ses sous-tâches
          */
         delete: operations["delete_task_by_id_api_tasks__task_id__delete"];
         options?: never;
@@ -167,6 +167,86 @@ export interface paths {
          * @description Supprime les tâches avec un statut donné dans une plage de dates (admin)
          */
         delete: operations["delete_tasks_by_date_and_status_api_v1_tasks__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{task_id}/children": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Task Children
+         * @description Récupère les tâches enfants directes d'une tâche
+         */
+        get: operations["get_task_children_api_tasks__task_id__children_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tasks/{task_id}/tree": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Task Tree
+         * @description Récupère une tâche et toutes ses sous-tâches
+         */
+        get: operations["get_task_tree_api_tasks__task_id__tree_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit Task
+         * @description Crée une nouvelle tâche et la soumet immédiatement pour traitement
+         */
+        post: operations["submit_task_api_v1_tasks_submit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/revoke/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Tasks By User Id
+         * @description Révoque une tâche en cours d'exécution
+         */
+        delete: operations["delete_tasks_by_user_id_api_v1_tasks_revoke__task_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -617,7 +697,7 @@ export interface components {
             messages: components["schemas"]["ChatMessage"][];
             /**
              * Model
-             * @default gpt-4o-mini
+             * @default llama-3.1-8b-instruct
              */
             model: string;
             /**
@@ -709,7 +789,7 @@ export interface components {
          * CeleryTaskName
          * @enum {string}
          */
-        CeleryTaskName: "worker.tasks.ocr" | "tasks.page_classification";
+        CeleryTaskName: "worker.tasks.ocr" | "tasks.page_classification" | "tasks.page_text_classification" | "tasks.dispatch" | "tasks.ocr_chunk" | "tasks.entity_extraction";
         /**
          * ChatCompletion
          * @description Represents a chat completion response returned by model, based on the provided input.
@@ -872,21 +952,6 @@ export interface components {
             /** Content */
             content: string;
         };
-        /** Checkbox */
-        Checkbox: {
-            /** X */
-            x: number;
-            /** Y */
-            y: number;
-            /** Width */
-            width: number;
-            /** Height */
-            height: number;
-            /** Confidence */
-            confidence: number;
-            /** Is Checked */
-            is_checked: boolean;
-        };
         /** Choice */
         Choice: {
             /**
@@ -991,6 +1056,19 @@ export interface components {
             /** Model */
             model: string;
         };
+        /** EntityPrediction */
+        EntityPrediction: {
+            /** Entity Name */
+            entity_name: string;
+            /** Confidence */
+            confidence: number;
+            /** Value */
+            value?: string | null;
+            /** Bbox */
+            bbox?: components["schemas"]["Bbox"][] | null;
+            /** Pages */
+            pages?: number[] | null;
+        };
         /** FormEntry */
         FormEntry: {
             /**
@@ -1013,6 +1091,25 @@ export interface components {
              * @description Valeur corrigée (typo, casse, format date, nombres, orthographe…) de value si besoin
              */
             corrected_value?: string | null;
+        };
+        /** FormulaBlock */
+        FormulaBlock: {
+            /**
+             * Type
+             * @description Block type identifier.
+             * @default formula
+             */
+            type: string;
+            /**
+             * Latex
+             * @description Mathematical expression in valid LaTeX format.
+             */
+            latex: string;
+            /**
+             * Confidence
+             * @description Model confidence score for extraction.
+             */
+            confidence?: number | null;
         };
         /**
          * Function
@@ -1062,18 +1159,39 @@ export interface components {
             /** Dependencies */
             dependencies?: components["schemas"]["Health"][] | null;
         };
-        /** ImageFormDetector */
-        ImageFormDetector: {
+        /** ImageBlock */
+        ImageBlock: {
             /**
-             * Is Form
-             * @description Indique si l'image est un formulaire ou non.
+             * Type
+             * @description Block type identifier.
+             * @default image
              */
-            is_form: boolean;
+            type: string;
+            /** @description Structured visual understanding of the image. */
+            content: components["schemas"]["ImageContent"];
+        };
+        /** ImageContent */
+        ImageContent: {
             /**
-             * Confidence
-             * @description Confiance de la classification (0-1).
+             * Objects
+             * @description List of visual objects detected in the image.
              */
-            confidence: number;
+            objects: string[];
+            /**
+             * Text
+             * @description All visible text extracted from the image.
+             */
+            text: string[];
+            /**
+             * Layout
+             * @description Overall spatial layout description.
+             */
+            layout?: string | null;
+            /**
+             * Relationships
+             * @description Relationships between elements in the image.
+             */
+            relationships: string[];
         };
         /** InputForm */
         InputForm: {
@@ -1143,7 +1261,7 @@ export interface components {
             definition: string;
         };
         /** Layout */
-        Layout: {
+        "Layout-Input": {
             /**
              * Cls Id
              * @description Class ID, an integer.
@@ -1164,10 +1282,59 @@ export interface components {
              * @description Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]
              */
             coordinate: number[];
-            /** Order */
+            /**
+             * Order
+             * @description Order of the layout element.
+             */
             order?: number | null;
-            /** Content */
+            /**
+             * Content
+             * @description Optional content of the layout element.
+             */
             content?: unknown | null;
+            /**
+             * Block
+             * @description Optional block content, can be an image, formula, or table.
+             */
+            block?: components["schemas"]["ImageBlock"] | components["schemas"]["FormulaBlock"] | components["schemas"]["TableBlock-Input"] | null;
+        };
+        /** Layout */
+        "Layout-Output": {
+            /**
+             * Cls Id
+             * @description Class ID, an integer.
+             */
+            cls_id: number;
+            /**
+             * Label
+             * @description Class label, a string.
+             */
+            label: string;
+            /**
+             * Score
+             * @description Confidence score of the bounding box, a float.
+             */
+            score: number;
+            /**
+             * Coordinate
+             * @description Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]
+             */
+            coordinate: number[];
+            /**
+             * Order
+             * @description Order of the layout element.
+             */
+            order?: number | null;
+            /**
+             * Content
+             * @description Optional content of the layout element.
+             */
+            content?: unknown | null;
+            /**
+             * Block
+             * @description Optional block content, can be an image, formula, or table.
+             */
+            block?: components["schemas"]["ImageBlock"] | components["schemas"]["FormulaBlock"] | components["schemas"]["TableBlock-Output"] | null;
         };
         /** Model */
         Model: {
@@ -1203,7 +1370,7 @@ export interface components {
             data: unknown[];
         };
         /** OCRResult */
-        OCRResult: {
+        "OCRResult-Input": {
             /** Type */
             type: string;
             /** Model Name */
@@ -1217,7 +1384,7 @@ export interface components {
             /** Total Pages */
             total_pages: number;
             /** Pages */
-            pages: components["schemas"]["Page"][];
+            pages: components["schemas"]["Page-Input"][];
             /** Extras */
             extras?: {
                 [key: string]: unknown;
@@ -1227,6 +1394,42 @@ export interface components {
              * @default
              */
             text: string | null;
+            /**
+             * Entities
+             * @description List of entity predictions for the page
+             */
+            entities?: components["schemas"]["EntityPrediction"][];
+        };
+        /** OCRResult */
+        "OCRResult-Output": {
+            /** Type */
+            type: string;
+            /** Model Name */
+            model_name: string;
+            /** Created At */
+            created_at: number;
+            /** Updated At */
+            updated_at: number;
+            /** Version */
+            version: string;
+            /** Total Pages */
+            total_pages: number;
+            /** Pages */
+            pages: components["schemas"]["Page-Output"][];
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Text
+             * @default
+             */
+            text: string | null;
+            /**
+             * Entities
+             * @description List of entity predictions for the page
+             */
+            entities?: components["schemas"]["EntityPrediction"][];
         };
         /** OcrChunkBase */
         OcrChunkBase: {
@@ -1282,11 +1485,13 @@ export interface components {
              * @description Dense query embedding
              */
             query_vector: number[];
+            /** Top K */
+            top_k?: number | null;
             /**
-             * Top K
-             * @default 5
+             * Threshold
+             * @description Minimum cosine similarity score for a chunk to be included in results
              */
-            top_k: number;
+            threshold?: number | null;
         };
         /**
          * OcrChunkSearchResult
@@ -1317,7 +1522,7 @@ export interface components {
             chunks?: components["schemas"]["OcrChunkBase"][];
         };
         /** Page */
-        Page: {
+        "Page-Input": {
             /** Page */
             page: number;
             /** Page Url */
@@ -1331,19 +1536,49 @@ export interface components {
              * Layouts
              * @description Layout definition
              */
-            layouts?: components["schemas"]["Layout"][];
-            /**
-             * Checkboxes
-             * @description Checkbox definition
-             */
-            checkboxes?: components["schemas"]["Checkbox"][];
+            layouts?: components["schemas"]["Layout-Input"][];
             /**
              * Form Entries
              * @description Form extraction
              */
             form_entries?: (components["schemas"]["LLMFormField"] | components["schemas"]["FormEntry"])[];
-            /** @description Détection de formulaire d'image */
-            image_form_detector?: components["schemas"]["ImageFormDetector"] | null;
+            /** @description Vector representation of the page */
+            vector?: components["schemas"]["Vector"] | null;
+            /**
+             * Similar Template Ids
+             * @description List of similar template IDs
+             */
+            similar_template_ids?: [
+                string,
+                number
+            ][];
+            /**
+             * Classifications
+             * @description List of classification results for the page
+             */
+            classifications?: components["schemas"]["ClassificationResult"][];
+        };
+        /** Page */
+        "Page-Output": {
+            /** Page */
+            page: number;
+            /** Page Url */
+            page_url?: string | null;
+            /**
+             * Boxes
+             * @description Detections
+             */
+            boxes?: components["schemas"]["Bbox"][];
+            /**
+             * Layouts
+             * @description Layout definition
+             */
+            layouts?: components["schemas"]["Layout-Output"][];
+            /**
+             * Form Entries
+             * @description Form extraction
+             */
+            form_entries?: (components["schemas"]["LLMFormField"] | components["schemas"]["FormEntry"])[];
             /** @description Vector representation of the page */
             vector?: components["schemas"]["Vector"] | null;
             /**
@@ -1425,8 +1660,140 @@ export interface components {
             /** Labels */
             labels?: string | null;
         };
+        /** TableBlock */
+        "TableBlock-Input": {
+            /**
+             * Type
+             * @description Block type identifier.
+             * @default table
+             */
+            type: string;
+            /** @description Structured table content. */
+            content: components["schemas"]["TableContent-Input"];
+        };
+        /** TableBlock */
+        "TableBlock-Output": {
+            /**
+             * Type
+             * @description Block type identifier.
+             * @default table
+             */
+            type: string;
+            /** @description Structured table content. */
+            content: components["schemas"]["TableContent-Output"];
+        };
+        /** TableCell */
+        "TableCell-Input": {
+            /**
+             * Value
+             * @description Cell content. Can be a string or a nested table if hierarchical structure exists.
+             */
+            value: string | components["schemas"]["TableBlock-Input"];
+            /**
+             * Rowspan
+             * @description Number of rows this cell spans.
+             * @default 1
+             */
+            rowspan: number;
+            /**
+             * Colspan
+             * @description Number of columns this cell spans.
+             * @default 1
+             */
+            colspan: number;
+        };
+        /** TableCell */
+        "TableCell-Output": {
+            /**
+             * Value
+             * @description Cell content. Can be a string or a nested table if hierarchical structure exists.
+             */
+            value: string | components["schemas"]["TableBlock-Output"];
+            /**
+             * Rowspan
+             * @description Number of rows this cell spans.
+             * @default 1
+             */
+            rowspan: number;
+            /**
+             * Colspan
+             * @description Number of columns this cell spans.
+             * @default 1
+             */
+            colspan: number;
+        };
+        /** TableContent */
+        "TableContent-Input": {
+            /**
+             * Headers
+             * @description Table headers, possibly hierarchical.
+             */
+            headers?: components["schemas"]["TableHeader-Input"][] | null;
+            /**
+             * Rows
+             * @description Table rows in reading order.
+             */
+            rows: components["schemas"]["TableRow-Input"][];
+        };
+        /** TableContent */
+        "TableContent-Output": {
+            /**
+             * Headers
+             * @description Table headers, possibly hierarchical.
+             */
+            headers?: components["schemas"]["TableHeader-Output"][] | null;
+            /**
+             * Rows
+             * @description Table rows in reading order.
+             */
+            rows: components["schemas"]["TableRow-Output"][];
+        };
+        /** TableHeader */
+        "TableHeader-Input": {
+            /**
+             * Name
+             * @description Header label.
+             */
+            name: string;
+            /**
+             * Children
+             * @description Nested headers for hierarchical tables.
+             */
+            children?: components["schemas"]["TableHeader-Input"][] | null;
+        };
+        /** TableHeader */
+        "TableHeader-Output": {
+            /**
+             * Name
+             * @description Header label.
+             */
+            name: string;
+            /**
+             * Children
+             * @description Nested headers for hierarchical tables.
+             */
+            children?: components["schemas"]["TableHeader-Output"][] | null;
+        };
+        /** TableRow */
+        "TableRow-Input": {
+            /**
+             * Cells
+             * @description List of cells in the row, ordered left to right.
+             */
+            cells: components["schemas"]["TableCell-Input"][];
+        };
+        /** TableRow */
+        "TableRow-Output": {
+            /**
+             * Cells
+             * @description List of cells in the row, ordered left to right.
+             */
+            cells: components["schemas"]["TableCell-Output"][];
+        };
         /** TaskForm */
         TaskForm: {
+            /** Id */
+            id?: string | null;
             /** Group Id */
             group_id?: string | null;
             /** Type */
@@ -1443,13 +1810,17 @@ export interface components {
                 [key: string]: unknown;
             } | null;
             input?: components["schemas"]["InputForm"] | null;
-            output?: components["schemas"]["OCRResult"] | null;
+            output?: components["schemas"]["OCRResult-Input"] | null;
             /** Content Hash */
             content_hash?: string | null;
             /** Parameters */
             parameters?: {
                 [key: string]: unknown;
             } | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /** User Id */
+            user_id?: string | null;
         };
         /** TaskModel */
         TaskModel: {
@@ -1472,7 +1843,7 @@ export interface components {
              */
             percentage: number | null;
             input?: components["schemas"]["InputForm"] | null;
-            output?: components["schemas"]["OCRResult"] | null;
+            output?: components["schemas"]["OCRResult-Output"] | null;
             /** Created At */
             created_at: number;
             /** Updated At */
@@ -1489,12 +1860,14 @@ export interface components {
             parameters?: {
                 [key: string]: unknown;
             } | null;
+            /** Parent Id */
+            parent_id?: string | null;
         };
         /**
          * TaskOperation
          * @enum {string}
          */
-        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "page_classification";
+        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "page_classification" | "chunk_ocr" | "entity_extraction";
         /** TaskStats */
         TaskStats: {
             global_stats: components["schemas"]["TaskStatsGlobal"];
@@ -1524,7 +1897,7 @@ export interface components {
          * TaskStatus
          * @enum {string}
          */
-        TaskStatus: "created" | "queued" | "started" | "in_progress" | "completed" | "failed" | "retrying" | "canceled" | "timeout";
+        TaskStatus: "created" | "queued" | "started" | "in_progress" | "completed" | "failed" | "retrying" | "canceled" | "timeout" | "revoked";
         /** TaskUpdateForm */
         TaskUpdateForm: {
             /** Group Id */
@@ -1543,13 +1916,17 @@ export interface components {
                 [key: string]: unknown;
             } | null;
             input?: components["schemas"]["InputForm"] | null;
-            output?: components["schemas"]["OCRResult"] | null;
+            output?: components["schemas"]["OCRResult-Input"] | null;
             /** Content Hash */
             content_hash?: string | null;
             /** Parameters */
             parameters?: {
                 [key: string]: unknown;
             } | null;
+            /** Parent Id */
+            parent_id?: string | null;
+            /** User Id */
+            user_id?: string | null;
         };
         /** TokenCreate */
         TokenCreate: {
@@ -1761,7 +2138,7 @@ export interface operations {
     update_task_by_id_api_tasks__task_id__patch: {
         parameters: {
             query: {
-                task_type: components["schemas"]["TaskOperation"];
+                task_type: string;
             };
             header?: never;
             path: {
@@ -1919,6 +2296,132 @@ export interface operations {
             };
             header?: never;
             path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_children_api_tasks__task_id__children_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_task_tree_api_tasks__task_id__tree_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_task_api_v1_tasks_submit_post: {
+        parameters: {
+            query?: {
+                task_name?: components["schemas"]["CeleryTaskName"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskForm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_tasks_by_user_id_api_v1_tasks_revoke__task_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
             cookie?: never;
         };
         requestBody?: never;

@@ -16,6 +16,7 @@ import '@gouvminint/vue-dsfr/styles'
 import '@gouvfr/dsfr/dist/scheme/scheme.min.css'
 
 import './main.css'
+import 'katex/dist/katex.min.css'
 
 declare global {
   interface Window {

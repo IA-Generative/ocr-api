@@ -32,6 +32,7 @@
     "focus-trap-vue": "^4.1.0",
     "husky": "^9.1.7",
     "keycloak-js": "^26.2.3",
+    "katex": "^0.16.0",
     "marked": "^18.0.0",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.1.18",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^5.4.1",
+    "@types/katex": "^0.16.0",
     "@playwright/test": "^1.58.2",
     "@rushstack/eslint-patch": "^1.15.0",
     "@testing-library/jest-dom": "^6.9.1",

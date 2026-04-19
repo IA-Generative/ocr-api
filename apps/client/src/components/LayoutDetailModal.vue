@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { components } from '@/api/types/api.schema'
+import type { FormulaBlock, TableBlock, ImageBlock } from './layout/types'
+import LayoutBlockFormula from './layout/LayoutBlockFormula.vue'
+import LayoutBlockTable from './layout/LayoutBlockTable.vue'
+import LayoutBlockImage from './layout/LayoutBlockImage.vue'
 
-type Layout = components['schemas']['Layout']
+type Layout = components['schemas']['Layout-Output']
 
 const props = defineProps<{
   layout: Layout
@@ -23,35 +28,50 @@ const LAYOUT_COLORS: Record<string, { bg: string; border: string; text: string }
   footer: { bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.75)', text: 'rgb(71,85,105)' },
   reference: { bg: 'rgba(156,163,175,0.12)', border: 'rgba(156,163,175,0.75)', text: 'rgb(75,85,99)' },
   formula: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.75)', text: 'rgb(185,28,28)' },
+  display_formula: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.75)', text: 'rgb(185,28,28)' },
   algorithm: { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.75)', text: 'rgb(180,83,9)' },
 }
 const LAYOUT_DEFAULT_COLOR = { bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.75)', text: 'rgb(51,65,85)' }
 
-function getLayoutColor(label: string) {
-  return LAYOUT_COLORS[label?.toLowerCase()] ?? LAYOUT_DEFAULT_COLOR
-}
-
-const color = computed(() => getLayoutColor(props.layout.label))
+const color = computed(() => LAYOUT_COLORS[props.layout.label?.toLowerCase()] ?? LAYOUT_DEFAULT_COLOR)
 const scorePercent = computed(() => Math.round(props.layout.score * 100))
 
 const [xmin, ymin, xmax, ymax] = props.layout.coordinate
 const width = Math.round(xmax - xmin)
 const height = Math.round(ymax - ymin)
 
-import { computed } from 'vue'
+const labelLower = computed(() => props.layout.label?.toLowerCase())
+const isFormula = computed(() => labelLower.value === 'formula' || labelLower.value === 'display_formula')
+const isTable = computed(() => labelLower.value === 'table' || labelLower.value === 'table_caption')
+const isFigure = computed(() => labelLower.value === 'figure' || labelLower.value === 'figure_caption' || labelLower.value === 'image')
+
+const formulaBlock = computed<FormulaBlock | null>(() => {
+  const raw = props.layout.block ?? props.layout.content
+  return isFormula.value && raw ? (raw as FormulaBlock) : null
+})
+const tableBlock = computed<TableBlock | null>(() => {
+  const raw = props.layout.block ?? props.layout.content
+  return isTable.value && raw ? (raw as TableBlock) : null
+})
+const imageBlock = computed<ImageBlock | null>(() => {
+  const raw = props.layout.block ?? props.layout.content
+  return isFigure.value && raw ? (raw as ImageBlock) : null
+})
+
+const isWide = computed(() => isTable.value || isFigure.value)
 </script>
 
 <template>
   <Teleport to="body">
-    <!-- Backdrop -->
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
       @click.self="emit('close')"
     >
-      <!-- Panel -->
-      <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
-
-        <!-- Header coloré selon le label -->
+      <div
+        class="relative bg-white rounded-2xl shadow-2xl mx-4 overflow-hidden"
+        :class="isWide ? 'w-full max-w-2xl' : 'w-full max-w-sm'"
+      >
+        <!-- Header -->
         <div
           class="px-5 py-4 flex items-center gap-3"
           :style="{ backgroundColor: color.bg, borderBottom: `2px solid ${color.border}` }"
@@ -73,7 +93,7 @@ import { computed } from 'vue'
         </div>
 
         <!-- Body -->
-        <div class="p-5 flex flex-col gap-4">
+        <div class="p-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
 
           <!-- Confiance -->
           <div class="flex flex-col gap-1.5">
@@ -121,18 +141,24 @@ import { computed } from 'vue'
           </div>
 
           <!-- Ordre de lecture -->
-          <div v-if="layout.order !== null && layout.order !== undefined" class="flex items-center justify-between text-sm">
+          <div v-if="layout.order != null" class="flex items-center justify-between text-sm">
             <span class="font-medium text-slate-600">Ordre de lecture</span>
             <span class="font-mono font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">#{{ layout.order }}</span>
           </div>
 
-          <!-- Contenu textuel -->
-          <div v-if="layout.content" class="flex flex-col gap-1.5">
+          <!-- Bloc spécialisé -->
+          <LayoutBlockFormula v-if="formulaBlock" :block="formulaBlock" />
+          <LayoutBlockTable v-else-if="tableBlock" :block="tableBlock" />
+          <LayoutBlockImage v-else-if="imageBlock" :block="imageBlock" />
+
+          <!-- Contenu texte générique -->
+          <div v-else-if="layout.content" class="flex flex-col gap-1.5">
             <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Contenu</p>
             <div class="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-700 max-h-32 overflow-y-auto leading-relaxed whitespace-pre-wrap break-words">
               {{ typeof layout.content === 'string' ? layout.content : JSON.stringify(layout.content, null, 2) }}
             </div>
           </div>
+
         </div>
       </div>
     </div>

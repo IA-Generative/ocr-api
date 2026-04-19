@@ -1,5 +1,8 @@
 from typing import Optional, Any
 from pydantic import BaseModel, Field
+from src.schemas.layouts.image import ImageBlock
+from src.schemas.layouts.formula import FormulaBlock
+from src.schemas.layouts.table import TableBlock
 
 
 # labels
@@ -16,5 +19,8 @@ class Layout(BaseModel):
         ...,
         description="Coordinates of the bounding box, a list of floats in the format [xmin, ymin, xmax, ymax]",
     )
-    order: Optional[int] = None
-    content: Optional[Any] = None
+    order: Optional[int] = Field(None, description="Order of the layout element.")
+    content: Optional[Any] = Field(None, description="Optional content of the layout element.")
+    block: Optional[ImageBlock | FormulaBlock | TableBlock] = Field(
+        None, description="Optional block content, can be an image, formula, or table."
+    )
