@@ -64,7 +64,8 @@ const isWide = computed(() => isTable.value || isFigure.value)
 <template>
   <Teleport to="body">
     <div
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
+      class="fixed inset-0 z-50 flex items-center justify-center"
+      style="background-color: rgba(0, 0, 0, 0.4)"
       @click.self="emit('close')"
     >
       <div
@@ -84,7 +85,8 @@ const isWide = computed(() => isTable.value || isFigure.value)
             Classe #{{ layout.cls_id }}
           </span>
           <button
-            class="ml-auto text-slate-400 hover:text-slate-600 transition-colors"
+            class="text-slate-400 hover:text-slate-600 transition-colors"
+            style="margin-left: auto; flex-shrink: 0"
             aria-label="Fermer"
             @click="emit('close')"
           >
