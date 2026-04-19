@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.5.1](https://github.com/IA-Generative/ocr-api/compare/v1.5.0...v1.5.1) (2026-04-19)
+
+
+### Bug Fixes
+
+* **paddle:** adjust recognition batch size and add CPU threading options ([9f22d2a](https://github.com/IA-Generative/ocr-api/commit/9f22d2a009fe02f7518da2dff653fe289f34a8db))
+
 ## [1.5.0](https://github.com/IA-Generative/ocr-api/compare/v1.4.3...v1.5.0) (2026-04-19)
 
 
