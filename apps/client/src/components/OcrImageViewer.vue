@@ -9,7 +9,7 @@ import type { DrawnBox } from '@/composables/use-box-drawing'
 import type { BoxMeta } from '@/composables/use-ocr-review'
 
 type Bbox = components['schemas']['Bbox']
-type Layout = components['schemas']['Layout']
+type Layout = components['schemas']['Layout-Output']
 type EntityPrediction = {
   entity_name: string
   confidence: number
@@ -125,6 +125,7 @@ const LAYOUT_COLORS: Record<string, { bg: string; border: string; text: string }
   footer: { bg: 'rgba(148,163,184,0.12)', border: 'rgba(148,163,184,0.75)', text: 'rgb(71,85,105)' },
   reference: { bg: 'rgba(156,163,175,0.12)', border: 'rgba(156,163,175,0.75)', text: 'rgb(75,85,99)' },
   formula: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.75)', text: 'rgb(185,28,28)' },
+  display_formula: { bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.75)', text: 'rgb(185,28,28)' },
   algorithm: { bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.75)', text: 'rgb(180,83,9)' },
 }
 const LAYOUT_DEFAULT_COLOR = { bg: 'rgba(100,116,139,0.12)', border: 'rgba(100,116,139,0.75)', text: 'rgb(51,65,85)' }
