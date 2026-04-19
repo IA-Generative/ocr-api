@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.4.3](https://github.com/IA-Generative/ocr-api/compare/v1.4.2...v1.4.3) (2026-04-19)
+
+
+### Bug Fixes
+
+* **progress:** enhance progress tracking for OCR and entity extraction ([826db21](https://github.com/IA-Generative/ocr-api/commit/826db2107b499deea3c0f7aabc2f5b7a29b5498d))
+
 ## [1.4.2](https://github.com/IA-Generative/ocr-api/compare/v1.4.1...v1.4.2) (2026-04-18)
 
 
