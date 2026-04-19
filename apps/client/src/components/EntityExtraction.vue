@@ -23,10 +23,23 @@
           />
         </div>
 
-        <ProgressBar
-          :visible="isPolling && status === 'in_progress'"
-          :progress="progressPercent"
-        />
+        <div v-if="isPolling" class="flex flex-col gap-2">
+          <ProgressBar
+            :visible="true"
+            :progress="ocrProgress"
+            text="OCR"
+          />
+          <ProgressBar
+            :visible="chunkStarted"
+            :progress="chunkProgress"
+            text="Découpage"
+          />
+          <ProgressBar
+            :visible="extractionStarted"
+            :progress="extractionProgress"
+            text="Extraction d'entités"
+          />
+        </div>
       </div>
 
       <!-- COLONNE DROITE : Entités -->
@@ -122,47 +135,6 @@
       </div>
     </div>
 
-    <!-- Résultats extraction -->
-    <div v-if="extractedEntities.length > 0 && !isPolling">
-      <EntityResult :entities="extractedEntities" />
-    </div>
-
-    <!-- Visualisation bboxes sur le document -->
-    <div v-if="hasBboxes && !isPolling" class="flex flex-col gap-3">
-      <div class="flex items-center justify-between">
-        <h3 class="fr-h6 mb-0">Localisation des entités</h3>
-        <div v-if="totalPages > 1" class="flex items-center gap-2">
-          <button
-            class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-arrow-left-s-line"
-            type="button"
-            :disabled="currentPage === 0"
-            aria-label="Page précédente"
-            @click="currentPage = Math.max(0, currentPage - 1)"
-          />
-          <span class="text-sm text-slate-600">{{ currentPage + 1 }} / {{ totalPages }}</span>
-          <button
-            class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-icon-arrow-right-s-line"
-            type="button"
-            :disabled="currentPage >= totalPages - 1"
-            aria-label="Page suivante"
-            @click="currentPage = Math.min(totalPages - 1, currentPage + 1)"
-          />
-        </div>
-      </div>
-      <div class="relative rounded-xl overflow-hidden border border-slate-200 shadow-sm bg-slate-50">
-        <OcrImageViewer
-          :all-boxes="[]"
-          :box-meta="[]"
-          :show-image="true"
-          :drawing-mode="false"
-          :selected-box-idx="null"
-          :image-url="currentPageImageUrl"
-          view-mode="entity"
-          :entity-boxes="currentPageEntities"
-        />
-      </div>
-    </div>
-
     <!-- Modal ajout/édition -->
     <EntityDefinitionModal
       v-if="modalOpen"
@@ -176,12 +148,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import ProgressBar from '@/components/ProgressBar.vue'
 import EntityDefinitionModal from '@/components/EntityDefinitionModal.vue'
-import EntityResult from '@/components/EntityResult.vue'
-import OcrImageViewer from '@/components/OcrImageViewer.vue'
 import type { EntityDefinition } from '@/components/EntityDefinitionModal.vue'
-import type { EntityPrediction } from '@/components/EntityResult.vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 import useToaster from '@/composables/use-toaster'
@@ -190,41 +160,18 @@ type EntityType = EntityDefinition['entity_type']
 
 const http = createHttpClient(OCR_API_URL)
 const { addErrorMessage, addSuccessMessage } = useToaster()
+const router = useRouter()
 
 const files = ref<File | null>(null)
 const uploadError = ref<string | undefined>(undefined)
 const uploadAccept = '.pdf,.jpg,.png'
 const isPolling = ref(false)
 const status = ref<string | null>(null)
-const progressPercent = ref(0)
-const extractedEntities = ref<EntityPrediction[]>([])
-const taskPages = ref<any[]>([])
-const currentPage = ref(0)
-
-const currentPageImageUrl = computed<string | undefined>(() => {
-  return taskPages.value[currentPage.value]?.page_url ?? undefined
-})
-
-// Pages are 0-indexed in entity data; show entities that match or have no page info
-const currentPageEntities = computed<EntityPrediction[]>(() => {
-  return extractedEntities.value.filter((e: EntityPrediction) =>
-    !e.pages || e.pages.length === 0 || e.pages.includes(currentPage.value),
-  )
-})
-
-// Total pages: prefer server pages array, fallback to max page index from entities
-const totalPages = computed(() => {
-  if (taskPages.value.length > 0) return taskPages.value.length
-  const maxPage = extractedEntities.value.reduce((max: number, e: EntityPrediction) => {
-    const m = e.pages ? Math.max(...e.pages) : 0
-    return Math.max(max, m)
-  }, 0)
-  return maxPage + 1
-})
-
-const hasBboxes = computed(() => {
-  return extractedEntities.value.some((e: EntityPrediction) => e.bbox && e.bbox.length > 0)
-})
+const ocrProgress = ref(0)
+const chunkProgress = ref(0)
+const extractionProgress = ref(0)
+const chunkStarted = ref(false)
+const extractionStarted = ref(false)
 
 let pollingTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -277,33 +224,71 @@ function onSave (entity: EntityDefinition) {
 const selectFile = (selected: FileList | File[]) => {
   files.value = Array.isArray(selected) ? selected[0] ?? null : selected[0] ?? null
   uploadError.value = undefined
-  extractedEntities.value = []
 }
 
 async function pollTask(taskId: string) {
   try {
-    const { data: task } = await http.get<any>(`/tasks/${taskId}`)
+    const [{ data: task }, { data: ocrChildren }] = await Promise.all([
+      http.get<any>(`/tasks/${taskId}`),
+      http.get<any[]>(`/tasks/${taskId}/children`),
+    ])
     status.value = task.status
 
-    if (task.status === 'in_progress' || task.status === 'started') {
-      progressPercent.value = Math.round((task.percentage ?? 0) * 100)
-      pollingTimer = setTimeout(() => pollTask(taskId), 2000)
-    }
-    else if (task.status === 'completed') {
-      progressPercent.value = 100
+    // OCR progress from parent task
+    ocrProgress.value = (task.status === 'in_progress' || task.status === 'started')
+      ? Math.round((task.percentage ?? 0) * 100)
+      : 100
+
+    if (task.status === 'failed') {
       isPolling.value = false
-      taskPages.value = task.output?.pages ?? []
-      extractedEntities.value = task.output?.entities ?? []
-      addSuccessMessage({ title: 'Extraction terminée', description: 'Les entités sont disponibles.' })
-    }
-    else if (task.status === 'failed') {
-      isPolling.value = false
-      uploadError.value = task.extras?.error ?? "Échec de l'extraction."
+      uploadError.value = task.extras?.error ?? 'Échec du traitement OCR.'
       addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+      return
     }
-    else {
-      pollingTimer = setTimeout(() => pollTask(taskId), 2000)
+
+    // Chunk child (direct child of OCR task)
+    const chunkChild = (ocrChildren as any[]).find((c: any) => c.type === 'tasks.ocr_chunk')
+
+    if (chunkChild) {
+      chunkStarted.value = true
+      chunkProgress.value = chunkChild.status === 'completed'
+        ? 100
+        : Math.round((chunkChild.percentage ?? 0) * 100)
+
+      if (chunkChild.status === 'failed') {
+        isPolling.value = false
+        uploadError.value = chunkChild.extras?.error ?? 'Échec du découpage.'
+        addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+        return
+      }
+
+      // Entity extraction child (child of chunk task)
+      const { data: chunkChildren } = await http.get<any[]>(`/tasks/${chunkChild.id}/children`)
+      const entityChild = (chunkChildren as any[]).find((c: any) => c.type === 'tasks.entity_extraction')
+
+      if (entityChild) {
+        extractionStarted.value = true
+
+        if (entityChild.status === 'completed') {
+          extractionProgress.value = 100
+          isPolling.value = false
+          addSuccessMessage({ title: 'Extraction terminée', description: 'Redirection vers les résultats...' })
+          router.push(`/${entityChild.id}`)
+          return
+        }
+        else if (entityChild.status === 'failed') {
+          isPolling.value = false
+          uploadError.value = entityChild.extras?.error ?? "Échec de l'extraction."
+          addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+          return
+        }
+        else {
+          extractionProgress.value = Math.round((entityChild.percentage ?? 0) * 100)
+        }
+      }
     }
+
+    pollingTimer = setTimeout(() => pollTask(taskId), 2000)
   }
   catch (err: any) {
     isPolling.value = false
@@ -315,10 +300,11 @@ async function startExtraction() {
   if (!files.value) return
 
   uploadError.value = undefined
-  extractedEntities.value = []
-  taskPages.value = []
-  currentPage.value = 0
-  progressPercent.value = 0
+  ocrProgress.value = 0
+  chunkProgress.value = 0
+  extractionProgress.value = 0
+  chunkStarted.value = false
+  extractionStarted.value = false
   isPolling.value = true
   status.value = null
 

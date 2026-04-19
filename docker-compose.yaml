@@ -111,10 +111,14 @@ services:
       - |
         API_KEYS=[{"user_id": "test_user", "email": "test_user@example.com", "roles": ["user"], "is_admin": false, "token": "secret-api"}]
     depends_on:
-      - redis
-      - db
-      - minio
-      #- migration
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      migration:
+        condition: service_completed_successfully
 
     env_file:
       - .env
@@ -146,7 +150,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:15
