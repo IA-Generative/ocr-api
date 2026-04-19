@@ -448,6 +448,7 @@ async function submitAnnotations () {
       :box="selectedBox"
       :saved-state="selectedBoxIdx !== null ? savedStateFor(selectedBoxIdx) : undefined"
       :is-hidden="selectedBoxIdx !== null ? isBoxHidden(selectedBoxIdx) : false"
+      :image-url="imageUrl"
       @close="selectedBoxIdx = null"
       @save="(review) => { onSave(review); if (contentHash) submitAnnotations() }"
       @delete="deleteDrawnBox"

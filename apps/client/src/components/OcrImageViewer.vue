@@ -257,6 +257,7 @@ onBeforeUnmount(() => {
     <LayoutDetailModal
       v-if="selectedLayout"
       :layout="selectedLayout"
+      :image-url="imageUrl"
       @close="selectedLayout = null"
     />
 

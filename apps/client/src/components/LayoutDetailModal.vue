@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { components } from '@/api/types/api.schema'
 import type { FormulaBlock, TableBlock, ImageBlock } from './layout/types'
 import LayoutBlockFormula from './layout/LayoutBlockFormula.vue'
@@ -10,6 +10,7 @@ type Layout = components['schemas']['Layout-Output']
 
 const props = defineProps<{
   layout: Layout
+  imageUrl?: string
 }>()
 
 const emit = defineEmits<{
@@ -59,6 +60,49 @@ const imageBlock = computed<ImageBlock | null>(() => {
 })
 
 const isWide = computed(() => isTable.value || isFigure.value)
+
+// --- Thumbnail dimensions ---
+const naturalSize = ref({ w: 0, h: 0 })
+
+function onImageLoaded(e: Event) {
+  const img = e.target as HTMLImageElement
+  naturalSize.value = { w: img.naturalWidth, h: img.naturalHeight }
+}
+
+const thumbMaxH = 120
+const thumbStyle = computed(() => {
+  const nw = naturalSize.value.w
+  const nh = naturalSize.value.h
+  if (!nw || !nh) return null
+  const cropW = xmax - xmin
+  const cropH = ymax - ymin
+  if (cropW <= 0 || cropH <= 0) return null
+  // Scale to fit in thumbMaxH
+  const scale = Math.min(thumbMaxH / cropH, 200 / cropW, 1)
+  const displayW = Math.round(cropW * scale)
+  const displayH = Math.round(cropH * scale)
+  const imgScale = displayW / cropW
+  return {
+    container: {
+      width: `${displayW}px`,
+      height: `${displayH}px`,
+      overflow: 'hidden',
+      position: 'relative' as const,
+      borderRadius: '8px',
+      border: '1px solid #e2e8f0',
+      flexShrink: '0',
+    },
+    img: {
+      position: 'absolute' as const,
+      left: `${-xmin * imgScale}px`,
+      top: `${-ymin * imgScale}px`,
+      width: `${nw * imgScale}px`,
+      height: `${nh * imgScale}px`,
+      maxWidth: 'none',
+      maxHeight: 'none',
+    },
+  }
+})
 </script>
 
 <template>
@@ -97,50 +141,44 @@ const isWide = computed(() => isTable.value || isFigure.value)
         <!-- Body -->
         <div class="p-5 flex flex-col gap-4 max-h-[80vh] overflow-y-auto">
 
-          <!-- Confiance -->
-          <div class="flex flex-col gap-1.5">
-            <div class="flex justify-between items-center text-sm">
-              <span class="font-medium text-slate-600">Confiance</span>
-              <span
-                class="font-bold text-sm"
-                :class="scorePercent >= 80 ? 'text-emerald-600' : scorePercent >= 50 ? 'text-amber-500' : 'text-red-500'"
-              >{{ scorePercent }}%</span>
+          <!-- Thumbnail + Coordonnées côte à côte -->
+          <div class="flex gap-4 items-start">
+            <!-- Thumbnail -->
+            <div v-if="imageUrl && thumbStyle" :style="thumbStyle.container">
+              <img :src="imageUrl" :style="thumbStyle.img" @load="onImageLoaded" />
             </div>
-            <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
-              <div
-                class="h-full rounded-full transition-all duration-500"
-                :class="scorePercent >= 80 ? 'bg-emerald-500' : scorePercent >= 50 ? 'bg-amber-400' : 'bg-red-400'"
-                :style="{ width: `${scorePercent}%` }"
-              />
+            <!-- Image cachée pour récupérer naturalSize si pas encore chargée -->
+            <img v-if="imageUrl && !naturalSize.w" :src="imageUrl" style="display:none" @load="onImageLoaded" />
+
+            <!-- Coordonnées -->
+            <div class="flex-1 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex flex-col gap-2">
+              <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Coordonnées</p>
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-700">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">x min</span>
+                  <span class="font-mono font-medium">{{ Math.round(xmin) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">y min</span>
+                  <span class="font-mono font-medium">{{ Math.round(ymin) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">x max</span>
+                  <span class="font-mono font-medium">{{ Math.round(xmax) }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">y max</span>
+                  <span class="font-mono font-medium">{{ Math.round(ymax) }}</span>
+                </div>
+                <div class="flex justify-between col-span-2 pt-1 border-t border-slate-200 mt-0.5">
+                  <span class="text-slate-400">Taille</span>
+                  <span class="font-mono font-medium">{{ width }} × {{ height }} px</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Coordonnées -->
-          <div class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex flex-col gap-2">
-            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Coordonnées</p>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-700">
-              <div class="flex justify-between">
-                <span class="text-slate-400">x min</span>
-                <span class="font-mono font-medium">{{ Math.round(xmin) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">y min</span>
-                <span class="font-mono font-medium">{{ Math.round(ymin) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">x max</span>
-                <span class="font-mono font-medium">{{ Math.round(xmax) }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-slate-400">y max</span>
-                <span class="font-mono font-medium">{{ Math.round(ymax) }}</span>
-              </div>
-              <div class="flex justify-between col-span-2 pt-1 border-t border-slate-200 mt-0.5">
-                <span class="text-slate-400">Taille</span>
-                <span class="font-mono font-medium">{{ width }} × {{ height }} px</span>
-              </div>
-            </div>
-          </div>
+          <!-- Confiance -->
 
           <!-- Ordre de lecture -->
           <div v-if="layout.order != null" class="flex items-center justify-between text-sm">
