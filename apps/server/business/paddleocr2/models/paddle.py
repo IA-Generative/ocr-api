@@ -37,7 +37,16 @@ class PaddleInferOCR2(BaseModelPrediction):
             use_doc_unwarping=False,
             lang="fr",
             ocr_version=paddle_settings.OCR_VERSION,
+            device=paddle_settings.DEVICE,
+            cpu_threads=paddle_settings.CPU_THREADS,
+            enable_mkldnn=paddle_settings.ENABLE_MKLDNN,
         )
+        self.warmup()
+
+    def warmup(self):
+        # Create a dummy white image for warmup
+        dummy_image = Image.new("RGB", (640, 480), color="white")
+        self.model.predict(np.array(dummy_image))
 
     def batch_predict(self, images: list[Image.Image], pages: list = [], *args, **kwargs) -> list[Page]:
         result: list[Page] = []
