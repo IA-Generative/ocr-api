@@ -23,10 +23,23 @@
           />
         </div>
 
-        <ProgressBar
-          :visible="isPolling && status === 'in_progress'"
-          :progress="progressPercent"
-        />
+        <div v-if="isPolling" class="flex flex-col gap-2">
+          <ProgressBar
+            :visible="true"
+            :progress="ocrProgress"
+            text="OCR"
+          />
+          <ProgressBar
+            :visible="chunkStarted"
+            :progress="chunkProgress"
+            text="Découpage"
+          />
+          <ProgressBar
+            :visible="classificationStarted"
+            :progress="classificationProgress"
+            text="Classification"
+          />
+        </div>
       </div>
 
       <!-- COLONNE DROITE : Types de documents -->
@@ -96,12 +109,6 @@
       </div>
     </div>
 
-    <!-- Résultat CLASSIFICATION -->
-    <div v-if="taskOutput && !isPolling" class="flex flex-col gap-6">
-      <ClassificationResult v-if="classificationPages.length > 0" :pages="classificationPages" />
-      <OcrViewer :data="taskOutput" />
-    </div>
-
     <!-- Modal ajout/édition -->
     <DocTypeModal
       v-if="modalOpen"
@@ -114,11 +121,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import ProgressBar from '@/components/ProgressBar.vue'
-import OcrViewer from '@/components/OcrViewer.vue'
-import ClassificationResult from '@/components/ClassificationResult.vue'
-import type { ClassificationPage } from '@/components/ClassificationResult.vue'
 import DocTypeModal from '@/components/DocTypeModal.vue'
 import type { DocumentType } from '@/components/DocTypeModal.vue'
 import createHttpClient from '@/api/http-client'
@@ -127,12 +132,16 @@ import useToaster from '@/composables/use-toaster'
 
 const http = createHttpClient(OCR_API_URL)
 const { addErrorMessage, addSuccessMessage } = useToaster()
+const router = useRouter()
 
 const files = ref<File | null>(null)
 const isPolling = ref(false)
 const status = ref<string | null>(null)
-const progressPercent = ref(0)
-const taskOutput = ref<{ id: string; pages: any[] } | null>(null)
+const ocrProgress = ref(0)
+const chunkProgress = ref(0)
+const classificationProgress = ref(0)
+const chunkStarted = ref(false)
+const classificationStarted = ref(false)
 const uploadError = ref<string | undefined>(undefined)
 
 let pollingTimer: ReturnType<typeof setTimeout> | null = null
@@ -175,28 +184,59 @@ const getNormalizedDocumentTypes = () =>
 
 async function pollTask(taskId: string) {
   try {
-    const { data: task } = await http.get<any>(`/tasks/${taskId}`)
+    const [{ data: task }, { data: children }] = await Promise.all([
+      http.get<any>(`/tasks/${taskId}`),
+      http.get<any[]>(`/tasks/${taskId}/children`),
+    ])
     status.value = task.status
 
+    // OCR progress from parent task
     if (task.status === 'in_progress' || task.status === 'started') {
-      progressPercent.value = Math.round((task.percentage ?? 0) * 100)
-      pollingTimer = setTimeout(() => pollTask(taskId), 2000)
-    }
-    else if (task.status === 'completed') {
-      progressPercent.value = 100
-      isPolling.value = false
-      taskOutput.value = { id: taskId, pages: task.output?.pages ?? [] }
-      addSuccessMessage({ title: 'Classification terminée', description: 'Les résultats sont disponibles.' })
-    }
-    else if (task.status === 'failed') {
-      isPolling.value = false
-      uploadError.value = task.extras?.error ?? 'Échec de la classification.'
-      addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+      ocrProgress.value = Math.round((task.percentage ?? 0) * 100)
     }
     else {
-      // queued / created / etc.
-      pollingTimer = setTimeout(() => pollTask(taskId), 2000)
+      ocrProgress.value = 100
     }
+
+    if (task.status === 'failed') {
+      isPolling.value = false
+      uploadError.value = task.extras?.error ?? 'Échec du traitement OCR.'
+      addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+      return
+    }
+
+    // Sub-task progress from children
+    const chunkChild = (children as any[]).find((c: any) => c.type === 'tasks.ocr_chunk')
+    const classChild = (children as any[]).find((c: any) => c.type === 'tasks.page_text_classification')
+
+    if (chunkChild) {
+      chunkStarted.value = true
+      chunkProgress.value = chunkChild.status === 'completed'
+        ? 100
+        : Math.round((chunkChild.percentage ?? 0) * 100)
+    }
+
+    if (classChild) {
+      classificationStarted.value = true
+      if (classChild.status === 'completed') {
+        classificationProgress.value = 100
+        isPolling.value = false
+        addSuccessMessage({ title: 'Classification terminée', description: 'Redirection vers les résultats...' })
+        router.push(`/${classChild.id}`)
+        return
+      }
+      else if (classChild.status === 'failed') {
+        isPolling.value = false
+        uploadError.value = classChild.extras?.error ?? 'Échec de la classification.'
+        addErrorMessage({ title: 'Échec :', description: uploadError.value ?? '' })
+        return
+      }
+      else {
+        classificationProgress.value = Math.round((classChild.percentage ?? 0) * 100)
+      }
+    }
+
+    pollingTimer = setTimeout(() => pollTask(taskId), 2000)
   }
   catch (err: any) {
     isPolling.value = false
@@ -207,15 +247,17 @@ async function pollTask(taskId: string) {
 const selectFile = (selected: FileList | File[]) => {
   files.value = Array.isArray(selected) ? selected[0] ?? null : selected[0] ?? null
   uploadError.value = undefined
-  taskOutput.value = null
 }
 
 async function startOcr() {
   if (!files.value) return
 
   uploadError.value = undefined
-  taskOutput.value = null
-  progressPercent.value = 0
+  ocrProgress.value = 0
+  chunkProgress.value = 0
+  classificationProgress.value = 0
+  chunkStarted.value = false
+  classificationStarted.value = false
   isPolling.value = true
   status.value = null
 
@@ -237,9 +279,7 @@ async function startOcr() {
   }
 }
 
-onMounted(() => {
-  taskOutput.value = null
-})
+onMounted(() => {})
 
 onBeforeUnmount(() => {
   if (pollingTimer) clearTimeout(pollingTimer)
@@ -248,27 +288,4 @@ onBeforeUnmount(() => {
 const uploadLabel = 'Téléverser un document'
 const uploadHint = 'Formats acceptés : PDF, JPG, PNG'
 const uploadAccept = '.pdf,.jpg,.png'
-
-const classificationPages = computed<ClassificationPage[]>(() => {
-  if (!taskOutput.value) return []
-  return taskOutput.value.pages
-    .filter((p: any) => p.classifications && p.classifications.length > 0)
-    .map((p: any) => {
-      const classifications = p.classifications.map((c: any) => ({
-        label: c.label,
-        confidence: c.confidence,
-        scorePercent: Math.round(c.confidence * 100),
-      }))
-      const topLabel = classifications.reduce(
-        (best: any, c: any) => (c.confidence > (best?.confidence ?? -1) ? c : best),
-        null as any,
-      )?.label?.label ?? null
-      return {
-        page: p.page,
-        pageUrl: p.page_url ?? null,
-        topLabel,
-        classifications,
-      }
-    })
-})
 </script>
