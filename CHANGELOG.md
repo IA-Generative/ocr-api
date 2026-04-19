@@ -29,6 +29,19 @@
 - code clean
 - :art: change minio vars
 
+## [1.5.0](https://github.com/IA-Generative/ocr-api/compare/v1.4.3...v1.5.0) (2026-04-19)
+
+
+### Features
+
+* add imageUrl prop and thumbnail display to detail modals ([2483b28](https://github.com/IA-Generative/ocr-api/commit/2483b28142674f456dd45ba8be5a8804fa10d99e))
+* add layout components for formula, image, and table blocks ([a84d05a](https://github.com/IA-Generative/ocr-api/commit/a84d05a5e8973878717e205edb3348b13384f17f))
+
+
+### Bug Fixes
+
+* **modal:** update background color and margin styles for better visibility ([613549f](https://github.com/IA-Generative/ocr-api/commit/613549fd9777038dd3b2212b3156e1ca4f95ff4e))
+
 ## [1.4.3](https://github.com/IA-Generative/ocr-api/compare/v1.4.2...v1.4.3) (2026-04-19)
 
 
