@@ -42,6 +42,7 @@ class EntityCreateDefinition(BaseModel):
 
 class ParameterEntityDefinition(EntityDefinition):
     entities_definitions: Optional[list[EntityDefinition]] = Field(default_factory=list)
+    template_id: Optional[str] = None
 
 
 class EntityPrediction(BaseModel):

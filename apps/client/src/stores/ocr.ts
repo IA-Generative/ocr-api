@@ -282,6 +282,34 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
+  async function downloadResultFile (taskId: string, filename?: string): Promise<void> {
+    try {
+      const response = await http.get(
+        `/tasks/${encodeURIComponent(taskId)}/result-file`,
+        { responseType: 'blob' },
+      )
+
+      const blob = new Blob([response.data])
+      const url = URL.createObjectURL(blob)
+
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename ?? `result-${taskId}.odt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+
+      URL.revokeObjectURL(url)
+    }
+    catch (error) {
+      addErrorMessage({
+        title: 'Erreur :',
+        description: `Erreur lors du téléchargement du document rempli : ${error}`,
+      })
+      throw error
+    }
+  }
+
   return {
     status,
     percentage,
@@ -294,6 +322,7 @@ export const useOcrStore = defineStore('ocr', () => {
     reset,
     validateFile,
     downloadText,
+    downloadResultFile,
     getTask,
   }
 })

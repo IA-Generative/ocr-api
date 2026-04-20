@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query, Depends, status as http_status
+from fastapi.responses import StreamingResponse
 from typing import Optional, Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
+import io
 from src.schemas.task import (
     TaskModel,
     TaskStatus,
@@ -133,6 +135,49 @@ async def get_task_by_id_user(
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     return task
+
+
+@router.get("/tasks/{task_id}/result-file")
+async def download_task_result_file(
+    task_id: str,
+    ctx: TokenDep,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+):
+    """Télécharge le fichier résultat (document rempli) d'une tâche"""
+    task = await get_task_by_id_internal(task_id, db, task_service)
+    if task is None:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+    if task.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+    if not task.output or not task.output.result_path:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="No result file available for this task",
+        )
+
+    s3_key = task.output.result_path
+    try:
+        obj = s3_client_connector.client.get_object(Bucket=s3_client_connector.bucket_name, Key=s3_key)
+    except Exception:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Result file not found in storage",
+        )
+
+    # Build a meaningful filename from the original input filename
+    base_name = task_id
+    if task.input and task.input.raw_filename:
+        base_name = task.input.raw_filename.rsplit(".", 1)[0]
+    filename = f"{base_name}_rempli.odt"
+
+    return StreamingResponse(
+        io.BytesIO(obj["Body"].read()),
+        media_type="application/vnd.oasis.opendocument.text",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
 
 
 @router.get("/tasks/content/{content_hash}", response_model=Optional[TaskModel])

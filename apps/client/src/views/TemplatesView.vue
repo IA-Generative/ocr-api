@@ -154,10 +154,6 @@ function onFieldsSaved (fields: EntityDefinition[]) {
   // refresh list to get updated entity_zone
   store.fetchTemplatings()
 }
-
-function onApplySubmit (_files: File[]) {
-  // TODO: envoyer les fichiers au backend pour extraction
-}
 </script>
 
 <template>
@@ -384,7 +380,6 @@ function onApplySubmit (_files: File[]) {
     v-if="applyingTemplate"
     :template="applyingTemplate"
     @close="applyingTemplate = null"
-    @submit="onApplySubmit"
   />
 </template>
 

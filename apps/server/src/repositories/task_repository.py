@@ -267,10 +267,14 @@ class TaskRepository:
                 detail=f"Task with id {task_id} not found.",
             )
 
-        tasks_tree = []
+        tasks_tree = [TaskModel.model_validate(root_task)]
 
-        tasks_tree.append(TaskModel.model_validate(root_task))
-        child_tasks = await self.fetch_tasks_by_parent_id(db, task_id)
-        tasks_tree.extend(child_tasks)
+        async def _collect_children(parent_id: str):
+            children = await self.fetch_tasks_by_parent_id(db, parent_id)
+            for child in children:
+                tasks_tree.append(child)
+                await _collect_children(child.id)
+
+        await _collect_children(task_id)
 
         return tasks_tree

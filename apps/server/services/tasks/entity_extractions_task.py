@@ -16,6 +16,7 @@ from services.utils.validation import validate_task
 from services.client.tools import (
     server_client,
 )
+from .filling_template_task import process_fill_template
 
 
 model = TextEntityExtractionModel()
@@ -28,6 +29,9 @@ class EntityExtractionTask(CeleryTask):
 
     def on_success(self, retval, task_id, args, kwargs):
         logger.info(f"Task {task_id} completed successfully.")
+        if retval.get("parameters", {}).get("template_id"):
+            # If the task has a template_id parameter, trigger the filling task
+            process_fill_template.apply_async(args=[retval])
 
 
 @celery_app.task(

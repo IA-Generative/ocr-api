@@ -132,5 +132,43 @@ export const useTemplatingStore = defineStore('templating', () => {
     return updated
   }
 
-  return { templatings, total, isLoading, error, taskInfos, uploadTemplating, fetchTemplatings, fetchTaskInfo, fetchAllTaskInfos, deleteTemplating, updateTemplating }
+  async function submitExtraction (template: TemplatingModel, files: File[]): Promise<string[]> {
+    const entitiesDefinitions = (template.entity_zone ?? [])
+      .map(ez => ez.entity_definition)
+      .filter(ed => !!ed.definition)
+
+    const parameter = JSON.stringify({
+      name: template.name,
+      definition: `Extraction basée sur le template ${template.name}`,
+      template_id: template.id,
+      entities_definitions: entitiesDefinitions,
+    })
+
+    const taskIds: string[] = []
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('group_id', template.group_id)
+      formData.append('task_name', 'tasks.entity_extraction')
+      formData.append('parameter', parameter)
+
+      const { data } = await http.post('/jobs/', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      taskIds.push(data.id)
+    }
+    return taskIds
+  }
+
+  async function getTaskStatus (taskId: string): Promise<{ id: string; status: string; percentage: number; type: string } | null> {
+    try {
+      const { data } = await http.get(`/tasks/${encodeURIComponent(taskId)}`)
+      return data
+    }
+    catch {
+      return null
+    }
+  }
+
+  return { templatings, total, isLoading, error, taskInfos, uploadTemplating, fetchTemplatings, fetchTaskInfo, fetchAllTaskInfos, deleteTemplating, updateTemplating, submitExtraction, getTaskStatus }
 })
