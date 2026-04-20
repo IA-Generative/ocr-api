@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.6.0](https://github.com/IA-Generative/ocr-api/compare/v1.5.1...v1.6.0) (2026-04-20)
+
+
+### Features
+
+* **training:** add training process ([65fa2ca](https://github.com/IA-Generative/ocr-api/commit/65fa2ca7b0b306407736f3376734ba0f372ce13f))
+
 ## [1.5.1](https://github.com/IA-Generative/ocr-api/compare/v1.5.0...v1.5.1) (2026-04-19)
 
 
