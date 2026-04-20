@@ -13,6 +13,7 @@ from .routers.chat import router as chat_router
 from .routers.v1 import router as v1_router
 from ocr_backend.core.security.factory import TokenVerifier
 
+
 # from .routers.template import template_router
 from src import __name__, __version__
 

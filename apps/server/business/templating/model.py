@@ -5,7 +5,6 @@ import re
 
 
 class TemplatingFieldExtraction:
-
     def __init__(
         self,
         placeholder_pattern: str = r"{{(.*?)}}",

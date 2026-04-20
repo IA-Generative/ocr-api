@@ -31,6 +31,15 @@ class EntityDefinition(BaseModel):
     exemples: Optional[list[str]] = Field(default_factory=list)
 
 
+class EntityCreateDefinition(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    definition: str | None = None
+    entity_type: EntityType = EntityType.TEXT
+    formats: Optional[list[str]] = Field(default_factory=list)
+    exemples: Optional[list[str]] = Field(default_factory=list)
+
+
 class ParameterEntityDefinition(EntityDefinition):
     entities_definitions: Optional[list[EntityDefinition]] = Field(default_factory=list)
 

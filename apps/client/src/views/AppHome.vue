@@ -12,12 +12,13 @@ import SideBar from '@/components/SideBar.vue'
 import TasksTab from '@/components/TasksTab.vue'
 import Classification from '@/components/Classification.vue'
 import EntityExtraction from '@/components/EntityExtraction.vue'
+import TemplatesView from '@/views/TemplatesView.vue'
 import { useOcrStore } from '@/stores/ocr'
 
 const store = useOcrStore()
 const router = useRouter()
 const route = useRoute()
-const currentTab = ref<'ocr' | 'classification' | 'entity' | 'tasks'>(route.name === 'Tasks' ? 'tasks' : 'ocr')
+const currentTab = ref<'ocr' | 'classification' | 'entity' | 'tasks' | 'templates'>(route.name === 'Tasks' ? 'tasks' : route.name === 'Templates' ? 'templates' : 'ocr')
 const selectedFile = ref<File | null>(null)
 const pdfUrl = ref<string | null>(null)
 const uploadError = computed(() => store.error)
@@ -131,6 +132,12 @@ onBeforeUnmount(() => {
           size="sm"
           @click="currentTab = 'tasks'"
         />
+        <DsfrButton
+          label="Templates"
+          :priority="currentTab === 'templates' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'templates'"
+        />
       </div>
 
       <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
@@ -178,8 +185,12 @@ onBeforeUnmount(() => {
             <EntityExtraction />
           </div>
 
-          <div v-else>
+          <div v-else-if="currentTab === 'tasks'">
             <TasksTab />
+          </div>
+
+          <div v-else-if="currentTab === 'templates'">
+            <TemplatesView />
           </div>
         </div>
       </div>

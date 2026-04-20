@@ -38,6 +38,7 @@
               type="text"
               class="fr-input fr-input--sm w-full"
               :class="{ 'fr-input--error': submitted && !isValidName(form.name) }"
+              :disabled="!!forcedName"
               placeholder="ex: date_naissance"
             />
             <p v-if="submitted && !isValidName(form.name)" class="text-xs text-red-500 mt-1">
@@ -163,7 +164,7 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 
-type EntityType = 'string' | 'int' | 'float' | 'date' | 'boolean' | 'email' | 'phone' | 'address' | 'currency' | 'iban'
+type EntityType = 'text' | 'date' | 'integer' | 'float' | 'boolean' | 'email' | 'url' | 'phone_number'
 
 export type EntityDefinition = {
   name: string
@@ -175,6 +176,7 @@ export type EntityDefinition = {
 
 const props = defineProps<{
   initial?: EntityDefinition
+  forcedName?: string
 }>()
 
 const emit = defineEmits<{
@@ -186,24 +188,22 @@ const isEdit = !!props.initial
 const submitted = ref(false)
 
 const form = reactive<EntityDefinition>({
-  name: props.initial?.name ?? '',
+  name: props.forcedName ?? props.initial?.name ?? '',
   definition: props.initial?.definition ?? '',
-  entity_type: props.initial?.entity_type ?? 'string',
+  entity_type: props.initial?.entity_type ?? 'text',
   formats: props.initial?.formats ? [...props.initial.formats] : [],
   exemples: props.initial?.exemples ? [...props.initial.exemples] : [],
 })
 
 const ENTITY_TYPES: { value: EntityType; label: string; placeholder: string }[] = [
-  { value: 'string',   label: 'Texte',      placeholder: 'Ex : Nom complet de la personne' },
-  { value: 'int',      label: 'Entier',     placeholder: 'Ex : Âge de la personne en années' },
-  { value: 'float',    label: 'Décimal',    placeholder: 'Ex : Taux de TVA appliqué (ex : 20.0)' },
-  { value: 'date',     label: 'Date',       placeholder: 'Ex : Date de naissance au format JJ/MM/AAAA' },
-  { value: 'boolean',  label: 'Oui / Non',  placeholder: 'Ex : Le document comporte-t-il une signature ?' },
-  { value: 'email',    label: 'Email',      placeholder: 'Ex : Adresse email de contact du signataire' },
-  { value: 'phone',    label: 'Téléphone',  placeholder: 'Ex : Numéro de téléphone portable ou fixe' },
-  { value: 'address',  label: 'Adresse',    placeholder: 'Ex : Adresse postale complète du domicile' },
-  { value: 'currency', label: 'Montant',    placeholder: 'Ex : Montant total TTC en euros' },
-  { value: 'iban',     label: 'IBAN',       placeholder: 'Ex : IBAN du bénéficiaire du virement' },
+  { value: 'text',         label: 'Texte',      placeholder: 'Ex : Nom complet de la personne' },
+  { value: 'integer',      label: 'Entier',     placeholder: 'Ex : Âge de la personne en années' },
+  { value: 'float',        label: 'Décimal',    placeholder: 'Ex : Taux de TVA appliqué (ex : 20.0)' },
+  { value: 'date',         label: 'Date',       placeholder: 'Ex : Date de naissance au format JJ/MM/AAAA' },
+  { value: 'boolean',      label: 'Oui / Non',  placeholder: 'Ex : Le document comporte-t-il une signature ?' },
+  { value: 'email',        label: 'Email',      placeholder: 'Ex : Adresse email de contact du signataire' },
+  { value: 'url',          label: 'URL',        placeholder: 'Ex : Lien vers le site web du fournisseur' },
+  { value: 'phone_number', label: 'Téléphone',  placeholder: 'Ex : Numéro de téléphone portable ou fixe' },
 ]
 
 function placeholderFor (type: EntityType) {

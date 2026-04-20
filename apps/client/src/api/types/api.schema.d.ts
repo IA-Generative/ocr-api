@@ -608,6 +608,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/templatings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List templatings (paginated) */
+        get: operations["list_templatings_api_v1_templatings__get"];
+        put?: never;
+        /** Upload an ODT template */
+        post: operations["create_templating_api_v1_templatings__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/templatings/{templating_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a templating by id */
+        get: operations["get_templating_api_v1_templatings__templating_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete a templating */
+        delete: operations["delete_templating_api_v1_templatings__templating_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update a templating */
+        patch: operations["update_templating_api_v1_templatings__templating_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -725,6 +762,19 @@ export interface components {
              */
             sources?: components["schemas"]["UsedChunk"][];
         };
+        /** BaseBox */
+        BaseBox: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Confidence */
+            confidence: number;
+        };
         /** Bbox */
         Bbox: {
             /** X */
@@ -739,6 +789,23 @@ export interface components {
             confidence: number;
             /** Text */
             text: string;
+        };
+        /** Body_create_templating_api_v1_templatings__post */
+        Body_create_templating_api_v1_templatings__post: {
+            /** File */
+            file: string;
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Group Id
+             * @default DEFAULT
+             */
+            group_id: string;
         };
         /** Body_upload_file_api_jobs__post */
         Body_upload_file_api_jobs__post: {
@@ -789,7 +856,7 @@ export interface components {
          * CeleryTaskName
          * @enum {string}
          */
-        CeleryTaskName: "worker.tasks.ocr" | "tasks.page_classification" | "tasks.page_text_classification" | "tasks.dispatch" | "tasks.ocr_chunk" | "tasks.entity_extraction";
+        CeleryTaskName: "worker.tasks.ocr" | "tasks.page_classification" | "tasks.page_text_classification" | "tasks.dispatch" | "tasks.ocr_chunk" | "tasks.entity_extraction" | "tasks.templating_extraction";
         /**
          * ChatCompletion
          * @description Represents a chat completion response returned by model, based on the provided input.
@@ -1056,6 +1123,19 @@ export interface components {
             /** Model */
             model: string;
         };
+        /** EntityCreateDefinition */
+        EntityCreateDefinition: {
+            /** Name */
+            name: string;
+            /** Definition */
+            definition?: string | null;
+            /** @default text */
+            entity_type: components["schemas"]["EntityType"];
+            /** Formats */
+            formats?: string[] | null;
+            /** Exemples */
+            exemples?: string[] | null;
+        };
         /** EntityPrediction */
         EntityPrediction: {
             /** Entity Name */
@@ -1068,6 +1148,16 @@ export interface components {
             bbox?: components["schemas"]["Bbox"][] | null;
             /** Pages */
             pages?: number[] | null;
+        };
+        /**
+         * EntityType
+         * @enum {string}
+         */
+        EntityType: "text" | "date" | "integer" | "float" | "boolean" | "email" | "url" | "phone_number";
+        /** EntityZone */
+        EntityZone: {
+            entity_definition: components["schemas"]["EntityCreateDefinition"];
+            boxes: components["schemas"]["BaseBox"] | null;
         };
         /** FormEntry */
         FormEntry: {
@@ -1182,6 +1272,11 @@ export interface components {
              * @description All visible text extracted from the image.
              */
             text: string[];
+            /**
+             * Description
+             * @description Optional overall description of the image content.
+             */
+            description?: string | null;
             /**
              * Layout
              * @description Overall spatial layout description.
@@ -1867,7 +1962,7 @@ export interface components {
          * TaskOperation
          * @enum {string}
          */
-        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "page_classification" | "chunk_ocr" | "entity_extraction";
+        TaskOperation: "ocr" | "default" | "save_template" | "forms" | "vectorize" | "vlm_ocr" | "page_classification" | "chunk_ocr" | "entity_extraction" | "templating_extraction";
         /** TaskStats */
         TaskStats: {
             global_stats: components["schemas"]["TaskStatsGlobal"];
@@ -1927,6 +2022,71 @@ export interface components {
             parent_id?: string | null;
             /** User Id */
             user_id?: string | null;
+        };
+        /** TemplatingExtractionResult */
+        TemplatingExtractionResult: {
+            /**
+             * Valid Fields
+             * @description Form entries with valid values
+             */
+            valid_fields?: string[];
+            /**
+             * Invalid Fields
+             * @description Form entries with invalid values
+             */
+            invalid_fields?: string[];
+        };
+        /** TemplatingModel */
+        TemplatingModel: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** User Id */
+            user_id?: string | null;
+            /** Group Id */
+            group_id: string;
+            /** Source File */
+            source_file: string;
+            /** Source Task Id */
+            source_task_id?: string | null;
+            /** Extracting Status */
+            extracting_status?: string | null;
+            /** Total Page */
+            total_page: number;
+            /** Created At */
+            created_at: number;
+            /** Updated At */
+            updated_at: number;
+            /** Entity Zone */
+            entity_zone?: components["schemas"]["EntityZone"][] | null;
+            entity_names?: components["schemas"]["TemplatingExtractionResult"] | null;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TemplatingUpdateModel */
+        TemplatingUpdateModel: {
+            /** Name */
+            name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Source File */
+            source_file?: string | null;
+            /** Source Task Id */
+            source_task_id?: string | null;
+            /** Total Page */
+            total_page?: number | null;
+            /** Entity Zone */
+            entity_zone?: components["schemas"]["EntityZone"][] | null;
+            entity_names?: components["schemas"]["TemplatingExtractionResult"] | null;
+            /** Extras */
+            extras?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** TokenCreate */
         TokenCreate: {
@@ -3069,6 +3229,171 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_templatings_api_v1_templatings__get: {
+        parameters: {
+            query?: {
+                group_id?: string | null;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_templating_api_v1_templatings__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_templating_api_v1_templatings__post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatingModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_templating_api_v1_templatings__templating_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templating_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatingModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_templating_api_v1_templatings__templating_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templating_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatingModel"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_templating_api_v1_templatings__templating_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templating_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplatingUpdateModel"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatingModel"];
                 };
             };
             /** @description Validation Error */
