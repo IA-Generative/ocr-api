@@ -5,6 +5,7 @@ from .templates import Template
 from .annotations import TaskAnnotationBase
 from .token import Token
 from .ocr_chunks import OcrChunksTable
+from .templating import Templating
 
 __all__ = [
     "Task",
@@ -14,6 +15,7 @@ __all__ = [
     "TaskAnnotationBase",
     "Token",
     "OcrChunksTable",
+    "Templating",
 ]
 
 # Base.metadata.create_all(engine)

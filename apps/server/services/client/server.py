@@ -83,6 +83,41 @@ class ServerClient:
         )
         return response.json()
 
+    def create_templating(
+        self,
+        file_path: str,
+        name: str,
+        description: str = "",
+        group_id: str = "DEFAULT",
+    ) -> dict:
+        with open(file_path, "rb") as f:
+            response = self.request(
+                "POST",
+                "/api/v1/templatings/",
+                files={"file": (file_path, f, "application/vnd.oasis.opendocument.text")},
+                data={"name": name, "description": description, "group_id": group_id},
+            )
+        return response.json()
+
+    def get_templating_by_id(self, templating_id: str) -> dict:
+        response = self.request("GET", f"/api/v1/templatings/{templating_id}")
+        return response.json()
+
+    def list_templatings(self, group_id: str | None = None, page: int = 1, page_size: int = 10) -> dict:
+        params = {"page": page, "page_size": page_size}
+        if group_id:
+            params["group_id"] = group_id
+        response = self.request("GET", "/api/v1/templatings/", params=params)
+        return response.json()
+
+    def update_templating(self, templating_id: str, update_data: dict) -> dict:
+        response = self.request("PATCH", f"/api/v1/templatings/{templating_id}", json=update_data)
+        return response.json()
+
+    def delete_templating(self, templating_id: str) -> dict:
+        response = self.request("DELETE", f"/api/v1/templatings/{templating_id}")
+        return response.json()
+
     def search_chunks(
         self,
         content_hash: str,

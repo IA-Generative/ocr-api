@@ -8,6 +8,7 @@ import Home from '../views/AppHome.vue'
 import DevOcrViewer from '../views/DevOcrViewer.vue'
 import OcrResultView from '../views/OcrResultView.vue'
 import Documentation from '../views/Documentation.vue'
+import TemplatesView from '../views/TemplatesView.vue'
 
 function redirectToSSO () {
   const loginUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}&redirect_uri=${encodeURIComponent(KEYCLOAK_REDIRECT_URI)}&response_type=code`
@@ -76,6 +77,13 @@ const routes = [
     name: 'Documentation',
     component: Documentation,
     beforeEnter: authGuard('/docs'),
+  },
+  {
+    path: '/templates',
+    name: 'Templates',
+    component: TemplatesView,
+    props: { fullscreen: true },
+    beforeEnter: authGuard('/templates'),
   },
   {
     path: '/:taskId',
