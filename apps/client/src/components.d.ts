@@ -62,6 +62,7 @@ declare module 'vue' {
     TasksTab: typeof import('./components/TasksTab.vue')['default']
     TemplateApplyModal: typeof import('./components/TemplateApplyModal.vue')['default']
     TemplateFieldsModal: typeof import('./components/TemplateFieldsModal.vue')['default']
+    TemplateHistoryModal: typeof import('./components/TemplateHistoryModal.vue')['default']
     TokenModal: typeof import('./components/TokenModal.vue')['default']
   }
 }
@@ -118,5 +119,6 @@ declare global {
   const TasksTab: typeof import('./components/TasksTab.vue')['default']
   const TemplateApplyModal: typeof import('./components/TemplateApplyModal.vue')['default']
   const TemplateFieldsModal: typeof import('./components/TemplateFieldsModal.vue')['default']
+  const TemplateHistoryModal: typeof import('./components/TemplateHistoryModal.vue')['default']
   const TokenModal: typeof import('./components/TokenModal.vue')['default']
 }
