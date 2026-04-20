@@ -2805,7 +2805,7 @@ wheels = [
 
 [[package]]
 name = "ocr-api"
-version = "1.5.0"
+version = "1.6.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -2902,6 +2902,9 @@ services = [
 ]
 stress-test = [
     { name = "locust" },
+]
+templating = [
+    { name = "odfpy" },
 ]
 test = [
     { name = "aiosqlite" },
@@ -3011,6 +3014,7 @@ services = [
     { name = "unstructured", specifier = ">=0.18.15" },
 ]
 stress-test = [{ name = "locust", specifier = ">=2.34.1" }]
+templating = [{ name = "odfpy", specifier = ">=1.4.1" }]
 test = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "coverage", specifier = ">=7.13.5" },

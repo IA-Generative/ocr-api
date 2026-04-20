@@ -25,14 +25,12 @@ ENV TORCHINDUCTOR_CACHE_DIR=/tmp
 ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=true
 
 COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version  /app/
-RUN uv sync --no-cache --group business-forms \
+RUN --mount=type=cache,target=/app/.cache uv sync --group business-forms \
   --group checkbox_service \
   --group client \
   --group llm \
   --group ocr-service-paddle \
-  # --group ocr-service-features \
-  --group services \
-  && uv cache clean
+  --group services
 
 ENV PYTHONPATH=/app
 # Download PaddleOCR models
@@ -49,7 +47,7 @@ ENV PATH=$PATH:/app/.venv/bin/
 
 
 FROM builder AS test
-RUN uv sync --no-cache --group business-forms \
+RUN --mount=type=cache,target=/app/.cache uv sync --group business-forms \
   --group checkbox_service \
   --group client \
   --group llm \
@@ -57,4 +55,4 @@ RUN uv sync --no-cache --group business-forms \
   --group services \
   --group test \
   --group ocr-service-features \
-  && uv cache clean
+  --group templating
