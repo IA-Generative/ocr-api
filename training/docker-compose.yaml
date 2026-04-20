@@ -1,0 +1,45 @@
+services:
+  # Étape 1 : télécharge dataset + modèle pré-entrainé dans le volume /data
+  download:
+    image: ocr-training
+    build:
+      context: ..
+      dockerfile: training/Dockerfile
+    command: /app/training/1_download_dataset.sh
+    volumes:
+      - training-data:/data
+
+  # Étape 2 : entraînement — lit depuis /data, écrit les checkpoints dans /data/output
+  train:
+    image: ocr-training
+    build:
+      context: ..
+      dockerfile: training/Dockerfile
+    command: /app/training/2_train.sh
+    volumes:
+      - training-data:/data
+
+  # Étape 3 : évaluation du dernier checkpoint
+  eval:
+    image: ocr-training
+    build:
+      context: ..
+      dockerfile: training/Dockerfile
+    command: /app/training/3_eval.sh
+    volumes:
+      - training-data:/data
+
+  # Étape 4 : export du modèle en static graph dans /data/output/PP-OCRv5_server_rec_infer
+  export:
+    image: ocr-training
+    build:
+      context: ..
+      dockerfile: training/Dockerfile
+    command: /app/training/4_export.sh
+    volumes:
+      - training-data:/data
+      - ./output:/data/output # monte aussi en local pour récupérer le modèle exporté
+
+volumes:
+  training-data:
+    driver: local

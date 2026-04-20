@@ -36,3 +36,5 @@ apps/server/training/output/*
 PaddleOCR/
 apps/server/PaddleOCR/
 .pnpm-store/
+training/ocr_rec_dataset_examples/
+training/PP-OCRv5*
