@@ -118,14 +118,65 @@
                 />
               </div>
 
-              <div v-if="job.status === 'completed' && job.fillingTaskId" class="mt-2 flex justify-end">
+              <div v-if="job.status === 'completed' && job.fillingTaskId" class="mt-3">
+                <!-- Toggle results -->
                 <button
-                  class="fr-btn fr-btn--tertiary fr-btn--sm"
-                  @click="$router.push(`/${job.fillingTaskId}`)"
+                  class="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                  @click="job.showResults = !job.showResults"
                 >
-                  <span class="fr-icon-eye-line fr-mr-1w" aria-hidden="true" />
-                  Voir la tâche
+                  <span :class="job.showResults ? 'fr-icon-arrow-up-s-line' : 'fr-icon-arrow-down-s-line'" style="font-size: 12px;" aria-hidden="true" />
+                  {{ job.showResults ? 'Masquer les résultats' : 'Voir les résultats' }}
                 </button>
+
+                <!-- Results panel -->
+                <div v-if="job.showResults" class="mt-2 rounded-lg border border-slate-200 bg-white overflow-hidden">
+                  <!-- Entities table -->
+                  <div v-if="job.entities.length > 0" class="max-h-48 overflow-y-auto">
+                    <table class="w-full text-xs">
+                      <thead class="bg-slate-50 sticky top-0">
+                        <tr>
+                          <th class="text-left px-3 py-2 font-semibold text-slate-600 border-b border-slate-200">Champ</th>
+                          <th class="text-left px-3 py-2 font-semibold text-slate-600 border-b border-slate-200">Valeur</th>
+                          <th class="text-right px-3 py-2 font-semibold text-slate-600 border-b border-slate-200">Confiance</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="(entity, ei) in job.entities" :key="ei" class="even:bg-slate-50">
+                          <td class="px-3 py-1.5 text-slate-700 font-medium border-b border-slate-100">{{ entity.entity_name }}</td>
+                          <td class="px-3 py-1.5 text-slate-800 border-b border-slate-100">{{ entity.value ?? '—' }}</td>
+                          <td class="px-3 py-1.5 text-right border-b border-slate-100">
+                            <span
+                              class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
+                              :class="entity.confidence >= 0.8 ? 'bg-green-100 text-green-700' : entity.confidence >= 0.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'"
+                            >{{ Math.round(entity.confidence * 100) }}%</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div v-else class="px-3 py-4 text-xs text-slate-400 text-center">
+                    Aucune entité extraite.
+                  </div>
+
+                  <!-- Download + link -->
+                  <div class="flex items-center justify-between px-3 py-2 border-t border-slate-200 bg-slate-50">
+                    <button
+                      v-if="job.hasResultFile && job.fillingTaskId"
+                      class="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition-colors"
+                      @click="ocrStore.downloadResultFile(job.fillingTaskId!)"
+                    >
+                      <span class="fr-icon-download-line" style="font-size: 12px;" aria-hidden="true" />
+                      Télécharger le document rempli
+                    </button>
+                    <button
+                      class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                      @click="$router.push(`/${job.fillingTaskId}`)"
+                    >
+                      <span class="fr-icon-external-link-line" style="font-size: 11px;" aria-hidden="true" />
+                      Ouvrir en détail
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -161,10 +212,18 @@
 import { ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTemplatingStore, type TemplatingModel } from '@/stores/templating'
+import { useOcrStore } from '@/stores/ocr'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 
 const http = createHttpClient(OCR_API_URL)
+const ocrStore = useOcrStore()
+
+interface EntityResult {
+  entity_name: string
+  value: string | null
+  confidence: number
+}
 
 interface JobTrack {
   taskId: string
@@ -172,6 +231,9 @@ interface JobTrack {
   fileName: string
   status: string
   percentage: number
+  entities: EntityResult[]
+  hasResultFile: boolean
+  showResults: boolean
 }
 
 const props = defineProps<{
@@ -249,6 +311,9 @@ async function submit () {
         fileName: file.name,
         status: 'queued',
         percentage: 0,
+        entities: [],
+        hasResultFile: false,
+        showResults: false,
       })
     }
     jobs.value = results
@@ -291,6 +356,15 @@ function startPolling () {
           if (fillingTask.status === 'completed') {
             job.status = 'completed'
             job.percentage = 100
+            job.hasResultFile = !!fillingTask.output?.result_path
+            // Extract entities from the filling task output
+            if (fillingTask.output?.entities && job.entities.length === 0) {
+              job.entities = (fillingTask.output.entities as EntityResult[]).map((e: any) => ({
+                entity_name: e.entity_name,
+                value: e.value ?? null,
+                confidence: e.confidence ?? 0,
+              }))
+            }
           } else {
             job.status = 'in_progress'
             job.percentage = Math.round((fillingTask.percentage ?? 0) * 100)

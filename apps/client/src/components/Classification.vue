@@ -1,6 +1,22 @@
 <template>
   <div class="flex flex-col gap-8">
 
+    <!-- Guide d'utilisation -->
+    <div class="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+      <p class="font-semibold mb-2 flex items-center gap-2">
+        <span class="fr-icon-information-line" aria-hidden="true" />
+        Classification de documents
+      </p>
+      <p class="text-blue-800 mb-1">
+        Classez automatiquement vos documents par type (facture, contrat, pièce d'identité…).
+      </p>
+      <ol class="list-decimal ml-5 flex flex-col gap-0.5 text-blue-800 text-xs">
+        <li>Définissez les types de documents attendus avec un nom et une description.</li>
+        <li>Téléversez un document à classifier.</li>
+        <li>Lancez la classification — chaque page est analysée et un score de confiance est attribué par type.</li>
+      </ol>
+    </div>
+
     <!-- SECTION PRINCIPALE : Upload + Types -->
     <div class="flex flex-col gap-6 md:flex-row md:gap-10">
 

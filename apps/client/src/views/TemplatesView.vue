@@ -183,6 +183,26 @@ function onFieldsSaved (fields: EntityDefinition[]) {
       Importez des documents de référence pour configurer vos modèles de reconnaissance.
     </p>
 
+    <!-- Guide d'utilisation -->
+    <div class="fr-mb-4w rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-900">
+      <p class="font-semibold mb-2 flex items-center gap-2">
+        <span class="fr-icon-information-line" aria-hidden="true" />
+        Comment utiliser les templates ?
+      </p>
+      <ol class="list-decimal ml-5 flex flex-col gap-1 text-blue-800">
+        <li>
+          <strong>Préparez votre document ODT</strong> avec des champs à remplir en utilisant la syntaxe
+          <code class="bg-blue-100 px-1 py-0.5 rounded text-xs" v-pre>{{nom_du_champ}}</code> ou
+          <code class="bg-blue-100 px-1 py-0.5 rounded text-xs">[[nom_du_champ]]</code>.
+          <br />
+          <span class="text-xs text-blue-600">Exemple : <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{nom}}</code>, <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{date_naissance}}</code>, <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{montant_total}}</code></span>
+        </li>
+        <li><strong>Importez le fichier ODT</strong> ci-dessous — les champs seront automatiquement détectés.</li>
+        <li><strong>Configurez les champs</strong> : donnez un type et une description à chaque champ détecté.</li>
+        <li><strong>Lancez l'extraction</strong> sur vos documents — les valeurs seront extraites et le template rempli automatiquement.</li>
+      </ol>
+    </div>
+
     <!-- Upload zone -->
     <div class="fr-card fr-card--no-arrow fr-mb-6w">
       <div class="fr-card__body">
