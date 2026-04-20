@@ -134,6 +134,9 @@ training = [
     "rapidfuzz>=3.13.0",
     "scikit-image>=0.26.0",
 ]
+templating = [
+    "odfpy>=1.4.1",
+]
 
 
 [tool.pytest.ini_options]
