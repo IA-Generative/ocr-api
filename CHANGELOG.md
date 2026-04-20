@@ -29,6 +29,17 @@
 - code clean
 - :art: change minio vars
 
+## [1.7.0](https://github.com/IA-Generative/ocr-api/compare/v1.6.0...v1.7.0) (2026-04-20)
+
+
+### Features
+
+* add result file download functionality and template filling feature ([20278a9](https://github.com/IA-Generative/ocr-api/commit/20278a975c91baad5e2b884e914b5afb2299c84a))
+* Add templating functionality with CRUD operations ([2ad672b](https://github.com/IA-Generative/ocr-api/commit/2ad672bb0bf6b53536787e573480644e626d440b))
+* add usage guides for document classification, entity extraction, and template management ([323cab3](https://github.com/IA-Generative/ocr-api/commit/323cab303f804438637f4c866151b925054acadf))
+* **templating:** add TemplateHistoryModal component and integrate into TemplatesView ([9744eda](https://github.com/IA-Generative/ocr-api/commit/9744eda29b1e76c4f4a58cb8da030cd4cc42f87d))
+* **templating:** implement templating field extraction and add tests ([72013fe](https://github.com/IA-Generative/ocr-api/commit/72013fecc2bcd5f33512db671fd3c2dcb62b8c67))
+
 ## [1.6.0](https://github.com/IA-Generative/ocr-api/compare/v1.5.1...v1.6.0) (2026-04-20)
 
 
