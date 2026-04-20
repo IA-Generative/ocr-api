@@ -136,6 +136,7 @@ training = [
 ]
 templating = [
     "odfpy>=1.4.1",
+    "relatorio>=0.12.1",
 ]
 
 

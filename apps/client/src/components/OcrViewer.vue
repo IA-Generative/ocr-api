@@ -39,6 +39,8 @@ const props = defineProps<{
   }
   contentHash?: string
   predefinedLabels?: PageLabel[]
+  resultPath?: string
+  templateName?: string
 }>()
 
 const store = useOcrStore()
@@ -46,6 +48,12 @@ const annotationsStore = useAnnotationsStore()
 const { addErrorMessage, addSuccessMessage } = useToaster()
 const pages = props.data.pages
 const currentPage = ref(0)
+
+function downloadResultFile () {
+  if (props.data.id) {
+    store.downloadResultFile(props.data.id)
+  }
+}
 
 const imageUrl = computed(() => pages[currentPage.value].page_url ?? undefined)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
@@ -439,6 +447,27 @@ async function submitAnnotations () {
           @update:consent-for-training="(v) => { setPageConsent(v); if (contentHash) submitAnnotations() }"
           @save="submitAnnotations"
         />
+
+        <!-- Document rempli -->
+        <div v-if="resultPath" class="rounded-2xl border border-slate-200 bg-white shadow-sm text-sm">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+            <span class="fr-icon-file-download-line text-slate-400" style="font-size: 14px;" aria-hidden="true" />
+            <span class="font-semibold text-slate-700 text-sm">Document rempli</span>
+          </div>
+          <div class="p-3 flex flex-col gap-2.5">
+            <div v-if="templateName" class="flex items-center gap-2">
+              <span class="text-xs text-slate-400 shrink-0">Template</span>
+              <span class="text-xs font-medium text-slate-600 truncate" :title="templateName">{{ templateName }}</span>
+            </div>
+            <button
+              class="w-full flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors"
+              @click="downloadResultFile"
+            >
+              <span class="fr-icon-download-line" style="font-size: 14px;" aria-hidden="true" />
+              Télécharger
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 

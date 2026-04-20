@@ -127,16 +127,16 @@ onBeforeUnmount(() => {
           @click="currentTab = 'entity'"
         />
         <DsfrButton
-          label="Mes tâches"
-          :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
-          size="sm"
-          @click="currentTab = 'tasks'"
-        />
-        <DsfrButton
           label="Templates"
           :priority="currentTab === 'templates' ? 'primary' : 'tertiary'"
           size="sm"
           @click="currentTab = 'templates'"
+        />
+        <DsfrButton
+          label="Mes tâches"
+          :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
+          size="sm"
+          @click="currentTab = 'tasks'"
         />
       </div>
 

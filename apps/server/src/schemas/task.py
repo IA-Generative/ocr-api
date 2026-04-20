@@ -80,6 +80,7 @@ class TaskOperation(StrEnum):
     CHUNK_OCR = "chunk_ocr"
     ENTITY_EXTRACTION = "entity_extraction"
     TEMPLATING_EXTRACTION = "templating_extraction"
+    TEMPLATING_FILLING = "templating_filling"
 
 
 class CeleryTaskName(StrEnum):
@@ -90,6 +91,7 @@ class CeleryTaskName(StrEnum):
     OCR_CHUNK_TASK = "tasks.ocr_chunk"
     ENTITY_EXTRACTION_TASK = "tasks.entity_extraction"
     TEMPLATING_EXTRACTION_TASK = "tasks.templating_extraction"
+    TEMPLATING_FILLING_TASK = "tasks.templating_filling"
 
 
 class TaskStatsGlobal(BaseModel):

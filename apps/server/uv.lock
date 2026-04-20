@@ -1403,6 +1403,15 @@ wheels = [
 ]
 
 [[package]]
+name = "genshi"
+version = "0.7.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/52/0036675d60f142575a71ca26a52379e967d9b37774de5d57bbd3e8cac0cd/genshi-0.7.10.tar.gz", hash = "sha256:85b0db113625314f0f44f3fe6ef0eb2564d6c34dd2ee5677b495d15142bb4973", size = 237292, upload-time = "2025-11-30T20:28:01.743Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/27/69/259f8a1edc358a72c511b145c33b85a7667804a5c8ba04991aa5737d38a4/genshi-0.7.10-py3-none-any.whl", hash = "sha256:1c45aa70c06f2fcab68137f040890e4fb105cc539f0121cb86d750656dafc37c", size = 179261, upload-time = "2025-11-30T20:28:00.817Z" },
+]
+
+[[package]]
 name = "gevent"
 version = "25.9.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2905,6 +2914,7 @@ stress-test = [
 ]
 templating = [
     { name = "odfpy" },
+    { name = "relatorio" },
 ]
 test = [
     { name = "aiosqlite" },
@@ -3014,7 +3024,10 @@ services = [
     { name = "unstructured", specifier = ">=0.18.15" },
 ]
 stress-test = [{ name = "locust", specifier = ">=2.34.1" }]
-templating = [{ name = "odfpy", specifier = ">=1.4.1" }]
+templating = [
+    { name = "odfpy", specifier = ">=1.4.1" },
+    { name = "relatorio", specifier = ">=0.12.1" },
+]
 test = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "coverage", specifier = ">=7.13.5" },
@@ -4493,6 +4506,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/19/eb/ef32dcd2cb69b69bc0c3e55205bce94a7def48d495358946bc42186dcccc/regex-2026.4.4-cp314-cp314t-win32.whl", hash = "sha256:385edaebde5db5be103577afc8699fea73a0e36a734ba24870be7ffa61119d74", size = 275709, upload-time = "2026-04-03T20:56:20.996Z" },
     { url = "https://files.pythonhosted.org/packages/a0/86/c291bf740945acbf35ed7dbebf8e2eea2f3f78041f6bd7cdab80cb274dc0/regex-2026.4.4-cp314-cp314t-win_amd64.whl", hash = "sha256:5d354b18839328927832e2fa5f7c95b7a3ccc39e7a681529e1685898e6436d45", size = 285622, upload-time = "2026-04-03T20:56:23.641Z" },
     { url = "https://files.pythonhosted.org/packages/d5/e7/ec846d560ae6a597115153c02ca6138a7877a1748b2072d9521c10a93e58/regex-2026.4.4-cp314-cp314t-win_arm64.whl", hash = "sha256:af0384cb01a33600c49505c27c6c57ab0b27bf84a74e28524c92ca897ebdac9d", size = 275773, upload-time = "2026-04-03T20:56:26.07Z" },
+]
+
+[[package]]
+name = "relatorio"
+version = "0.12.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "genshi" },
+    { name = "lxml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b7/62/183fdf994a2dec3c4024c4a67611584616159c67ff74fb42ba9cb00dd3c7/relatorio-0.12.1.tar.gz", hash = "sha256:261e47c4df04cb63db34bd534377072c7841d6f95f9dd986c13943da4951fd4e", size = 296163, upload-time = "2026-04-03T21:48:28.379Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/4c/ab43c3a35a402f17a153a66c27c3dce184e4ff511a8a414d208dfaa4c5bf/relatorio-0.12.1-py3-none-any.whl", hash = "sha256:603f2542e760b313126e6eb32afff10eb018315d4048fb456e385092332e41a3", size = 298931, upload-time = "2026-04-03T21:48:26.631Z" },
 ]
 
 [[package]]

@@ -97,6 +97,8 @@ onMounted(async () => {
       <OcrViewer
         :data="{ id: task.id, pages: task.output.pages, entities: (task.output as any).entities ?? [] }"
         :content-hash="task.content_hash ?? undefined"
+        :result-path="(task.output as any).result_path ?? undefined"
+        :template-name="(task as any).parameters?.name ?? undefined"
       >
         <template v-if="task.output.text" #extra-actions>
           <button
