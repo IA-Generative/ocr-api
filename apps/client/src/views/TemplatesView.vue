@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import TemplateFieldsModal from '@/components/TemplateFieldsModal.vue'
 import TemplateApplyModal from '@/components/TemplateApplyModal.vue'
+import TemplateHistoryModal from '@/components/TemplateHistoryModal.vue'
 import type { EntityDefinition } from '@/components/EntityDefinitionModal.vue'
 import type { TemplatingModel } from '@/stores/templating'
 import { useTemplatingStore } from '@/stores/templating'
@@ -139,6 +140,7 @@ async function deleteTemplate (id: string) {
 
 const configuringTemplate = ref<typeof templates.value[0] | null>(null)
 const applyingTemplate = ref<typeof templates.value[0] | null>(null)
+const historyTemplate = ref<typeof templates.value[0] | null>(null)
 const templateFields = ref<Record<string, EntityDefinition[]>>({})
 
 function allFieldsDefined (template: TemplatingModel): boolean {
@@ -192,8 +194,8 @@ function onFieldsSaved (fields: EntityDefinition[]) {
       <ol class="list-decimal ml-5 flex flex-col gap-1 text-blue-800">
         <li>
           <strong>Préparez votre document ODT</strong> avec des champs à remplir en utilisant la syntaxe
-          <code class="bg-blue-100 px-1 py-0.5 rounded text-xs" v-pre>{{nom_du_champ}}</code> ou
-          <code class="bg-blue-100 px-1 py-0.5 rounded text-xs">[[nom_du_champ]]</code>.
+          <code class="bg-blue-100 px-1 py-0.5 rounded text-xs" v-pre>{{nom_du_champ}}</code> 
+          
           <br />
           <span class="text-xs text-blue-600">Exemple : <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{nom}}</code>, <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{date_naissance}}</code>, <code class="bg-blue-100 px-1 py-0.5 rounded" v-pre>{{montant_total}}</code></span>
         </li>
@@ -382,6 +384,16 @@ function onFieldsSaved (fields: EntityDefinition[]) {
                   <span>Lancer l'extraction</span>
                 </button>
               </div>
+
+              <!-- Historique -->
+              <button
+                v-if="allFieldsDefined(template)"
+                class="fr-btn fr-btn--tertiary-no-outline fr-btn--sm fr-mt-1w"
+                @click="historyTemplate = template"
+              >
+                <span class="fr-icon-time-line fr-mr-1w" aria-hidden="true" />
+                <span>Historique des extractions</span>
+              </button>
             </div>
           </div>
         </div>
@@ -400,6 +412,13 @@ function onFieldsSaved (fields: EntityDefinition[]) {
     v-if="applyingTemplate"
     :template="applyingTemplate"
     @close="applyingTemplate = null"
+  />
+
+  <TemplateHistoryModal
+    v-if="historyTemplate"
+    :template-id="historyTemplate.id"
+    :template-name="historyTemplate.name"
+    @close="historyTemplate = null"
   />
 </template>
 
