@@ -59,6 +59,11 @@ export const useTasksStore = defineStore('tasks', () => {
     userTasksPaginated.value = { ...userTasksPaginated.value, items: items.filter((t: any) => t.id !== taskId), total: Math.max(0, (userTasksPaginated.value.total || items.length) - 1) }
   }
 
+  async function revokeTask (taskId: string) {
+    if (!taskId) throw new Error('taskId required')
+    await http.delete(`/v1/tasks/revoke/${encodeURIComponent(taskId)}`)
+  }
+
   function stopPollingUserTasks () {
     // Placeholder for compatibility with other code that may call stopPollingUserTasks
     // No-op for now.
@@ -72,6 +77,7 @@ export const useTasksStore = defineStore('tasks', () => {
     fetchTaskChildren,
     fetchTaskTree,
     deleteTask,
+    revokeTask,
     stopPollingUserTasks,
   }
 })
