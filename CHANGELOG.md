@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.1](https://github.com/IA-Generative/ocr-api/compare/v1.10.0...v1.10.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **queue:** display queue position for tasks in progress ([ed74211](https://github.com/IA-Generative/ocr-api/commit/ed74211661b4389fe36588f4cf70700f153ed0f8))
+
 ## [1.10.0](https://github.com/IA-Generative/ocr-api/compare/v1.9.3...v1.10.0) (2026-04-21)
 
 
