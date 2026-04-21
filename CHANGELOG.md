@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.8.0](https://github.com/IA-Generative/ocr-api/compare/v1.7.0...v1.8.0) (2026-04-21)
+
+
+### Features
+
+* add task statistics by type for global and user tasks ([83d4e41](https://github.com/IA-Generative/ocr-api/commit/83d4e41e52fc6d23595a0de504d64c3479ea3a4f))
+
 ## [1.7.0](https://github.com/IA-Generative/ocr-api/compare/v1.6.0...v1.7.0) (2026-04-20)
 
 
