@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [1.9.3](https://github.com/IA-Generative/ocr-api/compare/v1.9.2...v1.9.3) (2026-04-21)
+
+
+### Bug Fixes
+
+* **statistics:** set default selected period to 'today' ([071aadf](https://github.com/IA-Generative/ocr-api/commit/071aadfa2a64d8ee3debf65e753438895169a8a7))
+* **tasks:** add revoke task functionality and update task status mapping ([e3f17ce](https://github.com/IA-Generative/ocr-api/commit/e3f17ce132c5145733444f46bcbd73e0435e2dba))
+
 ## [1.9.2](https://github.com/IA-Generative/ocr-api/compare/v1.9.1...v1.9.2) (2026-04-21)
 
 
