@@ -12,6 +12,7 @@ from src.schemas.task import (
     TaskUpdateForm,
     TaskForm,
     CeleryTaskName,
+    LeaderboardResponse,
 )
 from src.services.task_service import TaskService
 from src.schemas.pagination import Pagination
@@ -298,6 +299,39 @@ async def count_users_today(
 
     count = await task_service.count_unique_users_between_dates(db, start_ts, end_ts)
     return {"users_today": count}
+
+
+@router.get(
+    "/v1/leaderboard",
+    response_model=LeaderboardResponse,
+)
+async def get_leaderboard(
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+    ctx: TokenDep,
+    task_type: Optional[str] = Query(None, description="Type de tâche (ex: ocr, forms, vectorize)"),
+    start_date: Optional[int] = Query(None, description="Timestamp début de période (epoch secondes)"),
+    end_date: Optional[int] = Query(None, description="Timestamp fin de période (epoch secondes)"),
+):
+    """Récupère le leaderboard : #1 + voisins autour de l'utilisateur courant"""
+    if ctx.user_id is None:
+        raise HTTPException(status_code=http_status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+    result = await task_service.get_leaderboard(
+        db,
+        user_id=ctx.user_id,
+        task_type=task_type,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    # Anonymiser les user_ids : "Vous" pour soi, "Utilisateur #rank" pour les autres
+    for entry in result.entries:
+        if entry.is_me:
+            entry.user_id = "Vous"
+        else:
+            entry.user_id = f"Utilisateur #{entry.rank}"
+
+    return result
 
 
 @router.delete("/tasks/{task_id}", status_code=204)

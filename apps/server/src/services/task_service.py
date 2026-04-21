@@ -7,6 +7,7 @@ from src.schemas.task import (
     TaskUpdateForm,
     TaskForm,
     TaskStats,
+    LeaderboardResponse,
 )
 from src.repositories.task_repository import TaskRepository
 
@@ -104,3 +105,14 @@ class TaskService:
     async def get_task_tree(self, db: AsyncSession, task_id: str) -> list[TaskModel]:
         """Récupère une tâche et toutes ses tâches enfants"""
         return await self.task_repo.get_task_tree(db, task_id)
+
+    async def get_leaderboard(
+        self,
+        db: AsyncSession,
+        user_id: str,
+        task_type: str | None = None,
+        start_date: int | None = None,
+        end_date: int | None = None,
+    ) -> LeaderboardResponse:
+        """Récupère le classement autour de l'utilisateur"""
+        return await self.task_repo.get_leaderboard(db, user_id, task_type, start_date, end_date)

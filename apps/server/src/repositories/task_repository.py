@@ -16,6 +16,8 @@ from src.schemas.task import (
     TaskStats,
     TaskStatsGlobal,
     TaskStatsUser,
+    LeaderboardEntry,
+    LeaderboardResponse,
 )
 from src.models.task import Task
 
@@ -309,3 +311,69 @@ class TaskRepository:
         await _collect_children(task_id)
 
         return tasks_tree
+
+    async def get_leaderboard(
+        self,
+        db: AsyncSession,
+        user_id: str,
+        task_type: str | None = None,
+        start_date: int | None = None,
+        end_date: int | None = None,
+    ) -> LeaderboardResponse:
+        """Retourne le #1, l'utilisateur au-dessus, l'utilisateur courant, et l'utilisateur en dessous."""
+        # Build filters
+        filters = []
+        if task_type:
+            filters.append(Task.type == task_type)
+        if start_date is not None:
+            filters.append(Task.created_at >= start_date)
+        if end_date is not None:
+            filters.append(Task.created_at <= end_date)
+
+        # Full ranked list
+        query = (
+            select(Task.user_id, func.count(Task.id).label("task_count"))
+            .filter(*filters)
+            .group_by(Task.user_id)
+            .order_by(func.count(Task.id).desc())
+        )
+        result = await db.execute(query)
+        ranked = result.all()
+
+        total_participants = len(ranked)
+        if total_participants == 0:
+            return LeaderboardResponse(entries=[], my_rank=None, total_participants=0)
+
+        # Find user position
+        my_index: int | None = None
+        for i, (uid, _) in enumerate(ranked):
+            if uid == user_id:
+                my_index = i
+                break
+
+        # Collect unique indices: #1 + neighbors around user
+        indices: set[int] = {0}  # always include #1
+        if my_index is not None:
+            if my_index > 0:
+                indices.add(my_index - 1)  # above
+            indices.add(my_index)  # me
+            if my_index < total_participants - 1:
+                indices.add(my_index + 1)  # below
+
+        entries = []
+        for idx in sorted(indices):
+            uid, count = ranked[idx]
+            entries.append(
+                LeaderboardEntry(
+                    rank=idx + 1,
+                    user_id=uid,
+                    task_count=count,
+                    is_me=(uid == user_id),
+                )
+            )
+
+        return LeaderboardResponse(
+            entries=entries,
+            my_rank=my_index + 1 if my_index is not None else None,
+            total_participants=total_participants,
+        )
