@@ -281,7 +281,7 @@ const PERIODS = [
   { key: '30d', label: '30 jours' },
   { key: '90d', label: '90 jours' },
 ]
-const selectedPeriod = ref('7d')
+const selectedPeriod = ref('today')
 
 function getPeriodTimestamps(key) {
   if (key === 'all') return {}
