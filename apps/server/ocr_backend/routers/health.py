@@ -26,7 +26,7 @@ async def get_health(response: Response):
     db_health, redis_health, s3_health = await asyncio.gather(
         db_client_connector.aget_health(),
         asyncio.to_thread(redis_client_connector.get_health),
-        asyncio.to_thread(s3_client_connector.get_health),
+        s3_client_connector.aget_health(),
     )
 
     dependencies = [db_health, redis_health, s3_health]

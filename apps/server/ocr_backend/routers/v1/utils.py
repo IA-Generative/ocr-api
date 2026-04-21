@@ -55,6 +55,13 @@ def retrieve_from_private_s3(file_key: str) -> Path:
     return _write_to_tempfile(data, suffix=suffix)
 
 
+async def aretrieve_from_private_s3(file_key: str) -> Path:
+    """Async version — downloads from S3 without blocking the event loop."""
+    data = await s3_client_connector.aget_object(file_key)
+    suffix = Path(file_key).suffix
+    return _write_to_tempfile(data, suffix=suffix)
+
+
 def retrieve_from_url(
     url: str,
     mime_types_allowed: list[str] = ALLOWED_MIME_TYPES,
