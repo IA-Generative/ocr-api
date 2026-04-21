@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.0](https://github.com/IA-Generative/ocr-api/compare/v1.9.3...v1.10.0) (2026-04-21)
+
+
+### Features
+
+* **leaderboard:** add leaderboard modal and API integration ([d65984f](https://github.com/IA-Generative/ocr-api/commit/d65984f2e28c85c99bb50c7c2fdfbfe2763a071e))
+
 ## [1.9.3](https://github.com/IA-Generative/ocr-api/compare/v1.9.2...v1.9.3) (2026-04-21)
 
 
