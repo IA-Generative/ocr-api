@@ -99,6 +99,8 @@ class TaskStatsGlobal(BaseModel):
     total_tasks: int
     # Clé = status, Valeur = nombre de tâches
     tasks_stats: Dict[TaskStatus, int]
+    # Clé = type d'opération, Valeur = nombre de tâches
+    tasks_by_type: Dict[str, int] = {}
 
 
 class TaskStatsUser(TaskStatsGlobal):

@@ -36,9 +36,5 @@ def test_templating_field_extraction_valid(tmp_path: Path):
 
     doc = load(output_path)
     full_text = " ".join(str(p) for p in doc.getElementsByType(P))
-    print(
-        f"\n=== Contenu du document (valid) ===\n{full_text}\n==================================="
-    )
-    assert (
-        "Value 1" in full_text
-    ), f"'Value 1' absent du document généré. Contenu : {full_text[:500]}"
+    print(f"\n=== Contenu du document (valid) ===\n{full_text}\n===================================")
+    assert "Value 1" in full_text, f"'Value 1' absent du document généré. Contenu : {full_text[:500]}"

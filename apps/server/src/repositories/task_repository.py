@@ -221,7 +221,15 @@ class TaskRepository:
         tasks_stats = tasks_stats_result.all()
         tasks_stats_dict = {status: count for status, count in tasks_stats}
 
-        global_stats = TaskStatsGlobal(total_tasks=total_tasks, tasks_stats=tasks_stats_dict)
+        # Statistiques globales par type d'opération
+        global_by_type_result = await db.execute(select(Task.type, func.count(Task.id)).group_by(Task.type))
+        global_by_type = {t: c for t, c in global_by_type_result.all()}
+
+        global_stats = TaskStatsGlobal(
+            total_tasks=total_tasks,
+            tasks_stats=tasks_stats_dict,
+            tasks_by_type=global_by_type,
+        )
 
         # Statistiques de l'utilisateur courant
         user_total_tasks_result = await db.execute(select(func.count(Task.id)).filter(Task.user_id == user_id))
@@ -232,10 +240,18 @@ class TaskRepository:
         )
         user_tasks_stats = user_tasks_stats_result.all()
         user_tasks_stats_dict = {status: count for status, count in user_tasks_stats}
+
+        # Statistiques utilisateur par type d'opération
+        user_by_type_result = await db.execute(
+            select(Task.type, func.count(Task.id)).filter(Task.user_id == user_id).group_by(Task.type)
+        )
+        user_by_type = {t: c for t, c in user_by_type_result.all()}
+
         user_stats = TaskStatsUser(
             user_id=user_id,
             total_tasks=user_total_tasks,
             tasks_stats=user_tasks_stats_dict,
+            tasks_by_type=user_by_type,
         )
 
         return TaskStats(global_stats=global_stats, user_stats=user_stats)
