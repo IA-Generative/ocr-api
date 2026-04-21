@@ -127,6 +127,14 @@
                 <span class="fr-icon-eye-line" aria-hidden="true" />
               </button>
               <button
+                v-if="row.status === 'queued' || row.status === 'created' || row.status === 'in_progress' || row.status === 'started'"
+                class="task-action-btn warning"
+                title="Révoquer"
+                @click="revokeTask(row.id)"
+              >
+                <span class="fr-icon-close-circle-line" aria-hidden="true" />
+              </button>
+              <button
                 class="task-action-btn danger"
                 title="Supprimer"
                 @click="removeTask(row.id)"
@@ -235,6 +243,10 @@ function MapStatusToLabel(status: string) {
     started: 'Démarré',
     completed: 'Terminé',
     failed: 'Échoué',
+    revoked: 'Révoqué',
+    canceled: 'Annulé',
+    timeout: 'Timeout',
+    created: 'Créé',
   }
   return map[status] || status
 }
@@ -369,6 +381,21 @@ const removeTask = async (taskId: string) => {
     delete childrenCache.value[taskId]
     expandedIds.value = expandedIds.value.filter(x => x !== taskId)
     // Toujours recharger la page, même en cas d'erreur
+    const currentPage = paginatedData.value?.page ?? 1
+    const pageSize = paginatedData.value?.page_size ?? 10
+    await loadPage(currentPage, pageSize)
+  }
+}
+
+const revokeTask = async (taskId: string) => {
+  if (!taskId) return
+  try {
+    await store.revokeTask(taskId)
+  }
+  catch (e) {
+    console.error('Failed to revoke task', e)
+  }
+  finally {
     const currentPage = paginatedData.value?.page ?? 1
     const pageSize = paginatedData.value?.page_size ?? 10
     await loadPage(currentPage, pageSize)
@@ -714,7 +741,7 @@ const formatDate = (ts: any) => {
 .task-action-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .task-action-btn.primary:not(:disabled):hover { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
 .task-action-btn.danger:hover:not(:disabled)  { background: #fff1f2; border-color: #fecaca; color: #dc2626; }
-
+.task-action-btn.warning:hover:not(:disabled) { background: #fffbeb; border-color: #fde68a; color: #d97706; }
 /* ── Empty & placeholder ── */
 .task-empty-row {
   display: flex;
