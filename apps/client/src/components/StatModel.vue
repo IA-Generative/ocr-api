@@ -136,6 +136,102 @@
               </div>
             </div>
           </div>
+
+          <!-- ===== Utilisation par type d'opération ===== -->
+          <div class="pt-2">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-600 flex items-center justify-center shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              </div>
+              <h3 class="text-sm font-semibold text-slate-700">Utilisation par type</h3>
+            </div>
+          </div>
+
+          <!-- Type charts row -->
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Global type chart -->
+            <div class="rounded-2xl border border-slate-100 bg-white px-5 py-4">
+              <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Répartition globale</h3>
+              <div v-if="globalTypeDonut.length === 0" class="py-6 text-center text-[11px] text-slate-400">
+                Aucune donnée
+              </div>
+              <div v-else class="flex flex-col items-center gap-4">
+                <svg viewBox="0 0 36 36" class="w-32 h-32 mx-auto">
+                  <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f1f5f9" stroke-width="3.5" />
+                  <circle
+                    v-for="seg in globalTypeDonut"
+                    :key="seg.label"
+                    cx="18" cy="18" r="15.9155"
+                    fill="none"
+                    :stroke="seg.color"
+                    stroke-width="3.5"
+                    :stroke-dasharray="seg.dasharray"
+                    :stroke-dashoffset="seg.dashoffset"
+                    stroke-linecap="butt"
+                    style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dasharray 0.5s ease"
+                  />
+                  <text x="18" y="18" text-anchor="middle" dominant-baseline="middle" class="text-[7px] font-bold fill-slate-700" style="font-size:7px;font-weight:700">{{ globalTypeTotal }}</text>
+                </svg>
+                <div class="w-full space-y-1.5">
+                  <div v-for="item in globalTypeDonut" :key="item.label" class="flex items-center gap-2 text-[11px]">
+                    <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ background: item.color }" />
+                    <span class="flex-1 text-slate-500">{{ typeLabel(item.label) }}</span>
+                    <span class="font-semibold tabular-nums text-slate-700">{{ item.value }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- User type chart -->
+            <div class="rounded-2xl border border-slate-100 bg-white px-5 py-4">
+              <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">Mes types</h3>
+              <div v-if="userTypeDonut.length === 0" class="py-6 text-center text-[11px] text-slate-400">
+                Aucune donnée
+              </div>
+              <div v-else class="flex flex-col items-center gap-4">
+                <svg viewBox="0 0 36 36" class="w-32 h-32 mx-auto">
+                  <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#f1f5f9" stroke-width="3.5" />
+                  <circle
+                    v-for="seg in userTypeDonut"
+                    :key="seg.label"
+                    cx="18" cy="18" r="15.9155"
+                    fill="none"
+                    :stroke="seg.color"
+                    stroke-width="3.5"
+                    :stroke-dasharray="seg.dasharray"
+                    :stroke-dashoffset="seg.dashoffset"
+                    stroke-linecap="butt"
+                    style="transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dasharray 0.5s ease"
+                  />
+                  <text x="18" y="18" text-anchor="middle" dominant-baseline="middle" style="font-size:7px;font-weight:700;fill:#334155">{{ userTypeTotal }}</text>
+                </svg>
+                <div class="w-full space-y-1.5">
+                  <div v-for="item in userTypeDonut" :key="item.label" class="flex items-center gap-2 text-[11px]">
+                    <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ background: item.color }" />
+                    <span class="flex-1 text-slate-500">{{ typeLabel(item.label) }}</span>
+                    <span class="font-semibold tabular-nums text-slate-700">{{ item.value }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bar breakdown by type -->
+          <div v-if="globalTypeDonut.length > 0" class="rounded-2xl border border-slate-100 bg-white px-5 py-4">
+            <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Détail par type</h3>
+            <div class="space-y-2.5">
+              <div v-for="item in globalTypeDonut" :key="item.label" class="flex items-center gap-3 text-[11px]">
+                <span class="w-28 shrink-0 text-slate-500">{{ typeLabel(item.label) }}</span>
+                <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    class="h-full rounded-full transition-all duration-500"
+                    :style="{ width: typePct(item.value, globalTypeTotal), background: item.color }"
+                  />
+                </div>
+                <span class="w-6 text-right font-semibold tabular-nums text-slate-600">{{ item.value }}</span>
+              </div>
+            </div>
+          </div>
         </template>
 
       </div>
@@ -166,15 +262,18 @@ const stats = reactive({
   global_stats: {
     total_tasks: 0,
     tasks_stats: {},
+    tasks_by_type: {},
   },
   user_stats: {
     user_id: null,
     total_tasks: 0,
     tasks_stats: {},
+    tasks_by_type: {},
   },
 })
 
 const COLORS = ['#4caf50', '#2196f3', '#ff9800', '#e91e63', '#9c27b0']
+const TYPE_COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981', '#6366f1', '#ec4899', '#14b8a6', '#f97316', '#84cc16', '#a855f7']
 
 // fetch real stats from backend
 const loadStats = async () => {
@@ -226,8 +325,62 @@ const userDonut = computed(() =>
   buildDonut(stats.user_stats.tasks_stats, stats.user_stats.total_tasks),
 )
 
+function buildDonutWithColors(tasksStats, total, colors) {
+  const entries = Object.entries(tasksStats || {})
+  let cumulative = 0
+  return entries.map(([k, v], i) => {
+    const val = v || 0
+    const percent = total > 0 ? (val / total) * 100 : 0
+    const dashoffset = 25 - cumulative
+    cumulative += percent
+    return {
+      label: k,
+      value: val,
+      color: colors[i % colors.length],
+      dasharray: `${percent} ${100 - percent}`,
+      dashoffset,
+    }
+  })
+}
+
+const globalTypeTotal = computed(() =>
+  Object.values(stats.global_stats.tasks_by_type || {}).reduce((a, b) => a + b, 0),
+)
+const userTypeTotal = computed(() =>
+  Object.values(stats.user_stats.tasks_by_type || {}).reduce((a, b) => a + b, 0),
+)
+
+const globalTypeDonut = computed(() =>
+  buildDonutWithColors(stats.global_stats.tasks_by_type, globalTypeTotal.value, TYPE_COLORS),
+)
+const userTypeDonut = computed(() =>
+  buildDonutWithColors(stats.user_stats.tasks_by_type, userTypeTotal.value, TYPE_COLORS),
+)
+
+const TYPE_LABELS = {
+  ocr: 'OCR',
+  default: 'Défaut',
+  save_template: 'Sauvegarde template',
+  forms: 'Formulaires',
+  vectorize: 'Vectorisation',
+  vlm_ocr: 'VLM OCR',
+  page_classification: 'Classification',
+  chunk_ocr: 'Chunk OCR',
+  entity_extraction: 'Extraction entités',
+  templating_extraction: 'Extraction template',
+  templating_filling: 'Remplissage template',
+}
+
+function typeLabel(key) {
+  return TYPE_LABELS[key] || key
+}
+
 function globalPct(value) {
   const total = stats.global_stats.total_tasks || 1
   return `${Math.round((value / total) * 100)}%`
+}
+
+function typePct(value, total) {
+  return `${Math.round((value / (total || 1)) * 100)}%`
 }
 </script>
