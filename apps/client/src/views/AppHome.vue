@@ -26,6 +26,7 @@ const progressPercent = computed(() => Math.round(store.percentage * 100))
 const isPolling = computed(() => store.isPolling)
 const taskData = computed(() => store.taskData)
 const status = computed(() => store.status)
+const queuePosition = computed(() => store.position)
 const isLoading = ref(false)
 
 function selectFile (files: FileList | File[]) {
@@ -164,6 +165,11 @@ onBeforeUnmount(() => {
                 />
               </div>
 
+              <div v-if="isPolling && status === 'queued'" class="queue-position-info mt-4">
+                <span class="queue-position-icon">⏳</span>
+                <span>En file d'attente — position <strong>{{ queuePosition }}</strong></span>
+              </div>
+
               <ProgressBar
                 :visible="isPolling && status === 'in_progress'"
                 :progress="progressPercent"
@@ -216,3 +222,20 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.queue-position-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  color: #92400e;
+  font-size: 0.875rem;
+}
+.queue-position-icon {
+  font-size: 1.1rem;
+}
+</style>
