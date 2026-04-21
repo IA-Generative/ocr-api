@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends, status as http_sta
 from fastapi.responses import StreamingResponse
 from typing import Optional, Annotated, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
+import asyncio
 import io
 from src.schemas.task import (
     TaskModel,
@@ -68,6 +69,13 @@ def _rewrite_page_urls(task: TaskModel) -> TaskModel:
     return task
 
 
+async def _rewrite_page_urls_async(task: TaskModel) -> TaskModel:
+    """Non-blocking wrapper around _rewrite_page_urls to avoid blocking the event loop."""
+    if task.output and task.output.pages:
+        return await asyncio.to_thread(_rewrite_page_urls, task)
+    return task
+
+
 async def get_task_by_id_internal(task_id: str, db: AsyncSession, task_service: TaskService) -> TaskModel:
     """Helper interne pour récupérer une tâche avec enrichissement"""
     # Récupérer toutes les tâches avec cet ID
@@ -87,7 +95,7 @@ async def get_task_by_id_internal(task_id: str, db: AsyncSession, task_service: 
         if task.output is not None:
             task.output.pages = []
 
-    return _rewrite_page_urls(task)
+    return await _rewrite_page_urls_async(task)
 
 
 @router.post("/tasks", response_model=TaskModel, status_code=http_status.HTTP_201_CREATED)
@@ -118,14 +126,9 @@ async def get_task_by_id_user(
     task_type: Optional[TaskOperation] = None,
 ):
     """Récupère une tâche par son ID (utilisateur)"""
-    if not task_type:
-        logger.warning(
-            f"Task type not provided for task_id {task_id}, fetching all tasks with this ID to find the correct one."
-        )
-        task = await get_task_by_id_internal(task_id, db, task_service)
-    else:
-        logger.debug(f"Fetching task with ID {task_id} and type {task_type}.")
-        task = await task_service.get_task_by_id(db, task_id, task_type)
+    # Always use get_task_by_id_internal — it does a PK lookup (fast),
+    # plus position-in-queue and presigned-URL enrichment that the client needs.
+    task = await get_task_by_id_internal(task_id, db, task_service)
     if task is None:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
     if task.user_id != ctx.user_id and not ctx.is_admin:
@@ -223,7 +226,7 @@ async def update_task_by_id(
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     updated_task = await task_service.update_task(db, task_id, task_type, form_data=update_data)
-    return _rewrite_page_urls(updated_task)
+    return await _rewrite_page_urls_async(updated_task)
 
 
 @router.get(

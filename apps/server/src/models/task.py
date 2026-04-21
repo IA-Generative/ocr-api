@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String
+from sqlalchemy import FLOAT, JSON, BigInteger, Column, Index, Integer, String
 
 from src.connector.db_connector import Base
 
@@ -28,3 +28,9 @@ class Task(Base):
     extras = Column(JSON, nullable=True)
     content_hash = Column(String, nullable=True, index=True, unique=False)
     parent_id = Column(String, nullable=True)
+
+    __table_args__ = (
+        Index("ix_tasks_status", "status"),
+        Index("ix_tasks_status_created_at", "status", "created_at"),
+        Index("ix_tasks_user_id", "user_id"),
+    )
