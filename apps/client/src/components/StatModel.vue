@@ -25,6 +25,22 @@
         </button>
       </div>
 
+      <!-- Period selector -->
+      <div class="flex items-center gap-1.5 px-6 py-2.5 border-b border-slate-100/80 bg-slate-50/50">
+        <span class="text-[11px] font-medium text-slate-400 mr-1">Période :</span>
+        <button
+          v-for="p in PERIODS"
+          :key="p.key"
+          class="px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all"
+          :class="selectedPeriod === p.key
+            ? 'bg-indigo-500 text-white shadow-sm'
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'"
+          @click="selectedPeriod = p.key"
+        >
+          {{ p.label }}
+        </button>
+      </div>
+
       <!-- Content -->
       <div class="overflow-y-auto px-6 py-5 space-y-5 flex-1">
 
@@ -240,7 +256,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { defineEmits } from 'vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
@@ -256,6 +272,26 @@ const http = createHttpClient(OCR_API_URL)
 // loading / error
 const loading = ref(false)
 const error = ref(null)
+
+// Period filter
+const PERIODS = [
+  { key: 'all', label: 'Tout' },
+  { key: 'today', label: "Aujourd'hui" },
+  { key: '7d', label: '7 jours' },
+  { key: '30d', label: '30 jours' },
+  { key: '90d', label: '90 jours' },
+]
+const selectedPeriod = ref('7d')
+
+function getPeriodTimestamps(key) {
+  if (key === 'all') return {}
+  const now = Math.floor(Date.now() / 1000)
+  const days = { today: 0, '7d': 7, '30d': 30, '90d': 90 }[key] ?? 0
+  const start = new Date()
+  start.setHours(0, 0, 0, 0)
+  if (days > 0) start.setDate(start.getDate() - days)
+  return { start_date: Math.floor(start.getTime() / 1000), end_date: now }
+}
 
 // reactive stats container (will be filled by the backend)
 const stats = reactive({
@@ -280,7 +316,8 @@ const loadStats = async () => {
   loading.value = true
   error.value = null
   try {
-    const { data } = await http.get('/stats/tasks')
+    const params = getPeriodTimestamps(selectedPeriod.value)
+    const { data } = await http.get('/stats/tasks', { params })
     if (data) {
       stats.global_stats = data.global_stats ?? stats.global_stats
       stats.user_stats = data.user_stats ?? stats.user_stats
@@ -295,6 +332,10 @@ const loadStats = async () => {
 }
 
 onMounted(() => {
+  loadStats()
+})
+
+watch(selectedPeriod, () => {
   loadStats()
 })
 

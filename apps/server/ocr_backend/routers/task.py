@@ -263,8 +263,10 @@ async def get_tasks_stats(
     ctx: TokenDep,
     page: int = Query(1, ge=1),
     page_size: int = Query(10, le=100),
+    start_date: Optional[int] = Query(None, description="Timestamp début de période (epoch secondes)"),
+    end_date: Optional[int] = Query(None, description="Timestamp fin de période (epoch secondes)"),
 ):
-    """Récupère les statistiques des tâches"""
+    """Récupère les statistiques des tâches, optionnellement filtrées par période"""
     skip = (page - 1) * page_size
     return await task_service.statistics(
         db,
@@ -272,6 +274,8 @@ async def get_tasks_stats(
         is_admin=bool(ctx.is_admin),
         skip=skip,
         limit=page_size,
+        start_date=start_date,
+        end_date=end_date,
     )
 
 

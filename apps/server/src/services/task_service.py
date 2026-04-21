@@ -87,9 +87,11 @@ class TaskService:
         is_admin: bool = False,
         skip: int = 0,
         limit: int = 10,
+        start_date: int | None = None,
+        end_date: int | None = None,
     ) -> TaskStats:
         """Récupère les statistiques globales et par utilisateur"""
-        return await self.task_repo.statistics(db, user_id, is_admin, skip, limit)
+        return await self.task_repo.statistics(db, user_id, is_admin, skip, limit, start_date, end_date)
 
     async def count_unique_users_between_dates(self, db: AsyncSession, start_date: int, end_date: int) -> int:
         """Compte le nombre d'utilisateurs uniques entre deux dates"""

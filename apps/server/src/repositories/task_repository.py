@@ -211,18 +211,32 @@ class TaskRepository:
         is_admin: bool = False,
         skip: int = 0,
         limit: int = 10,
+        start_date: int | None = None,
+        end_date: int | None = None,
     ) -> TaskStats:
-        """Récupère les statistiques globales et par utilisateur"""
+        """Récupère les statistiques globales et par utilisateur, optionnellement filtrées par période"""
+
+        # Build date filters once
+        date_filters = []
+        if start_date is not None:
+            date_filters.append(Task.created_at >= start_date)
+        if end_date is not None:
+            date_filters.append(Task.created_at <= end_date)
+
         # Statistiques globales
-        total_tasks_result = await db.execute(select(func.count(Task.id)))
+        total_tasks_result = await db.execute(select(func.count(Task.id)).filter(*date_filters))
         total_tasks = total_tasks_result.scalar_one()
 
-        tasks_stats_result = await db.execute(select(Task.status, func.count(Task.id)).group_by(Task.status))
+        tasks_stats_result = await db.execute(
+            select(Task.status, func.count(Task.id)).filter(*date_filters).group_by(Task.status)
+        )
         tasks_stats = tasks_stats_result.all()
         tasks_stats_dict = {status: count for status, count in tasks_stats}
 
         # Statistiques globales par type d'opération
-        global_by_type_result = await db.execute(select(Task.type, func.count(Task.id)).group_by(Task.type))
+        global_by_type_result = await db.execute(
+            select(Task.type, func.count(Task.id)).filter(*date_filters).group_by(Task.type)
+        )
         global_by_type = {t: c for t, c in global_by_type_result.all()}
 
         global_stats = TaskStatsGlobal(
@@ -232,18 +246,19 @@ class TaskRepository:
         )
 
         # Statistiques de l'utilisateur courant
-        user_total_tasks_result = await db.execute(select(func.count(Task.id)).filter(Task.user_id == user_id))
+        user_filters = [Task.user_id == user_id, *date_filters]
+        user_total_tasks_result = await db.execute(select(func.count(Task.id)).filter(*user_filters))
         user_total_tasks = user_total_tasks_result.scalar_one()
 
         user_tasks_stats_result = await db.execute(
-            select(Task.status, func.count(Task.id)).filter(Task.user_id == user_id).group_by(Task.status)
+            select(Task.status, func.count(Task.id)).filter(*user_filters).group_by(Task.status)
         )
         user_tasks_stats = user_tasks_stats_result.all()
         user_tasks_stats_dict = {status: count for status, count in user_tasks_stats}
 
         # Statistiques utilisateur par type d'opération
         user_by_type_result = await db.execute(
-            select(Task.type, func.count(Task.id)).filter(Task.user_id == user_id).group_by(Task.type)
+            select(Task.type, func.count(Task.id)).filter(*user_filters).group_by(Task.type)
         )
         user_by_type = {t: c for t, c in user_by_type_result.all()}
 
