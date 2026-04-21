@@ -96,6 +96,10 @@
                 </div>
                 <span class="task-progress-pct">{{ Math.round((row.percentage ?? 0) * 100) }}%</span>
                 <span class="task-status-label" :class="`label-${row.status}`">{{ MapStatusToLabel(row.status) }}</span>
+                <span v-if="row.position != null" class="task-position-badge" :title="`Position en file d'attente : ${row.position + 1}`">
+                  <span class="fr-icon-timer-line" style="font-size:11px" aria-hidden="true" />
+                  #{{ row.position + 1 }}
+                </span>
               </div>
 
               <!-- Dates -->
@@ -662,6 +666,20 @@ const formatDate = (ts: any) => {
 .label-completed  { color: #059669; }
 .label-failed     { color: #dc2626; }
 .label-in_progress, .label-started { color: #2563eb; }
+
+.task-position-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #d97706;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 9999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+}
 
 .task-dates {
   display: flex;
