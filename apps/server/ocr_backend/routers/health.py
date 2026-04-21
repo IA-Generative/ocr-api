@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from fastapi import APIRouter, Response, status
 
@@ -21,14 +22,19 @@ up_time = datetime.datetime.now().isoformat()
     response_model=Health,
 )
 async def get_health(response: Response):
-    dependencies = []
+    # Run all health checks concurrently without blocking the event loop
+    db_health, redis_health, s3_health = await asyncio.gather(
+        db_client_connector.aget_health(),
+        asyncio.to_thread(redis_client_connector.get_health),
+        asyncio.to_thread(s3_client_connector.get_health),
+    )
+
+    dependencies = [db_health, redis_health, s3_health]
     api_status = "healthy"
-    for dep in [db_client_connector, redis_client_connector, s3_client_connector]:
-        health_dep: Health = dep.get_health()
+    for health_dep in dependencies:
         if health_dep.status == "unhealthy":
             api_status = "unhealthy"
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        dependencies.append(health_dep)
 
     return Health(
         name=__name__,

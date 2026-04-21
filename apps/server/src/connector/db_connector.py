@@ -78,5 +78,24 @@ class DbConnector:
             status="healthy",
         )
 
+    async def aget_health(self):
+        try:
+            async with AsyncSessionLocal() as session:
+                await session.execute(text("SELECT 1"))
+        except SQLAlchemyError as e:
+            return Health(
+                name="db",
+                extras={"error": str(e)},
+                version=sqlalchemy.__version__,
+                up_time=self.up_time,
+                status="unhealthy",
+            )
+        return Health(
+            name="db",
+            version=sqlalchemy.__version__,
+            up_time=self.up_time,
+            status="healthy",
+        )
+
 
 db_client_connector = DbConnector()
