@@ -29,6 +29,18 @@
 - code clean
 - :art: change minio vars
 
+## [1.9.0](https://github.com/IA-Generative/ocr-api/compare/v1.8.0...v1.9.0) (2026-04-21)
+
+
+### Features
+
+* **migration:** add task indexes for status, created_at, and user_id ([8a2992b](https://github.com/IA-Generative/ocr-api/commit/8a2992b15512d32870b1ea0ef9d27b8f7915b245))
+
+
+### Bug Fixes
+
+* **stats:** add period filtering for task statistics and health checks ([4090249](https://github.com/IA-Generative/ocr-api/commit/4090249d36f3a678c66da6dabbf11d6eb84bbc00))
+
 ## [1.8.0](https://github.com/IA-Generative/ocr-api/compare/v1.7.0...v1.8.0) (2026-04-21)
 
 
