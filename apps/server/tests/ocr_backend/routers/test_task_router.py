@@ -251,7 +251,7 @@ def test_delete_tasks_by_date_and_status_success(
 
         assert response.status_code == 204
         for task in mock_tasks:
-            mock_s3.delete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
+            mock_s3.adelete_by_task_id.assert_any_call(user_id=task.user_id, task_id=task.id)
 
         # Test avec rôle user (pas admin) - 403
         mock_ctx.is_admin = False

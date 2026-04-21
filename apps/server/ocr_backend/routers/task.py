@@ -161,7 +161,7 @@ async def download_task_result_file(
 
     s3_key = task.output.result_path
     try:
-        obj = s3_client_connector.client.get_object(Bucket=s3_client_connector.bucket_name, Key=s3_key)
+        body = await s3_client_connector.aget_object(s3_key)
     except Exception:
         raise HTTPException(
             status_code=http_status.HTTP_404_NOT_FOUND,
@@ -175,7 +175,7 @@ async def download_task_result_file(
     filename = f"{base_name}_rempli.odt"
 
     return StreamingResponse(
-        io.BytesIO(obj["Body"].read()),
+        io.BytesIO(body),
         media_type="application/vnd.oasis.opendocument.text",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
@@ -312,14 +312,14 @@ async def delete_task_by_id(
     for child in children:
         await task_service.delete_task_by_id(db, child.id, child.type)
         try:
-            s3_client_connector.delete_by_task_id(user_id=child.user_id, task_id=child.id)
+            await s3_client_connector.adelete_by_task_id(user_id=child.user_id, task_id=child.id)
         except Exception as e:
             logger.error(f"Error occurred while deleting child task {child.id} from S3: {e}")
 
     await task_service.delete_task_by_id(db, task.id, task.type)
 
     try:
-        s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
+        await s3_client_connector.adelete_by_task_id(user_id=task.user_id, task_id=task.id)
     except Exception as e:
         logger.error(f"Error occurred while deleting task from S3: {e}")
 
@@ -349,7 +349,7 @@ async def delete_tasks_by_date_and_status(
 
     for task in results:
         try:
-            s3_client_connector.delete_by_task_id(user_id=task.user_id, task_id=task.id)
+            await s3_client_connector.adelete_by_task_id(user_id=task.user_id, task_id=task.id)
         except Exception as e:
             logger.error(f"Error occurred while deleting task from S3: {e}")
 

@@ -1,6 +1,7 @@
 import tempfile
 import datetime
 
+import aioboto3
 import boto3
 from botocore.exceptions import ClientError
 
@@ -27,11 +28,14 @@ class S3Connector(BaseFileConnector):
         self.bucket_name = bucket_name
         self.up_time = datetime.datetime.now().isoformat()
 
-        settings = S3Settings()
+        self._settings = S3Settings()
         self._public_client = boto3.client(
             "s3",
-            endpoint_url=settings.public_url,
+            endpoint_url=self._settings.public_url,
         )
+
+        # aioboto3 session (créée une seule fois, thread-safe)
+        self._aio_session = aioboto3.Session()
 
         try:
             self.client.head_bucket(Bucket=self.bucket_name)
@@ -135,6 +139,90 @@ class S3Connector(BaseFileConnector):
             return True
         except ClientError as e:
             raise Exception(f"Erreur lors de la suppression des fichiers pour l'utilisateur {user_id} : {e}")
+
+    # ── Async native (aioboto3) ──
+
+    def _aio_client(self):
+        """Context manager for an async S3 client using the internal endpoint."""
+        return self._aio_session.client(
+            "s3",
+            endpoint_url=self._settings.AWS_ENDPOINT_URL,
+            verify=self._settings.VERIFY_SSL,
+        )
+
+    def _aio_public_client(self):
+        """Context manager for an async S3 client using the public endpoint (presigned URLs)."""
+        return self._aio_session.client(
+            "s3",
+            endpoint_url=self._settings.public_url,
+        )
+
+    async def asave(self, user_id: str, task_id: str, file_path: str) -> str:
+        object_key = f"{user_id}/{task_id}"
+        async with self._aio_client() as s3:
+            await s3.upload_file(file_path, self.bucket_name, object_key)
+        return object_key
+
+    async def aget_by_task_id(self, user_id: str, task_id: str) -> str:
+        object_key = f"{user_id}/{task_id}"
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        tmp_file_path = tmp_file.name
+        tmp_file.close()
+        async with self._aio_client() as s3:
+            await s3.download_file(self.bucket_name, object_key, tmp_file_path)
+        return tmp_file_path
+
+    async def adelete_by_task_id(self, user_id: str, task_id: str) -> bool:
+        object_key = f"{user_id}/{task_id}"
+        async with self._aio_client() as s3:
+            await s3.delete_object(Bucket=self.bucket_name, Key=object_key)
+        return True
+
+    async def adelete_by_user_id(self, user_id: str) -> bool:
+        batch_delete_size = 1_000
+        async with self._aio_client() as s3:
+            paginator = s3.get_paginator("list_objects_v2")
+            delete_us: dict = dict(Objects=[])
+            async for page in paginator.paginate(Bucket=self.bucket_name, Prefix=f"{user_id}/"):
+                for obj in page.get("Contents", []):
+                    delete_us["Objects"].append(dict(Key=obj["Key"]))
+                    if len(delete_us["Objects"]) >= batch_delete_size:
+                        await s3.delete_objects(Bucket=self.bucket_name, Delete=delete_us)
+                        delete_us = dict(Objects=[])
+            if delete_us["Objects"]:
+                await s3.delete_objects(Bucket=self.bucket_name, Delete=delete_us)
+        return True
+
+    async def aget_object(self, key: str) -> bytes:
+        """Download an object's body from S3 asynchronously."""
+        async with self._aio_client() as s3:
+            resp = await s3.get_object(Bucket=self.bucket_name, Key=key)
+            body = await resp["Body"].read()
+        return body
+
+    async def agenerate_presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        """Generate a presigned URL using the public-facing async client."""
+        async with self._aio_public_client() as s3:
+            url = await s3.generate_presigned_url(
+                ClientMethod="get_object",
+                Params={"Bucket": self.bucket_name, "Key": key},
+                ExpiresIn=expires_in,
+            )
+        return url
+
+    async def aget_health(self) -> Health:
+        try:
+            async with self._aio_client() as s3:
+                await s3.head_bucket(Bucket=self.bucket_name)
+        except Exception as error:
+            return Health(
+                name="s3",
+                extras={"error": str(error)},
+                version=boto3.__version__,
+                up_time=self.up_time,
+                status="unhealthy",
+            )
+        return Health(name="s3", version=boto3.__version__, up_time=self.up_time, status="healthy")
 
 
 s3_settings = S3Settings()
