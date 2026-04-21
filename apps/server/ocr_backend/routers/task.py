@@ -250,6 +250,11 @@ async def get_tasks_by_user(
     if tasks is None or len(tasks) == 0:
         return Pagination[TaskModel](total=0, page=page, page_size=page_size, items=[])
 
+    # Enrichir les tâches en file d'attente avec leur position
+    for task in tasks:
+        if task.status == TaskStatus.QUEUED.value:
+            task.position = await task_service.get_position_in_queue(db, task.id, task.type)
+
     return Pagination[TaskModel](total=count, page=page, page_size=page_size, items=tasks)
 
 
