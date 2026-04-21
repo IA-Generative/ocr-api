@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.9.1](https://github.com/IA-Generative/ocr-api/compare/v1.9.0...v1.9.1) (2026-04-21)
+
+
+### Bug Fixes
+
+* **boto3:** implement async S3 operations using aioboto3 for improved performance ([b9b9fb7](https://github.com/IA-Generative/ocr-api/commit/b9b9fb79a256b7462ba324d69b3e6e0430259248))
+
 ## [1.9.0](https://github.com/IA-Generative/ocr-api/compare/v1.8.0...v1.9.0) (2026-04-21)
 
 
