@@ -112,6 +112,17 @@ class TaskStats(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     global_stats: TaskStatsGlobal
     user_stats: TaskStatsUser
-    # all_users_stats: Pagination[TaskStatsUser] = Field(
-    #     None, description="Statistiques paginées pour tous les utilisateurs"
-    # )
+
+
+class LeaderboardEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    rank: int
+    user_id: str
+    task_count: int
+    is_me: bool = False
+
+
+class LeaderboardResponse(BaseModel):
+    entries: list[LeaderboardEntry]
+    my_rank: int | None = None
+    total_participants: int

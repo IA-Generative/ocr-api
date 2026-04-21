@@ -12,6 +12,10 @@
           <span class="fr-icon-bar-chart-box-line" aria-hidden="true" />
           Statistiques
         </button>
+        <button class="action-btn" @click="leaderboardVisible = true">
+          <span class="fr-icon-trophy-line" aria-hidden="true" />
+          Leaderboard
+        </button>
         <div class="users-pill" title="Utilisateurs actifs aujourd'hui">
           <span class="fr-icon-user-line" style="font-size:13px" aria-hidden="true" />
           <span>{{ connectedUsers ?? '—' }}</span>
@@ -167,6 +171,7 @@
 
     <!-- Stats Modal -->
     <StatModel v-if="statsVisible" @close="statsVisible = false" />
+    <LeaderboardModal v-if="leaderboardVisible" @close="leaderboardVisible = false" />
   </div>
 </template>
 
@@ -178,6 +183,7 @@ import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 import { useTasksStore } from '@/stores/tasks'
 import StatModel from './StatModel.vue'
+import LeaderboardModal from './LeaderboardModal.vue'
 import ProgressBar from './ProgressBar.vue'
 
 type TaskModel = {
@@ -362,6 +368,7 @@ const totalPages = computed(() => {
 
 // ----- MODAL -----
 const statsVisible = ref(false)
+const leaderboardVisible = ref(false)
 
 const goToTask = (task: any) => {
   if (!task || !task.id) return
