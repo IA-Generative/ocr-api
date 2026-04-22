@@ -20,6 +20,7 @@ from .prompts import (
 )
 from src.config.openai import OpenAISettings
 from src.logger import logger
+import time
 
 openai_settings = OpenAISettings()
 
@@ -32,6 +33,8 @@ class LayoutDescriptor(BaseModelPrediction):
         client_openai: openai.OpenAI = openai.OpenAI(
             base_url=openai_settings.OPENAI_BASE_URL,
             api_key=openai_settings.OPENAI_API_KEY,
+            timeout=openai_settings.OPENAI_TIMEOUT,
+            max_retries=openai_settings.OPENAI_MAX_RETRIES,
         ),
         *args,
         **kwargs,
@@ -86,29 +89,37 @@ class LayoutDescriptor(BaseModelPrediction):
             assert len(images) == len(pages), "Number of images and pages must match"
         else:
             raise ValueError("Pages must be provided for layout prediction")
-
-        for i, image in enumerate(images):
-            # width_img, height_img = image.size
-            current_page: Page = pages[i]
-            layouts: list[Layout] = current_page.layouts
-            for layout in layouts:
-                prompt = self.select_prompt(layout.label)
-                model_cls = self.select_base_model(layout.label)
-                if prompt and model_cls:
-                    xmin, ymin, xmax, ymax = layout.coordinate
-                    # WARNING: the following cropping assumes is not normalized, if coordinates are normalized, they should be denormalized before cropping
-                    cropped_image = image.crop((xmin, ymin, xmax, ymax))
-                    try:
-                        messages = self.build_messages(prompt, cropped_image)
-
-                        response: model_cls = self.client_instructor.create(
-                            model=self.model_name,
-                            messages=messages,
-                            response_model=model_cls,
-                        )  # ty:ignore[no-matching-overload]
-                        layout.block = response
-                    except Exception as e:
-                        logger.error(f"Error processing layout descriptor for page {current_page.page}: {e}")
-                        continue
+        if openai_settings.USE_DESCRIPTIOR:
+            for i, image in enumerate(images):
+                # width_img, height_img = image.size
+                current_page: Page = pages[i]
+                layouts: list[Layout] = current_page.layouts
+                for layout in layouts:
+                    prompt = self.select_prompt(layout.label)
+                    model_cls = self.select_base_model(layout.label)
+                    if prompt and model_cls:
+                        xmin, ymin, xmax, ymax = layout.coordinate
+                        # WARNING: the following cropping assumes is not normalized, if coordinates are normalized, they should be denormalized before cropping
+                        cropped_image = image.crop((xmin, ymin, xmax, ymax))
+                        try:
+                            messages = self.build_messages(prompt, cropped_image)
+                            t0 = time.time()
+                            logger.info(
+                                f"Sending layout descriptor request for page {current_page.page}, layout label: {layout.label}"
+                            )
+                            response: model_cls = self.client_instructor.create(
+                                model=self.model_name,
+                                messages=messages,
+                                response_model=model_cls,
+                            )  # ty:ignore[no-matching-overload]
+                            layout.block = response
+                            logger.info(
+                                f"Received layout descriptor response for page {current_page.page} in {time.time() - t0:.2f}s: {response}"
+                            )
+                        except Exception as e:
+                            logger.error(f"Error processing layout descriptor for page {current_page.page}: {e}")
+                            continue
+        else:
+            logger.info("Skipping layout description as USE_DESCRIPTOR is set to False")
 
         return pages

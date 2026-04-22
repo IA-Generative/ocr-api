@@ -44,6 +44,8 @@ def load_worker(
     openai_client = AsyncOpenAI(
         api_key=openai_settings.OPENAI_API_KEY,
         base_url=openai_settings.OPENAI_BASE_URL,
+        timeout=openai_settings.OPENAI_TIMEOUT,
+        max_retries=openai_settings.OPENAI_MAX_RETRIES,
     )
     vision_model_name = openai_settings.OPENAI_VISION_MODEL
     #################################################

@@ -163,7 +163,12 @@ class TextClassificationModel:
 class InstructorTextClassificationModel(TextClassificationModel):
     def __init__(
         self,
-        client: openai.OpenAI = openai.OpenAI(api_key=settings.OPENAI_API_KEY, base_url=settings.OPENAI_BASE_URL),
+        client: openai.OpenAI = openai.OpenAI(
+            api_key=settings.OPENAI_API_KEY,
+            base_url=settings.OPENAI_BASE_URL,
+            timeout=settings.OPENAI_TIMEOUT,
+            max_retries=settings.OPENAI_MAX_RETRIES,
+        ),
         model_name: str = settings.OPENAI_MODEL,
     ):
         super().__init__(client=client, model_name=model_name)

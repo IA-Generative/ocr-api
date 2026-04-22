@@ -34,6 +34,8 @@ _openai_settings = OpenAISettings()
 _client = AsyncOpenAI(
     api_key=_openai_settings.OPENAI_API_KEY,
     base_url=_openai_settings.OPENAI_BASE_URL,
+    timeout=_openai_settings.OPENAI_TIMEOUT,
+    max_retries=_openai_settings.OPENAI_MAX_RETRIES,
 )
 _instructor_client = instructor.from_openai(_client)
 
