@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.2](https://github.com/IA-Generative/ocr-api/compare/v1.10.1...v1.10.2) (2026-04-22)
+
+
+### Bug Fixes
+
+* **openai:** add timeout and max retries to OpenAI client configurations ([2cce948](https://github.com/IA-Generative/ocr-api/commit/2cce9489a7a1aa6c73af7ffa8cf2a09a566ca10e))
+
 ## [1.10.1](https://github.com/IA-Generative/ocr-api/compare/v1.10.0...v1.10.1) (2026-04-21)
 
 
