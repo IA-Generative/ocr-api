@@ -9,5 +9,8 @@ class OpenAISettings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o-mini"  # Alias used in .env — takes precedence when set
     OPENAI_VISION_MODEL: str = "mistral-small-3.2-24b-instruct-2506"
     EMBEDDINGS_MODEL: str = "text-embedding-3-small"
+    OPENAI_TIMEOUT: int = 30
+    OPENAI_MAX_RETRIES: int = 1
+    USE_DESCRIPTIOR: bool = False
 
     model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")

@@ -109,6 +109,8 @@ class OcrChunker:
         self.client_openai = openai.OpenAI(
             api_key=openai_settings.OPENAI_API_KEY,
             base_url=openai_settings.OPENAI_BASE_URL,
+            timeout=openai_settings.OPENAI_TIMEOUT,
+            max_retries=openai_settings.OPENAI_MAX_RETRIES,
         )
 
     # ------------------------------------------------------------------
@@ -153,6 +155,7 @@ class OcrChunker:
         Replace this method with a real embedding call (sentence-transformers,
         OpenAI embeddings, etc.) in production.
         """
+        logger.debug(f"Embedding {len(texts)} texts with model {self.model_name}")
         res = self.client_openai.embeddings.create(input=texts, model=self.model_name)
         logger.debug(
             f"Embedding {len(texts)} texts with model {self.model_name}: data_len={len(getattr(res, 'data', []))}"

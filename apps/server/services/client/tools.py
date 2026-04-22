@@ -13,4 +13,9 @@ file_connector = S3Connector(
 
 server_client = ServerClient()
 
-openai_client = openai.OpenAI(api_key=openai_settings.OPENAI_API_KEY, base_url=openai_settings.OPENAI_BASE_URL)
+openai_client = openai.OpenAI(
+    api_key=openai_settings.OPENAI_API_KEY,
+    base_url=openai_settings.OPENAI_BASE_URL,
+    timeout=openai_settings.OPENAI_TIMEOUT,
+    max_retries=openai_settings.OPENAI_MAX_RETRIES,
+)

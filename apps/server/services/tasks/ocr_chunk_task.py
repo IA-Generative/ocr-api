@@ -7,7 +7,7 @@ from src.schemas.task import (
     TaskStatus,
 )
 from celery import Task as CeleryTask
-
+import time
 
 from business.chunks.worker import ChunkWorker
 
@@ -67,7 +67,10 @@ def process_ocr_chunk(self: ChunkerWorker, task_info: dict | str) -> dict:
     task.id = celery_task_id  # type: ignore
 
     try:
+        t0 = time.time()
+        logger.info(f"Processing OCR chunk task {celery_task_id} for OCR task {ocr_task_id}")
         result = chunk_worker.process_task(task=task)
+        logger.info(f"Task {celery_task_id} completed in {time.time() - t0:.2f}s")
         # Update parent OCR task with completed status and classification output
         server_client.update_task_by_id(
             task_id=ocr_task_id,
