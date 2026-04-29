@@ -88,11 +88,9 @@ async def _rewrite_page_urls_async(task: TaskModel) -> TaskModel:
 async def get_task_by_id_internal(task_id: str, db: AsyncSession, task_service: TaskService) -> TaskModel:
     """Helper interne pour récupérer une tâche avec enrichissement"""
     # Récupérer toutes les tâches avec cet ID
-    tasks = await task_service.get_tasks_by_id(db, task_id)
-    if not tasks:
+    task = await task_service.get_task_by_id(db, task_id, task_type="ocr")
+    if not task:
         raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
-
-    task = tasks[0]  # Prendre la première tâche
 
     # Récupérer la position en file d'attente
     if task.status == TaskStatus.QUEUED.value:
