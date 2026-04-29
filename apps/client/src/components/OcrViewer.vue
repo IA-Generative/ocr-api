@@ -20,6 +20,7 @@ import type { PageLabel } from '@/interfaces/classification'
 import type { BboxReview, ValidationState } from '@/interfaces/review'
 import { useOcrStore } from '@/stores/ocr'
 import { useAnnotationsStore } from '@/stores/annotations'
+import { useTasksStore } from '@/stores/tasks'
 import type { PageAnnotation } from '@/stores/annotations'
 
 type ClassificationAnnotation = components['schemas']['ClassificationAnnotation']
@@ -45,9 +46,11 @@ const props = defineProps<{
 
 const store = useOcrStore()
 const annotationsStore = useAnnotationsStore()
+const tasksStore = useTasksStore()
 const { addErrorMessage, addSuccessMessage } = useToaster()
 const pages = props.data.pages
 const currentPage = ref(0)
+const pageImageUrl = ref<string | undefined>(undefined)
 
 function downloadResultFile () {
   if (props.data.id) {
@@ -55,7 +58,7 @@ function downloadResultFile () {
   }
 }
 
-const imageUrl = computed(() => pages[currentPage.value].page_url ?? undefined)
+const imageUrl = computed(() => pageImageUrl.value)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
 const layouts = computed<Layout[]>(() => (pages[currentPage.value]?.layouts ?? []) as Layout[])
 const hasLayouts = computed(() => pages.some((p: Page) => p.layouts && p.layouts.length > 0))
@@ -267,6 +270,23 @@ async function submitAnnotations () {
     isSubmitting.value = false
   }
 }
+
+// Charge l'image de la page courante via le store
+async function loadPageImage() {
+  if (!props.data.id || !pages[currentPage.value]) {
+    pageImageUrl.value = undefined
+    return
+  }
+  const pageNumber = (pages[currentPage.value].page ?? currentPage.value) + 1
+  try {
+    const blob = await tasksStore.fetchTaskPageImage(props.data.id, pageNumber)
+    pageImageUrl.value = URL.createObjectURL(blob)
+  } catch (e) {
+    pageImageUrl.value = undefined
+  }
+}
+
+watch(currentPage, loadPageImage, { immediate: true })
 </script>
 
 <template>
