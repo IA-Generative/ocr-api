@@ -46,6 +46,17 @@ TaskServiceDep = Annotated[TaskService, Depends(get_task_service)]
 DbSessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
+def normalize_page_url(page_url: str) -> str:
+    """Normalize the page URL by extracting the S3 key if it's a full URL."""
+    if page_url.startswith("http://") or page_url.startswith("https://"):
+        return s3_client_connector.extract_key_from_url(
+            page_url,
+            bucket_name=s3_client_connector.bucket_name,
+            s3_endpoint=s3_client_connector.client.meta.endpoint_url,
+        )
+    return page_url
+
+
 def _rewrite_page_urls(task: TaskModel) -> TaskModel:
     """Replace the origin of page_url with the public URL, regardless of the internal hostname."""
     if task.output and task.output.pages:
@@ -63,10 +74,7 @@ def _rewrite_page_urls(task: TaskModel) -> TaskModel:
                     )
                     # TODO: save the extracted key back to the database to avoid this step in the future
 
-                page.page_url = s3_client_connector.generate_presigned_url(
-                    key,
-                    expires_in=300,  # URL valable 5 minutes
-                )
+                page.page_url = key
     return task
 
 
@@ -180,6 +188,59 @@ async def download_task_result_file(
         media_type="application/vnd.oasis.opendocument.text",
         headers={
             "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+@router.get("/tasks/{task_id}/page/{page_number}")
+async def get_task_page(
+    task_id: str,
+    page_number: int,
+    ctx: TokenDep,
+    db: DbSessionDep,
+    task_service: TaskServiceDep,
+) -> StreamingResponse:
+    """Récupère une page spécifique d'une tâche"""
+    task = await get_task_by_id_internal(task_id, db, task_service)
+    if task.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=http_status.HTTP_404_NOT_FOUND, detail="Task not found")
+    if not task.output or not task.output.pages:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="No result file available for this task",
+        )
+    s3_key = None
+    if task.output and task.output.pages:
+        for page in task.output.pages:
+            if page.page == page_number - 1:
+                if not page.page_url:
+                    raise HTTPException(
+                        status_code=http_status.HTTP_404_NOT_FOUND,
+                        detail=f"Page {page_number} not found for this task",
+                    )
+                s3_key = normalize_page_url(page.page_url)
+                break
+
+    if s3_key is None:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail=f"Page {page_number} not found for this task",
+        )
+    try:
+        body = await s3_client_connector.aget_object(s3_key)
+    except Exception:
+        raise HTTPException(
+            status_code=http_status.HTTP_404_NOT_FOUND,
+            detail="Result file not found in storage",
+        )
+
+    filename = f"{task_id}_page_{page_number}.png"
+
+    return StreamingResponse(
+        io.BytesIO(body),
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
         },
     )
 

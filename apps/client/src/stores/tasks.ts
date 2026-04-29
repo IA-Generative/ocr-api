@@ -69,6 +69,15 @@ export const useTasksStore = defineStore('tasks', () => {
     // No-op for now.
   }
 
+  // Récupérer une image de page via la route backend (renvoie un blob)
+  async function fetchTaskPageImage(taskId: string, pageNumber: number): Promise<Blob> {
+    if (!taskId || pageNumber == null) throw new Error('taskId et pageNumber requis')
+    const response = await http.get(`/tasks/${encodeURIComponent(taskId)}/page/${pageNumber}`, {
+      responseType: 'blob',
+    })
+    return response.data as Blob
+  }
+
   return {
     userTasksPaginated,
     loading,
@@ -79,5 +88,6 @@ export const useTasksStore = defineStore('tasks', () => {
     deleteTask,
     revokeTask,
     stopPollingUserTasks,
+    fetchTaskPageImage, // <-- expose la nouvelle méthode
   }
 })

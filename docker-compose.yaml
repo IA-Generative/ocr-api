@@ -1,6 +1,12 @@
 services:
   minio:
     image: minio/minio:latest
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -16,6 +22,12 @@ services:
 
   redis:
     image: redis:latest
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     ports:
       - "6379:6379"
     restart: unless-stopped
@@ -56,10 +68,8 @@ services:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
     depends_on:
-      - redis
-      - minio
-      #- migration
-      - db
+      ocr_backend:
+        condition: service_healthy
     environment:
       - PROCESS_NAME=paddleocr-2.10.0
       - WORKER_NAME=worker.tasks.ocr
@@ -88,6 +98,12 @@ services:
 
   ocr_backend:
     image: ocr-api
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/api/health" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
     build:
       target: test
       context: .
@@ -112,11 +128,11 @@ services:
         API_KEYS=[{"user_id": "test_user", "email": "test_user@example.com", "roles": ["user"], "is_admin": false, "token": "secret-api"}]
     depends_on:
       redis:
-        condition: service_started
+        condition: service_healthy
       db:
         condition: service_healthy
       minio:
-        condition: service_started
+        condition: service_healthy
       migration:
         condition: service_completed_successfully
 
