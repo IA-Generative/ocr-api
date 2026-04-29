@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.3](https://github.com/IA-Generative/ocr-api/compare/v1.10.2...v1.10.3) (2026-04-29)
+
+
+### Bug Fixes
+
+* **docker:** add healthchecks for minio, redis, and ocr_backend services ([f5dbba1](https://github.com/IA-Generative/ocr-api/commit/f5dbba1249f770a3a25ba4eb961feaec7ebf37bc))
+* **tasks:** add fetchTaskPageImage method and update OcrViewer to load page images ([f5dbba1](https://github.com/IA-Generative/ocr-api/commit/f5dbba1249f770a3a25ba4eb961feaec7ebf37bc))
+
 ## [1.10.2](https://github.com/IA-Generative/ocr-api/compare/v1.10.1...v1.10.2) (2026-04-22)
 
 
