@@ -12,5 +12,6 @@ class OpenAISettings(BaseSettings):
     OPENAI_TIMEOUT: int = 30
     OPENAI_MAX_RETRIES: int = 1
     USE_DESCRIPTIOR: bool = False
+    OPENAI_VERIFY_SSL: bool = True
 
     model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")
