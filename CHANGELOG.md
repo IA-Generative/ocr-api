@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.4](https://github.com/IA-Generative/ocr-api/compare/v1.10.3...v1.10.4) (2026-04-30)
+
+
+### Bug Fixes
+
+* **import:** move OpenAIClipModel import to conditional block ([09a40d4](https://github.com/IA-Generative/ocr-api/commit/09a40d4178c3e6f8c9c301a6ec7fb86656aa524c))
+
 ## [1.10.3](https://github.com/IA-Generative/ocr-api/compare/v1.10.2...v1.10.3) (2026-04-29)
 
 
