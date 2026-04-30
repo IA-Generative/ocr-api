@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.5](https://github.com/IA-Generative/ocr-api/compare/v1.10.4...v1.10.5) (2026-04-30)
+
+
+### Bug Fixes
+
+* **tasks:** add support for OCR_TASK_ONLY in upload_file function ([5074ad4](https://github.com/IA-Generative/ocr-api/commit/5074ad4daf4d84b65a24efe0eba0a171a6ccbcf6))
+
 ## [1.10.4](https://github.com/IA-Generative/ocr-api/compare/v1.10.3...v1.10.4) (2026-04-30)
 
 
