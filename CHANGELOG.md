@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [1.10.6](https://github.com/IA-Generative/ocr-api/compare/v1.10.5...v1.10.6) (2026-04-30)
+
+
+### Bug Fixes
+
+* **chunker:** add SSL verification support using httpx client ([ffb7b8c](https://github.com/IA-Generative/ocr-api/commit/ffb7b8c12f5f4aa908e8761f4c166163a33baef6))
+
 ## [1.10.5](https://github.com/IA-Generative/ocr-api/compare/v1.10.4...v1.10.5) (2026-04-30)
 
 
