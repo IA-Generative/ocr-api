@@ -8,7 +8,6 @@ from src.schemas.task import TaskForm, TaskStatus, CeleryTaskName
 from business.chunks.worker import ChunkWorker
 
 
-from business.classification.models.openai_clip import OpenAIClipModel
 from src.schemas.classification import ParameterClassification
 from business.paddleocr2.configs.classification import ClassificationSettings
 from business.classification.worker import ClassificationWorker
@@ -18,10 +17,11 @@ from services.client.tools import (
     server_client,
 )
 
-
 classification_settings = ClassificationSettings()
 model = None
 if classification_settings.ENABLED:
+    from business.classification.models.openai_clip import OpenAIClipModel
+
     model = OpenAIClipModel(
         model_name=classification_settings.MODEL_NAME,
         download_root=classification_settings.CLIP_MODEL_DIR,
