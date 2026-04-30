@@ -38,6 +38,7 @@ from src.schemas.ocr_chunks import OcrChunkBase
 from src.schemas.output import Page
 import openai
 from src.config.openai import OpenAISettings
+import httpx
 
 openai_settings = OpenAISettings()
 # ---------------------------------------------------------------------------
@@ -111,6 +112,7 @@ class OcrChunker:
             base_url=openai_settings.OPENAI_BASE_URL,
             timeout=openai_settings.OPENAI_TIMEOUT,
             max_retries=openai_settings.OPENAI_MAX_RETRIES,
+            http_client=httpx.Client(verify=openai_settings.OPENAI_VERIFY_SSL),
         )
 
     # ------------------------------------------------------------------
