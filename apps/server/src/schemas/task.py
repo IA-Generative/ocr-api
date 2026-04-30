@@ -84,6 +84,7 @@ class TaskOperation(StrEnum):
 
 
 class CeleryTaskName(StrEnum):
+    OCR_TASK_ONLY = "only_ocr_task"
     OCR_TASK = "worker.tasks.ocr"
     PAGE_CLASSIFICATION_TASK = "tasks.page_classification"
     PAGE_TEXT_CLASSIFICATION_TASK = "tasks.page_text_classification"

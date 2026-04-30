@@ -212,6 +212,9 @@ async def upload_file(
         ):
             # Entity extraction (ou autre) dépend du chunk
             chain(ocr_sig, ocr_chunk_sig, celery_app.signature(task_name.value)).apply_async()
+        elif task_name and task_name == CeleryTaskName.OCR_TASK_ONLY:
+            # OCR seul → pas de chunk
+            chain(ocr_sig).apply_async()
         else:
             # OCR seul → toujours suivi du chunk
             chain(ocr_sig, ocr_chunk_sig).apply_async()
