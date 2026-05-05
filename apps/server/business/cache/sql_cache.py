@@ -6,8 +6,10 @@ from src.schemas.task import TaskModel, task_table, TaskStatus
 from src.connector.s3_connector import S3Connector
 from services.utils.lazy_pdf import LazyPdfImageList
 from src.logger import logger
+import os
 
 # logger.setLevel(logging.DEBUG)
+USE_CACHE = os.getenv("USE_CACHE", "true").lower() == "true"
 
 
 class TaskCache(BaseCache):
@@ -15,6 +17,8 @@ class TaskCache(BaseCache):
         self.file_connector = file_connector
 
     def is_in_cache(self, task: TaskModel) -> bool:
+        if not USE_CACHE:
+            return False
         found_task = task_table.get_task_by_content_hash(content_hash_value=task.content_hash)
         return (
             found_task is not None and found_task.status == TaskStatus.COMPLETED.value and found_task.type == task.type
