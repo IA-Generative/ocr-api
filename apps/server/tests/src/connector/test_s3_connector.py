@@ -34,9 +34,9 @@ def test_save_and_get_file(s3_connector: S3Connector):
 
     try:
         object_key = s3_connector.save(user_id, task_id, tmp_path)
-        assert object_key == f"{user_id}/{task_id}"
+        assert object_key == f"{user_id}/{task_id}/{os.path.basename(tmp_path)}"
 
-        file_data = s3_connector.get_by_task_id(user_id, task_id)
+        file_data = s3_connector.download_by_s3_key(object_key)
         with open(file_data, "rb") as f:
             assert f.read() == b"Hello World!"
     finally:

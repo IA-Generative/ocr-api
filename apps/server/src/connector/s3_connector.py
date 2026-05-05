@@ -8,6 +8,8 @@ from ..config.s3 import S3Settings
 from ..schemas.health import Health
 from .base import BaseFileConnector
 from ..logger import logger
+import os
+
 
 from boto3.s3.transfer import TransferConfig
 
@@ -55,8 +57,31 @@ class S3Connector(BaseFileConnector):
         except Exception as e:
             raise e
 
-    def save(self, user_id: str, task_id: str, file_path: str) -> str:
-        object_key = f"{user_id}/{task_id}"
+    def download_by_s3_key(self, s3_key: str) -> str:
+        try:
+            metadata = self.client.head_object(Bucket=self.bucket_name, Key=s3_key)
+            logger.debug(f"{s3_key} - {metadata['ContentLength']}")
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file_path = tmp_file.name
+            tmp_file.close()  # Important, boto3 va l’écrire
+            logger.debug(f"{s3_key} - Start to save chunk")
+            self.client.download_file(self.bucket_name, s3_key, tmp_file_path, Config=config)
+
+            return tmp_file_path
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError(f"{s3_key} non trouvé : {e}")
+            raise FileNotFoundError(f"{s3_key} non trouvé : {e}")
+
+        except Exception as e:
+            raise e
+
+    def save(self, user_id: str, task_id: str, file_path: str, filename: str | None = None) -> str:
+        if filename:
+            filename = os.path.basename(filename)
+        else:
+            filename = os.path.basename(file_path)
+        object_key = f"{user_id}/{task_id}/{filename}"
         try:
             self.client.upload_file(file_path, self.bucket_name, object_key)
             return object_key

@@ -88,7 +88,7 @@ def test_upload_files_success(client):
 
     # Verify file is saved in Minio
     task_id = response_model.id
-    file_from_minio = s3_client_connector.get_by_task_id(user_id, task_id)
+    file_from_minio = s3_client_connector.download_by_s3_key(f"{user_id}/{task_id}/{os.path.basename(path)}")
     assert os.path.exists(file_from_minio)
 
 

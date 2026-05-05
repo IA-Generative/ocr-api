@@ -56,8 +56,9 @@ class BaseWorker(ABC):
         task = self.set_output(task=task)
         try:
             logger.info(f"{task.id} load file ")
-            content = self.file_connector.get_by_task_id(user_id=task.user_id, task_id=task.id)
-            logger.info(f"{task.id} loaded")
+            if task.input:
+                content = self.file_connector.download_by_s3_key(s3_key=task.input.storage_file_path)
+                logger.info(f"{task.id} loaded")
 
         except Exception as e:
             task.extras["error"] = str(e)

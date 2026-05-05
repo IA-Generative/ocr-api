@@ -128,7 +128,7 @@ async def upload_file(
         )
 
     try:
-        saved_path = s3_client_connector.save(ctx.user_id, task_data.id, temp_file_path)
+        saved_path = s3_client_connector.save(ctx.user_id, task_data.id, temp_file_path, file.filename)
         logger.debug(f"Save into S3 - {saved_path}")
 
         _, extension = os.path.splitext(file.filename)
