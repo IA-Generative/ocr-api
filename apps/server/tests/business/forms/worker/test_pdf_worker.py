@@ -55,11 +55,12 @@ def test_worker_extractor_not_process(
         size=123456,
         content_type="image/jpg",  # Uncomment this line to simulate the absence of content_type
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = PDFFormsExtractorWorker(name="test", file_connector=storage_service, models=[], cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == dummy_task.percentage
@@ -77,11 +78,12 @@ def test_worker_extractor_process_pdf(
         size=123456,
         content_type="application/pdf",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = PDFFormsExtractorWorker(name="test", file_connector=storage_service, models=[], cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task != dummy_task

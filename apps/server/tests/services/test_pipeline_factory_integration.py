@@ -81,6 +81,11 @@ def test_load_factory_default_pdf_worker_with_pdf_form_worker(
     )
     monkeypatch.setattr(
         s3_client_connector,
+        "download_by_s3_key",
+        lambda *args, **kwargs: dummy_task_pdf_form.input.raw_filename,
+    )
+    monkeypatch.setattr(
+        s3_client_connector,
         "save",
         lambda *args, **kwargs: dummy_task_pdf_form.input.raw_filename,
     )
@@ -123,6 +128,11 @@ def test_load_factory_default_worker_with_image(
     monkeypatch.setattr(
         s3_client_connector,
         "get_by_task_id",
+        lambda *args, **kwargs: dummy_task_image_default.input.raw_filename,
+    )
+    monkeypatch.setattr(
+        s3_client_connector,
+        "download_by_s3_key",
         lambda *args, **kwargs: dummy_task_image_default.input.raw_filename,
     )
     monkeypatch.setattr(
@@ -173,6 +183,11 @@ def test_load_factory_with_pdf_form_worker(
     monkeypatch.setattr(
         s3_client_connector,
         "get_by_task_id",
+        lambda *args, **kwargs: dummy_task_pdf_form_ocr.input.raw_filename,
+    )
+    monkeypatch.setattr(
+        s3_client_connector,
+        "download_by_s3_key",
         lambda *args, **kwargs: dummy_task_pdf_form_ocr.input.raw_filename,
     )
     monkeypatch.setattr(
@@ -249,6 +264,11 @@ def test_load_factory_with_image_form_worker_with_vlm(
     monkeypatch.setattr(
         s3_client_connector,
         "get_by_task_id",
+        lambda *args, **kwargs: dummy_task_image_form_vlm.input.raw_filename,
+    )
+    monkeypatch.setattr(
+        s3_client_connector,
+        "download_by_s3_key",
         lambda *args, **kwargs: dummy_task_image_form_vlm.input.raw_filename,
     )
     monkeypatch.setattr(

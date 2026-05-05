@@ -37,11 +37,12 @@ def test_csv_worker_creation(storage_service: BaseFileConnector, dummy_task: Tas
         size=123456,
         content_type="text/csv",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = CSVWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1
@@ -56,11 +57,12 @@ def test_docx_worker_creation(storage_service: BaseFileConnector, dummy_task: Ta
         size=512000,
         content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = DocxWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1
@@ -75,11 +77,13 @@ def test_xlsx_worker_creation(storage_service: BaseFileConnector, dummy_task: Ta
         size=10240,
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
+
     worker = XlsxWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1
@@ -94,11 +98,12 @@ def test_odt_worker_creation(storage_service: BaseFileConnector, dummy_task: Tas
         size=102400,
         content_type="application/vnd.oasis.opendocument.text",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = OdtWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1
@@ -113,11 +118,12 @@ def test_ods_worker_creation(storage_service: BaseFileConnector, dummy_task: Tas
         size=10240,
         content_type="application/vnd.oasis.opendocument.spreadsheet",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = OdsWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1
@@ -132,11 +138,12 @@ def test_odp_worker_creation(storage_service: BaseFileConnector, dummy_task: Tas
         size=204800,
         content_type="application/vnd.oasis.opendocument.presentation",
     )
-    storage_service.save(
+    key = storage_service.save(
         user_id=dummy_task.user_id,
         task_id=dummy_task.id,
         file_path=dummy_task.input.storage_file_path,
     )
+    dummy_task.input.storage_file_path = key
     worker = OdpWorker(name="test", file_connector=storage_service, cache=None)
     update_task = worker.process_task(task=dummy_task)
     assert update_task.percentage == 1

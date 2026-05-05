@@ -40,6 +40,13 @@ def test_get_content_file_success(mock_minio: S3Connector, mock_model: MockeBase
         f.write(expected_content)
 
     mock_minio.save(task_id=dummy_task.id, user_id=dummy_task.user_id, file_path=tmp_path)
+    dummy_task.input = InputForm(
+        storage_file_path=f"{dummy_task.user_id}/{dummy_task.id}/data.txt",
+        raw_filename="data.txt",
+        ext=".txt",
+        size=len(expected_content),
+        content_type="text/plain",
+    )
 
     worker = AnyFileProcessWorker(name="test", file_connector=mock_minio, models=[mock_model])
     file_path = worker.get_content_file(task=dummy_task)
@@ -137,7 +144,12 @@ def test_predict_on_pages(mock_minio: S3Connector, mock_model: MockeBaseModelPre
     assert actual is not None
 
 
-def test_predict_get_from_hash(mock_minio: S3Connector, mock_model: MockeBaseModelPrediction, dummy_task: TaskModel):
+def test_predict_get_from_hash(
+    mock_minio: S3Connector,
+    mock_model: MockeBaseModelPrediction,
+    dummy_task: TaskModel,
+    monkeypatch: pytest.MonkeyPatch,
+):
     from services.base.cache import BaseCache
 
     input = InputForm(
@@ -167,6 +179,11 @@ def test_predict_get_from_hash(mock_minio: S3Connector, mock_model: MockeBaseMod
         ),
         created_at=0,
         updated_at=1,
+    )
+    monkeypatch.setattr(
+        mock_minio,
+        "download_by_s3_key",
+        lambda *args, **kwargs: "tests/data/valid/identite.jpg",
     )
 
     class MockCache(BaseCache):

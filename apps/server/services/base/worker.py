@@ -59,6 +59,13 @@ class BaseWorker(ABC):
             if task.input:
                 content = self.file_connector.download_by_s3_key(s3_key=task.input.storage_file_path)
                 logger.info(f"{task.id} loaded")
+            else:
+                content = None
+                logger.warning(f"{task.id} no input found")
+                raise FileNotFoundError(f"No input found for task : {task.id}")
+        except FileNotFoundError as e:
+            logger.error(str(e))
+            raise FileNotFoundError(str(e))
 
         except Exception as e:
             task.extras["error"] = str(e)
