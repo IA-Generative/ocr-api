@@ -92,11 +92,11 @@ class LangFuseTracingService(TracingService):
                 user_id=kwargs.get("user_id"),
                 session_id=kwargs.get("session_id"),
             )
-
-            yield trace
         except Exception as e:
-            logger.warning(f"Error managing Langfuse trace: {e}")
-            yield None
+            logger.warning(f"Error creating Langfuse trace: {e}")
+
+        try:
+            yield trace
         finally:
             # Mettre à jour le trace avec les données finales
             if trace and self.client:

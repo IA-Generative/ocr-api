@@ -41,13 +41,14 @@ class PDFFormsExtractorWorker(BaseWorker):
         self._cached_doc: fitz.Document = None
 
     def _get_cached_document(self, task: TaskModel) -> fitz.Document:
-        if self._cached_doc is None:
-            tmp_filename = self.get_content_file(task=task)
-            self._cached_doc = fitz.open(tmp_filename)
+        # Always open a fresh document — no cross-task caching to avoid stale state
+        self._clear_cached_document()
+        tmp_filename = self.get_content_file(task=task)
+        self._cached_doc = fitz.open(tmp_filename)
         return self._cached_doc
 
     def _clear_cached_document(self):
-        """Nettoie le document mis en cache pour éviter les conflits entre tâches"""
+        """Ferme et libère le document courant"""
         if self._cached_doc is not None:
             self._cached_doc.close()
             self._cached_doc = None

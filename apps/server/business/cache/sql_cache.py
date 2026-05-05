@@ -9,7 +9,7 @@ from src.logger import logger
 import os
 
 # logger.setLevel(logging.DEBUG)
-USE_CACHE = os.getenv("USE_CACHE", "true").lower() == "true"
+USE_CACHE = os.getenv("USE_CACHE", "false").lower() == "true"
 
 
 class TaskCache(BaseCache):
