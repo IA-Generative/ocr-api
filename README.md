@@ -9,17 +9,14 @@ OCR API est une solution complète pour extraire du texte à partir de fichiers 
 
 ## Table des matières
 
-1. [OCR API](#ocr-api)
-   1.1. [Introduction](#introduction)
-   1.2. [Table des matières](#table-des-matières)
-   1.3. Fonctionnalités disponibles
-       1.3.1. [OCR](docs/ocr/README.md)
-       1.3.2. [Classification](docs/classification/README.md)
-       1.3.3. [Extractions d'entités](docs/extractions/README.md)
-       1.3.4. [Templates](docs/templates/README.md)
-
-2. [Installation](docs/server/INSTALL.md)
-3. [Usage](docs/server/USAGE.md)
+- [Introduction](#introduction)
+- Fonctionnalités disponibles
+  - [OCR](docs/ocr/README.md)
+  - [Classification](docs/classification/README.md)
+  - [Extractions d'entités](docs/extractions/README.md)
+  - [Templates](docs/templates/README.md)
+- [Installation](docs/server/INSTALL.md)
+- [Usage](docs/server/USAGE.md)
 
 ---
 
