@@ -29,6 +29,18 @@
 - code clean
 - :art: change minio vars
 
+## [1.11.0](https://github.com/IA-Generative/ocr-api/compare/v1.10.6...v1.11.0) (2026-05-17)
+
+
+### Features
+
+* **docs:** enhance documentation with new sections for classification, entity extraction, and templates ([6958a4c](https://github.com/IA-Generative/ocr-api/commit/6958a4cba009a9f6ec4ec1e2afa64168347bf2cc))
+
+
+### Bug Fixes
+
+* **docs:** update table of contents formatting for better readability ([8bfb680](https://github.com/IA-Generative/ocr-api/commit/8bfb680311d7239f7d1983616c097938b480f213))
+
 ## [1.10.6](https://github.com/IA-Generative/ocr-api/compare/v1.10.5...v1.10.6) (2026-04-30)
 
 
