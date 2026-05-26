@@ -53,6 +53,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
+          versioning-strategy: ${{ github.ref_name == 'dev' && 'prerelease' || 'default' }}
           manifest-file: ${{ github.ref_name == 'dev' && '.release-please-manifest-prerelease.json' || '.release-please-manifest.json' }}
           config-file: ${{ github.ref_name == 'dev' && 'release-please-config-prerelease.json' || 'release-please-config-release.json' }}
 
