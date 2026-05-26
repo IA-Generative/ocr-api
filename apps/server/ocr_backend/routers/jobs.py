@@ -206,15 +206,16 @@ async def upload_file(
             # Classification et chunk en parallèle après l'OCR
             classification_sig = celery_app.signature(task_name.value)
             chain(ocr_sig, group(ocr_chunk_sig, classification_sig)).apply_async()
+        elif task_name and task_name == CeleryTaskName.OCR_TASK_ONLY:
+            # OCR seul → pas de chunk
+            chain(ocr_sig).apply_async()
         elif task_name and task_name not in (
             CeleryTaskName.OCR_TASK,
             CeleryTaskName.OCR_CHUNK_TASK,
         ):
             # Entity extraction (ou autre) dépend du chunk
             chain(ocr_sig, ocr_chunk_sig, celery_app.signature(task_name.value)).apply_async()
-        elif task_name and task_name == CeleryTaskName.OCR_TASK_ONLY:
-            # OCR seul → pas de chunk
-            chain(ocr_sig).apply_async()
+
         else:
             # OCR seul → toujours suivi du chunk
             chain(ocr_sig, ocr_chunk_sig).apply_async()
