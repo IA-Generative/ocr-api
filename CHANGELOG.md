@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [1.11.1](https://github.com/IA-Generative/ocr-api/compare/v1.11.0...v1.11.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **jobs:** streamline task handling for OCR processing without chunking ([de1d318](https://github.com/IA-Generative/ocr-api/commit/de1d31809f9f225b39bcd76bb1cb4e8d8cc07969))
+* **release:** add versioning strategy for dev branch in release workflow ([a318f90](https://github.com/IA-Generative/ocr-api/commit/a318f903d525f7c30322f58ff8bfa18e7a56ad33))
+
 ## [1.11.0](https://github.com/IA-Generative/ocr-api/compare/v1.10.6...v1.11.0) (2026-05-17)
 
 
