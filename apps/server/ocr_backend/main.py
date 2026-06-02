@@ -1,6 +1,7 @@
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
+from fastapi_mcp import FastApiMCP, AuthConfig
 
 from .routers.task import router as task_router
 from .routers.health import router as health_router
@@ -13,10 +14,8 @@ from .routers.chat import router as chat_router
 from .routers.v1 import router as v1_router
 from ocr_backend.core.security.factory import TokenVerifier
 
-
 # from .routers.template import template_router
 from src import __name__, __version__
-
 
 app = FastAPI(
     title=__name__,
@@ -47,3 +46,18 @@ app.include_router(ocr_chunks_router, prefix="/api", dependencies=_secure)
 app.include_router(chat_router, prefix="/api", dependencies=_secure)
 app.include_router(v1_router, prefix="/api/v1", dependencies=_secure)
 # app.include_router(template_router, prefix="/api")
+
+
+# Expose all API routes as MCP tools.
+# The MCP server is mounted on the same app and reuses the existing
+# `TokenVerifier` dependency: the client's `Authorization: Bearer <token>`
+# header is passed through to the underlying endpoints (token passthrough).
+mcp = FastApiMCP(
+    app,
+    name=__name__,
+    description=f"MCP server exposing the {__name__} API endpoints as tools.",
+    auth_config=AuthConfig(
+        dependencies=_secure,
+    ),
+)
+mcp.mount_http(mount_path="/api/mcp")
