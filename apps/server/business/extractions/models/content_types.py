@@ -21,3 +21,4 @@ EXCEL_CONTENT_TYPE = [
 ODT_CONTENT_TYPE = ["application/vnd.oasis.opendocument.text"]
 ODS_CONTENT_TYPE = ["application/vnd.oasis.opendocument.spreadsheet"]
 ODP_CONTENT_TYPE = ["application/vnd.oasis.opendocument.presentation"]
+EMAIL_CONTENT_TYPE = ["message/rfc822"]
