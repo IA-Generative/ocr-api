@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [1.12.0](https://github.com/IA-Generative/ocr-api/compare/v1.11.1...v1.12.0) (2026-06-02)
+
+
+### Features
+
+* add mcp server ([32c2d20](https://github.com/IA-Generative/ocr-api/commit/32c2d20ab3d398506c1ab9bed6bc5bcbdf157eec))
+* **mcp:** add compatibility patch for fastapi-mcp to handle self-referential models ([b4c8cf1](https://github.com/IA-Generative/ocr-api/commit/b4c8cf108fdc8259b53d535b6e1bbb4f004ca05a))
+
 ## [1.11.1](https://github.com/IA-Generative/ocr-api/compare/v1.11.0...v1.11.1) (2026-05-26)
 
 
