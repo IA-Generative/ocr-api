@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi_mcp import FastApiMCP, AuthConfig
 
+from .mcp_compat import patch_fastapi_mcp_recursion
+
 from .routers.task import router as task_router
 from .routers.health import router as health_router
 from .routers.jobs import router as job_router
@@ -52,6 +54,9 @@ app.include_router(v1_router, prefix="/api/v1", dependencies=_secure)
 # The MCP server is mounted on the same app and reuses the existing
 # `TokenVerifier` dependency: the client's `Authorization: Bearer <token>`
 # header is passed through to the underlying endpoints (token passthrough).
+# `patch_fastapi_mcp_recursion` makes the OpenAPI -> MCP conversion resilient to
+# self-referential Pydantic models (e.g. `TableHeader`, `TableCell`).
+patch_fastapi_mcp_recursion()
 mcp = FastApiMCP(
     app,
     name=__name__,
