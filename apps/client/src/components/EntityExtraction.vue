@@ -12,7 +12,7 @@
       </p>
       <ol class="list-decimal ml-5 flex flex-col gap-0.5 text-blue-800 text-xs">
         <li>Définissez les entités à rechercher (nom, type, description).</li>
-        <li>Téléversez un document (PDF, JPG, PNG).</li>
+        <li>Téléversez un document ({{ uploadFormatsLabel }}).</li>
         <li>Lancez l'extraction — le modèle analyse le texte et identifie chaque entité.</li>
       </ol>
     </div>
