@@ -21,6 +21,7 @@ from business.extractions.worker.file_worker import (
     OdsWorker,
     OdpWorker,
 )
+from business.extractions.models.file_extraction import FileHandlerExtractionModel
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
 from business.paddleocr2.configs.paddle import PaddleSetting
@@ -106,6 +107,7 @@ def load_worker(
     csv_worker = CSVWorker(
         name="csv-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,
@@ -113,6 +115,7 @@ def load_worker(
     xlsx_worker = XlsxWorker(
         name="xlsx-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,
@@ -120,6 +123,7 @@ def load_worker(
     docx_worker = DocxWorker(
         name="docx-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,
@@ -127,6 +131,7 @@ def load_worker(
     odt_worker = OdtWorker(
         name="odt-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,
@@ -134,6 +139,7 @@ def load_worker(
     ods_worker = OdsWorker(
         name="ods-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,
@@ -141,6 +147,7 @@ def load_worker(
     odp_worker = OdpWorker(
         name="odp-worker",
         file_connector=s3_client_connector,
+        models=[FileHandlerExtractionModel()],
         batch_size=batch_size,
         worker_weight=worker_weight,
         cache=cache,

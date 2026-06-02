@@ -19,18 +19,13 @@ import { ref } from 'vue'
 import useToaster from '@/composables/use-toaster'
 import createHttpClient from './../api/http-client'
 import { OCR_API_URL } from './../utils/constants'
+import { UPLOAD_FORMATS_LABEL, VALID_MIME_TYPES, hasValidExtension } from './../utils/upload'
 
 type TaskModel = components['schemas']['TaskModel']
 
 const { addErrorMessage, addSuccessMessage } = useToaster()
 
 const http = createHttpClient(OCR_API_URL)
-
-const VALID_MIME_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-]
 
 export const useOcrStore = defineStore('ocr', () => {
   const status = ref<string | null>(null)
@@ -162,11 +157,13 @@ export const useOcrStore = defineStore('ocr', () => {
    * Vérifie le type de fichier avant envoi
    */
   function validateFile (file: File): { valid: boolean, message?: string } {
-    // Vérification du type MIME
-    if (!VALID_MIME_TYPES.includes(file.type)) {
+    // Vérification du type (MIME ou extension en repli, certains navigateurs
+    // renvoyant un type MIME vide pour les fichiers bureautiques).
+    const isValidType = VALID_MIME_TYPES.includes(file.type) || hasValidExtension(file.name)
+    if (!isValidType) {
       return {
         valid: false,
-        message: `Type de fichier non supporté: ${file.type}. Utilisez PDF, JPEG ou PNG.`,
+        message: `Type de fichier non supporté: ${file.type || file.name}. Formats acceptés : ${UPLOAD_FORMATS_LABEL}.`,
       }
     }
     // Vérification de la taille (200 Mo max)
