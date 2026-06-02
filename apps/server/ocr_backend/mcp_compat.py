@@ -52,9 +52,7 @@ def _resolve_schema_references_safe(
 
     for key, value in schema_part.items():
         if isinstance(value, dict):
-            schema_part[key] = _resolve_schema_references_safe(
-                value, reference_schema, branch_seen
-            )
+            schema_part[key] = _resolve_schema_references_safe(value, reference_schema, branch_seen)
         elif isinstance(value, list):
             schema_part[key] = [
                 (

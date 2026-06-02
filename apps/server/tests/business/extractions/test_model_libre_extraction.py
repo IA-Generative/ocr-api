@@ -6,6 +6,7 @@ from business.extractions.models.libre_extraction import (
 
 from src.schemas.task import TaskModel
 from src.schemas.input import InputForm
+from services.utils.lazy_file import LazyFileImageList
 
 
 def test_odt_extraction_model_is_applicable():
@@ -26,40 +27,35 @@ def test_odt_extraction_model_is_applicable():
     )
     assert model.is_applicable(task) is True
 
-    task.input.content_type = "application/pdf"
+    task.input.content_type = "application/pdf"  # noqa
     assert model.is_applicable(task) is False
 
 
 def test_odt_extraction_model_batch_predict():
-    model = ODTExtractionModel()
-    with open("tests/data/file-sample_100kB.odt", "rb") as f:
-        test_odt_content = f.read()
-    images = [test_odt_content]
+    images = LazyFileImageList("tests/data/file-sample_100kB.odt")
+    model = ODTExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 
-    assert len(pages) == 1
+    assert len(pages) == 4
+    assert pages[0].boxes
 
 
 def test_odp_extraction_model_batch_predict():
-    model = OdpExtractionModel()
-    with open("tests/data/file_example_ODP_200kB.odp", "rb") as f:
-        test_odt_content = f.read()
-    images = [test_odt_content]
+    images = LazyFileImageList("tests/data/file_example_ODP_200kB.odp")
+    model = OdpExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 
-    assert len(pages) == 1
+    assert len(pages) == 3
     assert pages[0].boxes
 
 
 def test_ods_extraction_model_batch_predict():
-    model = OdsExtractionModel()
-    with open("tests/data/file_example_ODS_10.ods", "rb") as f:
-        test_odt_content = f.read()
-    images = [test_odt_content]
+    images = LazyFileImageList("tests/data/file_example_ODS_10.ods")
+    model = OdsExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 
-    assert len(pages) == 1
+    assert len(pages) == 2
     assert pages[0].boxes
