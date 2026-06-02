@@ -1,4 +1,4 @@
-from typing import List
+from typing import overload
 from PIL import Image
 from pdf2image import pdfinfo_from_path, convert_from_path
 from collections.abc import Sequence
@@ -22,7 +22,13 @@ class LazyPdfImageList(Sequence):
             self._total_pages = info["Pages"]
         return self._total_pages
 
-    def __getitem__(self, index) -> List[Image.Image]:
+    @overload
+    def __getitem__(self, index: int) -> Image.Image: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[Image.Image]: ...
+
+    def __getitem__(self, index: int | slice) -> Image.Image | Sequence[Image.Image]:
         if isinstance(index, slice):
             return [self[i] for i in range(*index.indices(len(self)))]
         if not isinstance(index, int):
