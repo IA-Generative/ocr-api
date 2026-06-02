@@ -7,6 +7,7 @@ from PIL import Image
 from services.base.model import BaseModelPrediction
 from services.base.cache import BaseCache
 from services.utils.lazy_pdf import LazyPdfImageList
+from services.utils.lazy_file import LazyFileImageList
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
@@ -89,7 +90,9 @@ class BaseWorker(ABC):
         #     raise EmptyContentException(f"No content found for task : {task.id}")
         return content
 
-    def transform_content(self, task: TaskModel, content: bytes) -> List[Image.Image | bytes] | LazyPdfImageList:
+    def transform_content(
+        self, task: TaskModel, content: bytes
+    ) -> List[Image.Image | bytes] | LazyPdfImageList | LazyFileImageList:
         task = self.set_output(task=task)
         if not task.input:
             raise ValueError("Task input is required to transform content")

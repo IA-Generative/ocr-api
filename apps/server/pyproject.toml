@@ -60,6 +60,7 @@ ocr-backend = [
 ]
 
 ocr-service-paddle = [
+    "liteparse>=2.0.4",
     "opencv-python-headless>=4.13.0.92",
     # "paddleocr==2.10.0",
     # "paddlepaddle==3.0.0",

@@ -2,6 +2,7 @@ from business.extractions.models.csv_extraction import CSVExtractionModel
 
 from src.schemas.task import TaskModel
 from src.schemas.input import InputForm
+from services.utils.lazy_file import LazyFileImageList
 
 
 def test_csv_extraction_model_is_applicable():
@@ -27,14 +28,14 @@ def test_csv_extraction_model_is_applicable():
 
 
 def test_csv_extraction_model_batch_predict():
-    model = CSVExtractionModel()
+
     with open("test.csv", "w") as f:
         f.write("col1,col2,col3\n")
         f.write("1,2,3\n")
         f.write("4,5,6\n")
-    with open("test.csv", "rb") as f:
-        test_csv_content = f.read()
-    images = [test_csv_content]
+
+    images = LazyFileImageList("test.csv")
+    model = CSVExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 

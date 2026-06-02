@@ -2,6 +2,7 @@ from business.extractions.models.excel_extraction import ExcelExtractionModel
 
 from src.schemas.task import TaskModel
 from src.schemas.input import InputForm
+from services.utils.lazy_file import LazyFileImageList
 
 
 def test_excel_extraction_model_is_applicable():
@@ -27,11 +28,9 @@ def test_excel_extraction_model_is_applicable():
 
 
 def test_excel_extraction_model_batch_predict():
-    model = ExcelExtractionModel()
-    with open("tests/data/file_example_XLSX_10.xlsx", "rb") as f:
-        test_xlsx_content = f.read()
-    images = [test_xlsx_content]
+    images = LazyFileImageList("tests/data/file_example_XLSX_10.xlsx")
+    model = ExcelExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 
-    assert len(pages) == 1
+    assert len(pages) == 2

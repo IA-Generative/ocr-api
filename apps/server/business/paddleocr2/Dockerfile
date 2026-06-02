@@ -15,6 +15,10 @@ RUN apt update -qy && apt install -qy \
   libsm6 \
   libxext6 \
   poppler-utils \
+  libreoffice-core \
+  libreoffice-writer \
+  libreoffice-calc \
+  libreoffice-impress \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/models/paddle/

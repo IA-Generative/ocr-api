@@ -2,6 +2,7 @@ from business.extractions.models.docx_extraction import DocxExtractionModel
 
 from src.schemas.task import TaskModel
 from src.schemas.input import InputForm
+from services.utils.lazy_file import LazyFileImageList
 
 
 def test_docs_extraction_model_is_applicable():
@@ -27,12 +28,10 @@ def test_docs_extraction_model_is_applicable():
 
 
 def test_docx_extraction_model_batch_predict():
-    model = DocxExtractionModel()
-    with open("tests/data/valid/file-sample_500kB.docx", "rb") as f:
-        test_csv_content = f.read()
-    images = [test_csv_content]
+    images = LazyFileImageList("tests/data/valid/file-sample_500kB.docx")
+    model = DocxExtractionModel(parser_result=images.info)
 
     pages = model.batch_predict(images)
 
-    assert len(pages) == 1
+    assert len(pages) == 5
     assert pages[0].boxes
