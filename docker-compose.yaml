@@ -2,7 +2,11 @@ services:
   minio:
     image: minio/minio:latest
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1" ]
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f http://localhost:9000/minio/health/live || exit 1",
+        ]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -23,7 +27,7 @@ services:
   redis:
     image: redis:latest
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -44,7 +48,6 @@ services:
         reservations:
           cpus: 2.0
           memory: 4000M
-    container_name: ocr-service
     command:
       [
         "celery",
@@ -99,7 +102,7 @@ services:
   ocr_backend:
     image: ocr-api
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5000/api/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -110,7 +113,6 @@ services:
       dockerfile: apps/server/ocr_backend/Dockerfile
     ports:
       - 5000:5000
-    container_name: ocr-api
     volumes:
       - ./apps/server/ocr_backend/:/app/ocr_backend/
       - ./apps/server/src/:/app/src/
@@ -159,7 +161,6 @@ services:
       target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
-    container_name: ocr-migration
     volumes:
       - ./apps/server/src/:/app/src/
       - ./apps/server/migration/:/app/migration
@@ -173,7 +174,7 @@ services:
     image: postgres:15
     restart: always
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -h localhost -p 5432" ]
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432"]
       interval: 1m30s
       timeout: 30s
       retries: 5
@@ -188,7 +189,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   ocr_frontend:
-    container_name: ocr_frontend
     restart: always
     working_dir: /app
     build:
