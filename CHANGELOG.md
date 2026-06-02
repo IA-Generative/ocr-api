@@ -29,6 +29,23 @@
 - code clean
 - :art: change minio vars
 
+## [1.13.0](https://github.com/IA-Generative/ocr-api/compare/v1.12.0...v1.13.0) (2026-06-02)
+
+
+### Features
+
+* **email:** implement email extraction model and worker for processing email content ([cb04313](https://github.com/IA-Generative/ocr-api/commit/cb043137b9327dd288a0e883cb861d90061889dd))
+* **lazy_pdf:** enhance __getitem__ method with overloads for better type hinting ([0dc7f2d](https://github.com/IA-Generative/ocr-api/commit/0dc7f2d18a7e13707240e5913cb932b2e70db990))
+* **liteparser:** Refactor file extraction models to use a unified FileHandlerExtractionModel ([5ea920c](https://github.com/IA-Generative/ocr-api/commit/5ea920cbae6b1e4d0408306e325ed9e766c061fd))
+* **readme:** update introduction and add supported file formats section ([f6ead06](https://github.com/IA-Generative/ocr-api/commit/f6ead0663ba51694bb6e39ea969d84eb202bc098))
+* **upload:** centralize upload formats and MIME type validation for improved consistency ([e15f22c](https://github.com/IA-Generative/ocr-api/commit/e15f22cce612c41008d623b0183a134dbd36f60e))
+* **upload:** update upload formats to include EML and adjust labels accordingly ([cb04313](https://github.com/IA-Generative/ocr-api/commit/cb043137b9327dd288a0e883cb861d90061889dd))
+
+
+### Bug Fixes
+
+* **docker-compose:** format healthcheck test commands for consistency ([ca30275](https://github.com/IA-Generative/ocr-api/commit/ca302755fbcd14b1f9d43571806a27b7b41d445b))
+
 ## [1.12.0](https://github.com/IA-Generative/ocr-api/compare/v1.11.1...v1.12.0) (2026-06-02)
 
 
