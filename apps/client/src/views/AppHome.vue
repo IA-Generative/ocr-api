@@ -14,6 +14,7 @@ import Classification from '@/components/Classification.vue'
 import EntityExtraction from '@/components/EntityExtraction.vue'
 import TemplatesView from '@/views/TemplatesView.vue'
 import { useOcrStore } from '@/stores/ocr'
+import { UPLOAD_ACCEPT, UPLOAD_FORMATS_LABEL } from '@/utils/upload'
 
 const store = useOcrStore()
 const router = useRouter()
@@ -79,9 +80,9 @@ const myOtherTools = ref([
   },
 ])
 
-const uploadHint = 'Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l’outil de reconnaissance de texte sera performant.'
+const uploadHint = `Taille maximale : 200 Mo. Formats supportés : ${UPLOAD_FORMATS_LABEL}. Plus la qualité du fichier sera élevée, plus l’outil de reconnaissance de texte sera performant.`
 const uploadLabel = 'Ajouter un fichier'
-const uploadAccept = 'image/jpeg,image/png,application/pdf'
+const uploadAccept = UPLOAD_ACCEPT
 
 onBeforeUnmount(() => {
   if (pdfUrl.value) {

@@ -144,6 +144,7 @@ import DocTypeModal from '@/components/DocTypeModal.vue'
 import type { DocumentType } from '@/components/DocTypeModal.vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
+import { UPLOAD_ACCEPT, UPLOAD_FORMATS_LABEL } from '@/utils/upload'
 import useToaster from '@/composables/use-toaster'
 
 const http = createHttpClient(OCR_API_URL)
@@ -302,6 +303,6 @@ onBeforeUnmount(() => {
 })
 
 const uploadLabel = 'Téléverser un document'
-const uploadHint = 'Formats acceptés : PDF, JPG, PNG'
-const uploadAccept = '.pdf,.jpg,.png'
+const uploadHint = `Formats acceptés : ${UPLOAD_FORMATS_LABEL}`
+const uploadAccept = UPLOAD_ACCEPT
 </script>

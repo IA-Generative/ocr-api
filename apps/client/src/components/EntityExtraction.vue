@@ -24,7 +24,7 @@
       <div class="flex flex-col gap-4 flex-1">
         <DsfrFileUpload
           label="Téléverser un document"
-          hint="Formats acceptés : PDF, JPG, PNG"
+          :hint="`Formats acceptés : ${uploadFormatsLabel}`"
           :accept="uploadAccept"
           :error="uploadError"
           @change="selectFile"
@@ -170,6 +170,7 @@ import EntityDefinitionModal from '@/components/EntityDefinitionModal.vue'
 import type { EntityDefinition } from '@/components/EntityDefinitionModal.vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
+import { UPLOAD_ACCEPT, UPLOAD_FORMATS_LABEL } from '@/utils/upload'
 import useToaster from '@/composables/use-toaster'
 
 type EntityType = EntityDefinition['entity_type']
@@ -180,7 +181,8 @@ const router = useRouter()
 
 const files = ref<File | null>(null)
 const uploadError = ref<string | undefined>(undefined)
-const uploadAccept = '.pdf,.jpg,.png'
+const uploadAccept = UPLOAD_ACCEPT
+const uploadFormatsLabel = UPLOAD_FORMATS_LABEL
 const isPolling = ref(false)
 const status = ref<string | null>(null)
 const ocrProgress = ref(0)
