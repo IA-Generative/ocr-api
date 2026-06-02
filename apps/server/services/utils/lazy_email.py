@@ -14,11 +14,24 @@ from odf.style import Style, TextProperties
 from odf.text import H, P
 
 from src.logger import logger
+from business.extractions.models.content_types import (
+    ODT_CONTENT_TYPE,
+    ODS_CONTENT_TYPE,
+    ODP_CONTENT_TYPE,
+    DOCX_CONTENT_TYPE,
+    EXCEL_CONTENT_TYPE,
+    CSV_CONTENT_TYPE,
+)
 
 from .lazy_file import LazyFileImageList
 from .lazy_pdf import LazyPdfImageList
 
 PDF_CONTENT_TYPE = "application/pdf"
+
+# Formats dont le texte est déjà extrait par liteparse (aucun OCR nécessaire).
+TEXT_CONTENT_TYPES = (
+    ODT_CONTENT_TYPE + ODS_CONTENT_TYPE + ODP_CONTENT_TYPE + DOCX_CONTENT_TYPE + EXCEL_CONTENT_TYPE + CSV_CONTENT_TYPE
+)
 
 
 class LazyEmailList(LazyFileImageList):
@@ -64,6 +77,9 @@ class LazyEmailList(LazyFileImageList):
 
         # 5. Construction de la séquence composite (email + pièces jointes)
         self._build_segments(self._total_pages)
+
+        # 6. Source de chaque page : texte déjà extrait (liteparse) ou OCR.
+        self._build_page_sources(self._total_pages)
 
     # ------------------------------------------------------------------ #
     # Extraction du contenu de l'email
@@ -118,6 +134,7 @@ class LazyEmailList(LazyFileImageList):
                     "size": len(payload),
                     "path": tmp.name,
                     "lazy": None,
+                    "kind": "skip",
                     "page_count": 0,
                     "start_page": None,
                 }
@@ -127,15 +144,30 @@ class LazyEmailList(LazyFileImageList):
     # ------------------------------------------------------------------ #
     # Construction des sous-listes paresseuses des pièces jointes
     # ------------------------------------------------------------------ #
+    @staticmethod
+    def _load_image(path: str) -> Image.Image:
+        image = Image.open(path)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        return image
+
     def _build_attachment_lists(self) -> None:
         for att in self.attachments:
+            content_type = att["content_type"]
             try:
-                if att["content_type"] == PDF_CONTENT_TYPE:
-                    lazy = LazyPdfImageList(att["path"], dpi=self.dpi, fmt=self.fmt)
+                if content_type == PDF_CONTENT_TYPE:
+                    # PDF : rendu image puis OCR Paddle.
+                    att["lazy"] = LazyPdfImageList(att["path"], dpi=self.dpi, fmt=self.fmt)
+                    att["kind"] = "ocr"
+                elif content_type.startswith("image/"):
+                    # Image : OCR Paddle.
+                    att["lazy"] = [self._load_image(att["path"])]
+                    att["kind"] = "ocr"
                 else:
-                    lazy = LazyFileImageList(att["path"], dpi=self.dpi, fmt=self.fmt)
-                att["lazy"] = lazy
-                att["page_count"] = len(lazy)
+                    # Bureautique (ODT, DOCX, ...) : texte déjà extrait par liteparse.
+                    att["lazy"] = LazyFileImageList(att["path"], dpi=self.dpi, fmt=self.fmt)
+                    att["kind"] = "text"
+                att["page_count"] = len(att["lazy"])
             except Exception as exc:  # pièce jointe non rendable (zip, etc.)
                 logger.warning(
                     "Impossible de rendre la pièce jointe {} ({}): {}",
@@ -144,6 +176,7 @@ class LazyEmailList(LazyFileImageList):
                     exc,
                 )
                 att["lazy"] = None
+                att["kind"] = "skip"
                 att["page_count"] = 0
 
     def _compute_attachment_start_pages(self, email_pages: int) -> None:
@@ -171,6 +204,37 @@ class LazyEmailList(LazyFileImageList):
             self._segments.append((att["page_count"], lambda i, s=lazy: s[i]))
         self._total = sum(count for count, _ in self._segments)
 
+    def _build_page_sources(self, email_pages: int) -> None:
+        """
+        Pour chaque page composite, mémorise sa source d'extraction :
+          - une ``ParsedPage`` liteparse si le texte est déjà disponible
+            (email + pièces jointes bureautiques) ;
+          - ``None`` si la page doit être OCR-isée (PDF / image), son index
+            global étant alors ajouté à ``self.ocr_pages``.
+        """
+        # Pages de l'email lui-même (texte liteparse).
+        self.page_sources: list = list(self.info.pages[:email_pages])
+        self.ocr_pages: set[int] = set()
+        global_idx = email_pages
+        for att in self.attachments:
+            if att["kind"] == "skip" or att["page_count"] <= 0:
+                continue
+            global_idx = self._append_attachment_sources(att, global_idx)
+
+    def _append_attachment_sources(self, att: dict, global_idx: int) -> int:
+        if att["kind"] == "text":
+            parsed_pages = att["lazy"].info.pages
+            for offset in range(att["page_count"]):
+                parsed = parsed_pages[offset] if offset < len(parsed_pages) else None
+                self.page_sources.append(parsed)
+                global_idx += 1
+        else:  # ocr (PDF / image)
+            for _ in range(att["page_count"]):
+                self.page_sources.append(None)
+                self.ocr_pages.add(global_idx)
+                global_idx += 1
+        return global_idx
+
     # ------------------------------------------------------------------ #
     # Génération de la page ODT
     # ------------------------------------------------------------------ #
@@ -182,10 +246,7 @@ class LazyEmailList(LazyFileImageList):
             location = "non rendable"
         else:
             location = "à la suite"
-        return (
-            f"- {att['filename']} "
-            f"({att['content_type']}, {att['size']} octets) — {location}"
-        )
+        return f"- {att['filename']} ({att['content_type']}, {att['size']} octets) — {location}"
 
     def _build_odt(self) -> str:
         doc = OpenDocumentText()
@@ -251,7 +312,4 @@ class LazyEmailList(LazyFileImageList):
         raise IndexError("Page index out of range")
 
     def __repr__(self):
-        return (
-            f"<LazyEmailList pages={len(self)} "
-            f"attachments={len(self.attachments)} email='{self.email_path}'>"
-        )
+        return f"<LazyEmailList pages={len(self)} attachments={len(self.attachments)} email='{self.email_path}'>"

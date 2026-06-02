@@ -22,6 +22,8 @@ export const VALID_MIME_TYPES = [
   'application/vnd.oasis.opendocument.text',
   'application/vnd.oasis.opendocument.spreadsheet',
   'application/vnd.oasis.opendocument.presentation',
+  // Email
+  'message/rfc822',
 ]
 
 // Extensions acceptées (utilisées pour l'attribut `accept` et le fallback de validation).
@@ -36,13 +38,14 @@ export const VALID_EXTENSIONS = [
   '.odt',
   '.ods',
   '.odp',
+  '.eml',
 ]
 
 // Valeur de l'attribut HTML `accept` pour les inputs de type file.
 export const UPLOAD_ACCEPT = VALID_EXTENSIONS.join(',')
 
 // Texte d'aide affiché à l'utilisateur.
-export const UPLOAD_FORMATS_LABEL = 'PDF, JPG, PNG, CSV, DOCX, XLSX, ODT, ODS, ODP'
+export const UPLOAD_FORMATS_LABEL = 'PDF, JPG, PNG, CSV, DOCX, XLSX, ODT, ODS, ODP, EML'
 
 /**
  * Indique si un fichier possède une extension acceptée.

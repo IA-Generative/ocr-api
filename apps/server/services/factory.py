@@ -21,7 +21,9 @@ from business.extractions.worker.file_worker import (
     OdsWorker,
     OdpWorker,
 )
+from business.extractions.worker.email_worker import EmailWorker
 from business.extractions.models.file_extraction import FileHandlerExtractionModel
+from business.extractions.models.email_extraction import EmailExtractionModel
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
 from business.paddleocr2.configs.paddle import PaddleSetting
@@ -152,6 +154,14 @@ def load_worker(
         worker_weight=worker_weight,
         cache=cache,
     )
+    email_worker = EmailWorker(
+        name="email-worker",
+        file_connector=s3_client_connector,
+        models=[EmailExtractionModel(ocr_model=ocr_model)],
+        batch_size=batch_size,
+        worker_weight=worker_weight,
+        cache=cache,
+    )
     ##################################################
     workers = [
         csv_worker,  # TaskOperation.DEFAULT and text/csv
@@ -160,6 +170,7 @@ def load_worker(
         odt_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.text
         ods_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.spreadsheet
         odp_worker,  # TaskOperation.DEFAULT and application/vnd.oasis.opendocument.presentation
+        email_worker,  # TaskOperation.DEFAULT and message/rfc822
         default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
         default_worker,  # TaskOperation.DEFAULT
         worker_pdf,  # application/pdf AND is_form_pdf
