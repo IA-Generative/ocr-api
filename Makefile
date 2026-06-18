@@ -188,9 +188,10 @@ generate-openapi: up-frontend  ## Génère la documentation OpenAPI
 	docker compose -f $(FRONTEND_COMPOSE_FILE) exec ocr_frontend pnpm run generate-openapi
 
 test-sdk: install-uv ## Test le SDK Python
-	docker compose -f docker-compose.yaml up -d && \
+	docker compose -f docker-compose.yaml up -d
 	cd sdk && \
 	uv sync --dev && \
-	uv run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests || \
-	docker compose -f docker-compose.yaml down -v 
-	
+	uv run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests; \
+	status=$$?; \
+	docker compose -f $(PWD)/docker-compose.yaml down -v; \
+	exit $$status

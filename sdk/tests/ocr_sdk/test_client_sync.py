@@ -15,7 +15,7 @@ def path_to_test_file() -> str:
     return str(path)
 
 
-def test_sync_client(path_to_test_file: str):
+def test_sync_client(path_to_test_file: str, api_ready):
     with SyncOCRClient(base_url="http://localhost:5000", api_key="default-api-key") as client:
         health = client.get_health()
         assert health.status == "healthy"
@@ -30,7 +30,7 @@ def test_sync_client(path_to_test_file: str):
 
 
 @pytest.mark.asyncio
-async def test_async_client(path_to_test_file: str):
+async def test_async_client(path_to_test_file: str, api_ready):
     async with AsyncOCRClient(base_url="http://localhost:5000", api_key="default-api-key") as client:
         health = await client.get_health()
         assert health.status == "healthy"

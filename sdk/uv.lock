@@ -445,7 +445,7 @@ wheels = [
 
 [[package]]
 name = "ocr-sdk"
-version = "0.1.2"
+version = "0.10.1"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
