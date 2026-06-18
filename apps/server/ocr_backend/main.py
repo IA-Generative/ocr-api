@@ -1,3 +1,6 @@
+import os
+
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -11,6 +14,20 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # from .routers.template import template_router
 from src import __name__, __version__
+from src.config import SentrySettings
+from src.logger import logger
+
+_environment = os.getenv("ENVIRONMENT", "production")
+_sentry_settings = SentrySettings()
+if _sentry_settings.SENTRY_API_DSN and _environment != "testing":
+    try:
+        sentry_sdk.init(
+            dsn=_sentry_settings.SENTRY_API_DSN,
+            send_default_pii=_sentry_settings.SEND_DEFAULT_PII,
+            environment=_environment,
+        )
+    except Exception as e:
+        logger.warning(f"Sentry initialization failed, continuing without it: {e}")
 
 app = FastAPI(
     title=__name__,

@@ -22,3 +22,6 @@ export const USER_REVIEW_URL = (window as any).VITE_USER_REVIEW_URL ?? import.me
 export const TCHAP_CANAL_URL = (window as any).VITE_TCHAP_CANAL_URL ?? import.meta.env.VITE_TCHAP_CANAL_URL
 export const CHAT_URL = (window as any).VITE_CHAT_URL ?? import.meta.env.VITE_CHAT_URL
 export const PORTAIL_URL = (window as any).VITE_PORTAIL_URL ?? import.meta.env.VITE_PORTAIL_URL
+
+export const SENTRY_FRONTEND_DSN = (window as any).VITE_SENTRY_FRONTEND_DSN ?? import.meta.env.VITE_SENTRY_FRONTEND_DSN
+export const ENVIRONMENT = (window as any).VITE_ENVIRONMENT ?? import.meta.env.VITE_ENVIRONMENT

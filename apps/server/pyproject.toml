@@ -39,6 +39,7 @@ test = [
     "requests>=2.32.3",
     "coverage>=7.8.0",
     "datasets>=3.6.0",
+    "pytest-dotenv>=0.5.2",
 ]
 ocr-backend = [
     "httpx>=0.25.0",
@@ -47,6 +48,7 @@ ocr-backend = [
     "python-multipart==0.0.20",
     "prometheus-fastapi-instrumentator>=7.1.0",
     "python-keycloak>=5.7.0",
+    "sentry-sdk[fastapi]>=2.34.1",
 ]
 
 ocr-service-paddle = [
@@ -79,6 +81,7 @@ services = [
     "pynvml>=12.0.0",
     "pypandoc-binary>=1.15",
     "unstructured>=0.18.15",
+    "sentry-sdk[celery]>=2.34.1",
 ]
 
 migration = [
@@ -130,6 +133,10 @@ update_changelog_on_bump = true
 major_version_zero = true
 
 
+
+[tool.pytest.ini_options]
+env_override_existing_values = 1
+env_files = ["tests/.env.testing"]
 
 [tool.ruff]
 line-length = 120
