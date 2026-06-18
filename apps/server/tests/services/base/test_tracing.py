@@ -349,6 +349,6 @@ def test_langfuse_tracing_service_trace_error_handling(mock_logger, mock_import)
     # Vérifier qu'un warning a été loggé
     mock_logger.warning.assert_called()
     warning_calls = [
-        call for call in mock_logger.warning.call_args_list if "Error managing Langfuse trace" in str(call)
+        call for call in mock_logger.warning.call_args_list if "Error creating Langfuse trace" in str(call)
     ]
     assert len(warning_calls) > 0
