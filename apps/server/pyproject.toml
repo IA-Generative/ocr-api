@@ -8,32 +8,33 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "httpx>=0.28.1",
-    "python-json-logger==3.3.0",
-    "setuptools>=80.9.0",
+    "python-json-logger>=4.1.0",
+    "setuptools>=82.0.1",
     "toml>=0.10.2",
     "minio>=7.2.16",
-    "pydantic-settings>=2.10.1",
-    "sqlalchemy>=2.0.42",
-    "celery[redis]>=5.5.1",
+    "pydantic-settings>=2.14.2",
+    "sqlalchemy>=2.0.51",
+    "celery[redis]>=5.6.3",
     "flower>=2.0.1",
     "psycopg2-binary>=2.9.10",
-    "boto3>=1.40.0",
-    "qdrant-client>=1.15.1",
+    "boto3>=1.43.37",
+    "qdrant-client>=1.18.0",
     "aiofiles>=24.1.0",
-    "pymupdf>=1.26.3",
+    "pymupdf>=1.28.0",
+    "cryptography>=48.0.1",
 ]
 
 [dependency-groups]
 stress-test = [
-    "locust>=2.34.1",
+    "locust>=2.44.4",
 ]
 
 test = [
     "httpx>=0.25.0",
-    "pytest-asyncio>=0.26.0",
-    "pytest==8.3.5",
-    "ruff>=0.11.5",
-    "pytest-cov>=6.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest==9.1.1",
+    "ruff>=0.15.20",
+    "pytest-cov>=7.1.0",
     # "celery[pytest]>=5.5.1",
     "pillow>=10.4.0",
     "requests>=2.32.3",
@@ -46,7 +47,7 @@ ocr-backend = [
     "fastapi>=0.116.1",
     "uvicorn[standard]==0.35.0",
     "python-multipart==0.0.20",
-    "prometheus-fastapi-instrumentator>=7.1.0",
+    "prometheus-fastapi-instrumentator>=8.0.2",
     "python-keycloak>=5.7.0",
     "sentry-sdk[fastapi]>=2.34.1",
 ]
@@ -89,9 +90,17 @@ migration = [
 ]
 
 dev = [
-    "ipykernel>=6.29.5",
-    "pre-commit>=4.2.0",
-    "ruff>=0.12.3",
+    "httpx>=0.25.0",
+    "pytest-asyncio>=1.4.0",
+    "pytest==9.1.1",
+    "ruff>=0.15.20",
+    "pytest-cov>=7.1.0",
+    # "celery[pytest]>=5.5.1",
+    "pillow>=10.4.0",
+    "requests>=2.32.3",
+    "coverage>=7.8.0",
+    "datasets>=3.6.0",
+    "pytest-dotenv>=0.5.2",
 ]
 
 version = [
@@ -137,6 +146,7 @@ major_version_zero = true
 [tool.pytest.ini_options]
 env_override_existing_values = 1
 env_files = ["tests/.env.testing"]
+asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 120
