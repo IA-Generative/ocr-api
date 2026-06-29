@@ -14,7 +14,6 @@ services:
     env_file:
       - .env
 
-
   redis:
     image: redis:latest
     ports:
@@ -23,19 +22,19 @@ services:
     env_file:
       - .env
 
-  flower_ocr:
-    image: ocr-flower
-    environment:
-      CELERY_BROKER_URL: redis://redis
-      CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
-    ports:
-      - "5555:5555"
-    command: ["celery", "--broker=$BROKER_URL" , "flower", "--address=0.0.0.0", "--port=5555"]
-    env_file:
-      - .env
-    build:
-      context: .
-      dockerfile: apps/server/flower/Dockerfile
+  # flower_ocr:
+  #   image: ocr-flower
+  #   environment:
+  #     CELERY_BROKER_URL: redis://redis
+  #     CELERY_RESULT_BACKEND: db+postgres://db:secret@db:5432/example_db
+  #   ports:
+  #     - "5555:5555"
+  #   command: ["celery", "--broker=$BROKER_URL" , "flower", "--address=0.0.0.0", "--port=5555"]
+  #   env_file:
+  #     - .env
+  #   build:
+  #     context: .
+  #     dockerfile: apps/server/flower/Dockerfile
 
   ocr_service:
     deploy:
@@ -48,13 +47,24 @@ services:
           cpus: 2.0
           memory: 4000M
     container_name: ocr-service
-    command: ["celery", "-A", "services.main", "worker", "--pool=solo", "--loglevel=info","--concurrency=1", "-E", "--hostname=paddle_worker@%h"]
+    command:
+      [
+        "celery",
+        "-A",
+        "services.main",
+        "worker",
+        "--pool=solo",
+        "--loglevel=info",
+        "--concurrency=1",
+        "-E",
+        "--hostname=paddle_worker@%h",
+      ]
     image: ocr-service-paddle
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/:/app/business/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/:/app/business/
     build:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
@@ -79,12 +89,12 @@ services:
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
     ports:
-    - 5000:5000
+      - 5000:5000
     container_name: ocr-api
     volumes:
-    - ./apps/server/ocr_backend/:/app/ocr_backend/
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
+      - ./apps/server/ocr_backend/:/app/ocr_backend/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
     environment:
       - DEV_MODE="true"
       - PROCESS_NAME=paddleocr-2.10.0
@@ -98,24 +108,43 @@ services:
       - minio
       #- migration
 
-
     env_file:
       - .env
+
+  ocr_frontend:
+    container_name: ocr_frontend
+    restart: unless-stopped
+    working_dir: /app
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+      target: dev
+    env_file:
+      - .env
+    environment:
+      - VITE_SSO_BYPASS=true
+    ports:
+      - 8081:3000
+    volumes:
+      - ./apps/client:/app
+      - /app/node_modules
+    depends_on:
+      - ocr_backend
 
   migration:
     image: ocr-api
     command:
-    - alembic
-    - upgrade
-    - head
+      - alembic
+      - upgrade
+      - head
     build:
       target: test
       context: .
       dockerfile: apps/server/ocr_backend/Dockerfile
     container_name: ocr-migration
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/migration/:/app/migration
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/migration/:/app/migration
     env_file:
       - .env
     depends_on:

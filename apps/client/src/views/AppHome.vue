@@ -5,6 +5,7 @@ import Media from '@/assets/ocr-card.svg'
 import ComminitySVG from '@/assets/pictograms/community.svg'
 import PenSVG from '@/assets/pictograms/pen.svg'
 import CustomCard from '@/components/CustomCard.vue'
+import CustomTabs from '@/components/CustomTabs.vue'
 import InfoBulle from '@/components/InfoBulle.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
@@ -66,10 +67,24 @@ const myOtherTools = ref([
   },
 ])
 
-const uploadHint = 'Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l’outil de reconnaissance de texte sera performant.'
+const uploadHint = `Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l'outil de reconnaissance de texte sera performant.`
 const uploadLabel = 'Ajouter un fichier'
 const uploadAccept = 'image/jpeg,image/png,application/pdf'
-const currentTab = ref<'ocr' | 'tasks'>('ocr')
+
+const tabs = ref([
+  { label: 'OCR', slot: 'tab-0-content' },
+  { label: 'Mes tâches', slot: 'tab-1-content' },
+])
+
+const cardTitle = `Comment utiliser “Extraire un texte” ?`
+const cardInfos = `
+  <ol>
+    <li>Ajoutez un PDF avec un texte scanné (texte numérisé, photo d’un texte imprimé, formulaire, ...)</li>
+    <li>Cliquez sur “Extraire le texte”</li>
+  </ol>
+  <p>Les textes scannés apparaissent en rouge. Vous pouvez extraire et télécharger le contenu du fichier en fichier .txt.</p>
+`
+const cardHint = `💡 Les textes scannés apparaissent en rouge. Vous pouvez extraire et télécharger le contenu du fichier en fichier .txt.`
 
 onBeforeUnmount(() => {
   if (pdfUrl.value) {
@@ -84,39 +99,14 @@ onBeforeUnmount(() => {
     <div class="main-page__container">
       <div class="mt-[35px]">
         <h1 class="flex items-center gap-3">
-          <!--
-          <img
-            class="hidden md:block"
-            src="@/assets/pictograms/document-search.svg"
-            alt="Document Search Pictogram"
-          >
-          -->
-
           <span>Reconnaître un texte scanné </span>
         </h1>
       </div>
 
-      <div class="tabs flex gap-2 mt-4">
-        <DsfrButton
-          label="OCR"
-          :priority="currentTab === 'ocr' ? 'primary' : 'tertiary'"
-          size="sm"
-          @click="currentTab = 'ocr'"
-        />
-        <DsfrButton
-          label="Mes tâches"
-          :priority="currentTab === 'tasks' ? 'primary' : 'tertiary'"
-          size="sm"
-          @click="currentTab = 'tasks'"
-        />
-      </div>
-
-      <div class="flex flex-col gap-[2rem] p-[24px] bg-[var(--background-default-grey)] border border-[var(--border-default-grey)] mt-10">
-        <InfoBulle />
-
-        <div class="page-container">
-          <div v-if="currentTab === 'ocr'">
-            <!-- File Upload -->
+      <CustomTabs :tabs-data="tabs">
+        <template #tab-0-content>
+          <InfoBulle />
+          <div class="page-container">
             <div class="file-upload-container flex flex-col">
               <DsfrFileUpload
                 :label="uploadLabel"
@@ -148,30 +138,20 @@ onBeforeUnmount(() => {
               </div>
             </div>
           </div>
+        </template>
 
-          <div v-else>
-            <TasksTab />
-          </div>
-        </div>
-      </div>
+        <template #tab-1-content>
+          <TasksTab />
+        </template>
+      </CustomTabs>
 
       <CustomCard
         :img-src="Media"
         img-alt="image de stylo sur feuille de papier"
-        title="Comment utiliser “Extraire un texte” ?"
+        :title="cardTitle"
         description=""
-        infos="
-            <ol>
-              <li>
-                Ajoutez un PDF avec un texte scanné (texte numérisé, photo d’un texte imprimé, formulaire, ...)
-              </li>
-              <li>
-                Cliquez sur “Extraire le texte”
-              </li>
-            </ol>
-            <p>Les textes scannés apparaissent en rouge. Vous pouvez  extraire et télécharger le contenu du fichier en fichier .txt.</p>
-          "
-        hint="💡 Les textes scannés apparaissent en rouge. Vous pouvez  extraire et télécharger le contenu du fichier en fichier .txt."
+        :infos="cardInfos"
+        :hint="cardHint"
       />
     </div>
   </div>
