@@ -29,6 +29,26 @@
 - code clean
 - :art: change minio vars
 
+## [0.11.0](https://github.com/IA-Generative/ocr-api/compare/v0.10.1...v0.11.0) (2026-06-30)
+
+
+### Features
+
+* add NoCacheMiddleware to prevent caching of responses ([d87f098](https://github.com/IA-Generative/ocr-api/commit/d87f098f97bd94069cd486e37a45f5e80812d6fc))
+* add unit tests for QdrantVectorStore and collection management functionality ([bc02737](https://github.com/IA-Generative/ocr-api/commit/bc027370b9c04bc0f42605b017efe1b8895548f5))
+* enhance error handling and logging in BaseWorker, update storage file path in tests ([c14a428](https://github.com/IA-Generative/ocr-api/commit/c14a428da2399551fa1cb85a4ca834663fc73515))
+* enhance S3 file handling with download functionality and filename management ([ffdc3a4](https://github.com/IA-Generative/ocr-api/commit/ffdc3a4032e3b85ca0484219b278cbfb520f9cfd))
+* **ocr:** aligne with abrege ([9959e24](https://github.com/IA-Generative/ocr-api/commit/9959e240ece10b62103ad05fe583097d9ad63d88))
+* report errors to Sentry for api, worker and frontend ([#398](https://github.com/IA-Generative/ocr-api/issues/398)) ([12df704](https://github.com/IA-Generative/ocr-api/commit/12df704f5c0b781d7322e453c9b12d5258eef977))
+
+
+### Bug Fixes
+
+* **ci:** correct tracing test assertion and stabilize SDK tests ([#399](https://github.com/IA-Generative/ocr-api/issues/399)) ([50bb1fb](https://github.com/IA-Generative/ocr-api/commit/50bb1fb1ea9f96367ffd7236af39df562d69a605))
+* **ci:** release ([abf4236](https://github.com/IA-Generative/ocr-api/commit/abf4236eec3ab1a705e96a41907b3a3b0cf938e5))
+* improve cache handling in TaskCache and streamline NoCacheMiddleware response headers ([0274dcc](https://github.com/IA-Generative/ocr-api/commit/0274dccdaa3917f0bd8ef53e9dda74184c79b85a))
+* vulne ([b544f56](https://github.com/IA-Generative/ocr-api/commit/b544f56d620ba3bdb2b5817ebb59702ba871fe62))
+
 ## [0.10.1](https://github.com/IA-Generative/ocr-api/compare/v0.10.0...v0.10.1) (2026-04-07)
 
 
