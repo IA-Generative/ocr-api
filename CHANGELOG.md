@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.11.1](https://github.com/IA-Generative/ocr-api/compare/v0.11.0...v0.11.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **security:** fix security depandabot ([f476009](https://github.com/IA-Generative/ocr-api/commit/f476009b133d21b69d50350efb07db48f8cdd671))
+
 ## [0.11.0](https://github.com/IA-Generative/ocr-api/compare/v0.10.1...v0.11.0) (2026-06-30)
 
 
