@@ -1,9 +1,8 @@
-import os
 from typing import List
 from time import time
 from PIL import Image
 
-from paddleocr import PaddleOCR
+from paddleocr import PPStructureV3
 import numpy as np
 
 from services.base.model import BaseModelPrediction
@@ -14,21 +13,25 @@ from src.logger import logger
 
 class PaddleInferOCR2(BaseModelPrediction):
     def __init__(self, path_model: str):
-        self.model: PaddleOCR = PaddleOCR(
+        self.model: PPStructureV3 = PPStructureV3(
             use_doc_orientation_classify=True,
             use_doc_unwarping=False,
             use_textline_orientation=True,
-            engine="paddle",
+            # Only run on regions the layout analysis detects as a table, so it
+            # only adds latency on pages that contain one.
+            use_table_recognition=True,
+            use_formula_recognition=False,
+            use_chart_recognition=False,
+            use_seal_recognition=False,
             lang="fr",
-            ocr_version="PP-OCRv6",
+            # PPStructureV3 only supports up to PP-OCRv5 (no PP-OCRv6 support yet).
+            ocr_version="PP-OCRv5",
             # oneDNN's PIR executor can't convert the doc-orientation model's
             # array-of-double attributes on paddlepaddle 3.3.1, so disable it.
             enable_mkldnn=False,
         )
 
-    def batch_predict(
-        self, images: List[Image.Image], pages: list = [], *args, **kwargs
-    ) -> List[Page]:
+    def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
         result: List[Page] = []
         if len(pages):
             assert len(images) == len(pages)
@@ -36,19 +39,17 @@ class PaddleInferOCR2(BaseModelPrediction):
         for i, image in enumerate(images):
             width_img, height_img = image.size
             t = time()
-            predictions = self.model.predict(
-                np.array(image), use_doc_orientation_classify=True
-            )
-            logger.info(f"[PaddleOCR] Inference time: {time() - t:.2f}s")
+            predictions = self.model.predict(np.array(image))
+            logger.info(f"[PPStructureV3] Inference time: {time() - t:.2f}s")
             page_boxes: List[Bbox] = []
+            page_markdowns = []
 
             for pred in predictions:
-                rec_texts = pred["rec_texts"]
-                rec_scores = pred["rec_scores"]
-                rec_boxes = pred["rec_boxes"]
-                rec_orientations = pred.get("textline_orientation_angles") or [
-                    None
-                ] * len(rec_texts)
+                ocr_res = pred["overall_ocr_res"]
+                rec_texts = ocr_res["rec_texts"]
+                rec_scores = ocr_res["rec_scores"]
+                rec_boxes = ocr_res["rec_boxes"]
+                rec_orientations = ocr_res.get("textline_orientation_angles") or [None] * len(rec_texts)
 
                 for text, confidence, box_coords, orientation in zip(
                     rec_texts, rec_scores, rec_boxes, rec_orientations
@@ -70,15 +71,14 @@ class PaddleInferOCR2(BaseModelPrediction):
                         height=norm_h,
                         confidence=float(confidence),
                         text=text,
-                        orientation=(
-                            int(orientation)
-                            if orientation is not None and orientation >= 0
-                            else None
-                        ),
+                        orientation=(int(orientation) if orientation is not None and orientation >= 0 else None),
                     )
                     page_boxes.append(box)
 
-            page = Page(page=i, boxes=page_boxes)
+                page_markdowns.append(pred.markdown)
+
+            markdown_info = self.model.concatenate_markdown_pages(page_markdowns)
+            page = Page(page=i, boxes=page_boxes, page_markdown=markdown_info["markdown_texts"])
             result.append(page)
 
         return result
