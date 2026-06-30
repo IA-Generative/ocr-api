@@ -22,6 +22,7 @@ class Page(BaseModel):
     similar_template_ids: List[tuple[str, float]] = Field(
         default_factory=list, description="List of similar template IDs"
     )
+    page_markdown: Optional[str] = Field(default=None, description="Markdown content of the page (PP-StructureV3)")
 
 
 class OCRResult(BaseModel):
@@ -37,6 +38,9 @@ class OCRResult(BaseModel):
     text: Optional[str] = ""
 
     def set_page_text(self, page: Page, delta_y: float = 0.005) -> str:
+        if page.page_markdown:
+            return page.page_markdown
+
         page_lines_content = []
         checkboxes = [
             Bbox(
