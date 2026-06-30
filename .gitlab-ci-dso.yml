@@ -23,50 +23,80 @@ read_secret:
     - .vault:read_secret
 
 docker-build-ocr-api:
-  variables:
-    IMAGE_NAMES: ocr-api:${TAG} ocr-api:${CI_COMMIT_SHORT_SHA}
-    DOCKERFILE: "apps/server/ocr_backend/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
+  variables:
+    DOCKERFILE: "apps/server/ocr_backend/Dockerfile"
+    IMAGE_NAMES: ""  # Overridden in before_script
   rules:
-    - if: '$CI_COMMIT_TAG'
-      variables:
-        IMAGE_NAMES: ocr-api:${TAG} ocr-api:${CI_COMMIT_SHORT_SHA} ocr-api:${CI_COMMIT_TAG}
-    - if: '$CI_COMMIT_REF_NAME == "main"'
-      variables:
-        IMAGE_NAMES: ocr-api:${TAG} ocr-api:${CI_COMMIT_SHORT_SHA} ocr-api:latest
-    - when: on_success
+    - when: always
+  before_script:
+    - |
+      SHORT_SHA=$(echo $CI_COMMIT_SHA | cut -c1-7)
+      TAGS="ocr-api:$SHORT_SHA"
+      TAGS="$TAGS ocr-api:$CI_COMMIT_REF_SLUG"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        TAG_WITHOUT_V=${CI_COMMIT_TAG#v}
+        TAGS="$TAGS ocr-api:$TAG_WITHOUT_V"
+        if echo "$CI_COMMIT_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          TAGS="$TAGS ocr-api:latest"
+        fi
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        TAGS="$TAGS ocr-api:latest"
+      fi
+      export IMAGE_NAMES="$TAGS"
+      echo "Building with tags: $IMAGE_NAMES"
 
 docker-build-ocr-service-paddle-2.10.0:
-  variables:
-    IMAGE_NAMES: ocr-service-paddle-2.10.0:${TAG} ocr-service-paddle-2.10.0:${CI_COMMIT_SHORT_SHA}
-    DOCKERFILE: "apps/server/business/paddleocr2/Dockerfile"
   stage: docker-build
   extends:
     - .kaniko:build-push
+  variables:
+    DOCKERFILE: "apps/server/business/paddleocr2/Dockerfile"
+    IMAGE_NAMES: ""  # Overridden in before_script
   rules:
-    - if: '$CI_COMMIT_TAG'
-      variables:
-        IMAGE_NAMES: ocr-service-paddle-2.10.0:${TAG} ocr-service-paddle-2.10.0:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-2.10.0:${CI_COMMIT_TAG}
-    - if: '$CI_COMMIT_REF_NAME == "main"'
-      variables:
-        IMAGE_NAMES: ocr-service-paddle-2.10.0:${TAG} ocr-service-paddle-2.10.0:${CI_COMMIT_SHORT_SHA} ocr-service-paddle-2.10.0:latest
-    - when: on_success
+    - when: always
+  before_script:
+    - |
+      SHORT_SHA=$(echo $CI_COMMIT_SHA | cut -c1-7)
+      TAGS="ocr-service-paddle-2.10.0:$SHORT_SHA"
+      TAGS="$TAGS ocr-service-paddle-2.10.0:$CI_COMMIT_REF_SLUG"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        TAG_WITHOUT_V=${CI_COMMIT_TAG#v}
+        TAGS="$TAGS ocr-service-paddle-2.10.0:$TAG_WITHOUT_V"
+        if echo "$CI_COMMIT_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          TAGS="$TAGS ocr-service-paddle-2.10.0:latest"
+        fi
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        TAGS="$TAGS ocr-service-paddle-2.10.0:latest"
+      fi
+      export IMAGE_NAMES="$TAGS"
+      echo "Building with tags: $IMAGE_NAMES"
 
 docker-build-ocr-frontend:
-  variables:
-    IMAGE_NAMES: ocr-frontend:${TAG} ocr-frontend:${CI_COMMIT_SHORT_SHA}
-    DOCKERFILE: "./apps/client/Dockerfile"
-    WORKING_DIR: "./apps/client"
   stage: docker-build
   extends:
     - .kaniko:build-push
+  variables:
+    DOCKERFILE: "./apps/client/Dockerfile"
+    WORKING_DIR: "./apps/client"
+    IMAGE_NAMES: ""  # Overridden in before_script
   rules:
-    - if: '$CI_COMMIT_TAG'
-      variables:
-        IMAGE_NAMES: ocr-frontend:${TAG} ocr-frontend:${CI_COMMIT_SHORT_SHA} ocr-frontend:${CI_COMMIT_TAG}
-    - if: '$CI_COMMIT_REF_NAME == "main"'
-      variables:
-        IMAGE_NAMES: ocr-frontend:${TAG} ocr-frontend:${CI_COMMIT_SHORT_SHA} ocr-frontend:latest
-    - when: on_success
+    - when: always
+  before_script:
+    - |
+      SHORT_SHA=$(echo $CI_COMMIT_SHA | cut -c1-7)
+      TAGS="ocr-frontend:$SHORT_SHA"
+      TAGS="$TAGS ocr-frontend:$CI_COMMIT_REF_SLUG"
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        TAG_WITHOUT_V=${CI_COMMIT_TAG#v}
+        TAGS="$TAGS ocr-frontend:$TAG_WITHOUT_V"
+        if echo "$CI_COMMIT_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+          TAGS="$TAGS ocr-frontend:latest"
+        fi
+      elif [ "$CI_COMMIT_BRANCH" = "main" ]; then
+        TAGS="$TAGS ocr-frontend:latest"
+      fi
+      export IMAGE_NAMES="$TAGS"
+      echo "Building with tags: $IMAGE_NAMES"
