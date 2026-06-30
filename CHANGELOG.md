@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.12.0](https://github.com/IA-Generative/ocr-api/compare/v0.11.2...v0.12.0) (2026-06-30)
+
+
+### Features
+
+* **mark:** add markdown ([68facd7](https://github.com/IA-Generative/ocr-api/commit/68facd7a65c88f145d421ba921acea534a73e880))
+
 ## [0.11.2](https://github.com/IA-Generative/ocr-api/compare/v0.11.1...v0.11.2) (2026-06-30)
 
 
