@@ -27,19 +27,14 @@ if __name__ == "__main__":
     if args.folder:
         os.environ["PADDLE_PDX_CACHE_HOME"] = args.folder
 
-    from paddleocr import PPStructureV3
+    from paddleocr import PaddleOCR
 
     print(f"Downloading PaddleOCR models into {os.environ.get('PADDLE_PDX_CACHE_HOME', '~/.paddlex')}...")
     # Must match models/paddle.py:PaddleInferOCR2 constructor params so the
     # right models are pre-downloaded.
-    PPStructureV3(
-        use_doc_orientation_classify=True,
-        use_doc_unwarping=False,
-        use_textline_orientation=True,
-        use_table_recognition=True,
-        use_formula_recognition=False,
-        use_chart_recognition=False,
-        use_seal_recognition=False,
+    PaddleOCR(
+        use_angle_cls=True,
         lang="fr",
         ocr_version=args.version,
+        device="cpu",
     )

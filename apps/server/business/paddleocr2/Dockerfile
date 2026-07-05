@@ -16,6 +16,7 @@ RUN apt update -qy && apt install -qy \
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 ENV PADDLE_PDX_CACHE_HOME=$PADDLE_OCR_BASE_DIR
+ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/

@@ -12,6 +12,7 @@ def test_ocr_inference():
     actual_pages = obj.batch_predict(images=[image])
     assert len(actual_pages) == 1
     assert isinstance(actual_pages[0], Page)
+    assert len(actual_pages[0].boxes) > 0
 
 
 def test_ocr_empty_image():
