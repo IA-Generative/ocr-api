@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.12.6](https://github.com/IA-Generative/ocr-api/compare/v0.12.5...v0.12.6) (2026-07-05)
+
+
+### Bug Fixes
+
+* **paddleocr:** remove enable_mkldnn parameter from PaddleOCR initialization ([f272783](https://github.com/IA-Generative/ocr-api/commit/f2727835d5033cf55d00d7ae6960048bfa11a559))
+* **tracing:** update trace generation method in LangFuseTracingService ([f272783](https://github.com/IA-Generative/ocr-api/commit/f2727835d5033cf55d00d7ae6960048bfa11a559))
+
 ## [0.12.5](https://github.com/IA-Generative/ocr-api/compare/v0.12.4...v0.12.5) (2026-07-05)
 
 
