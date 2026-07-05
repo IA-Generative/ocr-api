@@ -20,6 +20,7 @@ class PaddleInferOCR2(BaseModelPrediction):
             lang="fr",
             ocr_version="PP-OCRv5",
             device="cpu",
+            enable_mkldnn=False,
         )
 
     def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
