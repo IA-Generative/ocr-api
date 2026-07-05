@@ -81,16 +81,11 @@ class LangFuseTracingService(TracingService):
         try:
             # Créer le trace Langfuse
             trace_id = self.client.create_trace_id(seed=trace_id)
-            trace = self.client.start_generation(
-                trace_context={"trace_id": trace_id},
+            trace = self.client.update_current_generation(
                 name=kwargs.get("name", trace_id),
                 input=kwargs.get("input"),
                 metadata=kwargs.get("metadata", {}),
                 model=kwargs.get("model", "ocr-service"),
-            )
-            trace.update_trace(
-                user_id=kwargs.get("user_id"),
-                session_id=kwargs.get("session_id"),
             )
         except Exception as e:
             logger.warning(f"Error creating Langfuse trace: {e}")
