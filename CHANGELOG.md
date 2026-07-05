@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.12.4](https://github.com/IA-Generative/ocr-api/compare/v0.12.3...v0.12.4) (2026-07-05)
+
+
+### Bug Fixes
+
+* **docker:** add TORCHINDUCTOR_CACHE_DIR environment variable to Dockerfiles ([61dd89a](https://github.com/IA-Generative/ocr-api/commit/61dd89a7a8e54ff93340bf02abe10efddcd31781))
+
 ## [0.12.3](https://github.com/IA-Generative/ocr-api/compare/v0.12.2...v0.12.3) (2026-07-01)
 
 
