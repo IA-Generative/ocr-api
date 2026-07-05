@@ -18,6 +18,7 @@ ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
 ENV PADDLE_PDX_CACHE_HOME=$PADDLE_OCR_BASE_DIR
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
+ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/
 
 COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version  /app/
 RUN uv sync --no-cache --group business-forms \

@@ -22,6 +22,7 @@ ENV PATH=$PATH:/app/.venv/bin/
 ENV HOST=0.0.0.0
 ENV PYTHONPATH=/app/
 ENV PORT=5000
+ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/
 CMD ["./scripts/run.sh"]
 
 FROM builder AS test
