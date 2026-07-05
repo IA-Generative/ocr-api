@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.12.5](https://github.com/IA-Generative/ocr-api/compare/v0.12.4...v0.12.5) (2026-07-05)
+
+
+### Bug Fixes
+
+* **paddleocr:** update PaddleOCR model initialization and enhance inference tests ([bc9c870](https://github.com/IA-Generative/ocr-api/commit/bc9c870f9a1a46e648de6370ec1bb6cc69d9d342))
+
 ## [0.12.4](https://github.com/IA-Generative/ocr-api/compare/v0.12.3...v0.12.4) (2026-07-05)
 
 
