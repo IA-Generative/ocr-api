@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.16.0](https://github.com/IA-Generative/ocr-api/compare/v0.15.1...v0.16.0) (2026-07-09)
+
+
+### Features
+
+* add ZoneSelectionModal component and integrate with OcrViewer for enhanced zone selection functionality ([25219cb](https://github.com/IA-Generative/ocr-api/commit/25219cb504e4a49dc134431bca712e3759b95aee))
+* enhance OcrViewer with search functionality and zone selection features ([47d400e](https://github.com/IA-Generative/ocr-api/commit/47d400ece50dca24ae4385531d6036e49ee419df))
+
 ## [0.15.1](https://github.com/IA-Generative/ocr-api/compare/v0.15.0...v0.15.1) (2026-07-09)
 
 
