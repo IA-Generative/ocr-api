@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.15.0](https://github.com/IA-Generative/ocr-api/compare/v0.14.0...v0.15.0) (2026-07-09)
+
+
+### Features
+
+* add TaskDetail view and routing, enhance TasksTab with detail navigation ([218ac04](https://github.com/IA-Generative/ocr-api/commit/218ac0412d89a608913687a1aef6b3d45363c139))
+* rename S3_BUCKET_NAME to AWS_BUCKET_NAME for consistency and update related documentation ([1c95b85](https://github.com/IA-Generative/ocr-api/commit/1c95b8593e836ddc785f979602d2842561753b22))
+
 ## [0.14.0](https://github.com/IA-Generative/ocr-api/compare/v0.13.0...v0.14.0) (2026-07-09)
 
 
