@@ -36,7 +36,7 @@ class BaseFileWorker(BaseWorker):
         file_connector: S3Connector,
         models: list[BaseModelPrediction] = [],
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -78,7 +78,7 @@ class CSVWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -105,7 +105,7 @@ class DocxWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -132,7 +132,7 @@ class OdtWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -159,7 +159,7 @@ class OdpWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -186,7 +186,7 @@ class OdsWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(
@@ -213,7 +213,7 @@ class XlsxWorker(BaseFileWorker):
         name: str,
         file_connector: S3Connector,
         batch_size: int = 2,
-        worker_weight: int = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         super().__init__(

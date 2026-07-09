@@ -1,0 +1,6 @@
+# Override for liteparse tests: removes host port bindings that may conflict
+# with other running services (e.g. another postgres on :5432).
+# Internal Docker network communication is unaffected.
+services:
+  db:
+    ports: []

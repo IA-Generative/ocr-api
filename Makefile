@@ -8,7 +8,7 @@ STRESS_HOST=http://localhost:5000
 HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
 .PHONY: install-uv install-local linter bump-patch bump-minor \
-        up down tests build-ocr-backend build-ocr-service build \
+        up down tests tests-liteparse build-liteparse build-ocr-backend build-ocr-service build \
         upgrade-db upgrade-revision cluster help
 
 .DEFAULT_GOAL := help
@@ -157,6 +157,18 @@ stress-test: install-uv ## Lance un test de charge
 
 stress-stats: install-uv ## Affiche les statistiques du test de charge
 	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
+
+tests: install-uv ## Lance les tests unitaires du backend
+	cd apps/server && uv run pytest tests/ -v --tb=short
+
+tests-liteparse: up-db ## Lance les tests unitaires liteparse dans Docker
+	docker compose -f docker-compose-test.yaml -f docker-compose-liteparse-test.override.yaml \
+		up liteparse_service --no-build --exit-code-from liteparse_service
+	$(MAKE) down-test
+
+build-liteparse: ## Construit l'image Docker liteparse (obligatoire au 1er lancement)
+	docker compose -f docker-compose-test.yaml -f docker-compose-liteparse-test.override.yaml \
+		build liteparse_service
 
 up-db: ## Lance l'environnement de développement avec la base de données
 	docker compose -f docker-compose-test.yaml up -d db minio redis migration

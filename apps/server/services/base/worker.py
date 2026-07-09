@@ -35,7 +35,7 @@ class BaseWorker(ABC):
         file_connector: S3Connector,
         models: List[BaseModelPrediction],
         batch_size: int = 2,
-        worker_weight: float = 1,
+        worker_weight: int | float = 1,
         cache: Optional[BaseCache] = None,
     ):
         self.name = name

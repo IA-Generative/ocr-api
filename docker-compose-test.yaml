@@ -22,6 +22,43 @@ services:
     env_file:
       - .env
 
+  liteparse_service:
+    image: liteparse_service
+    build:
+      target: test
+      context: .
+      dockerfile: apps/server/business/paddleocr2/Dockerfile
+      args:
+        - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
+    container_name: liteparse_service
+    command:
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./business/liteparse
+      - --cov=./services
+      - --cov-report=term-missing
+      - tests/business/liteparse/
+      - -ra -v --maxfail=0
+    volumes:
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests/
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/:/app/business/
+      - ./apps/server/configs/:/app/configs/
+    environment:
+      DEV_MODE: "true"
+      CELERY_APP_NAME: default
+      PROCESS_NAME: "liteparse"
+    depends_on:
+      - redis
+      - db
+      - minio
+      - migration
+    env_file:
+      - .env
+
   paddleocr2_service:
     image: paddleocr2_service
     build:
@@ -32,23 +69,23 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr2_service
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/
-    - --cov=./services
-    - --cov-report=term-missing
-    - tests/business/
-    - tests/services
-    - --ignore=tests/business/features
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./business/
+      - --cov=./services
+      - --cov-report=term-missing
+      - tests/business/
+      - tests/services
+      - --ignore=tests/business/features
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/:/app/business/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/:/app/business/
+      - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -75,23 +112,23 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr3_service
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - tests/integrations/business/paddle3.1.0/
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./business/paddleocr3
+      - --cov-report=term-missing
+      - tests/business/paddleocr3
+      - tests/integrations/business/paddle3.1.0/
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-    - ./apps/server/business/llm:/app/business/llm
-    - ./apps/server/business/checkbox_service:/app/business/checkbox_service
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/cache:/app/business/cache
+      - ./apps/server/business/paddleocr3:/app/business/paddleocr3
+      - ./apps/server/business/llm:/app/business/llm
+      - ./apps/server/business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -123,20 +160,20 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: paddleocr3_service_gpu
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./business/paddleocr3
-    - --cov-report=term-missing
-    - tests/business/paddleocr3
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./business/paddleocr3
+      - --cov-report=term-missing
+      - tests/business/paddleocr3
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/:/app/tests
-    - ./apps/server/services/:/app/services/
-    - ./apps/server/business/cache:/app/business/cache
-    - ./apps/server/business/paddleocr3:/app/business/paddleocr3
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/:/app/tests
+      - ./apps/server/services/:/app/services/
+      - ./apps/server/business/cache:/app/business/cache
+      - ./apps/server/business/paddleocr3:/app/business/paddleocr3
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -163,22 +200,22 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr_backend
     command:
-    - uv
-    - run
-    - pytest
-    - -s
-    - --cov=./ocr_backend
-    - --cov=./src
-    - --cov-report=term-missing
-    - tests/ocr_backend
-    - tests/src/
-    - -ra -v --maxfail=0
+      - uv
+      - run
+      - pytest
+      - -s
+      - --cov=./ocr_backend
+      - --cov=./src
+      - --cov-report=term-missing
+      - tests/ocr_backend
+      - tests/src/
+      - -ra -v --maxfail=0
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/tests/src:/app/tests/src
-    - ./apps/server/tests/:/app/tests/
-    - ./apps/server/ocr_backend/:/app/ocr_backend/
-    - ./apps/server/configs/:/app/configs/
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/tests/src:/app/tests/src
+      - ./apps/server/tests/:/app/tests/
+      - ./apps/server/ocr_backend/:/app/ocr_backend/
+      - ./apps/server/configs/:/app/configs/
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
@@ -192,9 +229,9 @@ services:
 
   migration:
     command:
-    - alembic
-    - upgrade
-    - head
+      - alembic
+      - upgrade
+      - head
     build:
       target: test
       context: .
@@ -203,8 +240,8 @@ services:
         - HARBOR_PROXY_URL=${HARBOR_PROXY_URL}
     container_name: ocr-migration
     volumes:
-    - ./apps/server/src/:/app/src/
-    - ./apps/server/migration/:/app/migration
+      - ./apps/server/src/:/app/src/
+      - ./apps/server/migration/:/app/migration
     env_file:
       - .env
     depends_on:

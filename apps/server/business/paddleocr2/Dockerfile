@@ -2,7 +2,7 @@ ARG HARBOR_PROXY_URL
 
 FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.13-slim AS builder
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+RUN pip install --no-cache-dir uv
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
@@ -11,6 +11,7 @@ RUN apt update -qy && apt install -qy \
   ffmpeg \
   libsm6 \
   libxext6 \
+  libreoffice \
   poppler-utils \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
@@ -26,6 +27,7 @@ RUN uv sync --no-cache --group business-forms \
   --group checkbox_service \
   --group client \
   --group llm \
+  --group liteparse \
   --group ocr-service-paddle \
   --group ocr-docling \
   --group services \
@@ -46,6 +48,7 @@ COPY apps/server/business/features /app/business/features
 COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/docling_inference /app/business/docling_inference
 COPY apps/server/business/extractions /app/business/extractions
+COPY apps/server/business/liteparse /app/business/liteparse
 
 # Copy common code
 COPY apps/server/src /app/src
@@ -60,6 +63,7 @@ RUN uv sync --no-cache --group business-forms \
   --group checkbox_service \
   --group client \
   --group llm \
+  --group liteparse \
   --group ocr-service-paddle \
   --group ocr-docling \
   --group services \
