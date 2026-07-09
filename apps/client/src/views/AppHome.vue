@@ -67,9 +67,20 @@ const myOtherTools = ref([
   },
 ])
 
-const uploadHint = `Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf. Plus la qualité du fichier sera élevée, plus l'outil de reconnaissance de texte sera performant.`
+const uploadHint = `Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf, docx, xlsx, odt, ods, odp, csv, eml. Plus la qualité du fichier sera élevée, plus l'outil de reconnaissance de texte sera performant.`
 const uploadLabel = 'Ajouter un fichier'
-const uploadAccept = 'image/jpeg,image/png,application/pdf'
+const uploadAccept = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'application/vnd.oasis.opendocument.text', // odt
+  'application/vnd.oasis.opendocument.spreadsheet', // ods
+  'application/vnd.oasis.opendocument.presentation', // odp
+  'text/csv',
+  'message/rfc822', // eml
+].join(',')
 
 const tabs = ref([
   { label: 'OCR', slot: 'tab-0-content' },

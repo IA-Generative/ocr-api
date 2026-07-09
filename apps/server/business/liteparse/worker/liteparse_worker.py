@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import List, Optional
+
+from PIL import Image
 
 from services.base.worker import BaseWorker
 from services.base.cache import BaseCache
@@ -42,3 +44,9 @@ class LiteparseWorker(BaseWorker):
             with open(content, "rb") as f:
                 content = f.read()
         return [content]
+
+    def predict_on_pages(self, task: TaskModel, pages: List[Image.Image], save_image: bool = True) -> TaskModel:
+        # `pages` here are actually raw file bytes, not PIL images — LiteparseExtractionModel
+        # already uploads its own page screenshots and sets Page.page_url itself,
+        # so skip BaseWorker's generic image.save() upload step.
+        return super().predict_on_pages(task=task, pages=pages, save_image=False)
