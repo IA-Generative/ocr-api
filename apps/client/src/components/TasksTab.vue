@@ -1,65 +1,24 @@
-<template>
-  <div class="task-container fr-container">
-    <h2 class="fr-h2">Liste des tâches</h2>
-
-    <div class="table-responsive">
-      <table class="fr-table task-table">
-        <thead>
-          <tr>
-            <th @click="sortBy('type')">Type ⬍</th>
-            <th @click="sortBy('percentage')">Pourcentage ⬍</th>
-            <th @click="sortBy('created_at')">Créé le ⬍</th>
-            <th @click="sortBy('updated_at')">Mis à jour le ⬍</th>
-            <th>Voir résultat</th>
-            <th>Supprimer</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr v-for="task in sortedTasks" :key="task.id">
-            <td>
-              <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
-              <span v-else>Inconnu</span>
-            </td>
-
-            <td>
-              <ProgressBar :visible="true" :progress="(task.percentage ?? 0) * 100" :text="MapStatusToLabel(task.status)" />
-            </td>
-
-            <td>{{ formatDate(task.created_at) }}</td>
-            <td>{{ formatDate(task.updated_at) }}</td>
-
-            <td>
-              <DsfrButton size="sm" priority="secondary" :disabled="task.status !== 'completed'" @click="downloadTaskResult(task)">
-                Voir résultat
-              </DsfrButton>
-            </td>
-
-            <td>
-              <DsfrButton size="sm" priority="tertiary" @click="removeTask(task.id)">Supprimer</DsfrButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import createHttpClient from '@/api/http-client'
-import { OCR_API_URL } from '@/utils/constants'
 import { useTasksStore } from '@/stores/tasks'
+import { OCR_API_URL } from '@/utils/constants'
 import ProgressBar from './ProgressBar.vue'
 
 const store = useTasksStore()
+const router = useRouter()
 const http = createHttpClient(OCR_API_URL)
 
 // ----- TRI -----
 const sortKey = ref('created_at')
 const sortAsc = ref(false)
 
-function MapStatusToLabel(status: string) {
+function goToDetail (taskId: string) {
+  router.push(`/tasks/${taskId}`)
+}
+
+function MapStatusToLabel (status: string) {
   const map: Record<string, string> = {
     queued: 'En attente',
     in_progress: 'En cours',
@@ -69,10 +28,11 @@ function MapStatusToLabel(status: string) {
   return map[status] || status
 }
 
-function sortBy(key: string) {
+function sortBy (key: string) {
   if (sortKey.value === key) {
     sortAsc.value = !sortAsc.value
-  } else {
+  }
+  else {
     sortKey.value = key
     sortAsc.value = true
   }
@@ -80,17 +40,23 @@ function sortBy(key: string) {
 
 const sortedTasks = computed(() => {
   const items: any[] = store.userTasksPaginated?.items ?? []
-  if (!sortKey.value) return items
+  if (!sortKey.value) {
+    return items
+  }
   return [...items].sort((a, b) => {
     const valA = a[sortKey.value]
     const valB = b[sortKey.value]
-    if (valA === valB) return 0
-    if (sortAsc.value) return valA > valB ? 1 : -1
+    if (valA === valB) {
+      return 0
+    }
+    if (sortAsc.value) {
+      return valA > valB ? 1 : -1
+    }
     return valA < valB ? 1 : -1
   })
 })
 
-const loadAll = async () => {
+async function loadAll () {
   await store.fetchUserTasks(1, 1000)
 }
 
@@ -105,8 +71,10 @@ onBeforeUnmount(() => {
 })
 
 // ----- TÉLÉCHARGEMENT -----
-const downloadTaskResult = async (task: any) => {
-  if (!task || task.status !== 'completed') return
+async function downloadTaskResult (task: any) {
+  if (!task || task.status !== 'completed') {
+    return
+  }
   try {
     const { data: text } = await http.get<string>(`/text-task/${encodeURIComponent(task.id)}`, {
       headers: { accept: 'text/plain' },
@@ -123,31 +91,130 @@ const downloadTaskResult = async (task: any) => {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
-  } catch (e) {
+  }
+  catch (e) {
     console.error('Téléchargement échoué', e)
   }
 }
 
 // ----- SUPPRESSION -----
-const removeTask = async (taskId: string) => {
-  if (!taskId) return
+async function removeTask (taskId: string) {
+  if (!taskId) {
+    return
+  }
   try {
     await store.deleteTask(taskId)
-  } catch {
+  }
+  catch {
     // store already shows error toast
   }
 }
 
-const formatDate = (ts: any) => {
-  if (ts === null || ts === undefined || ts === '') return ''
+function formatDate (ts: any) {
+  if (ts === null || ts === undefined || ts === '') {
+    return ''
+  }
   try {
     let n = Number(ts)
-    if (Number.isNaN(n)) return String(ts)
-    if (n < 1e12) n = n * 1000
+    if (Number.isNaN(n)) {
+      return String(ts)
+    }
+    if (n < 1e12) {
+      n = n * 1000
+    }
     return new Date(n).toLocaleString()
-  } catch (e) { return String(ts) }
+  }
+  catch {
+    return String(ts)
+  }
 }
 </script>
+
+<template>
+  <div class="task-container fr-container">
+    <h2 class="fr-h2">
+      Liste des tâches
+    </h2>
+
+    <div class="table-responsive">
+      <table class="fr-table task-table">
+        <thead>
+          <tr>
+            <th @click="sortBy('type')">
+              Type ⬍
+            </th>
+            <th @click="sortBy('percentage')">
+              Pourcentage ⬍
+            </th>
+            <th @click="sortBy('created_at')">
+              Créé le ⬍
+            </th>
+            <th @click="sortBy('updated_at')">
+              Mis à jour le ⬍
+            </th>
+            <th>Détail</th>
+            <th>Voir résultat</th>
+            <th>Supprimer</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            v-for="task in sortedTasks"
+            :key="task.id"
+          >
+            <td>
+              <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
+              <span v-else>Inconnu</span>
+            </td>
+
+            <td>
+              <ProgressBar
+                :visible="true"
+                :progress="(task.percentage ?? 0) * 100"
+                :text="MapStatusToLabel(task.status)"
+              />
+            </td>
+
+            <td>{{ formatDate(task.created_at) }}</td>
+            <td>{{ formatDate(task.updated_at) }}</td>
+
+            <td>
+              <DsfrButton
+                size="sm"
+                priority="tertiary"
+                @click="goToDetail(task.id)"
+              >
+                Voir le détail
+              </DsfrButton>
+            </td>
+
+            <td>
+              <DsfrButton
+                size="sm"
+                priority="secondary"
+                :disabled="task.status !== 'completed'"
+                @click="downloadTaskResult(task)"
+              >
+                Voir résultat
+              </DsfrButton>
+            </td>
+
+            <td>
+              <DsfrButton
+                size="sm"
+                priority="tertiary"
+                @click="removeTask(task.id)"
+              >
+                Supprimer
+              </DsfrButton>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .task-container {

@@ -12,6 +12,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AppFooter: typeof import('./components/AppFooter.vue')['default']
     AppHeader: typeof import('./components/AppHeader.vue')['default']
     AppToaster: typeof import('./components/AppToaster.vue')['default']
     CustomCard: typeof import('./components/CustomCard.vue')['default']
@@ -32,13 +33,13 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SideBar: typeof import('./components/SideBar.vue')['default']
     StatModel: typeof import('./components/StatModel.vue')['default']
-    StatsModel: typeof import('./components/StatsModel.vue')['default']
     TasksTab: typeof import('./components/TasksTab.vue')['default']
   }
 }
 
 // For TSX support
 declare global {
+  const AppFooter: typeof import('./components/AppFooter.vue')['default']
   const AppHeader: typeof import('./components/AppHeader.vue')['default']
   const AppToaster: typeof import('./components/AppToaster.vue')['default']
   const CustomCard: typeof import('./components/CustomCard.vue')['default']
@@ -59,6 +60,5 @@ declare global {
   const RouterView: typeof import('vue-router')['RouterView']
   const SideBar: typeof import('./components/SideBar.vue')['default']
   const StatModel: typeof import('./components/StatModel.vue')['default']
-  const StatsModel: typeof import('./components/StatsModel.vue')['default']
   const TasksTab: typeof import('./components/TasksTab.vue')['default']
 }
