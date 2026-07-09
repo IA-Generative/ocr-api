@@ -142,26 +142,16 @@ class LiteparseExtractionModel(BaseModelPrediction):
                         client_s3 = self._file_connector.client
                         bucket = self._file_connector.bucket_name
                         for s in self._parser.screenshot(temp_path):
-                            key = (
-                                f"{task.user_id}/{task.id}/images/page_{s.page_num}.png"
+                            key = f"{task.user_id}/{task.id}/images/page_{s.page_num}.png"
+                            client_s3.upload_fileobj(BytesIO(s.image_bytes), bucket, key)
+                            screenshot_urls[s.page_num] = client_s3.generate_presigned_url(
+                                ClientMethod="get_object",
+                                Params={"Bucket": bucket, "Key": key},
+                                ExpiresIn=3600,
                             )
-                            client_s3.upload_fileobj(
-                                BytesIO(s.image_bytes), bucket, key
-                            )
-                            screenshot_urls[s.page_num] = (
-                                client_s3.generate_presigned_url(
-                                    ClientMethod="get_object",
-                                    Params={"Bucket": bucket, "Key": key},
-                                    ExpiresIn=3600,
-                                )
-                            )
-                            logger.info(
-                                f"[LiteparseExtractionModel] Screenshot saved: {key}"
-                            )
+                            logger.info(f"[LiteparseExtractionModel] Screenshot saved: {key}")
                     except Exception as screenshot_err:
-                        logger.warning(
-                            f"[LiteparseExtractionModel] Screenshots failed: {screenshot_err}"
-                        )
+                        logger.warning(f"[LiteparseExtractionModel] Screenshots failed: {screenshot_err}")
 
                 # One Page per liteparse page with real bboxes and screenshot
                 for lp_page in lp_pages:
@@ -175,9 +165,7 @@ class LiteparseExtractionModel(BaseModelPrediction):
                             width=item.width / page_width,
                             height=item.height / page_height,
                             text=item.text,
-                            confidence=(
-                                item.confidence if item.confidence is not None else 1.0
-                            ),
+                            confidence=(item.confidence if item.confidence is not None else 1.0),
                         )
                         for item in (lp_page.text_items or [])
                         if item.text.strip()
@@ -224,9 +212,7 @@ class LiteparseExtractionModel(BaseModelPrediction):
                     )
 
             except Exception as e:
-                logger.error(
-                    f"[LiteparseExtractionModel] Error processing file (page {i + 1}): {e}"
-                )
+                logger.error(f"[LiteparseExtractionModel] Error processing file (page {i + 1}): {e}")
                 result.append(Page(page=i + 1, boxes=[]))
             finally:
                 if os.path.exists(temp_path):

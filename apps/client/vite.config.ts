@@ -1,4 +1,6 @@
 import process from 'node:process'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
 
 import {
@@ -15,10 +17,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 
 const env = loadEnv('', process.cwd(), '')
+const { version } = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
+  define: {
+    __APP_VERSION__: JSON.stringify(version),
+  },
   server: {
     port: Number(env.FRONT_PORT),
     strictPort: true,
