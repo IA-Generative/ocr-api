@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.17.0](https://github.com/IA-Generative/ocr-api/compare/v0.16.0...v0.17.0) (2026-07-09)
+
+
+### Features
+
+* add OpenWebUI router and endpoint for document processing ([a60c11b](https://github.com/IA-Generative/ocr-api/commit/a60c11becf3a7321a8a91274d64277c70973db1a))
+
 ## [0.16.0](https://github.com/IA-Generative/ocr-api/compare/v0.15.1...v0.16.0) (2026-07-09)
 
 
