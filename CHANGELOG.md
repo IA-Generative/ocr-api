@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.15.1](https://github.com/IA-Generative/ocr-api/compare/v0.15.0...v0.15.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* update langfuse dependency handling and versioning in configuration files ([5eaf7d1](https://github.com/IA-Generative/ocr-api/commit/5eaf7d136cfcc208ab44655214b83332558b00df))
+
 ## [0.15.0](https://github.com/IA-Generative/ocr-api/compare/v0.14.0...v0.15.0) (2026-07-09)
 
 
