@@ -30,6 +30,13 @@ const VALID_MIME_TYPES = [
   'application/pdf',
   'image/jpeg',
   'image/png',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // xlsx
+  'application/vnd.oasis.opendocument.text', // odt
+  'application/vnd.oasis.opendocument.spreadsheet', // ods
+  'application/vnd.oasis.opendocument.presentation', // odp
+  'text/csv',
+  'message/rfc822', // eml
 ]
 
 export const useOcrStore = defineStore('ocr', () => {
@@ -166,7 +173,7 @@ export const useOcrStore = defineStore('ocr', () => {
     if (!VALID_MIME_TYPES.includes(file.type)) {
       return {
         valid: false,
-        message: `Type de fichier non supporté: ${file.type}. Utilisez PDF, JPEG ou PNG.`,
+        message: `Type de fichier non supporté: ${file.type}. Utilisez PDF, JPEG, PNG, DOCX, XLSX, ODT, ODS, ODP, CSV ou EML.`,
       }
     }
     // Vérification de la taille (200 Mo max)
