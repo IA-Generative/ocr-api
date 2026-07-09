@@ -65,6 +65,10 @@ ocr-service-paddle = [
 
 
 
+liteparse = [
+    "liteparse>=2.5.0",
+]
+
 services = [
     "docx2txt>=0.9",
     "langchain-community>=0.4.2",
