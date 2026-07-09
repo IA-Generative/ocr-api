@@ -11,8 +11,11 @@ RUN apt update -qy && apt install -qy \
   ffmpeg \
   libsm6 \
   libxext6 \
-  libreoffice \
   poppler-utils \
+  libreoffice-core \
+  libreoffice-writer \
+  libreoffice-calc \
+  libreoffice-impress \
   && apt autoremove && rm -rf /var/lib/apt/lists/*
 ENV UV_CACHE_DIR=/app/.cache
 ENV PADDLE_OCR_BASE_DIR=/app/.cache/paddle/
@@ -21,6 +24,13 @@ ENV PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
 ENV TORCH_HOME=/app/.cache/torch/
 ENV HF_HOME=/app/.cache/huggingface/
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/
+# Limite le parallélisme interne PaddlePaddle/OpenBLAS/PaddleX DataLoader.
+# Évite les deadlocks de threads dans un worker Celery solo.
+ENV OMP_NUM_THREADS=1
+ENV MKL_NUM_THREADS=1
+ENV PADDLE_NUM_THREADS=1
+ENV OPENBLAS_NUM_THREADS=1
+ENV FLAGS_paddle_num_threads=1
 
 COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version  /app/
 RUN uv sync --no-cache --group business-forms \

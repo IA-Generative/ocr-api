@@ -7,10 +7,9 @@ def parameters():
     parser.add_argument(
         "--version",
         required=False,
-        default="PP-OCRv5",
-        help="PaddleOCR model version (e.g. PP-OCRv4, PP-OCRv5). "
-        "PPStructureV3 doesn't support PP-OCRv6 yet. "
-        "Must match the version used at runtime in models/paddle.py.",
+        default=None,
+        help="PaddleOCR model version (e.g. PP-OCRv3, PP-OCRv4). "
+        "Defaults to PaddleSetting.OCR_VERSION if not specified.",
     )
     parser.add_argument(
         "--folder",
@@ -27,14 +26,21 @@ if __name__ == "__main__":
     if args.folder:
         os.environ["PADDLE_PDX_CACHE_HOME"] = args.folder
 
+    from business.paddleocr2.configs.paddle import PaddleSetting
+
+    paddle_settings = PaddleSetting()
+    version = args.version or paddle_settings.OCR_VERSION
+    folder = args.folder or paddle_settings.PADDLE_OCR_BASE_DIR
+
     from paddleocr import PaddleOCR
 
-    print(f"Downloading PaddleOCR models into {os.environ.get('PADDLE_PDX_CACHE_HOME', '~/.paddlex')}...")
-    # Must match models/paddle.py:PaddleInferOCR2 constructor params so the
-    # right models are pre-downloaded.
+    print(f"Downloading PaddleOCR {version} models into {folder}...")
     PaddleOCR(
-        use_angle_cls=True,
+        use_textline_orientation=False,
+        use_doc_unwarping=False,
         lang="fr",
-        ocr_version=args.version,
+        ocr_version=version,
         device="cpu",
+        cpu_threads=paddle_settings.CPU_THREADS,
+        enable_mkldnn=paddle_settings.ENABLE_MKLDNN,
     )

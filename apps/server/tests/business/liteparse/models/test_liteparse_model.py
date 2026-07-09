@@ -1,5 +1,4 @@
 from unittest.mock import MagicMock, patch
-from io import BytesIO
 
 import pytest
 
@@ -19,9 +18,7 @@ from src.schemas.task import TaskForm, TaskModel, TaskOperation, task_table
 def _make_task(content_type: str, filename: str, ext: str = "") -> TaskModel:
     task = task_table.insert_new_task(
         user_id="test-user",
-        form_data=TaskForm(
-            user_id="test-user", type=TaskOperation.DEFAULT, status="created"
-        ),
+        form_data=TaskForm(user_id="test-user", type=TaskOperation.DEFAULT, status="created"),
     )
     task.input = InputForm(
         storage_file_path=f"test-user/{task.id}/{filename}",
@@ -33,9 +30,7 @@ def _make_task(content_type: str, filename: str, ext: str = "") -> TaskModel:
     return task
 
 
-def _make_text_item(
-    text: str, x: float, y: float, w: float, h: float, confidence: float = 0.95
-):
+def _make_text_item(text: str, x: float, y: float, w: float, h: float, confidence: float = 0.95):
     item = MagicMock()
     item.text = text
     item.x = x
@@ -46,9 +41,7 @@ def _make_text_item(
     return item
 
 
-def _make_lp_page(
-    page_num: int, width: float, height: float, text_items=None, markdown: str = ""
-):
+def _make_lp_page(page_num: int, width: float, height: float, text_items=None, markdown: str = ""):
     page = MagicMock()
     page.page_num = page_num
     page.width = width
@@ -257,9 +250,7 @@ def test_batch_predict_fallback_markdown_when_no_text_items(model_no_s3):
     task = _make_task("text/csv", "data.csv")
     model_no_s3.set_current_task(task)
 
-    lp_pages = [
-        _make_lp_page(1, 612, 792, text_items=[], markdown="# Title\n\nSome text")
-    ]
+    lp_pages = [_make_lp_page(1, 612, 792, text_items=[], markdown="# Title\n\nSome text")]
     model_no_s3._parser.parse.return_value = _make_parse_result(pages=lp_pages)
     model_no_s3._parser.screenshot.return_value = []
 
@@ -274,9 +265,7 @@ def test_batch_predict_fallback_full_text_when_no_pages(model_no_s3):
     task = _make_task("text/csv", "data.csv")
     model_no_s3.set_current_task(task)
 
-    model_no_s3._parser.parse.return_value = _make_parse_result(
-        pages=[], text="Fallback text"
-    )
+    model_no_s3._parser.parse.return_value = _make_parse_result(pages=[], text="Fallback text")
     model_no_s3._parser.screenshot.return_value = []
 
     result = model_no_s3.batch_predict(images=[b"raw"])

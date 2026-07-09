@@ -1,10 +1,12 @@
 from typing import List
+import os
 from time import time
 from PIL import Image
 
 from paddleocr import PaddleOCR
 import numpy as np
 
+from business.paddleocr2.configs.paddle import PaddleSetting
 from services.base.model import BaseModelPrediction
 from src.schemas.output import Page
 from src.schemas.box import Bbox
@@ -13,17 +15,39 @@ from src.logger import logger
 
 class PaddleInferOCR2(BaseModelPrediction):
     def __init__(self, path_model: str):
-        self.model = PaddleOCR(
-            use_doc_orientation_classify=False,
-            use_doc_unwarping=False,
-            use_textline_orientation=False,
-            lang="fr",
-            ocr_version="PP-OCRv5",
-            device="cpu",
-            enable_mkldnn=False,
-        )
+        paddle_settings = PaddleSetting()
 
-    def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
+        def _maybe_dir(p: str, sub: str):
+            if not p:
+                return None
+            d = os.path.join(p, sub)
+            return d if os.path.exists(d) else None
+
+        det_dir = _maybe_dir(path_model, "detection")
+        rec_dir = _maybe_dir(path_model, "recognition")
+
+        # If specific model dirs are missing, pass None so PaddleOCR falls back
+        # to built-in/official models or auto-downloads as per its logic.
+        self.model: PaddleOCR = PaddleOCR(
+            text_detection_model_dir=det_dir,
+            text_recognition_model_dir=rec_dir,
+            use_textline_orientation=False,
+            use_doc_unwarping=False,
+            lang="fr",
+            ocr_version=paddle_settings.OCR_VERSION,
+            device=paddle_settings.DEVICE,
+            cpu_threads=paddle_settings.CPU_THREADS,
+            enable_mkldnn=paddle_settings.ENABLE_MKLDNN,
+        )
+        self.warmup()
+
+    def warmup(self):
+        dummy_image = Image.new("RGB", (640, 480), color="white")
+        self.model.predict(np.array(dummy_image))
+
+    def batch_predict(
+        self, images: List[Image.Image], pages: list = [], *args, **kwargs
+    ) -> List[Page]:
         result: List[Page] = []
         if len(pages):
             assert len(images) == len(pages)
@@ -39,9 +63,13 @@ class PaddleInferOCR2(BaseModelPrediction):
                 pred = predictions[0]
                 rec_texts = pred["rec_texts"]
                 rec_scores = pred["rec_scores"]
-                rec_boxes = pred["rec_boxes"]  # [x_min, y_min, x_max, y_max] absolute px
+                rec_boxes = pred[
+                    "rec_boxes"
+                ]  # [x_min, y_min, x_max, y_max] absolute px
 
-                for text, confidence, box_coords in zip(rec_texts, rec_scores, rec_boxes):
+                for text, confidence, box_coords in zip(
+                    rec_texts, rec_scores, rec_boxes
+                ):
                     x_min, y_min, x_max, y_max = box_coords
                     box = Bbox(
                         x=x_min / width_img,
