@@ -2,6 +2,13 @@ import pytest
 from unittest.mock import Mock, patch
 from contextlib import contextmanager
 
+try:
+    import langfuse  # noqa: F401
+
+    HAS_LANGFUSE = True
+except ImportError:
+    HAS_LANGFUSE = False
+
 from services.base.tracing import (
     TracingService,
     LoggingTracingService,
@@ -174,7 +181,7 @@ def test_langfuse_tracing_service_trace_enabled(mock_logger, mock_import):
     mock_client.auth_check.return_value = True
     mock_trace = Mock()
     mock_client.create_trace_id.return_value = "generated_trace_id"
-    mock_client.start_generation.return_value = mock_trace
+    mock_client.update_current_generation.return_value = mock_trace
     mock_langfuse_class.return_value = mock_client
 
     def import_side_effect(name, *args, **kwargs):
@@ -194,8 +201,7 @@ def test_langfuse_tracing_service_trace_enabled(mock_logger, mock_import):
 
     # Vérifier que les méthodes Langfuse ont été appelées
     mock_client.create_trace_id.assert_called_once_with(seed=trace_id)
-    mock_client.start_generation.assert_called_once()
-    mock_trace.update_trace.assert_called_once()
+    mock_client.update_current_generation.assert_called_once()
     mock_trace.update.assert_called_once()
     mock_trace.end.assert_called_once()
     mock_client.flush.assert_called_once()

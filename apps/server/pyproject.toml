@@ -72,7 +72,6 @@ liteparse = [
 services = [
     "docx2txt>=0.9",
     "langchain-community>=0.4.2",
-    "langfuse>=4.12.0",
     "odfpy>=1.4.1",
     "opencv-python-headless>=4.13.0.92",
     "pdf2image==1.17.0",
@@ -82,6 +81,10 @@ services = [
     "pypandoc-binary>=1.17",
     "unstructured>=0.23.1",
     "sentry-sdk[celery]>=2.34.1",
+]
+
+langfuse = [
+    "langfuse>=4.12.0",
 ]
 
 migration = [
