@@ -10,6 +10,7 @@ from .routers.health import router as health_router
 from .routers.jobs import router as job_router
 from .routers.text import text_router
 from .routers.process import process_router
+from .routers.openwebui import openwebui_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # from .routers.template import template_router
@@ -64,4 +65,5 @@ app.include_router(health_router, prefix="/api")
 app.include_router(job_router, prefix="/api")
 app.include_router(text_router, prefix="/api")
 app.include_router(process_router, prefix="/api")
+app.include_router(openwebui_router, prefix="/api/v1/openwebui")
 # app.include_router(template_router, prefix="/api")
