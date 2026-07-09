@@ -23,7 +23,7 @@ STATUTS_SUPPRIMABLES = {
 
 # --- S3 CONNECTOR ---
 s3_client = boto3.client("s3")
-bucket_name = os.environ["S3_BUCKET_NAME"]
+bucket_name = os.environ["AWS_BUCKET_NAME"]
 
 
 # --- UTILS ---

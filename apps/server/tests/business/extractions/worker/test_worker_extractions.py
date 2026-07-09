@@ -26,7 +26,7 @@ def dummy_task() -> TaskModel:
 @pytest.fixture(scope="module")
 def storage_service() -> BaseFileConnector:
     settings = S3Settings()
-    return S3Connector(s3_client=boto3.client("s3"), bucket_name=settings.S3_BUCKET_NAME)
+    return S3Connector(s3_client=boto3.client("s3"), bucket_name=settings.AWS_BUCKET_NAME)
 
 
 def test_csv_worker_creation(storage_service: BaseFileConnector, dummy_task: TaskModel):

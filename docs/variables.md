@@ -57,38 +57,27 @@ Légende : ✅ = obligatoire (le service plante/refuse de démarrer si absente) 
 
 ---
 
-### Variables pour la configuration du connecteur de stockage
+### Variables pour la configuration du connecteur de stockage (S3 / MinIO)
+
+> ⚠️ **Corrigé** : la documentation précédente mentionnait `S3_AVAILABLE`/`MINIO_AVAILABLE` et des classes `ConnectorSettings`/`MinioSettings` — **elles n'existent plus dans le code** (vérifié par recherche exhaustive, aucune occurrence). Il n'y a qu'un seul connecteur de stockage (`S3Connector`, `src/connector/s3_connector.py`), utilisé aussi bien pour un vrai bucket AWS S3 que pour une instance MinIO locale (en pointant `AWS_ENDPOINT_URL` vers MinIO) — pas de bascule applicative entre les deux.
+
+Seuls deux réglages sont propres à l'application (`S3Settings`, `src/config/s3.py`) :
 
 | Variable | Obligatoire | Description | Default | Utilisation |
 |:---|:---:|:---|:---|:---|
-| `S3_AVAILABLE` | ❌ | Active ou non le connecteur S3 (`True` ou `False`). | `False` | `ConnectorSettings` |
-| `MINIO_AVAILABLE` | ❌ | Active ou non le connecteur MinIO (`True` ou `False`). | `True` | `ConnectorSettings` |
-
-> ⚡ **Important :** `S3_AVAILABLE` et `MINIO_AVAILABLE` **ne doivent pas être tous les deux à `True`**.
-
----
-
-### Variables spécifiques à MinIO (si `MINIO_AVAILABLE=True`)
-
-| Variable | Obligatoire | Description | Default | Utilisation |
-|:---|:---:|:---|:---|:---|
-| `MINIO_BUCKET_NAME` | ❌ | Nom du bucket MinIO. | `test` | `MinioSettings` |
-| `MINIO_END_POINT` | ❌ | Adresse du serveur MinIO. | `localhost:9000` | `MinioSettings` |
-| `MINIO_ACCESS_KEY` | ❌ | Identifiant d'accès MinIO. | `minioadmin` | `MinioSettings` |
-| `MINIO_SECRET_KEY` | ❌ | Mot de passe MinIO. | `minioadmin` | `MinioSettings` |
-
----
-
-### Variables spécifiques à S3 (si `S3_AVAILABLE=True`)
-
-| Variable | Obligatoire | Description | Default | Utilisation |
-|:---|:---:|:---|:---|:---|
-| `S3_BUCKET_NAME` | ❌ | Nom du bucket S3. | `test` | `S3Settings` |
-| `S3_END_POINT` | ❌ | Adresse du endpoint S3. | `localhost:9000` | `S3Settings` |
-| `S3_ACCESS_KEY` | ❌ | Identifiant d'accès S3. | `S3admin` | `S3Settings` |
-| `S3_SECRET_KEY` | ❌ | Mot de passe S3. | `S3admin` | `S3Settings` |
-| `S3_REGION` | ❌ | Région du bucket S3. | `fr-par` | `S3Settings` |
+| `AWS_BUCKET_NAME` | ❌ | Nom du bucket S3/MinIO utilisé. | `test` | `S3Settings` |
 | `VERIFY_SSL` | ❌ | Vérifie le certificat SSL du endpoint S3. | `False` | `S3Settings` |
+
+Le reste des identifiants/endpoint est **lu nativement par boto3/botocore** (jamais par une classe `pydantic-settings` de ce repo) — ce sont les variables standard du SDK AWS :
+
+| Variable | Obligatoire | Description | Default | Utilisation |
+|:---|:---:|:---|:---|:---|
+| `AWS_ACCESS_KEY_ID` | ❌ (✅ si pas de rôle IAM) | Clé d'accès. | - | résolu nativement par `boto3` |
+| `AWS_SECRET_ACCESS_KEY` | ❌ (✅ si pas de rôle IAM) | Clé secrète. | - | résolu nativement par `boto3` |
+| `AWS_ENDPOINT_URL` | ❌ | Endpoint custom (utilisé en dev pour pointer vers MinIO au lieu d'AWS). | - (AWS par défaut) | résolu nativement par `boto3` |
+| `AWS_DEFAULT_REGION` | ❌ | Région AWS. | - | résolu nativement par `boto3` |
+
+> 💡 **Renommé** : `S3_BUCKET_NAME` s'appelait auparavant différemment du préfixe `AWS_` des quatre autres variables de stockage (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL`, `AWS_DEFAULT_REGION`). Renommé en `AWS_BUCKET_NAME` dans le code pour cohérence (`S3Settings.AWS_BUCKET_NAME`, `src/config/s3.py`). ⚠️ **C'est un breaking change** : il faut mettre à jour Vault (et tout `.env`) avec `AWS_BUCKET_NAME` avant/au moment du déploiement de cette version, sans quoi le connecteur retombera sur la valeur par défaut `test`.
 
 ---
 
@@ -139,6 +128,13 @@ Redis est utilisé comme broker Celery (`RedisSettings`, `src/config/redis.py` +
 | `KEYCLOAK_URL` / `KEYCLOAK_REALM` / `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` / `VERIFY_TOKEN_MODEL` | ❌ | Configuration Keycloak pour l'auth OIDC. | - | `ocr_backend/core/security/factory.py` |
 | `MODEL_FEATURE_NAME` | ❌ | Nom du modèle de features utilisé par les collections. | - | `ocr_backend/routers/collections.py` |
 
+> ℹ️ **Vues dans Vault, vérifiées contre le code** :
+> - `API_KEYS` ✅ utilisée — clés API acceptées par **cette** API (`ocr_backend/core/security/factory.py:47`, défaut `default-api-key` si absente).
+> - `VERIFY_TOKEN_MODEL` ✅ utilisée — sélectionne le vérificateur d'auth (`keycloak` par défaut, ou `full-access`) (`ocr_backend/core/security/factory.py:112`).
+> - `SERVER_BASE_URL` ❌ **aucune occurrence dans ce repo** (code, tests, SDK). Vraisemblablement une variable côté *consommateur* de cette API (un autre service qui appelle l'OCR API et a besoin de savoir où elle vit), pas une variable lue par ce backend.
+> - `SERVER_API_KEY` ❌ **idem, aucune occurrence** — probablement le pendant côté client de `API_KEYS` (la clé que le consommateur envoie), pas une variable lue par ce backend.
+> - `EMBEDDINGS_MODEL` ❌ **totalement absente du code** (recherche sur tout le repo : `apps/server`, `apps/client`, `sdk` — zéro résultat, y compris variantes `EMBEDDING_MODEL`). Aucune fonctionnalité d'embeddings n'existe dans ce repo actuellement. Soit c'est une variable morte à nettoyer côté Vault, soit elle appartient à un autre service (pas dans ce repo) — vaut le coup de vérifier avant de la renommer en `OPENAI_EMBEDDINGS_MODEL`, puisqu'il n'y a rien à raccorder ici pour l'instant.
+
 ---
 
 ## Volumes
@@ -187,7 +183,7 @@ MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
 
 # S3 (si besoin)
-S3_BUCKET_NAME=test
+AWS_BUCKET_NAME=test
 S3_END_POINT=localhost:9000
 S3_ACCESS_KEY=S3admin
 S3_SECRET_KEY=S3admin
