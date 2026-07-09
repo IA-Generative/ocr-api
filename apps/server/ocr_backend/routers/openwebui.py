@@ -26,7 +26,7 @@ from starlette.datastructures import Headers
 
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.routers.jobs import upload_file
-from ocr_backend.routers.task import get_task_by_id_user
+from ocr_backend.routers.task import delete_task_by_id, get_task_by_id_user
 from src.logger import logger
 from src.schemas.task import TaskModel, TaskOperation, TaskStatus
 
@@ -85,6 +85,15 @@ def _build_pages_content(task: TaskModel, filename: str, mime_type: str, size_by
             }
         )
     return docs
+
+
+async def _cleanup_task(task_id: str, ctx: RequestContext) -> None:
+    """Supprime la tâche et le fichier associé (S3) une fois la réponse construite. Best-effort."""
+    try:
+        await delete_task_by_id(task_id=task_id, ctx=ctx)
+        logger.info(f"[OpenWebUI] Task {task_id} and associated file deleted")
+    except Exception as e:
+        logger.error(f"[OpenWebUI] Failed to cleanup task {task_id}: {e}")
 
 
 async def _poll_task(task_id: str, ctx: RequestContext, max_wait_time: int, poll_interval: int) -> TaskModel:
@@ -164,19 +173,22 @@ async def openwebui_process_document(
         logger.error(f"[OpenWebUI] Upload failed: {e}")
         raise HTTPException(status_code=500, detail=f"Echec upload: {e}")
 
-    task = await _poll_task(task_result.id, ctx, max_wait_time, poll_interval)
+    try:
+        task = await _poll_task(task_result.id, ctx, max_wait_time, poll_interval)
 
-    if task.output and task.output.pages:
-        docs = _build_pages_content(task, filename, mime_type, len(data))
-        logger.info(f"[OpenWebUI] Done: {filename} — {len(docs)} page(s)")
-        return JSONResponse(content=docs, status_code=200)
+        if task.output and task.output.pages:
+            docs = _build_pages_content(task, filename, mime_type, len(data))
+            logger.info(f"[OpenWebUI] Done: {filename} — {len(docs)} page(s)")
+            return JSONResponse(content=docs, status_code=200)
 
-    return JSONResponse(
-        content=[
-            {
-                "page_content": f"[{filename}] traite, aucun texte extrait.",
-                "metadata": {"filename": filename, "task_id": task.id},
-            }
-        ],
-        status_code=200,
-    )
+        return JSONResponse(
+            content=[
+                {
+                    "page_content": f"[{filename}] traite, aucun texte extrait.",
+                    "metadata": {"filename": filename, "task_id": task.id},
+                }
+            ],
+            status_code=200,
+        )
+    finally:
+        await _cleanup_task(task_result.id, ctx)
