@@ -102,59 +102,75 @@ function goBack () {
       />
 
       <template v-else-if="task">
-        <dl class="detail-list">
-          <div class="detail-item">
-            <dt>ID de tâche</dt>
-            <dd class="mono">
-              {{ task.id }}
-            </dd>
+        <!-- Bandeau métadonnées DSFR -->
+        <div class="fr-callout fr-callout--blue-cumulus fr-mb-3w fr-mt-2w">
+          <div class="fr-callout__text">
+            <!-- Ligne 1 : nom fichier + statut + type -->
+            <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-mb-1w">
+              <div class="fr-col fr-col-12 fr-col-md-auto">
+                <p class="fr-text--xl fr-text--bold fr-mb-0">
+                  <span class="fr-icon-file-line fr-mr-1w" aria-hidden="true" />
+                  {{ task.input?.raw_filename ?? 'Fichier inconnu' }}
+                </p>
+              </div>
+              <div class="fr-col-auto">
+                <p
+                  class="fr-badge fr-mb-0"
+                  :class="{
+                    'fr-badge--success': task.status === 'completed',
+                    'fr-badge--error': task.status === 'failed',
+                    'fr-badge--warning': ['in_progress', 'started', 'retrying'].includes(task.status),
+                    'fr-badge--info': ['queued', 'created'].includes(task.status),
+                  }"
+                >
+                  {{ task.status }}
+                </p>
+              </div>
+              <div v-if="task.input?.content_type" class="fr-col-auto">
+                <p class="fr-badge fr-badge--new fr-mb-0">
+                  {{ task.input.content_type.split('/').pop() }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Ligne 2 : métriques clés -->
+            <div class="fr-grid-row fr-grid-row--gutters fr-text--sm fr-text--mention-grey">
+              <div class="fr-col-auto">
+                <span class="fr-icon-price-tag-3-line fr-mr-1v" aria-hidden="true" />
+                <span class="fr-text--bold">ID :</span>
+                <code class="fr-ml-1v">{{ task.id }}</code>
+              </div>
+              <div v-if="task.input?.size" class="fr-col-auto">
+                <span class="fr-icon-file-download-line fr-mr-1v" aria-hidden="true" />
+                {{ formatSize(task.input.size) }}
+              </div>
+              <div v-if="task.output?.total_pages" class="fr-col-auto">
+                <span class="fr-icon-article-line fr-mr-1v" aria-hidden="true" />
+                {{ task.output.total_pages }} page{{ task.output.total_pages > 1 ? 's' : '' }}
+              </div>
+              <div v-if="task.output?.model_name" class="fr-col-auto">
+                <span class="fr-icon-robot-2-line fr-mr-1v" aria-hidden="true" />
+                {{ task.output.model_name }}
+              </div>
+              <div class="fr-col-auto">
+                <span class="fr-icon-calendar-event-line fr-mr-1v" aria-hidden="true" />
+                {{ formatDate(task.created_at) }}
+              </div>
+              <div v-if="task.updated_at !== task.created_at" class="fr-col-auto">
+                <span class="fr-icon-refresh-line fr-mr-1v" aria-hidden="true" />
+                mis à jour {{ formatDate(task.updated_at) }}
+              </div>
+            </div>
+
+            <!-- Erreur éventuelle -->
+            <DsfrAlert
+              v-if="task.status === 'failed' && task.extras?.error"
+              type="error"
+              :description="String(task.extras.error)"
+              class="fr-mt-2w"
+            />
           </div>
-          <div class="detail-item">
-            <dt>Fichier</dt>
-            <dd>{{ task.input?.raw_filename ?? '—' }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Statut</dt>
-            <dd>{{ task.status }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Type de contenu</dt>
-            <dd>{{ task.input?.content_type ?? '—' }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Taille du fichier</dt>
-            <dd>{{ formatSize(task.input?.size) }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Modèle utilisé</dt>
-            <dd>{{ task.output?.model_name ?? '—' }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Nombre de pages</dt>
-            <dd>{{ task.output?.total_pages ?? '—' }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Créé le</dt>
-            <dd>{{ formatDate(task.created_at) }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Mis à jour le</dt>
-            <dd>{{ formatDate(task.updated_at) }}</dd>
-          </div>
-          <div class="detail-item">
-            <dt>Hash du contenu</dt>
-            <dd class="mono">
-              {{ task.content_hash ?? '—' }}
-            </dd>
-          </div>
-          <div
-            v-if="task.status === 'failed' && task.extras?.error"
-            class="detail-item detail-item--error"
-          >
-            <dt>Erreur</dt>
-            <dd>{{ task.extras.error }}</dd>
-          </div>
-        </dl>
+        </div>
 
         <div class="flex justify-center">
           <OcrViewer
@@ -180,39 +196,8 @@ function goBack () {
 </template>
 
 <style scoped>
-.detail-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 8px 24px;
-  margin: 24px 0;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.detail-item dt {
-  font-size: 0.75rem;
-  font-weight: bold;
-  color: #666;
-}
-
-.detail-item dd {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.detail-item--error dd {
-  color: #c00;
-}
-
-.mono {
-  font-family: monospace;
-}
-
 .no-preview {
-  color: #666;
+  color: var(--text-mention-grey);
   font-style: italic;
 }
 </style>

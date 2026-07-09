@@ -25,6 +25,7 @@ declare module 'vue' {
     DsfrFileUpload: typeof import('@gouvminint/vue-dsfr')['DsfrFileUpload']
     DsfrHeader: typeof import('@gouvminint/vue-dsfr')['DsfrHeader']
     DsfrPagination: typeof import('@gouvminint/vue-dsfr')['DsfrPagination']
+    DsfrSearchBar: typeof import('@gouvminint/vue-dsfr')['DsfrSearchBar']
     DsfrTile: typeof import('@gouvminint/vue-dsfr')['DsfrTile']
     InfoBulle: typeof import('./components/InfoBulle.vue')['default']
     OcrViewer: typeof import('./components/OcrViewer.vue')['default']
@@ -34,6 +35,7 @@ declare module 'vue' {
     SideBar: typeof import('./components/SideBar.vue')['default']
     StatModel: typeof import('./components/StatModel.vue')['default']
     TasksTab: typeof import('./components/TasksTab.vue')['default']
+    ZoneSelectionModal: typeof import('./components/ZoneSelectionModal.vue')['default']
   }
 }
 
@@ -52,6 +54,7 @@ declare global {
   const DsfrFileUpload: typeof import('@gouvminint/vue-dsfr')['DsfrFileUpload']
   const DsfrHeader: typeof import('@gouvminint/vue-dsfr')['DsfrHeader']
   const DsfrPagination: typeof import('@gouvminint/vue-dsfr')['DsfrPagination']
+  const DsfrSearchBar: typeof import('@gouvminint/vue-dsfr')['DsfrSearchBar']
   const DsfrTile: typeof import('@gouvminint/vue-dsfr')['DsfrTile']
   const InfoBulle: typeof import('./components/InfoBulle.vue')['default']
   const OcrViewer: typeof import('./components/OcrViewer.vue')['default']
@@ -61,4 +64,5 @@ declare global {
   const SideBar: typeof import('./components/SideBar.vue')['default']
   const StatModel: typeof import('./components/StatModel.vue')['default']
   const TasksTab: typeof import('./components/TasksTab.vue')['default']
+  const ZoneSelectionModal: typeof import('./components/ZoneSelectionModal.vue')['default']
 }

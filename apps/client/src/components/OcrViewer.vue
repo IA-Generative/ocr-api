@@ -4,6 +4,7 @@ import type { components } from '@/api/types/api.schema'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import useToaster from '@/composables/use-toaster'
 import { useOcrStore } from '@/stores/ocr'
+import ZoneSelectionModal from '@/components/ZoneSelectionModal.vue'
 
 type Bbox = components['schemas']['Bbox']
 type Page = components['schemas']['Page']
@@ -79,8 +80,8 @@ const isSelecting = ref(false)
 const selStart = ref({ x: 0, y: 0 })
 const selEnd = ref({ x: 0, y: 0 })
 const showZoneModal = ref(false)
-const zoneImageUrl = ref('')
 const zoneText = ref('')
+const savedSel = ref({ x: 0, y: 0, w: 0.1, h: 0.1 })
 
 const normalizedSel = computed(() => {
   const x1 = Math.min(selStart.value.x, selEnd.value.x)
@@ -108,9 +109,10 @@ const selectionStyle = computed<CSSProperties>(() => {
 })
 
 function getRelativeCoords(e: MouseEvent) {
-  const rect = containerRef.value!.getBoundingClientRect()
-  const W = imgDimensions.value.width
-  const H = imgDimensions.value.height
+  if (!containerRef.value) return { x: 0, y: 0 }
+  const rect = containerRef.value.getBoundingClientRect()
+  const W = imgDimensions.value.width || 1
+  const H = imgDimensions.value.height || 1
   return {
     x: Math.max(0, Math.min(1, (e.clientX - rect.left) / W)),
     y: Math.max(0, Math.min(1, (e.clientY - rect.top) / H)),
@@ -124,34 +126,21 @@ function onMouseDown(e: MouseEvent) {
   selStart.value = c
   selEnd.value = c
 }
-function onMouseMove(e: MouseEvent) {
+function onGlobalMouseMove(e: MouseEvent) {
   if (!isSelecting.value) return
   selEnd.value = getRelativeCoords(e)
 }
-async function onMouseUp() {
+function onGlobalMouseUp() {
   if (!isSelecting.value) return
   isSelecting.value = false
   const sel = normalizedSel.value
-  if (sel.w < 0.01 || sel.h < 0.01) return
+  if (sel.w < 0.005 || sel.h < 0.005) return
   const boxesInZone = boxes.value.filter(box =>
     box.x < sel.x + sel.w && box.x + box.width > sel.x
     && box.y < sel.y + sel.h && box.y + box.height > sel.y,
   )
   zoneText.value = boxesInZone.map(b => b.text).join(' ')
-  zoneImageUrl.value = ''
-  const img = imgRef.value
-  if (img) {
-    const nW = img.naturalWidth
-    const nH = img.naturalHeight
-    const canvas = document.createElement('canvas')
-    canvas.width = Math.round(sel.w * nW)
-    canvas.height = Math.round(sel.h * nH)
-    const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.drawImage(img, Math.round(sel.x * nW), Math.round(sel.y * nH), canvas.width, canvas.height, 0, 0, canvas.width, canvas.height)
-      zoneImageUrl.value = canvas.toDataURL('image/png')
-    }
-  }
+  savedSel.value = { ...sel }
   showZoneModal.value = true
 }
 
@@ -164,8 +153,15 @@ onMounted(() => {
       imgDimensions.value = { width: contentRect.width, height: contentRect.height }
   })
   resizeObserver.observe(imgRef.value)
+  // Listeners globaux pour capturer mouseup même hors du container
+  window.addEventListener('mousemove', onGlobalMouseMove)
+  window.addEventListener('mouseup', onGlobalMouseUp)
 })
-onBeforeUnmount(() => resizeObserver?.disconnect())
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  window.removeEventListener('mousemove', onGlobalMouseMove)
+  window.removeEventListener('mouseup', onGlobalMouseUp)
+})
 
 function styleForBox(box: Bbox, isMatch: boolean): CSSProperties {
   const W = imgDimensions.value.width
@@ -246,8 +242,6 @@ async function onDownloadText() {
       class="relative w-full border border-slate-300 hidden md:block"
       :class="isSelectMode ? 'cursor-crosshair' : ''"
       @mousedown="onMouseDown"
-      @mousemove="onMouseMove"
-      @mouseup="onMouseUp"
     >
       <img ref="imgRef" :src="imageUrl" alt="OCR page" class="block w-full h-auto select-none transition-opacity duration-300" :class="showImage ? 'opacity-100' : 'opacity-0'" draggable="false">
 
@@ -279,31 +273,16 @@ async function onDownloadText() {
       <DsfrPagination v-model:current-page="currentPage" :pages="paginationPages" :trunc-limit="5" />
     </div>
 
-    <!-- Feature 2 : modal zone selectionnee -->
-    <Teleport to="body">
-      <div v-if="showZoneModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50" @click.self="showZoneModal = false">
-        <div class="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded shadow-xl p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="fr-h4 mb-0">Zone selectionnee</h2>
-            <button class="fr-btn fr-btn--secondary fr-btn--sm" aria-label="Fermer" @click="showZoneModal = false">
-              <span class="fr-icon-close-line" aria-hidden="true" />
-            </button>
-          </div>
-          <img v-if="zoneImageUrl" :src="zoneImageUrl" alt="Zone" class="w-full border border-gray-200 mb-4">
-          <div v-else class="text-sm text-gray-400 italic mb-4">(image non disponible)</div>
-          <div class="mb-4">
-            <p class="text-sm font-semibold mb-1 text-gray-600">Texte extrait :</p>
-            <div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm whitespace-pre-wrap">
-              {{ zoneText || '(aucun texte dans cette zone)' }}
-            </div>
-          </div>
-          <div class="flex gap-2 justify-end">
-            <DsfrButton label="Copier" icon="fr-icon-clipboard-line" secondary :disabled="!zoneText" @click="copyText(zoneText); showZoneModal = false" />
-            <DsfrButton label="Fermer" @click="showZoneModal = false" />
-          </div>
-        </div>
-      </div>
-    </Teleport>
+    <!-- Feature 2 : modal zone selectionnee (composant separe) -->
+    <ZoneSelectionModal
+      :show="showZoneModal"
+      :image-url="imageUrl"
+      :text="zoneText"
+      :selection="savedSel"
+      :img-width="imgDimensions.width"
+      :img-height="imgDimensions.height"
+      @close="showZoneModal = false"
+    />
   </div>
 </template>
 
