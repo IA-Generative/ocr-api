@@ -65,7 +65,7 @@ DATABASE_URL=postgresql://postgres:secret@db:5432/example_db
 MONITOR_RESSOURCE_EVERY=5
 
 # S3 (MinIO) configuration
-S3_BUCKET_NAME=test
+AWS_BUCKET_NAME=test
 AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=minioadmin
 AWS_ENDPOINT_URL=http://minio:9000

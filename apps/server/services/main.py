@@ -59,9 +59,7 @@ def init_worker(**kwargs):
     # Flag interne PaddlePaddle pour le nombre de threads d'inférence CPU
     os.environ["FLAGS_paddle_num_threads"] = "1"
 
-    logger.info(
-        f"[worker_process_init] Chargement du pipeline {os.environ['PROCESS_NAME']}…"
-    )
+    logger.info(f"[worker_process_init] Chargement du pipeline {os.environ['PROCESS_NAME']}…")
     # Import différé : PaddlePaddle/PaddleX n'est importé qu'ici,
     # après que multiprocessing.set_start_method("spawn") est actif
     # et que le process Celery est pleinement initialisé.
@@ -72,9 +70,7 @@ def init_worker(**kwargs):
 
 
 logger.info(
-    f"{os.environ['WORKER_NAME']} - {os.environ['PROCESS_NAME']} {celery_config.CELERY_APP_NAME}"
-    + "\n"
-    + 79 * "*"
+    f"{os.environ['WORKER_NAME']} - {os.environ['PROCESS_NAME']} {celery_config.CELERY_APP_NAME}" + "\n" + 79 * "*"
 )
 
 tracing = get_tracing_service(tracing_name=os.environ.get("TRACING_SERVICE", "logging"))
@@ -95,16 +91,12 @@ def _run_task(task: TaskModel) -> dict:
     if process_ocr is None:
         # Celery task_always_eager (tests) ne déclenche pas worker_process_init.
         # Initialisation lazy pour ce cas uniquement.
-        logger.warning(
-            "[_run_task] process_ocr non initialisé, init lazy (contexte test ?)"
-        )
+        logger.warning("[_run_task] process_ocr non initialisé, init lazy (contexte test ?)")
         from .factory import load_worker  # noqa: PLC0415
 
         process_ocr = load_worker(name=os.environ["PROCESS_NAME"])
     try:
-        with tracing.trace_context(
-            trace_id=task.id, user_id=task.user_id, name=os.environ["WORKER_NAME"]
-        ):
+        with tracing.trace_context(trace_id=task.id, user_id=task.user_id, name=os.environ["WORKER_NAME"]):
             task = process_ocr.process(task=task)
 
         return task.model_dump()

@@ -45,9 +45,7 @@ class PaddleInferOCR2(BaseModelPrediction):
         dummy_image = Image.new("RGB", (640, 480), color="white")
         self.model.predict(np.array(dummy_image))
 
-    def batch_predict(
-        self, images: List[Image.Image], pages: list = [], *args, **kwargs
-    ) -> List[Page]:
+    def batch_predict(self, images: List[Image.Image], pages: list = [], *args, **kwargs) -> List[Page]:
         result: List[Page] = []
         if len(pages):
             assert len(images) == len(pages)
@@ -63,13 +61,9 @@ class PaddleInferOCR2(BaseModelPrediction):
                 pred = predictions[0]
                 rec_texts = pred["rec_texts"]
                 rec_scores = pred["rec_scores"]
-                rec_boxes = pred[
-                    "rec_boxes"
-                ]  # [x_min, y_min, x_max, y_max] absolute px
+                rec_boxes = pred["rec_boxes"]  # [x_min, y_min, x_max, y_max] absolute px
 
-                for text, confidence, box_coords in zip(
-                    rec_texts, rec_scores, rec_boxes
-                ):
+                for text, confidence, box_coords in zip(rec_texts, rec_scores, rec_boxes):
                     x_min, y_min, x_max, y_max = box_coords
                     box = Bbox(
                         x=x_min / width_img,
