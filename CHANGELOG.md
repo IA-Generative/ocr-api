@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.14.0](https://github.com/IA-Generative/ocr-api/compare/v0.13.0...v0.14.0) (2026-07-09)
+
+
+### Features
+
+* enhance Redis configuration with Sentinel support and improve database URL handling ([0c62b4b](https://github.com/IA-Generative/ocr-api/commit/0c62b4b7dac5829112a9ff4572612e85bccac03e))
+
 ## [0.13.0](https://github.com/IA-Generative/ocr-api/compare/v0.12.6...v0.13.0) (2026-07-09)
 
 
