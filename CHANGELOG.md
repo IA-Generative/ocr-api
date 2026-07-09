@@ -29,6 +29,15 @@
 - code clean
 - :art: change minio vars
 
+## [0.13.0](https://github.com/IA-Generative/ocr-api/compare/v0.12.6...v0.13.0) (2026-07-09)
+
+
+### Features
+
+* add support for additional file formats in OCR upload and update hints ([61379a6](https://github.com/IA-Generative/ocr-api/commit/61379a602cfdd2f6ab2ee5c99e39baf8d6c6bd5f))
+* integrate liteparse library and add liteparse worker ([bdc189e](https://github.com/IA-Generative/ocr-api/commit/bdc189e80d67c62b7a5c30a72b4b7446f92d085e))
+* set multiprocessing start method to 'spawn' for PaddleOCR stability and initialize OCR pipeline in worker process ([2276ba3](https://github.com/IA-Generative/ocr-api/commit/2276ba3bf49518859e985d9408c7490795970b7b))
+
 ## [0.12.6](https://github.com/IA-Generative/ocr-api/compare/v0.12.5...v0.12.6) (2026-07-05)
 
 
