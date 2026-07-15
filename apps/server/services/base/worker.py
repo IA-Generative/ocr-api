@@ -234,11 +234,7 @@ class BaseWorker(ABC):
         key = f"{task.user_id}/{task.id}/images/page_{page_index}.jpg"
         client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
         logger.debug(f"[worker {self.name}] Uploaded page {page_index} to {key}")
-        return client_s3.generate_presigned_url(
-            ClientMethod="get_object",
-            Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-            ExpiresIn=3600,  # 1h
-        )
+        return key
 
     def _checkpoint_progress(self, task: TaskModel, processed_pages: int) -> TaskModel:
         extra_log = {"task_id": task.id, "user_id": task.user_id}

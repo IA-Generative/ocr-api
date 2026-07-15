@@ -307,11 +307,13 @@ def test_batch_predict_screenshots_uploaded_per_page(model_with_s3, mock_s3):
     result = model_with_s3.batch_predict(images=[b"raw"])
 
     assert mock_s3.client.upload_fileobj.call_count == 2
-    assert mock_s3.client.generate_presigned_url.call_count == 2
+    # La presigned URL n'est plus générée à l'upload : seule la clé S3 est stockée,
+    # l'URL est générée à la demande via la route /tasks/{id}/page/{n}.
+    assert mock_s3.client.generate_presigned_url.call_count == 0
 
-    # Each page has a page_url
-    assert result[0].page_url == "https://s3/presigned"
-    assert result[1].page_url == "https://s3/presigned"
+    # Each page has a page_url pointing to its S3 key
+    assert result[0].page_url == f"{task.user_id}/{task.id}/images/page_1.png"
+    assert result[1].page_url == f"{task.user_id}/{task.id}/images/page_2.png"
 
 
 def test_batch_predict_screenshot_key_format(model_with_s3, mock_s3):
@@ -322,12 +324,10 @@ def test_batch_predict_screenshot_key_format(model_with_s3, mock_s3):
     model_with_s3._parser.parse.return_value = _make_parse_result(pages=lp_pages)
     model_with_s3._parser.screenshot.return_value = [_make_screenshot(1)]
 
-    model_with_s3.batch_predict(images=[b"raw"])
+    result = model_with_s3.batch_predict(images=[b"raw"])
 
-    call_kwargs = mock_s3.client.generate_presigned_url.call_args
-    key_used = call_kwargs.kwargs["Params"]["Key"]
     expected_key = f"{task.user_id}/{task.id}/images/page_1.png"
-    assert key_used == expected_key
+    assert result[0].page_url == expected_key
 
 
 def test_batch_predict_screenshot_failure_does_not_raise(model_with_s3, mock_s3):

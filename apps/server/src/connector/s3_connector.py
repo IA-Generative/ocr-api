@@ -76,6 +76,15 @@ class S3Connector(BaseFileConnector):
         except Exception as e:
             raise e
 
+    def get_object_bytes(self, s3_key: str) -> bytes:
+        try:
+            response = self.client.get_object(Bucket=self.bucket_name, Key=s3_key)
+            return response["Body"].read()
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                raise FileNotFoundError(f"{s3_key} non trouvé : {e}")
+            raise FileNotFoundError(f"{s3_key} non trouvé : {e}")
+
     def save(self, user_id: str, task_id: str, file_path: str, filename: str | None = None) -> str:
         if filename:
             filename = os.path.basename(filename)
@@ -98,6 +107,13 @@ class S3Connector(BaseFileConnector):
                 raise FileNotFoundError(f"Fichier non trouvé pour la tâche {task_id} de l'utilisateur {user_id} : {e}")
             else:
                 raise e
+
+    def generate_presigned_url(self, key: str, expires_in: int = 3600) -> str:
+        return self.client.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": self.bucket_name, "Key": key},
+            ExpiresIn=expires_in,
+        )
 
     def get_health(self) -> Health:
         try:
