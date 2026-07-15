@@ -7,6 +7,9 @@ from PIL import Image
 from services.base.model import BaseModelPrediction
 from services.base.cache import BaseCache
 from services.utils.lazy_pdf import LazyPdfImageList
+from services.utils.lazy_email import LazyEmailList, ZIP_CONTENT_TYPES
+from services.utils.lazy_zip import LazyZipList
+from business.liteparse.models.liteparse_model import parsed_page_to_schema
 from src import __name__, __version__
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
@@ -20,6 +23,9 @@ from src.schemas.task import (
 )
 from src.utils.file import hash_file
 from io import BytesIO
+
+
+EMAIL_CONTENT_TYPES = ("message/rfc822",)
 
 
 class EmptyContentException(Exception): ...
@@ -107,6 +113,20 @@ class BaseWorker(ABC):
             t_convert = time.time() - t_convert
             logger.debug(f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}")
 
+        elif content_type in EMAIL_CONTENT_TYPES:
+            t_convert = time.time()
+            logger.debug(f"{task.id} - {filename} convert email to image")
+            pages = LazyEmailList(content)
+            t_convert = time.time() - t_convert
+            logger.debug(f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}")
+
+        elif content_type in ZIP_CONTENT_TYPES:
+            t_convert = time.time()
+            logger.debug(f"{task.id} - {filename} convert archive to image")
+            pages = LazyZipList(content)
+            t_convert = time.time() - t_convert
+            logger.debug(f"{task.id} - {filename} convert to image nb pages {len(pages)} into {t_convert}")
+
         else:
             logger.error(f"[worker {self.name}] Unsupported file type {task.extras}")
             task.extras["error"] = f"Unsupported file type {task.extras}"
@@ -119,84 +139,124 @@ class BaseWorker(ABC):
         return pages
 
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image], save_image: bool = True) -> TaskModel:
-        extra_log = {"task_id": task.id, "user_id": task.user_id}
         task = self.set_output(task=task, total_pages=len(pages))
-        filename = task.input.raw_filename
-        client_s3 = self.file_connector.client
         task.output.pages = [Page(page=i) for i in range(len(pages))]
+        task.output.text = ""
+
+        # Pages déjà extraites par liteparse (email/zip avec pièces jointes
+        # bureautiques) : pas d'OCR, on récupère directement le texte connu.
+        page_sources = getattr(pages, "page_sources", None)
+        ocr_pages = getattr(pages, "ocr_pages", None)
+        if page_sources is not None and ocr_pages is not None:
+            task = self._fill_text_pages(task, pages, page_sources, ocr_pages, save_image=save_image)
+            ocr_indices = sorted(ocr_pages)
+        else:
+            ocr_indices = list(range(len(pages)))
+
+        if not ocr_indices:
+            # Toutes les pages étaient déjà du texte connu (liteparse) : rien à OCR-iser.
+            if not pages:
+                task.output.set_text()
+                return task
+            return self._checkpoint_progress(task, len(pages))
+
+        already_processed = len(pages) - len(ocr_indices)
+        for start in range(0, len(ocr_indices), self.batch_size):
+            batch_indices = ocr_indices[start : start + self.batch_size]
+            task = self._predict_on_ocr_batch(task, pages, batch_indices, save_image=save_image)
+            processed = already_processed + start + len(batch_indices)
+            task = self._checkpoint_progress(task, processed)
+
+        return task
+
+    def _fill_text_pages(
+        self,
+        task: TaskModel,
+        pages: List[Image.Image],
+        page_sources: list,
+        ocr_pages: set,
+        save_image: bool = True,
+    ) -> TaskModel:
+        """Renseigne les pages déjà extraites par liteparse (pas d'OCR), en
+        générant quand même leur image (déjà rendue par LazyEmailList /
+        LazyZipList) pour exposer un page_url au même titre que les pages OCR."""
+        for i, parsed in enumerate(page_sources):
+            if i in ocr_pages or parsed is None:
+                continue
+            page_url = self._upload_page_image(task, pages[i], i) if save_image else None
+            task.output.pages[i] = parsed_page_to_schema(parsed, page_url=page_url)
+        return task
+
+    def _predict_on_ocr_batch(
+        self, task: TaskModel, pages: List[Image.Image], batch_indices: List[int], save_image: bool = True
+    ) -> TaskModel:
+        extra_log = {"task_id": task.id, "user_id": task.user_id}
+        filename = task.input.raw_filename
+        t_predict = time.time()
+        batch = [pages[idx] for idx in batch_indices]
         logger.debug(
-            f"[worker {self.name}] [Size input images {len(pages)}][Size empty pages {len(task.output.pages)}]",
+            f"[worker {self.name}] {filename} for task {task.id}, batch pages {batch_indices}[total: {len(pages)}]",
             extra=extra_log,
         )
 
-        task.output.text = ""
-        for i in range(0, len(pages), self.batch_size):
-            t_predict = time.time()
-            batch = pages[i : i + self.batch_size]
+        partial_result: List[Page] = [task.output.pages[idx] for idx in batch_indices]
+        for model in self.models:
             logger.debug(
-                f"[worker {self.name}] {filename} for task {task.id}, batch [{i}:{i + self.batch_size}][total: {len(pages)}]",
+                f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch pages {batch_indices}][size result : {len(partial_result)}]",
+                extra=extra_log,
+            )
+            model.set_current_task(task)
+            t = time.time()
+            partial_result = model.batch_predict(images=batch, pages=partial_result)
+            logger.debug(
+                f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
                 extra=extra_log,
             )
 
-            partial_result: List[Page] = task.output.pages[i : i + self.batch_size]
+        if save_image:
+            for j, idx in enumerate(batch_indices):
+                partial_result[j].page_url = self._upload_page_image(task, batch[j], idx)
 
-            for model in self.models:
-                logger.debug(
-                    f"[worker {self.name}][task-id {task.id}][model {model.__class__.__name__}][batch {i}:{i + self.batch_size}][size result : {len(partial_result)}]",
-                    extra=extra_log,
-                )
-                model.set_current_task(task)
-                t = time.time()
-                partial_result: List[Page] = model.batch_predict(images=batch, pages=partial_result)
-                logger.debug(
-                    f"[worker {self.name}][task-id {task.id}][model{model.__class__.__name__}][process time {time.time() - t:.2f}]",
-                    extra=extra_log,
-                )
-            if save_image:
-                for j, image in enumerate(batch):
-                    buffer = BytesIO()
-                    image.save(buffer, format="JPEG")
-                    buffer.seek(0)
-                    key = f"{task.user_id}/{task.id}/images/page_{i + j}.jpg"
-                    client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
-                    logger.debug(
-                        f"[worker {self.name}] Uploaded page {i + j} to {key}",
-                        extra=extra_log,
-                    )
-                    signed_url = client_s3.generate_presigned_url(
-                        ClientMethod="get_object",
-                        Params={"Bucket": self.file_connector.bucket_name, "Key": key},
-                        ExpiresIn=3600,  # 1h
-                    )
-                    partial_result[j].page_url = signed_url
+        for j, idx in enumerate(batch_indices):
+            task.output.pages[idx] = partial_result[j]
 
-            task.output.pages[i : i + self.batch_size] = partial_result
+        logger.debug(
+            f"{filename} time to process pages {batch_indices} - {time.time() - t_predict:.2f}s",
+            extra=extra_log,
+        )
+        return task
 
-            page_range = f"{i + 1}" if len(batch) == 1 else f"{i + 1}-{i + self.batch_size}"
-            logger.debug(
-                f"{filename} time to process page {page_range} - {time.time() - t_predict:.2f}s",
-                extra=extra_log,
-            )
+    def _upload_page_image(self, task: TaskModel, image: Image.Image, page_index: int) -> Optional[str]:
+        client_s3 = self.file_connector.client
+        buffer = BytesIO()
+        image.save(buffer, format="JPEG")
+        buffer.seek(0)
+        key = f"{task.user_id}/{task.id}/images/page_{page_index}.jpg"
+        client_s3.upload_fileobj(buffer, self.file_connector.bucket_name, key)
+        logger.debug(f"[worker {self.name}] Uploaded page {page_index} to {key}")
+        return client_s3.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={"Bucket": self.file_connector.bucket_name, "Key": key},
+            ExpiresIn=3600,  # 1h
+        )
 
-            percentage = (i + len(batch)) / task.output.total_pages
-            logger.debug(
-                f"[worker {self.name}] [Current percentage {100 * percentage:.2f}%]",
-                extra=extra_log,
-            )
-            task.output.set_text()
-            task = task_table.update_task(
-                task_id=task.id,
-                form_data=TaskUpdateForm(
-                    status=TaskStatus.IN_PROGRESS.value,
-                    percentage=percentage * self.worker_weight,
-                    output=task.output,
-                    extras=task.extras,
-                ),
-            )
-            logger.debug(
-                task.extras,
-                extra=extra_log,
-            )
+    def _checkpoint_progress(self, task: TaskModel, processed_pages: int) -> TaskModel:
+        extra_log = {"task_id": task.id, "user_id": task.user_id}
+        percentage = processed_pages / task.output.total_pages
+        logger.debug(
+            f"[worker {self.name}] [Current percentage {100 * percentage:.2f}%]",
+            extra=extra_log,
+        )
+        task.output.set_text()
+        task = task_table.update_task(
+            task_id=task.id,
+            form_data=TaskUpdateForm(
+                status=TaskStatus.IN_PROGRESS.value,
+                percentage=percentage * self.worker_weight,
+                output=task.output,
+                extras=task.extras,
+            ),
+        )
         return task
 
     def set_output(self, task: TaskModel, total_pages: int = -1, pages: list[Page] = []) -> TaskModel:
@@ -330,7 +390,13 @@ class BaseWorker(ABC):
 
 class AnyFileProcessWorker(BaseWorker):
     def is_applicable(self, task: TaskModel) -> bool:
-        return task.input.content_type.startswith("image/") or task.input.content_type == "application/pdf"
+        content_type = task.input.content_type
+        return (
+            content_type.startswith("image/")
+            or content_type == "application/pdf"
+            or content_type in EMAIL_CONTENT_TYPES
+            or content_type in ZIP_CONTENT_TYPES
+        )
 
 
 class DefaultFileProcessWorker(BaseWorker):
