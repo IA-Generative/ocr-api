@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.0](https://github.com/IA-Generative/ocr-api/compare/v0.18.0...v0.19.0) (2026-07-15)
+
+
+### Features
+
+* **yt:** add youtube transcription ([940c57c](https://github.com/IA-Generative/ocr-api/commit/940c57ccd4c1c0d2e619ba88c0cb03d61c20b11c))
+
 ## [0.18.0](https://github.com/IA-Generative/ocr-api/compare/v0.17.0...v0.18.0) (2026-07-15)
 
 
