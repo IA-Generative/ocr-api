@@ -29,6 +29,19 @@
 - code clean
 - :art: change minio vars
 
+## [0.18.0](https://github.com/IA-Generative/ocr-api/compare/v0.17.0...v0.18.0) (2026-07-15)
+
+
+### Features
+
+* **eml+zip:** add eml and zip consideration ([92b20a3](https://github.com/IA-Generative/ocr-api/commit/92b20a334abe389f1b530bc228bf5d2173aca447))
+
+
+### Bug Fixes
+
+* **openwebui:** delete task and associated file after processing ([580ec7f](https://github.com/IA-Generative/ocr-api/commit/580ec7fee6132b37953b13fcc49615a93d1e50f0))
+* url presigned ([8f4b45c](https://github.com/IA-Generative/ocr-api/commit/8f4b45cbf509bad5972d5254d50b5d8e4b1ec233))
+
 ## [0.17.0](https://github.com/IA-Generative/ocr-api/compare/v0.16.0...v0.17.0) (2026-07-09)
 
 
