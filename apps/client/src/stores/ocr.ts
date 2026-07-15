@@ -86,6 +86,11 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
+  async function getPageImageUrl (taskId: string, pageNumber: number): Promise<string> {
+    const { data } = await http.get<Blob>(`/tasks/${taskId}/page/${pageNumber}`, { responseType: 'blob' })
+    return URL.createObjectURL(data)
+  }
+
   async function pollTask (
     taskId: string,
     intervalMs = 2000,
@@ -300,6 +305,7 @@ export const useOcrStore = defineStore('ocr', () => {
     position,
 
     getTask,
+    getPageImageUrl,
     sendFileAndPoll,
     reset,
     validateFile,

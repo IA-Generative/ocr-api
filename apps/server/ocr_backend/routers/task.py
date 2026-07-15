@@ -1,6 +1,10 @@
+import io
+import mimetypes
 from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi.responses import StreamingResponse
 from typing import Optional
-from src.schemas.task import TaskModel, task_table, TaskStatus, TaskStats
+from urllib.parse import urlparse
+from src.schemas.task import TaskModel, TaskUpdateForm, task_table, TaskStatus, TaskStats
 from src.schemas.pagination import Pagination
 from ocr_backend.core.security.token import RequestContext
 from ocr_backend.core.security.factory import TokenVerifier
@@ -9,6 +13,20 @@ from src.logger import logger
 from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Tasks"])
+
+
+def _as_s3_key(page_url: str) -> str:
+    """Normalise un ``page_url`` legacy (presigned URL complète, avant
+    migration) en simple clé S3. Les tâches déjà migrées ont directement
+    la clé stockée et sont retournées telles quelles."""
+    if not page_url.startswith("http://") and not page_url.startswith("https://"):
+        return page_url
+
+    path = urlparse(page_url).path.lstrip("/")
+    prefix = f"{s3_client_connector.bucket_name}/"
+    if path.startswith(prefix):
+        path = path[len(prefix) :]
+    return path
 
 
 def get_task_by_id(task_id: str) -> TaskModel:
@@ -34,6 +52,51 @@ async def get_task_by_id_user(
         raise HTTPException(status_code=404, detail="Task not found")
 
     return task
+
+
+@router.get("/tasks/{task_id}/page/{page_number}")
+async def get_task_page(
+    task_id: str,
+    page_number: int,
+    ctx: RequestContext = Depends(TokenVerifier),
+) -> StreamingResponse:
+    """Renvoie l'image d'une page (1-indexée) en la streamant depuis S3."""
+    task: TaskModel = get_task_by_id(task_id=task_id)
+    if task.user_id != ctx.user_id and not ctx.is_admin:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    if not task.output or not task.output.pages:
+        raise HTTPException(status_code=404, detail="No result file available for this task")
+
+    page_index = page_number - 1
+    if not (0 <= page_index < len(task.output.pages)):
+        raise HTTPException(status_code=404, detail=f"Page {page_number} not found for this task")
+
+    page = task.output.pages[page_index]
+    if not page.page_url:
+        raise HTTPException(status_code=404, detail=f"Page {page_number} not found for this task")
+
+    s3_key = _as_s3_key(page.page_url)
+    if s3_key != page.page_url:
+        # Migration à la volée : l'ancien format stockait la presigned URL
+        # complète, on la remplace par la clé nue.
+        task.output.pages[page_index].page_url = s3_key
+        task_table.update_task(task_id=task_id, form_data=TaskUpdateForm(output=task.output))
+
+    try:
+        body = s3_client_connector.get_object_bytes(s3_key)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Result file not found in storage")
+
+    content_type = mimetypes.guess_type(s3_key)[0] or "application/octet-stream"
+    extension = mimetypes.guess_extension(content_type) or ""
+    filename = f"{task_id}_page_{page_number}{extension}"
+
+    return StreamingResponse(
+        io.BytesIO(body),
+        media_type=content_type,
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
 
 
 def get_tasks_by_user_id(

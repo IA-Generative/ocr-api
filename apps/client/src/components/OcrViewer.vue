@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { CSSProperties } from 'vue'
 import type { components } from '@/api/types/api.schema'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import useToaster from '@/composables/use-toaster'
 import { useOcrStore } from '@/stores/ocr'
 import ZoneSelectionModal from '@/components/ZoneSelectionModal.vue'
@@ -28,14 +28,39 @@ const pages = props.data.pages
 const currentPage = ref(0)
 
 const paginationPages = computed<PaginationPage[]>(() =>
-  pages.map((p, idx) => ({
-    href: p.page_url ?? undefined,
+  pages.map((_, idx) => ({
     label: String(idx + 1),
     title: `Page ${idx + 1}`,
   })),
 )
 
-const imageUrl = computed(() => pages[currentPage.value]?.page_url ?? undefined)
+const imageUrl = ref<string | undefined>(undefined)
+
+function revokeCurrentImageUrl() {
+  if (imageUrl.value) URL.revokeObjectURL(imageUrl.value)
+}
+
+async function loadCurrentPageImage() {
+  const taskId = props.data.id
+  const page = pages[currentPage.value]
+  if (!taskId || !page?.page_url) {
+    revokeCurrentImageUrl()
+    imageUrl.value = undefined
+    return
+  }
+  try {
+    const url = await store.getPageImageUrl(taskId, currentPage.value + 1)
+    revokeCurrentImageUrl()
+    imageUrl.value = url
+  }
+  catch (err) {
+    imageUrl.value = undefined
+    addErrorMessage({ title: 'Erreur', description: `Impossible de charger l'image de la page : ${err}` })
+  }
+}
+
+watch(currentPage, loadCurrentPageImage, { immediate: true })
+onBeforeUnmount(revokeCurrentImageUrl)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
 const showImage = ref(true)
 

@@ -170,7 +170,8 @@ class LiteparseExtractionModel(BaseModelPrediction):
                     f"pages_liteparse={len(lp_pages)}"
                 )
 
-                # Build a page_num → presigned_url map for all pages
+                # Build a page_num → S3 key map for all pages (pas de presigned url
+                # ici : elle est générée à la demande via la route /tasks/{id}/pages/{n}/url).
                 screenshot_urls: dict[int, str] = {}
                 if self._file_connector and task:
                     try:
@@ -179,11 +180,7 @@ class LiteparseExtractionModel(BaseModelPrediction):
                         for s in self._parser.screenshot(temp_path):
                             key = f"{task.user_id}/{task.id}/images/page_{s.page_num}.png"
                             client_s3.upload_fileobj(BytesIO(s.image_bytes), bucket, key)
-                            screenshot_urls[s.page_num] = client_s3.generate_presigned_url(
-                                ClientMethod="get_object",
-                                Params={"Bucket": bucket, "Key": key},
-                                ExpiresIn=3600,
-                            )
+                            screenshot_urls[s.page_num] = key
                             logger.info(f"[LiteparseExtractionModel] Screenshot saved: {key}")
                     except Exception as screenshot_err:
                         logger.warning(f"[LiteparseExtractionModel] Screenshots failed: {screenshot_err}")
