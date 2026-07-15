@@ -2,6 +2,7 @@
 import type { components } from '@/api/types/api.schema'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import MediaResultViewer from '@/components/MediaResultViewer.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import SideBar from '@/components/SideBar.vue'
 import { useOcrStore } from '@/stores/ocr'
@@ -17,6 +18,10 @@ const loading = ref(true)
 const loadError = ref<string | null>(null)
 
 const taskId = computed(() => String(route.params.id))
+const isYoutubeTask = computed(() => task.value?.input?.content_type === 'video/youtube')
+// `api.schema.d.ts` est généré depuis l'OpenAPI serveur et n'a pas encore été régénéré
+// depuis l'ajout du type de tâche média (source_url / AudioTranscriptionResult côté serveur).
+const mediaSourceUrl = computed(() => (task.value?.input as { source_url?: string } | undefined)?.source_url ?? '')
 
 function formatSize (size: number | null | undefined) {
   if (size === null || size === undefined) {
@@ -173,8 +178,14 @@ function goBack () {
         </div>
 
         <div class="flex justify-center">
+          <MediaResultViewer
+            v-if="task.status === 'completed' && isYoutubeTask && task.output"
+            :source-url="mediaSourceUrl"
+            :output="(task.output as any)"
+            class="w-full max-w-4xl"
+          />
           <OcrViewer
-            v-if="task.status === 'completed' && task.output?.pages?.length"
+            v-else-if="task.status === 'completed' && task.output?.pages?.length"
             :data="{ id: task.id, pages: task.output.pages }"
           />
           <p

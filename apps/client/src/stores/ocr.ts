@@ -91,6 +91,23 @@ export const useOcrStore = defineStore('ocr', () => {
     return URL.createObjectURL(data)
   }
 
+  async function createYoutubeTask (url: string, groupId = 'DEFAULT'): Promise<TaskModel> {
+    try {
+      const form = new FormData()
+      form.append('url', url)
+      form.append('group_id', groupId)
+      const { data } = await http.post<TaskModel>('/jobs/youtube', form)
+      return data
+    }
+    catch (err: any) {
+      addErrorMessage({
+        title: 'Erreur :',
+        description: `Erreur lors du lancement de l'analyse YouTube : ${err}`,
+      })
+      throw new Error(`Impossible de lancer l'analyse YouTube: ${err.message ?? 'Erreur inconnue'}`)
+    }
+  }
+
   async function pollTask (
     taskId: string,
     intervalMs = 2000,
@@ -306,6 +323,7 @@ export const useOcrStore = defineStore('ocr', () => {
 
     getTask,
     getPageImageUrl,
+    createYoutubeTask,
     sendFileAndPoll,
     reset,
     validateFile,

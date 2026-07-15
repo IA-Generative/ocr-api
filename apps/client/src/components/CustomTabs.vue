@@ -8,10 +8,16 @@ interface TabData {
 
 const props = defineProps<{
   tabsData: TabData[]
+  modelValue?: number
+}>()
+
+const emit = defineEmits<{
+  'update:modelValue': [index: number]
 }>()
 
 const tabListId = 'dynamic-tabs'
-const activeTab = ref(0)
+const internalActiveTab = ref(0)
+const activeTab = computed(() => props.modelValue ?? internalActiveTab.value)
 
 const tabs = computed(() =>
   props.tabsData.map((tab, index) => ({
@@ -23,7 +29,8 @@ const tabs = computed(() =>
 )
 
 function activateTab (index: number) {
-  activeTab.value = index
+  internalActiveTab.value = index
+  emit('update:modelValue', index)
 }
 </script>
 

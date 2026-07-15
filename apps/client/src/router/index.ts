@@ -34,9 +34,19 @@ function authGuard (_path: string) {
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    redirect: '/ocr',
+  },
+  {
+    path: '/ocr',
+    name: 'Ocr',
     component: Home,
-    beforeEnter: authGuard('/'),
+    beforeEnter: authGuard('/ocr'),
+  },
+  {
+    path: '/media',
+    name: 'Media',
+    component: Home,
+    beforeEnter: authGuard('/media'),
   },
   {
     path: '/tasks/:id',

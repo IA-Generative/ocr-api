@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import DocumentDownload from '@gouvfr/dsfr/dist/artwork/pictograms/document/document-download.svg'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Media from '@/assets/ocr-card.svg'
 import ComminitySVG from '@/assets/pictograms/community.svg'
 import PenSVG from '@/assets/pictograms/pen.svg'
 import CustomCard from '@/components/CustomCard.vue'
 import CustomTabs from '@/components/CustomTabs.vue'
 import InfoBulle from '@/components/InfoBulle.vue'
+import MediaViewer from '@/components/MediaViewer.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
 import TasksTab from '@/components/TasksTab.vue'
 import { useOcrStore } from '@/stores/ocr'
 
+const route = useRoute()
+const router = useRouter()
 const store = useOcrStore()
 const selectedFile = ref<File | null>(null)
 const pdfUrl = ref<string | null>(null)
@@ -86,8 +90,25 @@ const uploadAccept = [
 
 const tabs = ref([
   { label: 'OCR', slot: 'tab-0-content' },
+  { label: 'Média', slot: 'tab-2-content' },
   { label: 'Mes tâches', slot: 'tab-1-content' },
 ])
+
+// Seuls OCR et Média ont une route dédiée ; "Mes tâches" reste un onglet local
+// (pas de navigation) pour rester sur la page courante (OCR ou Média).
+const routeForTabIndex: Record<number, string> = { 0: '/ocr', 1: '/media' }
+
+const activeTabIndex = ref(route.path === '/media' ? 1 : 0)
+
+watch(() => route.path, (path) => {
+  if (path === '/media') activeTabIndex.value = 1
+  else if (path === '/ocr') activeTabIndex.value = 0
+})
+
+watch(activeTabIndex, (index) => {
+  const target = routeForTabIndex[index]
+  if (target && target !== route.path) router.push(target)
+})
 
 const cardTitle = `Comment utiliser “Extraire un texte” ?`
 const cardInfos = `
@@ -116,7 +137,7 @@ onBeforeUnmount(() => {
         </h1>
       </div>
 
-      <CustomTabs :tabs-data="tabs">
+      <CustomTabs v-model="activeTabIndex" :tabs-data="tabs">
         <template #tab-0-content>
           <InfoBulle />
           <div class="page-container">
@@ -150,6 +171,12 @@ onBeforeUnmount(() => {
                 />
               </div>
             </div>
+          </div>
+        </template>
+
+        <template #tab-2-content>
+          <div class="page-container">
+            <MediaViewer />
           </div>
         </template>
 
