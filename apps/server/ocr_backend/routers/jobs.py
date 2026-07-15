@@ -26,6 +26,7 @@ from ..connectors import s3_client_connector
 
 router = APIRouter(tags=["Jobs"])
 WORKER_NAME = "worker.tasks.ocr"
+YOUTUBE_CONTENT_TYPE = "video/youtube"
 
 
 def _handle_pdf_interest_zone(file_path: str, interest_zone: Optional[str]) -> list[RegionOfInterest]:
@@ -176,4 +177,53 @@ async def upload_file(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"File upload failed: {e} {traceback.format_exc()}",
+        )
+
+
+@router.post("/jobs/youtube", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+async def create_youtube_job(
+    url: str = Form(...),
+    group_id: str = Form("DEFAULT"),
+    task_operation: TaskOperation = Form(TaskOperation.DEFAULT.value),
+    ctx: RequestContext = Depends(TokenVerifier),
+):
+    task_data = task_table.insert_new_task(
+        user_id=ctx.user_id,
+        form_data=TaskForm(
+            user_id=ctx.user_id,
+            type=task_operation,
+            status=TaskStatus.CREATED.value,
+            percentage=0.0,
+            group_id=group_id,
+        ),
+    )
+
+    try:
+        input_form = InputForm(
+            raw_filename=url,
+            content_type=YOUTUBE_CONTENT_TYPE,
+            ext="",
+            size=0,
+            source_url=url,
+        )
+
+        task_data = task_table.update_task(
+            task_id=task_data.id,
+            form_data=TaskUpdateForm(status=TaskStatus.QUEUED.value, input=input_form),
+        )
+        task_data.position = task_table.get_position_in_queue(task_id=task_data.id)
+
+        celery_app.send_task(WORKER_NAME, args=[json.dumps(task_data.model_dump())], task_id=task_data.id)
+
+        return task_data
+
+    except Exception as e:
+        logger.error(f"Failed to create YouTube job for user {ctx.user_id}, task {task_data.id}: {e}")
+        task_table.update_task(
+            task_id=task_data.id,
+            form_data=TaskUpdateForm(status=TaskStatus.FAILED.value, extras={"error": str(e)}),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"YouTube job creation failed: {e}",
         )

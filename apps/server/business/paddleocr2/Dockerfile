@@ -38,6 +38,7 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group liteparse \
+  --group media \
   --group ocr-service-paddle \
   --group ocr-docling \
   --group services \
@@ -59,6 +60,7 @@ COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/docling_inference /app/business/docling_inference
 COPY apps/server/business/extractions /app/business/extractions
 COPY apps/server/business/liteparse /app/business/liteparse
+COPY apps/server/business/media /app/business/media
 
 # Copy common code
 COPY apps/server/src /app/src
@@ -74,6 +76,7 @@ RUN uv sync --no-cache --group business-forms \
   --group client \
   --group llm \
   --group liteparse \
+  --group media \
   --group ocr-service-paddle \
   --group ocr-docling \
   --group services \

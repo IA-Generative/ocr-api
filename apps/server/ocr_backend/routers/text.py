@@ -25,7 +25,8 @@ async def download_text_content_new(
 
     content = ""
     if task.output is not None:
-        content = task.output.text
+        # OCRResult a `.text`, AudioTranscriptionResult a `.transcription_text`.
+        content = getattr(task.output, "text", None) or getattr(task.output, "transcription_text", None) or ""
 
     return PlainTextResponse(content=content, status_code=200, media_type="text/plain")
 
@@ -48,7 +49,8 @@ async def download_task_form(
         raise HTTPException(status_code=404, detail="Task output not found")
 
     if transform == "text":
-        return PlainTextResponse(content=task.output.text, status_code=200, media_type="text/plain")
+        content = getattr(task.output, "text", None) or getattr(task.output, "transcription_text", None) or ""
+        return PlainTextResponse(content=content, status_code=200, media_type="text/plain")
 
     if transform == "only-result":
         return task.output

@@ -1,10 +1,23 @@
-from services.base.worker import BaseWorker
+from typing import Protocol, runtime_checkable
+
 from src.schemas.task import TaskModel
 from src.logger import logger, Colors
 
 
+@runtime_checkable
+class ProcessWorker(Protocol):
+    """Contrat minimal requis par ``Pipeline`` : un worker OCR (``BaseWorker``)
+    ou tout autre worker (ex: ``YoutubeTranscriptionWorker``) qui l'implémente."""
+
+    name: str
+
+    def is_applicable(self, task: TaskModel) -> bool: ...
+
+    def process_task(self, task: TaskModel) -> TaskModel: ...
+
+
 class Pipeline:
-    def __init__(self, workers: list[BaseWorker]):
+    def __init__(self, workers: list[ProcessWorker]):
         self.workers = workers
 
     def process(self, task: TaskModel) -> TaskModel:

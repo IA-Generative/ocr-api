@@ -2,15 +2,19 @@ import time
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String, func
 
 from src.connector.db_connector import Base, get_db
 from src.logger import logger
+from src.schemas.audio import AudioTranscriptionResult
 from src.schemas.input import InputForm
 from src.schemas.output import OCRResult
+from src.schemas.video import VideoDescriptionResult
+
+TaskOutput = Union[OCRResult, AudioTranscriptionResult, VideoDescriptionResult]
 
 
 class Task(Base):
@@ -46,7 +50,7 @@ class TaskModel(BaseModel):
     status: str = "queued"
     percentage: Optional[float] = 0.0
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     created_at: int
     updated_at: int
     extras: Optional[Dict[str, Any]] = None
@@ -62,7 +66,7 @@ class TaskForm(BaseModel):
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     content_hash: Optional[str] = None
 
 
@@ -74,7 +78,7 @@ class TaskUpdateForm(BaseModel):
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     content_hash: Optional[str] = None
 
 

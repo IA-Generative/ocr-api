@@ -195,7 +195,17 @@ def load_worker(
             ),
         ]
     ##################################################
+    ################# MEDIA WORKERS ##################
+    _media_workers = []
+    try:
+        from business.media.worker.youtube_worker import YoutubeTranscriptionWorker
+
+        _media_workers = [YoutubeTranscriptionWorker(name="youtube-transcription-worker")]
+    except ImportError as e:
+        print(f"yt-dlp not available, YouTube transcription worker disabled: {e}")
+    ##################################################
     workers = [
+        *_media_workers,  # content_type == "video/youtube"
         *_office_image_workers,  # TaskOperation.DEFAULT — office + image files (liteparse ou fallback)
         default_worker_pdf,  # TaskOperation.DEFAULT and application/pdf AND is_form_pdf
         default_worker,  # TaskOperation.DEFAULT
