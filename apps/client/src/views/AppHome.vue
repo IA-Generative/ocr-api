@@ -67,7 +67,7 @@ const myOtherTools = ref([
   },
 ])
 
-const uploadHint = `Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf, docx, xlsx, odt, ods, odp, csv, eml. Plus la qualité du fichier sera élevée, plus l'outil de reconnaissance de texte sera performant.`
+const uploadHint = `Taille maximale : 200 Mo. Formats supportés : jpg, png, pdf, docx, xlsx, odt, ods, odp, csv, eml, zip. Plus la qualité du fichier sera élevée, plus l'outil de reconnaissance de texte sera performant.`
 const uploadLabel = 'Ajouter un fichier'
 const uploadAccept = [
   'image/jpeg',
@@ -80,6 +80,8 @@ const uploadAccept = [
   'application/vnd.oasis.opendocument.presentation', // odp
   'text/csv',
   'message/rfc822', // eml
+  'application/zip', // zip
+  'application/x-zip-compressed', // zip
 ].join(',')
 
 const tabs = ref([

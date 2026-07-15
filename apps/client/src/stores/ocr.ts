@@ -37,6 +37,8 @@ const VALID_MIME_TYPES = [
   'application/vnd.oasis.opendocument.presentation', // odp
   'text/csv',
   'message/rfc822', // eml
+  'application/zip', // zip
+  'application/x-zip-compressed', // zip
 ]
 
 export const useOcrStore = defineStore('ocr', () => {
@@ -173,7 +175,7 @@ export const useOcrStore = defineStore('ocr', () => {
     if (!VALID_MIME_TYPES.includes(file.type)) {
       return {
         valid: false,
-        message: `Type de fichier non supporté: ${file.type}. Utilisez PDF, JPEG, PNG, DOCX, XLSX, ODT, ODS, ODP, CSV ou EML.`,
+        message: `Type de fichier non supporté: ${file.type}. Utilisez PDF, JPEG, PNG, DOCX, XLSX, ODT, ODS, ODP, CSV, EML ou ZIP.`,
       }
     }
     // Vérification de la taille (200 Mo max)

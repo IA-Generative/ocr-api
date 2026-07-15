@@ -54,6 +54,41 @@ LITEPARSE_CONTENT_TYPES = [
     "application/vnd.oasis.opendocument.presentation",
 ]
 
+
+def parsed_page_to_schema(lp_page, page_url: Optional[str] = None) -> Page:
+    """Convertit une ``ParsedPage`` liteparse en ``Page`` (bboxes déjà en texte, pas d'OCR)."""
+    page_width = lp_page.width or 1
+    page_height = lp_page.height or 1
+
+    boxes: list[Bbox] = [
+        Bbox(
+            x=item.x / page_width,
+            y=item.y / page_height,
+            width=item.width / page_width,
+            height=item.height / page_height,
+            text=item.text,
+            confidence=(item.confidence if item.confidence is not None else 1.0),
+        )
+        for item in (lp_page.text_items or [])
+        if item.text.strip()
+    ]
+
+    # Fallback: one full-page bbox with the markdown text if no text_items
+    if not boxes and lp_page.markdown:
+        boxes = [
+            Bbox(
+                x=0,
+                y=0,
+                width=1,
+                height=1,
+                text=lp_page.markdown,
+                confidence=1.0,
+            )
+        ]
+
+    return Page(page=lp_page.page_num, page_url=page_url, boxes=boxes)
+
+
 _CONTENT_TYPE_TO_EXT: dict[str, str] = {
     "text/csv": ".csv",
     "text/tab-separated-values": ".tsv",
@@ -155,42 +190,7 @@ class LiteparseExtractionModel(BaseModelPrediction):
 
                 # One Page per liteparse page with real bboxes and screenshot
                 for lp_page in lp_pages:
-                    page_width = lp_page.width or 1
-                    page_height = lp_page.height or 1
-
-                    boxes: list[Bbox] = [
-                        Bbox(
-                            x=item.x / page_width,
-                            y=item.y / page_height,
-                            width=item.width / page_width,
-                            height=item.height / page_height,
-                            text=item.text,
-                            confidence=(item.confidence if item.confidence is not None else 1.0),
-                        )
-                        for item in (lp_page.text_items or [])
-                        if item.text.strip()
-                    ]
-
-                    # Fallback: one full-page bbox with the markdown text if no text_items
-                    if not boxes and lp_page.markdown:
-                        boxes = [
-                            Bbox(
-                                x=0,
-                                y=0,
-                                width=1,
-                                height=1,
-                                text=lp_page.markdown,
-                                confidence=1.0,
-                            )
-                        ]
-
-                    result.append(
-                        Page(
-                            page=lp_page.page_num,
-                            page_url=screenshot_urls.get(lp_page.page_num),
-                            boxes=boxes,
-                        )
-                    )
+                    result.append(parsed_page_to_schema(lp_page, page_url=screenshot_urls.get(lp_page.page_num)))
 
                 # Fallback: if liteparse returned no pages, keep the full text in one page
                 if not lp_pages:
