@@ -38,9 +38,7 @@ def _build_broker_url() -> tuple[str, dict]:
         )
         transport_options = {
             "master_name": redis_settings.REDIS_SENTINEL_MASTER_NAME,
-            "sentinel_kwargs": (
-                {"password": redis_settings.REDIS_SENTINEL_PASSWORD} if redis_settings.REDIS_SENTINEL_PASSWORD else {}
-            ),
+            "sentinel_kwargs": ({"password": password} if password else {}),
         }
         return urls, transport_options
 
@@ -60,7 +58,7 @@ def _build_redis_client() -> redis.Redis:
         sentinel = Sentinel(
             redis_settings.sentinel_hosts(),
             socket_connect_timeout=2,
-            password=redis_settings.REDIS_SENTINEL_PASSWORD,
+            password=redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD,
             ssl=redis_settings.REDIS_USE_TLS,
         )
         return sentinel.master_for(
