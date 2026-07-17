@@ -65,11 +65,14 @@ def _build_broker_url() -> tuple[str, dict]:
 def _build_redis_client() -> redis.Redis:
     """Build a plain redis.Redis client, resolving the current master via Sentinel if enabled."""
     if redis_settings.REDIS_SENTINEL_ENABLED:
+        sentinel_password = redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD
         sentinel = Sentinel(
             redis_settings.sentinel_hosts(),
             socket_connect_timeout=2,
-            password=redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD,
-            ssl=redis_settings.REDIS_USE_TLS,
+            sentinel_kwargs={
+                "password": sentinel_password,
+                "ssl": redis_settings.REDIS_USE_TLS,
+            },
         )
         return sentinel.master_for(
             redis_settings.REDIS_SENTINEL_MASTER_NAME,
