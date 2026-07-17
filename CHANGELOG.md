@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.1](https://github.com/IA-Generative/ocr-api/compare/v0.19.0...v0.19.1) (2026-07-17)
+
+
+### Bug Fixes
+
+* sentinel scheme ([4c4175f](https://github.com/IA-Generative/ocr-api/commit/4c4175fc3e05dd382c9ce0820f2ada92244f0c69))
+
 ## [0.19.0](https://github.com/IA-Generative/ocr-api/compare/v0.18.0...v0.19.0) (2026-07-15)
 
 
