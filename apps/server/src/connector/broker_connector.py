@@ -7,10 +7,20 @@ from redis.exceptions import RedisError
 from redis.sentinel import Sentinel
 
 from src.config import CelerySettings, RedisSettings
+from src.logger import logger
 from src.schemas.health import Health
 
 celery_config = CelerySettings()
 redis_settings = RedisSettings()
+
+logger.info(
+    "Redis password config: REDIS_PASSWORD=%s (len=%d), REDIS_SENTINEL_PASSWORD=%s (len=%d), REDIS_SENTINEL_ENABLED=%s",
+    "set" if redis_settings.REDIS_PASSWORD else "empty",
+    len(redis_settings.REDIS_PASSWORD or ""),
+    "set" if redis_settings.REDIS_SENTINEL_PASSWORD else "empty",
+    len(redis_settings.REDIS_SENTINEL_PASSWORD or ""),
+    redis_settings.REDIS_SENTINEL_ENABLED,
+)
 
 
 def _redis_scheme() -> str:
