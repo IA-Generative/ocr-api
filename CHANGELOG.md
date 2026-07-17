@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.4](https://github.com/IA-Generative/ocr-api/compare/v0.19.3...v0.19.4) (2026-07-17)
+
+
+### Bug Fixes
+
+* **redis:** log redis pwd ([3d3aa65](https://github.com/IA-Generative/ocr-api/commit/3d3aa6518878a2387a25ab8e86e3647a5b9638a9))
+
 ## [0.19.3](https://github.com/IA-Generative/ocr-api/compare/v0.19.2...v0.19.3) (2026-07-17)
 
 
