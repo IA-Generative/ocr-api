@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.2](https://github.com/IA-Generative/ocr-api/compare/v0.19.1...v0.19.2) (2026-07-17)
+
+
+### Bug Fixes
+
+* sentinel password ([84ea469](https://github.com/IA-Generative/ocr-api/commit/84ea469db132c663ea432349c82ac612005f4bb6))
+
 ## [0.19.1](https://github.com/IA-Generative/ocr-api/compare/v0.19.0...v0.19.1) (2026-07-17)
 
 
