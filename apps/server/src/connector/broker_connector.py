@@ -29,7 +29,7 @@ def _build_broker_url() -> tuple[str, dict]:
     at connection time by Celery's own redis-sentinel transport).
     """
     if redis_settings.REDIS_SENTINEL_ENABLED:
-        sentinel_scheme = "sentinels" if redis_settings.REDIS_USE_TLS else "sentinel"
+        sentinel_scheme = "sentinel"
         password = redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD
         auth = f":{quote(password)}@" if password else ""
         urls = ";".join(
@@ -38,13 +38,20 @@ def _build_broker_url() -> tuple[str, dict]:
         )
         transport_options = {
             "master_name": redis_settings.REDIS_SENTINEL_MASTER_NAME,
-            "sentinel_kwargs": {"password": redis_settings.REDIS_SENTINEL_PASSWORD}
-            if redis_settings.REDIS_SENTINEL_PASSWORD
-            else {},
+            "sentinel_kwargs": (
+                {"password": redis_settings.REDIS_SENTINEL_PASSWORD} if redis_settings.REDIS_SENTINEL_PASSWORD else {}
+            ),
         }
         return urls, transport_options
 
-    return _build_redis_url(redis_settings.REDIS_HOST, redis_settings.REDIS_PORT, redis_settings.REDIS_PASSWORD), {}
+    return (
+        _build_redis_url(
+            redis_settings.REDIS_HOST,
+            redis_settings.REDIS_PORT,
+            redis_settings.REDIS_PASSWORD,
+        ),
+        {},
+    )
 
 
 def _build_redis_client() -> redis.Redis:
