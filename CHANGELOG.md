@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.5](https://github.com/IA-Generative/ocr-api/compare/v0.19.4...v0.19.5) (2026-07-17)
+
+
+### Bug Fixes
+
+* kwargs add sentinel ([ef37e1b](https://github.com/IA-Generative/ocr-api/commit/ef37e1bbcd604505663c9d7e663200ef926c7310))
+
 ## [0.19.4](https://github.com/IA-Generative/ocr-api/compare/v0.19.3...v0.19.4) (2026-07-17)
 
 
