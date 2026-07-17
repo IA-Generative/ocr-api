@@ -4,6 +4,7 @@ from fastapi import APIRouter, Response, status
 from src import __name__, __version__
 from src.connector.db_connector import db_client_connector
 from src.connector.broker_connector import redis_client_connector
+from src.logger import logger
 from src.schemas.health import Health
 
 from ..connectors import s3_client_connector
@@ -28,6 +29,7 @@ async def get_health(response: Response):
         if health_dep.status == "unhealthy":
             api_status = "unhealthy"
             response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            logger.error(f"Health check failed for dependency '{health_dep.name}': {health_dep.extras}")
         dependencies.append(health_dep)
 
     return Health(
