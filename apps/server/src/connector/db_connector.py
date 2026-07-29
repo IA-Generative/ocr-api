@@ -12,10 +12,18 @@ from src.schemas.health import Health
 
 SQLALCHEMY_DATABASE_URL = os.environ.get("DATABASE_URL")
 if not SQLALCHEMY_DATABASE_URL:
+    if os.environ.get("ALLOW_SQLITE_FALLBACK", "").lower() not in ("1", "true", "yes"):
+        raise RuntimeError(
+            "DATABASE_URL is not set. Refusing to start with an ephemeral SQLite "
+            "database — task state would be lost on every pod restart. Set "
+            "DATABASE_URL, or set ALLOW_SQLITE_FALLBACK=1 to explicitly opt into "
+            "local SQLite (dev/test only)."
+        )
     SQLALCHEMY_DATABASE_URL = "sqlite:///./example.db"
     logger.warning(
         "DATABASE_URL is not set — falling back to local SQLite "
-        f"({SQLALCHEMY_DATABASE_URL}). This should never happen outside local/test runs."
+        f"({SQLALCHEMY_DATABASE_URL}) because ALLOW_SQLITE_FALLBACK is set. "
+        "This should never happen outside local/test runs."
     )
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
