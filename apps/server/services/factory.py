@@ -22,6 +22,7 @@ from business.forms.workers.pdf_worker import (
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
 from business.paddleocr2.configs.paddle import PaddleSetting
+from src.config.env_compat import env_with_deprecated_fallback
 from src.config.ocr_model import OCRModelSettings
 
 from src.connector import S3Connector, s3_settings
@@ -40,9 +41,11 @@ def load_worker(
     ################# OPENAI CLIENT #################
     openai_client = AsyncOpenAI(
         api_key=os.environ.get("OPENAI_API_KEY", "default-api-key"),
-        base_url=os.environ.get("OPENAI_API_BASE_URL", "https://api.openai.com/v1"),
+        base_url=env_with_deprecated_fallback("OPENAI_API_BASE_URL", "OPENAI_API_BASE", "https://api.openai.com/v1"),
     )
-    vision_model_name = os.environ.get("VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503")
+    vision_model_name = env_with_deprecated_fallback(
+        "OPENAI_VLM_MODEL_NAME", "VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503"
+    )
     #################################################
 
     ################# CACHE CLIENT ##################

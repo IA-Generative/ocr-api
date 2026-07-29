@@ -1,4 +1,15 @@
 import multiprocessing
+import os
+
+# Silences third-party CLI/progress-bar noise (paddle glog, huggingface_hub,
+# tqdm) so pod output stays parseable. Must be set BEFORE the first import of
+# paddle/huggingface_hub/tqdm; setdefault so an explicit chart override wins.
+for _env_key, _env_value in (
+    ("GLOG_minloglevel", "2"),
+    ("HF_HUB_DISABLE_PROGRESS_BARS", "1"),
+    ("TQDM_DISABLE", "1"),
+):
+    os.environ.setdefault(_env_key, _env_value)
 
 # PP-OCRv5 (PaddleX 3.x) uses multiprocessing.Pool internally during predict().
 # On Linux, the default start method "fork" corrupts PaddlePaddle's BLAS/inference
@@ -7,7 +18,6 @@ import multiprocessing
 multiprocessing.set_start_method("spawn", force=True)  # noqa: E402
 
 import json  # noqa: E402
-import os  # noqa: E402
 import traceback  # noqa: E402
 
 import sentry_sdk  # noqa: E402

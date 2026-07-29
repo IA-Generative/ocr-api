@@ -8,7 +8,6 @@ import PenSVG from '@/assets/pictograms/pen.svg'
 import CustomCard from '@/components/CustomCard.vue'
 import CustomTabs from '@/components/CustomTabs.vue'
 import InfoBulle from '@/components/InfoBulle.vue'
-import MediaViewer from '@/components/MediaViewer.vue'
 import OcrViewer from '@/components/OcrViewer.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import SideBar from '@/components/SideBar.vue'
@@ -90,19 +89,17 @@ const uploadAccept = [
 
 const tabs = ref([
   { label: 'OCR', slot: 'tab-0-content' },
-  { label: 'Média', slot: 'tab-2-content' },
   { label: 'Mes tâches', slot: 'tab-1-content' },
 ])
 
-// Seuls OCR et Média ont une route dédiée ; "Mes tâches" reste un onglet local
-// (pas de navigation) pour rester sur la page courante (OCR ou Média).
-const routeForTabIndex: Record<number, string> = { 0: '/ocr', 1: '/media' }
+// Seul OCR a une route dédiée ; "Mes tâches" reste un onglet local
+// (pas de navigation) pour rester sur la page courante.
+const routeForTabIndex: Record<number, string> = { 0: '/ocr' }
 
-const activeTabIndex = ref(route.path === '/media' ? 1 : 0)
+const activeTabIndex = ref(0)
 
 watch(() => route.path, (path) => {
-  if (path === '/media') activeTabIndex.value = 1
-  else if (path === '/ocr') activeTabIndex.value = 0
+  if (path === '/ocr') activeTabIndex.value = 0
 })
 
 watch(activeTabIndex, (index) => {
@@ -171,12 +168,6 @@ onBeforeUnmount(() => {
                 />
               </div>
             </div>
-          </div>
-        </template>
-
-        <template #tab-2-content>
-          <div class="page-container">
-            <MediaViewer />
           </div>
         </template>
 

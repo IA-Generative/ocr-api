@@ -43,12 +43,6 @@ const routes = [
     beforeEnter: authGuard('/ocr'),
   },
   {
-    path: '/media',
-    name: 'Media',
-    component: Home,
-    beforeEnter: authGuard('/media'),
-  },
-  {
     path: '/tasks/:id',
     name: 'TaskDetail',
     component: TaskDetailView,
