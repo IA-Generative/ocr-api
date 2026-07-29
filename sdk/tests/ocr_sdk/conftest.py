@@ -1,7 +1,14 @@
+import os
 import time
 
 import httpx
 import pytest
+
+# test_models.py imports apps/server's src.schemas to diff it against ocr_sdk's
+# schemas — that pulls in src.connector.db_connector at import time, which now
+# refuses to start without a real DATABASE_URL unless explicitly opted out.
+# These tests never touch the DB, so opt into the local SQLite fallback here.
+os.environ.setdefault("ALLOW_SQLITE_FALLBACK", "1")
 
 API_BASE_URL = "http://localhost:5000"
 

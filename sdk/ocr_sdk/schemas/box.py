@@ -17,6 +17,7 @@ class Checkbox(BaseBox):
 
 class Bbox(BaseBox):
     text: str
+    orientation: int | None = None
 
 
 class PredictText(BaseModel):

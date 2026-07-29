@@ -1,10 +1,14 @@
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 
+from ocr_sdk.schemas.audio import AudioTranscriptionResult
 from ocr_sdk.schemas.input import InputForm
 from ocr_sdk.schemas.output import OCRResult
+from ocr_sdk.schemas.video import VideoDescriptionResult
+
+TaskOutput = Union[OCRResult, AudioTranscriptionResult, VideoDescriptionResult]
 
 
 class TaskModel(BaseModel):
@@ -16,7 +20,7 @@ class TaskModel(BaseModel):
     status: str = "queued"
     percentage: Optional[float] = 0.0
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     created_at: int
     updated_at: int
     extras: Optional[Dict[str, Any]] = None
@@ -32,7 +36,7 @@ class TaskForm(BaseModel):
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     content_hash: Optional[str] = None
 
 
@@ -44,7 +48,7 @@ class TaskUpdateForm(BaseModel):
     percentage: Optional[float] = 0.0
     extras: Optional[dict] = None
     input: Optional[InputForm] = None
-    output: Optional[OCRResult] = None
+    output: Optional[TaskOutput] = None
     content_hash: Optional[str] = None
 
 

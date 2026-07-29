@@ -1,4 +1,3 @@
-import os
 import boto3
 from openai import AsyncOpenAI
 from services.base.pipeline import Pipeline
@@ -22,7 +21,7 @@ from business.forms.workers.pdf_worker import (
 from services.base.worker import AnyFileProcessWorker, DefaultFileProcessWorker
 
 from business.paddleocr2.configs.paddle import PaddleSetting
-from src.config.env_compat import env_with_deprecated_fallback
+from src.config.llm import OpenAISettings
 from src.config.ocr_model import OCRModelSettings
 
 from src.connector import S3Connector, s3_settings
@@ -39,18 +38,17 @@ def load_worker(
 ) -> Pipeline:
     # logger.info(f"---- {name} selected ----")
     ################# OPENAI CLIENT #################
+    llm_settings = OpenAISettings()
     openai_client = AsyncOpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY", ""),
-        base_url=env_with_deprecated_fallback("OPENAI_API_BASE_URL", "OPENAI_API_BASE", "https://api.openai.com/v1"),
+        api_key=llm_settings.OPENAI_API_KEY,
+        base_url=llm_settings.OPENAI_API_BASE_URL,
     )
-    vision_model_name = env_with_deprecated_fallback(
-        "OPENAI_VLM_MODEL_NAME", "VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503"
-    )
+    vision_model_name = llm_settings.OPENAI_VLM_MODEL_NAME
     # FormFieldExtractor works on plain OCR text (no image in the prompt), unlike the
     # three models below which all send an image_url. Routing it through a separate,
     # cheaper instruct model avoids paying vision-model latency/cost for a text-only
     # task. Defaults to vision_model_name so unset deployments keep today's behavior.
-    instruct_model_name = os.environ.get("INSTRUCT_MODEL_NAME", vision_model_name)
+    instruct_model_name = llm_settings.instruct_model_name
     #################################################
 
     ################# CACHE CLIENT ##################

@@ -19,7 +19,7 @@ class RegionOfInterest(BaseModel):
 
 class InputForm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    storage_file_path: str
+    storage_file_path: Optional[str] = None
     raw_filename: str
     content_type: str
     ext: str
@@ -27,3 +27,6 @@ class InputForm(BaseModel):
     process_type: str = "DEFAULT"
     group_id: Optional[str] = None
     interest_zone: Optional[list[RegionOfInterest]] = Field(default_factory=list)
+    source_url: Optional[str] = Field(
+        default=None, description="URL externe (ex: YouTube) quand il n'y a pas de fichier stocké"
+    )

@@ -27,6 +27,7 @@ class Page(BaseModel):
     similar_template_ids: List[tuple[str, float]] = Field(
         default_factory=list, description="List of similar template IDs"
     )
+    page_markdown: Optional[str] = Field(default=None, description="Markdown content of the page (PP-StructureV3)")
 
 
 class OCRResult(BaseModel):
