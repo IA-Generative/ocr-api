@@ -44,7 +44,9 @@ class ApiToken(BaseVerifyToken):
         super().__init__(verify_token=True, is_fastapi=True)
         logging.info("Using API Token for verification")
         # TODO: use db or vault to store API keys and get user info associated with the key
-        self.__api_keys = set(os.environ.get("API_KEYS", "default-api-key").split(","))
+        # Fail closed: an unset API_KEYS means no key is accepted, not a guessable default.
+        self.__api_keys = {key.strip() for key in os.environ.get("API_KEYS", "").split(",") if key.strip()}
+        logging.info(f"Loaded {len(self.__api_keys)} API key(s) for verification")
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:

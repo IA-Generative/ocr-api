@@ -40,7 +40,7 @@ def load_worker(
     # logger.info(f"---- {name} selected ----")
     ################# OPENAI CLIENT #################
     openai_client = AsyncOpenAI(
-        api_key=os.environ.get("OPENAI_API_KEY", "default-api-key"),
+        api_key=os.environ.get("OPENAI_API_KEY", ""),
         base_url=env_with_deprecated_fallback("OPENAI_API_BASE_URL", "OPENAI_API_BASE", "https://api.openai.com/v1"),
     )
     vision_model_name = env_with_deprecated_fallback(
