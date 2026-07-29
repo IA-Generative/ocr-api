@@ -31,10 +31,10 @@ Légende : ✅ = obligatoire (le service plante/refuse de démarrer si absente) 
 
 | Variable | Obligatoire | Description | Default | Utilisation |
 |:---|:---:|:---|:---|:---|
-| `OPENAI_API_KEY` | ✅ | Clé API OpenAI pour accéder aux modèles LLM. | - | `OpenAISetting` (`business/llm/config.py`) |
-| `OPENAI_BASE_URL` | ✅ | URL de l'API OpenAI (ex : https://api.openai.com/v1). | - | `OpenAISetting` |
-| `INSTRUCT_MODEL_NAME` | ✅ | Nom du modèle d'instruction utilisé. | - | `OpenAISetting` |
-| `VISION_MODEL` | ❌ | Nom du modèle de vision à utiliser. | `None` | `OpenAISetting` |
+| `OPENAI_API_KEY` | ❌ | Clé API pour le hub LLM (échoue en amont si absente/invalide). | `""` | `OpenAISettings` (`src/config/llm.py`) |
+| `OPENAI_API_BASE_URL` | ✅ | URL de base du hub LLM. Aucun repli sur l'API publique OpenAI : absente → échec explicite au démarrage. Ancien nom déprécié : `OPENAI_API_BASE`. | - | `OpenAISettings` |
+| `OPENAI_VLM_MODEL_NAME` | ❌ | Modèle de vision utilisé par `VisionLLMOCR`, `LLMToForm` et `FormClassification`. Repli sur l'alias générique du hub (`chat`), jamais un nom de moteur concret. Ancien nom déprécié : `VISION_MODEL_NAME`. | `chat` | `OpenAISettings` |
+| `INSTRUCT_MODEL_NAME` | ❌ | Modèle texte utilisé par `FormFieldExtractor` (tâche pure texte, pas d'image). | `OPENAI_VLM_MODEL_NAME` | `OpenAISettings` |
 
 ---
 
@@ -161,10 +161,11 @@ CLASSIFICATION_FOLDER=classification
 DETECTION_BATCH_SIZE=2
 RECOGNITION_BATCH_SIZE=8
 
-# LLM (obligatoire)
+# LLM (OPENAI_API_BASE_URL obligatoire — pas de repli vers l'API publique OpenAI)
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxx
-OPENAI_BASE_URL=https://api.openai.com/v1
-INSTRUCT_MODEL_NAME=gpt-4o-mini
+OPENAI_API_BASE_URL=https://llm-hub.example.com/v1
+OPENAI_VLM_MODEL_NAME=chat
+INSTRUCT_MODEL_NAME=chat
 
 # OCR Model
 MODEL_NAME=paddle
