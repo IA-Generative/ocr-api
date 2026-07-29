@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.10](https://github.com/IA-Generative/ocr-api/compare/v0.19.9...v0.19.10) (2026-07-29)
+
+
+### Bug Fixes
+
+* llm ([24b582f](https://github.com/IA-Generative/ocr-api/commit/24b582f3d05e83f32d0ce93ea14c09f127a18015))
+
 ## [0.19.9](https://github.com/IA-Generative/ocr-api/compare/v0.19.8...v0.19.9) (2026-07-29)
 
 
