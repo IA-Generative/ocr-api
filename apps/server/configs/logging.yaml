@@ -4,13 +4,14 @@ disable_existing_loggers: false
 formatters:
   json:
     class: pythonjsonlogger.json.JsonFormatter
-    format: "%(asctime)s %(levelname)s %(name)s %(pathname)s %(lineno)d %(funcName)s %(message)s"
+    format: "%(asctime)s %(levelname)s %(name)s %(pathname)s %(lineno)d %(funcName)s %(component)s %(message)s"
     rename_fields:
       asctime: "@timestamp"
       levelname: "level"
       pathname: "file_path"
       lineno: "line"
       funcName: "function"
+      component: "component"
       message: "message"
 
   standard:

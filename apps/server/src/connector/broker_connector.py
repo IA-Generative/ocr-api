@@ -19,12 +19,12 @@ logger.info(
     len(redis_settings.REDIS_PASSWORD or ""),
     "set" if redis_settings.REDIS_SENTINEL_PASSWORD else "empty",
     len(redis_settings.REDIS_SENTINEL_PASSWORD or ""),
-    redis_settings.REDIS_SENTINEL_ENABLED,
+    redis_settings.sentinel_enabled,
 )
 
 
 def _redis_scheme() -> str:
-    return "rediss" if redis_settings.REDIS_USE_TLS else "redis"
+    return "rediss" if redis_settings.REDIS_TLS else "redis"
 
 
 def _build_redis_url(host: str, port: int, password: str | None) -> str:
@@ -38,7 +38,7 @@ def _build_broker_url() -> tuple[str, dict]:
     Supports plain redis/rediss, and Sentinel (the actual master is resolved
     at connection time by Celery's own redis-sentinel transport).
     """
-    if redis_settings.REDIS_SENTINEL_ENABLED:
+    if redis_settings.sentinel_enabled:
         sentinel_scheme = "sentinel"
         password = redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD
         auth = f":{quote(password)}@" if password else ""
@@ -64,21 +64,21 @@ def _build_broker_url() -> tuple[str, dict]:
 
 def _build_redis_client() -> redis.Redis:
     """Build a plain redis.Redis client, resolving the current master via Sentinel if enabled."""
-    if redis_settings.REDIS_SENTINEL_ENABLED:
+    if redis_settings.sentinel_enabled:
         sentinel_password = redis_settings.REDIS_SENTINEL_PASSWORD or redis_settings.REDIS_PASSWORD
         sentinel = Sentinel(
             redis_settings.sentinel_hosts(),
             socket_connect_timeout=2,
             sentinel_kwargs={
                 "password": sentinel_password,
-                "ssl": redis_settings.REDIS_USE_TLS,
+                "ssl": redis_settings.REDIS_TLS,
             },
         )
         return sentinel.master_for(
             redis_settings.REDIS_SENTINEL_MASTER_NAME,
             db=redis_settings.REDIS_DB,
             password=redis_settings.REDIS_PASSWORD,
-            ssl=redis_settings.REDIS_USE_TLS,
+            ssl=redis_settings.REDIS_TLS,
             socket_connect_timeout=2,
         )
 
@@ -87,7 +87,7 @@ def _build_redis_client() -> redis.Redis:
         port=redis_settings.REDIS_PORT,
         db=redis_settings.REDIS_DB,
         password=redis_settings.REDIS_PASSWORD,
-        ssl=redis_settings.REDIS_USE_TLS,
+        ssl=redis_settings.REDIS_TLS,
         socket_connect_timeout=2,
     )
 
