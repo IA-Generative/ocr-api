@@ -46,6 +46,11 @@ def load_worker(
     vision_model_name = env_with_deprecated_fallback(
         "OPENAI_VLM_MODEL_NAME", "VISION_MODEL_NAME", "mistral-small-3.1-24b-instruct-2503"
     )
+    # FormFieldExtractor works on plain OCR text (no image in the prompt), unlike the
+    # three models below which all send an image_url. Routing it through a separate,
+    # cheaper instruct model avoids paying vision-model latency/cost for a text-only
+    # task. Defaults to vision_model_name so unset deployments keep today's behavior.
+    instruct_model_name = os.environ.get("INSTRUCT_MODEL_NAME", vision_model_name)
     #################################################
 
     ################# CACHE CLIENT ##################
@@ -61,7 +66,7 @@ def load_worker(
     )
     vlm_visual_ocr_model = VisionLLMOCR(client=openai_client, model_name=vision_model_name)
     form_visual_classification_model = FormClassification(client=openai_client, model_name=vision_model_name)
-    from_text_field_extractor = FormFieldExtractor(client=openai_client, model_name=vision_model_name)
+    from_text_field_extractor = FormFieldExtractor(client=openai_client, model_name=instruct_model_name)
     ##################################################
 
     ################# WORKERS ########################
