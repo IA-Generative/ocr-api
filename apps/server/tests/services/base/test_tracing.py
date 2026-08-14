@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, Mock, patch
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 
 try:
     import langfuse  # noqa: F401
@@ -169,42 +169,140 @@ def test_langfuse_tracing_service_trace_disabled(mock_import):
 
     # Vérifier qu'aucune méthode Langfuse n'a été appelée
     mock_client.create_trace_id.assert_not_called()
-    mock_client.start_generation.assert_not_called()
+    mock_client.start_as_current_observation.assert_not_called()
+
+
+def _langfuse_import_side_effect(mock_client):
+    """Expose un faux module langfuse via builtins.__import__."""
+    mock_module = MagicMock()
+    mock_module.Langfuse.return_value = mock_client
+    mock_module.propagate_attributes.return_value = nullcontext()
+
+    def import_side_effect(name, *args, **kwargs):
+        if name == "langfuse":
+            return mock_module
+        return __import__(name, *args, **kwargs)
+
+    return import_side_effect, mock_module
+
+
+def _enabled_client():
+    """Client Langfuse mocké dont l'observation est un context manager."""
+    mock_client = MagicMock()
+    mock_client.auth_check.return_value = True
+    mock_client.create_trace_id.return_value = "generated_trace_id"
+    return mock_client
 
 
 @patch("builtins.__import__")
 @patch("services.base.tracing.logger")
-def test_langfuse_tracing_service_trace_enabled(mock_logger, mock_import):
-    """Test LangFuseTracingService trace when enabled"""
-    mock_langfuse_class = Mock()
-    mock_client = Mock()
-    mock_client.auth_check.return_value = True
-    mock_trace = Mock()
-    mock_client.create_trace_id.return_value = "generated_trace_id"
-    mock_client.update_current_generation.return_value = mock_trace
-    mock_langfuse_class.return_value = mock_client
+def test_langfuse_tracing_service_opens_and_closes_an_observation(mock_logger, mock_import):
+    """Une tâche tracée doit ouvrir puis fermer une observation Langfuse.
 
-    def import_side_effect(name, *args, **kwargs):
-        if name == "langfuse":
-            mock_module = Mock()
-            mock_module.Langfuse = mock_langfuse_class
-            return mock_module
-        return __import__(name, *args, **kwargs)
-
-    mock_import.side_effect = import_side_effect
+    C'est l'invariant métier : sans observation ouverte, Langfuse n'enregistre rien.
+    """
+    mock_client = _enabled_client()
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+    observation = mock_client.start_as_current_observation.return_value
 
     service = LangFuseTracingService()
-    trace_id = "test_trace"
 
-    with service.trace_context(trace_id, name="test", input={"test": "data"}):
+    with service.trace_context("test_trace", name="test", input={"test": "data"}):
         pass
 
-    # Vérifier que les méthodes Langfuse ont été appelées
-    mock_client.create_trace_id.assert_called_once_with(seed=trace_id)
-    mock_client.update_current_generation.assert_called_once()
-    mock_trace.update.assert_called_once()
-    mock_trace.end.assert_called_once()
+    mock_client.create_trace_id.assert_called_once_with(seed="test_trace")
+    mock_client.start_as_current_observation.assert_called_once()
+    call_kwargs = mock_client.start_as_current_observation.call_args.kwargs
+    assert call_kwargs["trace_context"] == {"trace_id": "generated_trace_id"}
+    assert call_kwargs["name"] == "test"
+    assert call_kwargs["as_type"] == "generation"
+    assert call_kwargs["input"] == {"test": "data"}
+
+    observation.__enter__.assert_called_once()
+    observation.__exit__.assert_called_once()
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_yields_the_observation(mock_logger, mock_import):
+    """_trace_implementation doit exposer l'observation ouverte, pas None."""
+    mock_client = _enabled_client()
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+    observation = mock_client.start_as_current_observation.return_value
+
+    service = LangFuseTracingService()
+
+    with service._trace_implementation("test_trace", name="test") as yielded:
+        assert yielded is observation.__enter__.return_value
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_records_final_metadata(mock_logger, mock_import):
+    """La durée et le statut calculés dans trace_context doivent finir sur l'observation."""
+    mock_client = _enabled_client()
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+    trace = mock_client.start_as_current_observation.return_value.__enter__.return_value
+
+    service = LangFuseTracingService()
+
+    with service.trace_context("test_trace", name="test"):
+        pass
+
+    trace.update.assert_called_once()
+    metadata = trace.update.call_args.kwargs["metadata"]
+    assert metadata["status"] == "completed"
+    assert "duration_seconds" in metadata
     mock_client.flush.assert_called_once()
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_propagates_user_id(mock_logger, mock_import):
+    """user_id est passé par services/main.py : il doit atteindre la trace Langfuse."""
+    mock_client = _enabled_client()
+    mock_import.side_effect, mock_module = _langfuse_import_side_effect(mock_client)
+
+    service = LangFuseTracingService()
+
+    with service.trace_context("test_trace", name="test", user_id="user-42", session_id="session-7"):
+        pass
+
+    mock_module.propagate_attributes.assert_called_once_with(user_id="user-42", session_id="session-7")
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_closes_observation_on_business_error(mock_logger, mock_import):
+    """Une erreur métier remonte, mais l'observation doit quand même être fermée."""
+    mock_client = _enabled_client()
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+    observation = mock_client.start_as_current_observation.return_value
+
+    service = LangFuseTracingService()
+
+    with pytest.raises(ValueError, match="boom"):
+        with service.trace_context("test_trace", name="test"):
+            raise ValueError("boom")
+
+    observation.__exit__.assert_called_once()
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_survives_finalization_error(mock_logger, mock_import):
+    """Un échec côté Langfuse ne doit jamais faire échouer la tâche OCR."""
+    mock_client = _enabled_client()
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+    trace = mock_client.start_as_current_observation.return_value.__enter__.return_value
+    trace.update.side_effect = Exception("Langfuse down")
+
+    service = LangFuseTracingService()
+
+    with service.trace_context("test_trace", name="test"):
+        pass
+
+    assert any("Error finalizing Langfuse trace" in str(call) for call in mock_logger.warning.call_args_list)
 
 
 @patch("services.base.tracing.time")
@@ -324,19 +422,6 @@ def test_process_error_still_propagated():
     with pytest.raises(ValueError, match="Test error"):
         with service.trace_context(trace_id):
             raise ValueError("Test error")
-
-
-def _langfuse_import_side_effect(mock_client):
-    """Expose un faux module langfuse via builtins.__import__."""
-    mock_module = MagicMock()
-    mock_module.Langfuse.return_value = mock_client
-
-    def import_side_effect(name, *args, **kwargs):
-        if name == "langfuse":
-            return mock_module
-        return __import__(name, *args, **kwargs)
-
-    return import_side_effect, mock_module
 
 
 @patch("builtins.__import__")
