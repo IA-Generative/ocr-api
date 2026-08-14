@@ -58,6 +58,9 @@ class LangFuseTracingService(TracingService):
         """
         Initialise le service de traçage Langfuse.
         """
+        self.client = None
+        self.is_langfuse = False
+
         try:
             from langfuse import Langfuse
 
@@ -67,8 +70,14 @@ class LangFuseTracingService(TracingService):
                 logger.warning("Langfuse authentication failed. Tracing will be disabled.")
         except Exception as e:
             logger.warning(f"Failed to initialize Langfuse client: {e}. Tracing will be disabled.")
-            self.client = None
             self.is_langfuse = False
+
+        if not self.is_langfuse and self.client is not None:
+            try:
+                self.client.shutdown()
+            except Exception as e:
+                logger.warning(f"Failed to shut down Langfuse client: {e}")
+            self.client = None
 
     @contextmanager
     def _trace_implementation(self, trace_id: str, **kwargs):

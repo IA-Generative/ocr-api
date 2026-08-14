@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 from contextlib import contextmanager
 
 try:
@@ -118,7 +118,7 @@ def test_langfuse_tracing_service_init_auth_fail(mock_logger, mock_import):
 
     service = LangFuseTracingService()
 
-    assert service.client == mock_client
+    assert service.client is None
     assert service.is_langfuse is False
     mock_client.auth_check.assert_called_once()
     mock_logger.warning.assert_called_once_with("Langfuse authentication failed. Tracing will be disabled.")
@@ -324,6 +324,68 @@ def test_process_error_still_propagated():
     with pytest.raises(ValueError, match="Test error"):
         with service.trace_context(trace_id):
             raise ValueError("Test error")
+
+
+def _langfuse_import_side_effect(mock_client):
+    """Expose un faux module langfuse via builtins.__import__."""
+    mock_module = MagicMock()
+    mock_module.Langfuse.return_value = mock_client
+
+    def import_side_effect(name, *args, **kwargs):
+        if name == "langfuse":
+            return mock_module
+        return __import__(name, *args, **kwargs)
+
+    return import_side_effect, mock_module
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_shuts_down_client_when_auth_returns_false(mock_logger, mock_import):
+    """Le constructeur Langfuse a déjà démarré un exporter OTLP en tâche de fond.
+
+    Sans shutdown explicite, cet exporter continue d'émettre vers Langfuse et chaque
+    batch échoue en 401 — c'est la source des 19k événements Sentry OCR-WORKER-T.
+    """
+    mock_client = MagicMock()
+    mock_client.auth_check.return_value = False
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+
+    service = LangFuseTracingService()
+
+    mock_client.shutdown.assert_called_once()
+    assert service.client is None
+    assert service.is_langfuse is False
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_shuts_down_client_when_auth_raises(mock_logger, mock_import):
+    """auth_check() lève UnauthorizedError sur des identifiants invalides : même exigence."""
+    mock_client = MagicMock()
+    mock_client.auth_check.side_effect = Exception("UnauthorizedError")
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+
+    service = LangFuseTracingService()
+
+    mock_client.shutdown.assert_called_once()
+    assert service.client is None
+    assert service.is_langfuse is False
+
+
+@patch("builtins.__import__")
+@patch("services.base.tracing.logger")
+def test_langfuse_tracing_service_survives_shutdown_error(mock_logger, mock_import):
+    """Un shutdown qui échoue ne doit pas empêcher le worker de démarrer."""
+    mock_client = MagicMock()
+    mock_client.auth_check.return_value = False
+    mock_client.shutdown.side_effect = Exception("shutdown failed")
+    mock_import.side_effect, _ = _langfuse_import_side_effect(mock_client)
+
+    service = LangFuseTracingService()
+
+    assert service.client is None
+    assert service.is_langfuse is False
 
 
 @patch("builtins.__import__")
