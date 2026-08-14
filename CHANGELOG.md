@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.11](https://github.com/IA-Generative/ocr-api/compare/v0.19.10...v0.19.11) (2026-08-14)
+
+
+### Bug Fixes
+
+* **tracing:** open a real langfuse observation for each task ([c2b9637](https://github.com/IA-Generative/ocr-api/commit/c2b9637a0ee7946e2fba9b513cd56b42b7ae560b))
+* **tracing:** shut down the langfuse client when auth fails ([157ba89](https://github.com/IA-Generative/ocr-api/commit/157ba89a4fc5c21794744c92214872d4008665b3))
+
 ## [0.19.10](https://github.com/IA-Generative/ocr-api/compare/v0.19.9...v0.19.10) (2026-07-29)
 
 
