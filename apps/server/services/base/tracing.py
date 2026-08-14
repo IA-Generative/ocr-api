@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 import time
 from datetime import datetime
 from src.logger import logger
@@ -60,11 +60,13 @@ class LangFuseTracingService(TracingService):
         """
         self.client = None
         self.is_langfuse = False
+        self._propagate_attributes = None
 
         try:
-            from langfuse import Langfuse
+            from langfuse import Langfuse, propagate_attributes
 
             self.client = Langfuse()
+            self._propagate_attributes = propagate_attributes
             self.is_langfuse = self.client.auth_check()
             if not self.is_langfuse:
                 logger.warning("Langfuse authentication failed. Tracing will be disabled.")
@@ -78,6 +80,7 @@ class LangFuseTracingService(TracingService):
             except Exception as e:
                 logger.warning(f"Failed to shut down Langfuse client: {e}")
             self.client = None
+            self._propagate_attributes = None
 
     @contextmanager
     def _trace_implementation(self, trace_id: str, **kwargs):
@@ -86,44 +89,49 @@ class LangFuseTracingService(TracingService):
             yield None
             return
 
-        trace = None
+        stack = ExitStack()
         try:
-            # Créer le trace Langfuse
-            trace_id = self.client.create_trace_id(seed=trace_id)
-            trace = self.client.update_current_generation(
-                name=kwargs.get("name", trace_id),
-                input=kwargs.get("input"),
-                metadata=kwargs.get("metadata", {}),
-                model=kwargs.get("model", "ocr-service"),
+            user_id = kwargs.get("user_id")
+            session_id = kwargs.get("session_id")
+            if user_id or session_id:
+                stack.enter_context(self._propagate_attributes(user_id=user_id, session_id=session_id))
+
+            trace = stack.enter_context(
+                self.client.start_as_current_observation(
+                    trace_context={"trace_id": self.client.create_trace_id(seed=trace_id)},
+                    name=kwargs.get("name", trace_id),
+                    as_type="generation",
+                    input=kwargs.get("input"),
+                    metadata=kwargs.get("metadata", {}),
+                    model=kwargs.get("model", "ocr-service"),
+                )
             )
         except Exception as e:
             logger.warning(f"Error creating Langfuse trace: {e}")
+            stack.close()
+            yield None
+            return
 
         try:
             yield trace
         finally:
-            # Mettre à jour le trace avec les données finales
-            if trace and self.client:
-                try:
-                    metadata = kwargs.get("metadata", {})
+            try:
+                metadata = kwargs.get("metadata", {})
+                trace.update(
+                    output=metadata,
+                    metadata=metadata,
+                    usage_details=kwargs.get("usage_details", {}),
+                    cost_details=kwargs.get("cost_details", {}),
+                    model=kwargs.get("model", "ocr-service"),
+                )
+            except Exception as e:
+                logger.warning(f"Error finalizing Langfuse trace: {e}")
 
-                    # Mettre à jour avec les métadonnées finales si possible
-                    trace.update(
-                        output=metadata,
-                        metadata=metadata,
-                        usage_details=kwargs.get("usage_details", {}),
-                        cost_details=kwargs.get("cost_details", {}),
-                        model=kwargs.get("model", "ocr-service"),
-                    )
-
-                    # Ajouter la durée comme score si disponible
-                    trace.end()
-
-                    # Forcer flush
-                    self.client.flush()
-
-                except Exception as e:
-                    logger.warning(f"Error finalizing Langfuse trace: {e}")
+            stack.close()
+            try:
+                self.client.flush()
+            except Exception as e:
+                logger.warning(f"Error flushing Langfuse trace: {e}")
 
 
 def get_tracing_service(tracing_name: str) -> TracingService:
