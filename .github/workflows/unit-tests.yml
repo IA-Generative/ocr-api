@@ -1,101 +1,92 @@
 name: Unit Tests
 
+# Kept local rather than delegated to fabnum-cicd: every target here drives
+# `docker compose` against postgres/redis/minio through the repository's
+# Makefile, on self-hosted runners. `test-docker.yml` runs a command in a
+# single image and cannot stand these up.
+
 on:
   workflow_call:
     inputs:
       PYTHON_VERSION:
         description: Python version used to run tests
-        required: true
+        required: false
         type: string
+        default: "3.13"
   workflow_dispatch:
     inputs:
       PYTHON_VERSION:
         description: Python version used to run tests
-        required: true
+        required: false
         type: string
-        default: 3.X
+        default: "3.13"
 
 jobs:
   run-tests-backend:
+    name: Backend API
     runs-on: actions-runner-controller
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
 
-      - name: Install dependencies and run tests
-        run: |
-          make test-backend-api
+    - name: Install dependencies and run tests
+      run: make test-backend-api
+
+    - name: Tear down containers
+      if: ${{ always() }}
+      # `make test-*` already calls `make down-test` on success; this catches
+      # the failure path, where a self-hosted runner would otherwise keep the
+      # compose stack (and its ports) for the next job.
+      run: make down-test
 
   run-tests-sdk:
+    name: SDK
     runs-on: actions-runner-controller
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
 
-      - name: Install dependencies and run tests
-        run: |
-          make test-sdk
+    - name: Install dependencies and run tests
+      run: make test-sdk
+
+    - name: Tear down containers
+      if: ${{ always() }}
+      run: docker compose -f docker-compose.yaml down -v || true
 
   run-tests-service-paddle:
+    name: PaddleOCR 2.10.0 service
     runs-on: actions-runner-controller
     permissions:
       contents: read
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.x
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ inputs.PYTHON_VERSION }}
 
-      - name: Install dependencies and run tests
-        run: |
-          make test-services-paddleocr2.10.0
-  # run-tests-service-paddle3:
-  #   runs-on: actions-runner-controller
-  #   permissions:
-  #     contents: read
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
+    - name: Install dependencies and run tests
+      run: make test-services-paddleocr2.10.0
 
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: 3.x
+    - name: Tear down containers
+      if: ${{ always() }}
+      run: make down-test
 
-  #     - name: Install dependencies and run tests
-  #       run: |
-  #         make test-services-paddleocr3.1.0
-
-  # run-tests-service-paddle3-gpu:
-  #   runs-on: sdid-app-hp-arc-controller
-  #   permissions:
-  #     contents: read
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: 3.x
-
-  #     - name: Install dependencies and run tests
-  #       run: |
-  #         make test-services-paddleocr3.1.0-gpu
+  # PaddleOCR 3.1.0 (CPU and GPU) targets are commented out in the Makefile;
+  # restore the matching jobs here alongside them.

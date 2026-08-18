@@ -1,37 +1,43 @@
 name: Lint
 
+# Kept local rather than delegated to fabnum-cicd: the shared catalogue has no
+# Python linter, and this one is a thin wrapper around the repository's own
+# `make lint` (ruff check + ruff format --check, via uv).
+
 on:
   workflow_call:
     inputs:
       PYTHON_VERSION:
-        description: Python version used to run tests
-        required: true
+        description: Python version used to run the linter
+        required: false
         type: string
+        default: "3.13"
   workflow_dispatch:
     inputs:
       PYTHON_VERSION:
-        description: Python version used to run tests
-        required: true
+        description: Python version used to run the linter
+        required: false
         type: string
-        default: 3.X
+        default: "3.13"
 
 jobs:
-  tests:
+  lint:
     name: Lint code
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
-
-    - name: Install dependencies
-      run: make install
+        enable-cache: true
+        cache-dependency-glob: apps/server/uv.lock
 
     - name: Run lint
+      # `make lint` bootstraps uv itself when absent, so it is safe whichever
+      # runner this lands on.
       run: make lint
