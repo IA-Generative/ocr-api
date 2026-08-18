@@ -1,8 +1,0 @@
-{
-    "packages": {
-        ".": {
-            "package-name": "ocr",
-            "include-component-in-tag": false
-        }
-    }
-}
