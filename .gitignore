@@ -30,3 +30,5 @@ node_modules/
 !apps/server/tests/data/valid/test.csv
 
 .pnpm-store/
+# Helm chart dependencies (resolved from Chart.lock)
+helm/charts/*.tgz

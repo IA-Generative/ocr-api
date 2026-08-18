@@ -46,3 +46,8 @@ var/
 .installed.cfg
 *.egg
 *node_modules/
+
+# Deployment/CI assets - the api and worker images build from the repository
+# root, so these would otherwise be uploaded into every build context.
+helm/
+ci/
