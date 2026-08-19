@@ -1,6 +1,0 @@
-# Self-hosted runner labels used by this repository, so actionlint stops
-# reporting them as unknown. `actions-runner-controller` is the ARC runner set
-# that has docker available - the compose-driven test targets need it.
-self-hosted-runner:
-  labels:
-  - actions-runner-controller

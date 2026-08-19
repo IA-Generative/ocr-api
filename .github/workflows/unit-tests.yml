@@ -2,8 +2,8 @@ name: Unit Tests
 
 # Kept local rather than delegated to fabnum-cicd: every target here drives
 # `docker compose` against postgres/redis/minio through the repository's
-# Makefile, on self-hosted runners. `test-docker.yml` runs a command in a
-# single image and cannot stand these up.
+# Makefile. `test-docker.yml` runs a command in a single image and cannot
+# stand these up.
 
 on:
   workflow_call:
@@ -24,15 +24,15 @@ on:
 jobs:
   run-tests-backend:
     name: Backend API
-    runs-on: actions-runner-controller
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
 
@@ -42,21 +42,21 @@ jobs:
     - name: Tear down containers
       if: ${{ always() }}
       # `make test-*` already calls `make down-test` on success; this catches
-      # the failure path, where a self-hosted runner would otherwise keep the
-      # compose stack (and its ports) for the next job.
+      # the failure path, so a failed run still exits with the compose stack
+      # stopped instead of leaking it to the runner's teardown.
       run: make down-test
 
   run-tests-sdk:
     name: SDK
-    runs-on: actions-runner-controller
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
 
@@ -69,15 +69,15 @@ jobs:
 
   run-tests-service-paddle:
     name: PaddleOCR 2.10.0 service
-    runs-on: actions-runner-controller
+    runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803  # v6.1.0
 
     - name: Set up Python
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6.3.0
       with:
         python-version: ${{ inputs.PYTHON_VERSION }}
 
