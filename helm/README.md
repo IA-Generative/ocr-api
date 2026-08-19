@@ -557,6 +557,8 @@ A Helm chart to deploy ocr.
 |-----|------|---------|-------------|
 | postgres.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
 | postgres.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| postgres.containerSecurityContext.readOnlyRootFilesystem | bool | `true` |  |
+| postgres.containerSecurityContext.runAsGroup | int | `10001` |  |
 | postgres.containerSecurityContext.runAsNonRoot | bool | `true` |  |
 | postgres.containerSecurityContext.runAsUser | int | `10001` |  |
 | postgres.containerSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
@@ -611,6 +613,7 @@ A Helm chart to deploy ocr.
 |-----|------|---------|-------------|
 | redis.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
 | redis.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| redis.containerSecurityContext.runAsGroup | int | `10001` |  |
 | redis.containerSecurityContext.runAsNonRoot | bool | `true` |  |
 | redis.containerSecurityContext.runAsUser | int | `10001` |  |
 | redis.containerSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
@@ -690,6 +693,8 @@ A Helm chart to deploy ocr.
 |-----|------|---------|-------------|
 | rustfs.containerSecurityContext.allowPrivilegeEscalation | bool | `false` |  |
 | rustfs.containerSecurityContext.capabilities.drop[0] | string | `"ALL"` |  |
+| rustfs.containerSecurityContext.readOnlyRootFilesystem | bool | `true` |  |
+| rustfs.containerSecurityContext.runAsGroup | int | `10001` |  |
 | rustfs.containerSecurityContext.runAsNonRoot | bool | `true` |  |
 | rustfs.containerSecurityContext.runAsUser | int | `10001` |  |
 | rustfs.containerSecurityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
