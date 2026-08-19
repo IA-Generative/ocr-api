@@ -2890,9 +2890,15 @@ postgres:
     fsGroup: 10001
     seccompProfile:
       type: "RuntimeDefault"
+  # The subchart's own statefulset already mounts unconditional emptyDirs for `run`
+  # (`postgres.runDir`, its unix socket) and `/tmp` alongside the PVC-backed data dir, so
+  # `readOnlyRootFilesystem: true` needs nothing extra from us here - unlike the frontend chart's
+  # nginx container, where those emptyDirs had to be added (see `frontend.extraVolumes` above).
   containerSecurityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
     runAsNonRoot: true
@@ -3008,8 +3014,10 @@ redis:
     fsGroup: 10001
     seccompProfile:
       type: "RuntimeDefault"
+  # readOnlyRootFilesystem is left unset here: the subchart's own default is already `true`.
   containerSecurityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
@@ -3129,9 +3137,13 @@ rustfs:
     fsGroup: 10001
     seccompProfile:
       type: "RuntimeDefault"
+  # The subchart's own deployment already mounts an unconditional `/tmp` emptyDir alongside the
+  # PVC-backed data/logs dirs, so `readOnlyRootFilesystem: true` needs nothing extra from us here.
   containerSecurityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
     capabilities:
       drop: ["ALL"]
     runAsNonRoot: true
