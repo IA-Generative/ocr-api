@@ -1,0 +1,16 @@
+# Gitleaks' built-in `kubernetes-secret-yaml` rule matches on YAML shape (a
+# `my-secret:`-like key holding a block scalar with `kind: Secret` + `data:`),
+# not on actual base64 secret content - it never inspects the block's actual
+# values. It fires on helm/test-values.yaml's `extraObjects.my-secret`
+# fixture, which exists solely to exercise the chart's `extraObjects`
+# templating path during `ct install`/`ct lint`; its "password" is the
+# literal string "secretpassword" piped through `b64enc`, not real secret
+# material - confirmed by re-running gitleaks unredacted locally, where the
+# match highlights only the `my-secret: | / apiVersion` shape, never the
+# password line itself.
+#
+# Fingerprint is commit-pinned (gitleaks' `git` mode ties it to the commit
+# that introduced the exact line): a future edit to this fixture's line
+# number or its surrounding lines will need a refreshed fingerprint from that
+# new commit's scan output, since the old one no longer matches.
+68a622b61e0835d558d453e8a69f52ff43f5f8a6:helm/test-values.yaml:kubernetes-secret-yaml:457
