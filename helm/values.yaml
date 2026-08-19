@@ -406,10 +406,11 @@ api:
   # @section -- Api
   args: []
   # -- Container-level security context. Rendered via `toYaml`, so any other
-  # `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though
+  # `SecurityContext` field (e.g. `procMount`) can be added here too, even though
   # not pre-populated below.
   securityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
@@ -1169,13 +1170,19 @@ frontend:
   # not pre-populated below.
   securityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
     runAsNonRoot: true
     seccompProfile:
       type: "RuntimeDefault"
-    readOnlyRootFilesystem: false  # true
+    # nginx-unprivileged still needs two writable paths under a read-only root: `/run` for its pid
+    # file (`pid /run/nginx.pid;` in the image's nginx.conf) and `/var/cache/nginx` for request
+    # buffering temp files. Both are provided as `emptyDir`s in `extraVolumes`/`extraVolumeMounts`
+    # below - not `volumes`/`volumeMounts`, which real deployments already use for the optional
+    # `viteEnv` config.js mount (see mirai-values) and would otherwise silently replace these.
+    readOnlyRootFilesystem: true
   # -- Frontend runtime config, rendered as `window.KEY = value` assignments into the
   # `templates/frontend/vite-config.yaml` ConfigMap (mounted as `config.js` - see
   # `volumes`/`volumeMounts` on this component). Since the built frontend bundle is static (Vite
@@ -1345,9 +1352,17 @@ frontend:
   #   image:
   #     reference: quay.io/crio/artifact:v2
   #     pullPolicy: IfNotPresent
-  # -- Additional volumes to add, concatenated with `volumes` above at render time.
+  # -- Additional volumes to add, concatenated with `volumes` above at render time. Defaults to the
+  # two `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this
+  # list rather than overriding it outright, or these will need restating.
   # @section -- Frontend
-  extraVolumes: []
+  extraVolumes:
+  - name: nginx-run
+    emptyDir:
+      sizeLimit: 10Mi
+  - name: nginx-cache
+    emptyDir:
+      sizeLimit: 100Mi
   # -- List of volumeClaims to add.
   # @section -- Frontend
   volumeClaims: []
@@ -1378,8 +1393,13 @@ frontend:
   # - name: storage-volume
   #   mountPath: /app/storage
   # -- Additional volumeMounts to add, concatenated with `volumeMounts` above at render time.
+  # Defaults to the mounts matching `extraVolumes` above.
   # @section -- Frontend
-  extraVolumeMounts: []
+  extraVolumeMounts:
+  - name: nginx-run
+    mountPath: /run
+  - name: nginx-cache
+    mountPath: /var/cache/nginx
   service:
     # -- Whether or not to create a Service for the app. Set to `false` for components that
     # don't accept traffic (e.g. a queue consumer with no `containerPort`).
@@ -1879,10 +1899,11 @@ worker:
   # @section -- Worker
   args: []
   # -- Container-level security context. Rendered via `toYaml`, so any other
-  # `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though
+  # `SecurityContext` field (e.g. `procMount`) can be added here too, even though
   # not pre-populated below.
   securityContext:
     runAsUser: 10001
+    runAsGroup: 10001
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
