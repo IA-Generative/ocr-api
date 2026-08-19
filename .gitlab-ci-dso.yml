@@ -1,9 +1,9 @@
 include:
   - project: $CATALOG_PATH
-    file: vault-ci.yml
-    ref: main
-  - project: $CATALOG_PATH
-    file: kaniko-ci.yml
+    file:
+      - vault-ci.yml
+      - kaniko-ci.yml
+      - helm-ci.yml
     ref: main
 
 default:
@@ -12,10 +12,16 @@ default:
 variables:
   TAG: "${CI_COMMIT_REF_SLUG}"
   REGISTRY_URL: "${REGISTRY_HOST}/${PROJECT_PATH}"
+  # The chart lives at the repository root (helm/Chart.yaml), not nested under a
+  # charts/ parent - so CHARTS_DIR is "." (one level up from the chart itself),
+  # same convention as CHARTS_DIR: ./charts pointing at charts/<name>/Chart.yaml
+  # elsewhere.
+  CHARTS_DIR: .
 
 stages:
   - read-secret
   - docker-build
+  - helm-package
 
 read_secret:
   stage: read-secret
@@ -99,3 +105,13 @@ docker-build-ocr-frontend:
       fi
       export IMAGE_NAMES="$TAGS"
       echo "Building with tags: $IMAGE_NAMES"
+
+helm-package-push:
+  stage: helm-package
+  extends:
+    - .helm:build-push
+  only:
+    - tags
+    - main
+    - dev
+  image: alpine/helm:4.1.3
