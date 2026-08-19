@@ -11,6 +11,8 @@
 #
 # Fingerprint is commit-pinned (gitleaks' `git` mode ties it to the commit
 # that introduced the exact line): a future edit to this fixture's line
-# number or its surrounding lines will need a refreshed fingerprint from that
-# new commit's scan output, since the old one no longer matches.
-68a622b61e0835d558d453e8a69f52ff43f5f8a6:helm/test-values.yaml:kubernetes-secret-yaml:457
+# number or its surrounding lines - or a history rewrite that changes the
+# introducing commit's SHA, as happened once already here - will need a
+# refreshed fingerprint from that new commit's scan output, since the old one
+# no longer matches.
+b5241ba7bea24d3f524700a8792ad1242aafcbc1:helm/test-values.yaml:kubernetes-secret-yaml:457
