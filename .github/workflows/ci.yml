@@ -149,6 +149,12 @@ jobs:
     permissions:
       pull-requests: read
       contents: read
+    with:
+      # Without this, the reusable workflow ignores the repository's own config and
+      # generates an equivalent-but-separate one from its own input defaults - harmless
+      # today since both resolve to the same rules, but a future edit to this file would
+      # silently stop affecting CI.
+      CONFIG_FILE: commitlint.config.js
 
   lint-python:
     uses: ./.github/workflows/lint.yml
