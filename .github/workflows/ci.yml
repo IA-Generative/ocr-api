@@ -183,7 +183,7 @@ jobs:
       pull-requests: write
     with:
       PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
-      GITHUB_SECURITY_TAB: false
+      GITHUB_SECURITY_TAB: true
 
   scan-trivy-conf:
     uses: dnum-mi/fabnum-cicd/.github/workflows/scan-trivy.yml@v0
@@ -197,7 +197,12 @@ jobs:
     with:
       PATH: ./
       PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
-      GITHUB_SECURITY_TAB: false
+      # sarif, not the table default: only sarif uploads to the Security tab below.
+      # The human-readable table moves from the job summary to that dashboard instead.
+      FORMAT: sarif
+      GITHUB_SECURITY_TAB: true
+      CATEGORY: trivy-config
+      TRIVYIGNORES: .trivyignore.yaml
 
   build-docker:
     uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@v0
@@ -256,7 +261,14 @@ jobs:
     with:
       IMAGE: ${{ needs.expose-vars.outputs.IMAGE_BASE }}/${{ matrix.service.name }}:${{ needs.expose-vars.outputs.IMAGE_TAG }}
       PR_NUMBER: ${{ github.event.pull_request.number || github.event.number || '' }}
-      GITHUB_SECURITY_TAB: false
+      # sarif, not the table default: only sarif uploads to the Security tab below.
+      # The human-readable table moves from the job summary to that dashboard instead.
+      FORMAT: sarif
+      GITHUB_SECURITY_TAB: true
+      # One matrix leg per service, all uploading from the same repository - a
+      # shared category would let each upload replace the previous one, leaving
+      # only whichever image finished last.
+      CATEGORY: trivy-image-${{ matrix.service.name }}
       # The worker image carries the whole paddle/torch wheel set; Trivy's 5m
       # default expires while it is still unpacking a single large binary, and
       # that failure is total - the scan aborts and writes no report at all.
