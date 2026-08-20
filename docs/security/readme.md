@@ -1,5 +1,7 @@
 # Sécurité & Configuration Keycloak
 
+> Voir aussi : [Scan de sécurité Strix (CI/CD)](strix.md)
+
 Pour que l’authentification via Keycloak fonctionne correctement avec OpenID Connect, **toutes les valeurs de configuration Keycloak doivent être définies dans le Vault** (ou dans vos variables d’environnement).
 
 ## Variables requises
