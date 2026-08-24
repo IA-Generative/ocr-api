@@ -7,15 +7,15 @@ requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.11.5",
-    "pydantic-settings>=2.10.1",
+    "pydantic-settings>=2.15.0",
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "boto3>=1.42.49",
     "celery>=5.6.2",
     "pytest>=8.3.5",
