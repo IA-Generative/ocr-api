@@ -21,6 +21,9 @@ env:
   LATEST_TAG: ${{ github.ref_name == 'main' }}
   USE_QEMU: false
   TAG_MAJOR_AND_MINOR: false
+  # Matches ci.yml: this repository has no use for a per-commit SHA tag on
+  # any of its images, release builds included.
+  TAG_SHORT_SHA: false
   # Automerge needs a GitHub App or a PAT; this repository authenticates with
   # GITHUB_TOKEN alone, so release-please's pull request is merged by hand.
   # Turning either of these on without a credential fails the job by design.
@@ -52,6 +55,7 @@ jobs:
       LATEST_TAG: ${{ env.LATEST_TAG }}
       USE_QEMU: ${{ env.USE_QEMU }}
       TAG_MAJOR_AND_MINOR: ${{ env.TAG_MAJOR_AND_MINOR }}
+      TAG_SHORT_SHA: ${{ env.TAG_SHORT_SHA }}
       AUTOMERGE_PRERELEASE: ${{ env.AUTOMERGE_PRERELEASE }}
       AUTOMERGE_RELEASE: ${{ env.AUTOMERGE_RELEASE }}
       PRERELEASE_BRANCH: ${{ env.PRERELEASE_BRANCH }}
@@ -139,6 +143,7 @@ jobs:
       LATEST_TAG: ${{ needs.expose-vars.outputs.LATEST_TAG == 'true' }}
       USE_QEMU: ${{ needs.expose-vars.outputs.USE_QEMU == 'true' }}
       TAG_MAJOR_AND_MINOR: ${{ needs.expose-vars.outputs.TAG_MAJOR_AND_MINOR == 'true' && needs.expose-vars.outputs.LATEST_TAG == 'true' }}
+      TAG_SHORT_SHA: ${{ needs.expose-vars.outputs.TAG_SHORT_SHA == 'true' }}
       CACHE: true
       CACHE_MODE: min
       BUILD_ARGS: |

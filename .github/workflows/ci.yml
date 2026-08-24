@@ -26,6 +26,12 @@ env:
   # Only amd64 is built, and the runners are amd64 - emulation would just make
   # the paddle layers slower for nothing.
   USE_QEMU: false
+  # A pull request's IMAGE_TAG (pr-<N>) stays constant across every push, so a
+  # commit that leaves this image's content unchanged reuses the previous
+  # digest - the short-sha tag would then just pile another tag onto that same
+  # still-live version instead of marking anything new. Nothing here reads a
+  # PR build by its commit SHA, so there is nothing worth tagging it with.
+  TAG_SHORT_SHA: false
   CT_CONF_PATH: ci/configs/ct.yaml
 
 jobs:
@@ -110,6 +116,7 @@ jobs:
       BUILD_ARM64: ${{ env.BUILD_ARM64 }}
       LATEST_TAG: ${{ env.LATEST_TAG }}
       USE_QEMU: ${{ env.USE_QEMU }}
+      TAG_SHORT_SHA: ${{ env.TAG_SHORT_SHA }}
       CT_CONF_PATH: ${{ env.CT_CONF_PATH }}
       IMAGE_BASE: ${{ steps.image.outputs.IMAGE_BASE }}
       IMAGE_TAG: ${{ steps.image.outputs.IMAGE_TAG }}
@@ -234,6 +241,7 @@ jobs:
       BUILD_ARM64: ${{ needs.expose-vars.outputs.BUILD_ARM64 == 'true' }}
       LATEST_TAG: ${{ needs.expose-vars.outputs.LATEST_TAG == 'true' }}
       USE_QEMU: ${{ needs.expose-vars.outputs.USE_QEMU == 'true' }}
+      TAG_SHORT_SHA: ${{ needs.expose-vars.outputs.TAG_SHORT_SHA == 'true' }}
       CACHE: true
       # 'max' would export every intermediate layer of three images, and the
       # paddle stages alone overrun the repository's 10 GB cache budget - past
