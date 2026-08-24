@@ -125,11 +125,16 @@ jobs:
       run: |
         set -euo pipefail
 
+        # Hardcoded 'ocr', not the repository name: `ocr-api/api` reads as a
+        # stutter next to `ocr-api/worker` and `ocr-api/frontend`. `ocr` is
+        # also the chart's own name (Chart.yaml), so every image lines up with
+        # it - ghcr.io/<owner>/ocr/api, .../ocr/worker, .../ocr/frontend.
+        #
         # `IA-Generative` is mixed case and OCI registries reject uppercase
         # references. build-docker.yml normalizes its own IMAGE_NAME, but
         # scan-trivy.yml and clean-images.yml take the string as given - so the
         # lowercase form is computed once here and shared by every consumer.
-        echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+        echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ocr" >> "$GITHUB_OUTPUT"
 
         # IMAGE_TAG is a required input of build-docker.yml. A pull request
         # names it after its number; a manual dispatch has no pull request, so

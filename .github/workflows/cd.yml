@@ -72,9 +72,10 @@ jobs:
     - name: Compute image base
       id: image-base
       shell: bash
-      # `IA-Generative` is mixed case and OCI registries reject uppercase
-      # references. See the matching note in ci.yml.
-      run: echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      # Hardcoded 'ocr' rather than the repository name - see the matching
+      # note in ci.yml. `IA-Generative` is mixed case and OCI registries
+      # reject uppercase references.
+      run: echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ocr" >> "$GITHUB_OUTPUT"
 
   release:
     uses: dnum-mi/fabnum-cicd/.github/workflows/release-app.yml@v0

@@ -41,9 +41,11 @@ jobs:
     - name: Compute image base
       id: image-base
       shell: bash
-      # clean-images.yml takes IMAGE as given, and `IA-Generative` is mixed
-      # case - OCI registries reject uppercase references.
-      run: echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      # Hardcoded 'ocr' rather than the repository name - see the matching
+      # note in ci.yml. clean-images.yml takes IMAGE as given, and
+      # `IA-Generative` is mixed case - OCI registries reject uppercase
+      # references.
+      run: echo "IMAGE_BASE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ocr" >> "$GITHUB_OUTPUT"
 
     - name: Collect closed pull requests within the lookback window
       id: list
