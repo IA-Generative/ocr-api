@@ -23,12 +23,23 @@ ENV HOST=0.0.0.0
 ENV PYTHONPATH=/app/
 ENV PORT=5000
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV HOME=/app
+
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD python3 -c "import urllib.request as u; u.urlopen('http://127.0.0.1:${PORT}/api/health', timeout=2)" || exit 1
+
+RUN groupadd --gid 10001 appuser \
+    && useradd --uid 10001 --gid appuser --no-create-home --home-dir /app --shell /usr/sbin/nologin appuser \
+    && mkdir -p /app/.cache/torchinductor \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
 CMD ["./scripts/run.sh"]
 
 FROM builder AS test
 WORKDIR /app
 RUN uv sync --no-cache --group test --group ocr-backend --group migration
-COPY apps/server/tests tests
+COPY --chown=appuser:appuser apps/server/tests tests
 CMD ["./scripts/run.sh"]
