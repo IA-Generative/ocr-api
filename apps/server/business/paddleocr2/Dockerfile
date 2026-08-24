@@ -85,6 +85,14 @@ COPY apps/server/services /app/services/
 COPY apps/server/configs /app/configs/
 
 ENV PATH=$PATH:/app/.venv/bin/
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV HOME=/app
+
+RUN groupadd --gid 10001 appuser \
+  && useradd --uid 10001 --gid appuser --no-create-home --home-dir /app --shell /usr/sbin/nologin appuser \
+  && chown -R appuser:appuser /app
+
+USER appuser
 
 # No HTTP server here (Celery worker, started via `celery -A services.main worker ...` in
 # docker-compose/helm's command override) - `inspect ping` is Celery's own liveness check
