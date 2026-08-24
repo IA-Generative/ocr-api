@@ -99,10 +99,22 @@ jobs:
       PRERELEASE_CONFIG_FILE: ${{ needs.expose-vars.outputs.PRERELEASE_CONFIG_FILE }}
       PRERELEASE_MANIFEST_FILE: ${{ needs.expose-vars.outputs.PRERELEASE_MANIFEST_FILE }}
       ENABLE_PRERELEASE: ${{ needs.expose-vars.outputs.ENABLE_PRERELEASE == 'true' }}
-    # No `secrets:` block: without an App or PAT the workflow falls back to
-    # GITHUB_TOKEN. The trade-off is that the release pull request does not
-    # trigger `pull_request` workflows, so it lands without CI and is merged
-    # manually. Wire APP_CLIENT_ID/APP_PRIVATE_KEY here to get both back.
+    # App token: release-please then pushes its release pull request as the
+    # App instead of GITHUB_TOKEN, so that pull request finally triggers
+    # ci.yml's `pull_request` checks instead of landing with no CI - it is
+    # still merged by hand (AUTOMERGE_* above stay false; this only changes
+    # who authenticates the push, not whether anything auto-merges). Same for
+    # the manifest-sync step on dev: it can now push an amended commit that
+    # re-triggers checks too, instead of the GITHUB_TOKEN path's checks never
+    # re-running on that commit.
+    # No loop risk from this, unlike bump-chart: every push this credential
+    # makes here targets release-please's own pull request branch, never
+    # dev/main directly - see the checkout step in release-app.yml, which
+    # stays on GITHUB_TOKEN regardless and is what actually pushes tags and
+    # cuts the release.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
   build-docker:
     uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@v0
@@ -171,8 +183,18 @@ jobs:
       # cycle vs release selected by the shape of APP_VERSION. The chart keeps
       # its own version line - a 0.19.12 app can ship as chart 0.1.1.
       APP_VERSION: ${{ needs.release.outputs.version }}
-    # Automerge is off (see AUTOMERGE_* above) and local mode opens no pull
-    # request, so no credential is needed here either.
+    # dev/staging/preprod's and main's branch rulesets both require a pull
+    # request for every push, with no exception for GITHUB_TOKEN - only a
+    # GitHub App can be named in a bypass list. Supplying these secrets
+    # switches this push (and only this push - see update-helm-chart.yml)
+    # from GITHUB_TOKEN to the App token, which is what lets it clear that
+    # rule on both. That trade also lifts GITHUB_TOKEN's usual guarantee that
+    # this push cannot retrigger this very pipeline; safe here because a
+    # re-triggered run finds nothing new to release (release-please is
+    # idempotent) and stops at `release`.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
   sync-cpin:
     name: Sync CPiN after release
@@ -181,16 +203,11 @@ jobs:
     - release
     - bump-chart
     if: ${{ needs.release.outputs.release-created == 'true' }}
-    # dso-auto-sync.yaml already syncs every push, but it races this pipeline:
-    # it fires on the ORIGINAL push, in parallel with this workflow, before
-    # bump-chart's commit exists - so CPiN packages the chart at its pre-bump
-    # version. bump-chart's own push cannot correct that itself: it goes out on
-    # GITHUB_TOKEN (see the matching note on that job), and GitHub never lets a
-    # GITHUB_TOKEN-authenticated push trigger another workflow run, including
-    # dso-auto-sync.yaml. Without this job, CPiN's chart stays one release
-    # behind until some unrelated future push to this branch happens to sync
-    # again. This job closes that gap by syncing explicitly, once the bump is
-    # known to have landed.
+    # The only automatic CPiN sync left: dso-auto-sync.yaml is manual-only
+    # (see that file) precisely because this job already covers every push
+    # that matters - and does so correctly, since it only fires once
+    # bump-chart has actually landed the version bump, instead of racing it
+    # the way a plain per-push trigger would.
     permissions: {}
     with:
       GITLAB_URL: ${{ vars.GITLAB_URL }}
