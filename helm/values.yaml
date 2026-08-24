@@ -2026,6 +2026,12 @@ worker:
     TQDM_DISABLE: "1"
     GLOG_minloglevel: "2"
     SEND_DEFAULT_PII: "False"
+    # Read by `PaddleSetting.DEVICE` (business/paddleocr2/configs/paddle.py) to select the
+    # inference device; defaults to "cpu" when unset. To actually run on GPU, the image itself
+    # must also be built with `--build-arg PADDLE_DEVICE=gpu` (apps/server/business/paddleocr2/
+    # Dockerfile) so the CUDA-enabled PaddlePaddle wheel is installed - then set this to "gpu"
+    # and request `nvidia.com/gpu` below.
+    # DEVICE: "gpu"
     # OpenAI-compatible client used by the worker for vision/LLM extraction
     # (`services/factory.py::load_worker`, `origin/main`). All three have safe fallbacks baked into
     # the app itself (`os.environ.get(..., default)`), so leaving them as-is does NOT crash the
