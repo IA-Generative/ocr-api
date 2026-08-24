@@ -16,3 +16,6 @@
 # refreshed fingerprint from that new commit's scan output, since the old one
 # no longer matches.
 b5241ba7bea24d3f524700a8792ad1242aafcbc1:helm/test-values.yaml:kubernetes-secret-yaml:457
+# Same fixture, refingerprinted after 904228f "chore(helm): move the ocr
+# chart into the repository" reintroduced the line under a new commit SHA.
+904228f9624a6c0e650d04d1950a04f6754cce99:helm/test-values.yaml:kubernetes-secret-yaml:457
