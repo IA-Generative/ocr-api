@@ -29,6 +29,18 @@
 - code clean
 - :art: change minio vars
 
+## [0.19.12-rc](https://github.com/IA-Generative/ocr-api/compare/v0.19.11...v0.19.12-rc) (2026-08-24)
+
+
+### Bug Fixes
+
+* gitleak disbale false postif ([a9b9984](https://github.com/IA-Generative/ocr-api/commit/a9b99842ed5ba4d615e30284f14367c9a7731abf))
+
+
+### Performance Improvements
+
+* update with latest package ([d0c1084](https://github.com/IA-Generative/ocr-api/commit/d0c1084ac0213272bcf4b1d2377fbeb9264972dc))
+
 ## [0.19.11](https://github.com/IA-Generative/ocr-api/compare/v0.19.10...v0.19.11) (2026-08-14)
 
 
