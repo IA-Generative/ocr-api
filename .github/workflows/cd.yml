@@ -174,6 +174,33 @@ jobs:
     # Automerge is off (see AUTOMERGE_* above) and local mode opens no pull
     # request, so no credential is needed here either.
 
+  sync-cpin:
+    name: Sync CPiN after release
+    uses: dnum-mi/fabnum-cicd/.github/workflows/sync-cpin.yml@v0
+    needs:
+    - release
+    - bump-chart
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    # dso-auto-sync.yaml already syncs every push, but it races this pipeline:
+    # it fires on the ORIGINAL push, in parallel with this workflow, before
+    # bump-chart's commit exists - so CPiN packages the chart at its pre-bump
+    # version. bump-chart's own push cannot correct that itself: it goes out on
+    # GITHUB_TOKEN (see the matching note on that job), and GitHub never lets a
+    # GITHUB_TOKEN-authenticated push trigger another workflow run, including
+    # dso-auto-sync.yaml. Without this job, CPiN's chart stays one release
+    # behind until some unrelated future push to this branch happens to sync
+    # again. This job closes that gap by syncing explicitly, once the bump is
+    # known to have landed.
+    permissions: {}
+    with:
+      GITLAB_URL: ${{ vars.GITLAB_URL }}
+      GIT_MIRROR_PROJECT_ID: ${{ vars.GITLAB_MIRROR_ID }}
+      REPOSITORY_NAME: ${{ vars.GILTAB_PROJECT_NAME }}
+      BRANCH_TO_SYNC: ${{ github.ref_name }}
+      SYNC_ALL: false
+    secrets:
+      GIT_MIRROR_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
+
   release-chart:
     uses: dnum-mi/fabnum-cicd/.github/workflows/release-helm-local.yml@v0
     needs:
