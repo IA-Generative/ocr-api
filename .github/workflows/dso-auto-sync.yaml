@@ -1,18 +1,22 @@
 name: Trigger dso sync
 
-# Mirrors the pushed branch to the CPiN GitLab instance, which is what actually
-# builds the Harbor images the clusters run (`harbor.../mirai/ocr-api` and
-# friends, tagged with the branch name: dev, staging, preprod, main).
+# Mirrors a branch to the CPiN GitLab instance, which is what actually builds
+# the Harbor images and packages the chart the clusters deploy.
 #
-# Deliberately triggered on every branch rather than from cd.yml: the deployed
-# tags are branch names, not release versions, so a push to `staging` has to
-# reach GitLab whether or not it produced a release. The ghcr.io images built
-# by cd.yml are the public, version-tagged mirror of the same code.
-
+# Manual only. Every environment pins its deployment to a specific chart
+# version (see the per-env values files in mirai-values) rather than tracking
+# whatever a branch's HEAD currently is, and .gitlab-ci-dso.yml's own
+# `helm-package-push` job already runs `only: tags, main, dev` - so the only
+# push that ever needs to reach GitLab automatically is one that just produced
+# something deployable, which is exactly what cd.yml's own `sync-cpin` job
+# already covers, at the correct post-bump commit, with no race to get wrong.
+# A push-based trigger here would just be a second, racier way to do the same
+# thing for releases, plus pointless GitLab pipelines for every push that
+# is not one (a workflow-only change, a hotfix, docs).
+#
+# Kept as a manual escape hatch for whatever `sync-cpin` cannot cover on its
+# own - re-running a sync that failed, or forcing one outside a release.
 on:
-  push:
-    branches:
-    - '**'
   workflow_dispatch:
 
 # One pipeline per branch on the GitLab side; a second trigger for the same
