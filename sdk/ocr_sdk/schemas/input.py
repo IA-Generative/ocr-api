@@ -28,5 +28,6 @@ class InputForm(BaseModel):
     group_id: Optional[str] = None
     interest_zone: Optional[list[RegionOfInterest]] = Field(default_factory=list)
     source_url: Optional[str] = Field(
-        default=None, description="URL externe (ex: YouTube) quand il n'y a pas de fichier stocké"
+        default=None,
+        description="URL externe (ex: YouTube) quand il n'y a pas de fichier stocké",
     )
