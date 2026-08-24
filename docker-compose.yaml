@@ -68,6 +68,10 @@ services:
     build:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
+      # Uncomment to build a GPU-enabled image; also set DEVICE=gpu below and give the
+      # container GPU access (e.g. `runtime: nvidia` / `deploy.resources.reservations.devices`).
+      # args:
+      #   PADDLE_DEVICE: gpu
     depends_on:
       - redis
       - minio
@@ -79,6 +83,7 @@ services:
       - CELERY_APP_NAME=default
       - SERVICE_NAME=ocr_worker
       - ENVIRONMENT=development
+      # - DEVICE=gpu # requires the image above to be built with PADDLE_DEVICE=gpu
     env_file:
       - .env
 
