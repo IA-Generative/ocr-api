@@ -14,7 +14,9 @@ class Segmentation(BaseModel):
 class LanguageTranscript(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     language: str = Field(description="Code langue (ex: fr, en, ja)")
-    is_original: bool = Field(default=False, description="Langue parlée d'origine de la vidéo")
+    is_original: bool = Field(
+        default=False, description="Langue parlée d'origine de la vidéo"
+    )
     segmentations: list[Segmentation] = Field(default_factory=list)
     text: str = ""
 
@@ -27,10 +29,12 @@ class AudioTranscriptionResult(BaseModel):
     updated_at: int
     version: str
     segmentations: list[Segmentation] = Field(
-        default_factory=list, description="Segments de la transcription retenue par défaut"
+        default_factory=list,
+        description="Segments de la transcription retenue par défaut",
     )
     transcription_text: str
     transcripts: list[LanguageTranscript] = Field(
-        default_factory=list, description="Toutes les langues de sous-titres récupérées (dont la langue originale)"
+        default_factory=list,
+        description="Toutes les langues de sous-titres récupérées (dont la langue originale)",
     )
     extras: Optional[dict] = None

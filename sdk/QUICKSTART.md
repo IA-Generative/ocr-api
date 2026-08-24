@@ -57,11 +57,11 @@ with SyncOCRClient("http://localhost:5000") as client:
     # Check health
     health = client.get_health()
     print(f"API is {health.status}")
-    
+
     # Process a document
     task = client.create_job("document.pdf")
     result = client.wait_for_task(task.id)
-    
+
     # Get text
     text = client.get_task_text(task.id)
     print(text)
@@ -78,7 +78,7 @@ async def process_document():
         # Create and wait for job
         task = await client.create_job("document.pdf")
         result = await client.wait_for_task(task.id)
-        
+
         # Get text
         text = await client.get_task_text(task.id)
         print(text)

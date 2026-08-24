@@ -52,7 +52,7 @@ def main():
             completed_task = client.wait_for_task(
                 task.id, poll_interval=2.0, max_wait_time=300.0
             )
-            print(f"   ✓ Tâche terminée!")
+            print("   ✓ Tâche terminée!")
             print(f"   ✓ Status final: {completed_task.status}")
             print(f"   ✓ Pourcentage: {completed_task.percentage}%\n")
         except OCRTimeoutError as e:

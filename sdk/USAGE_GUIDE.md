@@ -55,10 +55,10 @@ with SyncOCRClient("http://localhost:5000") as client:
     # Upload et créer la tâche
     task = client.create_job("facture.pdf")
     print(f"Tâche créée: {task.id}")
-    
+
     # Attendre la fin du traitement
     result = client.wait_for_task(task.id)
-    
+
     # Récupérer le texte
     text = client.get_task_text(task.id)
     print(text)
@@ -72,7 +72,7 @@ from ocr_sdk import SyncOCRClient
 with SyncOCRClient("http://localhost:5000") as client:
     # Tout en un seul appel
     results = client.process_document("document.pdf")
-    
+
     for result in results:
         print(f"Contenu: {result.page_content}")
         print(f"Metadata: {result.metadata}")
@@ -94,12 +94,12 @@ async def process_multiple_files(files):
         for file in files:
             task = await client.create_job(file)
             tasks.append(task)
-        
+
         # Attendre toutes les tâches en parallèle
         results = await asyncio.gather(
             *[client.wait_for_task(t.id) for t in tasks]
         )
-        
+
         return results
 
 # Utilisation
@@ -114,20 +114,20 @@ from ocr_sdk import SyncOCRClient, TaskStatus
 
 with SyncOCRClient("http://localhost:5000") as client:
     task = client.create_job("large_document.pdf")
-    
+
     # Surveiller la progression
     while True:
         current_task = client.get_task(task.id)
         print(f"Status: {current_task.status}")
         print(f"Progression: {current_task.percentage}%")
-        
+
         if current_task.status == TaskStatus.COMPLETED.value:
             print("Traitement terminé!")
             break
         elif current_task.status == TaskStatus.FAILED.value:
             print("Traitement échoué!")
             break
-        
+
         time.sleep(2)
 ```
 
@@ -153,7 +153,7 @@ with SyncOCRClient("http://localhost:5000") as client:
         interest_zone=json.dumps(interest_zones),
         task_operation=TaskOperation.OCR
     )
-    
+
     result = client.wait_for_task(task.id)
 ```
 
@@ -167,9 +167,9 @@ with SyncOCRClient("http://localhost:5000") as client:
         "formulaire.pdf",
         task_operation=TaskOperation.FORMS
     )
-    
+
     result = client.wait_for_task(task.id)
-    
+
     # Accéder aux champs du formulaire
     if result.output and result.output.pages:
         for page in result.output.pages:
@@ -199,19 +199,19 @@ def process_with_error_handling(file_path):
             task = client.create_job(file_path)
             result = client.wait_for_task(task.id, max_wait_time=300)
             return client.get_task_text(task.id)
-            
+
     except FileNotFoundError as e:
         logger.error(f"Fichier introuvable: {e}")
         return None
-        
+
     except OCRTimeoutError as e:
         logger.error(f"Timeout lors du traitement: {e}")
         return None
-        
+
     except OCRAPIError as e:
         logger.error(f"Erreur API {e.status_code}: {e.message}")
         return None
-        
+
     except Exception as e:
         logger.error(f"Erreur inattendue: {e}")
         return None
@@ -235,7 +235,7 @@ def process_with_retry(file_path, max_retries=3):
             try:
                 task = client.create_job(file_path)
                 return client.wait_for_task(task.id)
-                
+
             except OCRAPIError as e:
                 if e.status_code >= 500 and attempt < max_retries - 1:
                     # Erreur serveur, retry avec backoff
@@ -258,18 +258,18 @@ from ocr_sdk.exceptions import OCRAPIError, OCRTimeoutError
 
 class OCRService:
     """Service wrapper pour l'API OCR."""
-    
+
     def __init__(self, api_url: str, api_key: Optional[str] = None):
         self.api_url = api_url
         self.api_key = api_key
-    
+
     def extract_text(self, file_path: str, timeout: int = 300) -> Optional[str]:
         """Extrait le texte d'un document.
-        
+
         Args:
             file_path: Chemin vers le fichier
             timeout: Timeout en secondes
-            
+
         Returns:
             Texte extrait ou None en cas d'erreur
         """
@@ -281,13 +281,13 @@ class OCRService:
         except (OCRAPIError, OCRTimeoutError) as e:
             print(f"Erreur lors de l'extraction: {e}")
             return None
-    
+
     def batch_extract(self, file_paths: List[str]) -> dict:
         """Extrait le texte de plusieurs documents.
-        
+
         Args:
             file_paths: Liste des chemins de fichiers
-            
+
         Returns:
             Dictionnaire {file_path: texte_extrait}
         """
@@ -301,7 +301,7 @@ class OCRService:
                     tasks[task.id] = file_path
                 except Exception as e:
                     results[file_path] = f"Erreur: {e}"
-            
+
             # Attendre et récupérer les résultats
             for task_id, file_path in tasks.items():
                 try:
@@ -313,16 +313,16 @@ class OCRService:
                         results[file_path] = f"Échec: {result.status}"
                 except Exception as e:
                     results[file_path] = f"Erreur: {e}"
-        
+
         return results
-    
+
     def get_recent_tasks(self, page: int = 1, page_size: int = 10) -> List[TaskModel]:
         """Récupère les tâches récentes.
-        
+
         Args:
             page: Numéro de page
             page_size: Nombre de tâches par page
-            
+
         Returns:
             Liste des tâches
         """
@@ -332,12 +332,12 @@ class OCRService:
 # Utilisation
 if __name__ == "__main__":
     service = OCRService("http://localhost:5000")
-    
+
     # Extraire un seul document
     text = service.extract_text("document.pdf")
     if text:
         print(text)
-    
+
     # Extraire plusieurs documents
     files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
     results = service.batch_extract(files)
@@ -360,19 +360,19 @@ OCR_API_URL = "http://localhost:5000"
 @app.post("/process-document")
 async def process_document(file: UploadFile):
     """Endpoint pour traiter un document."""
-    
+
     # Sauvegarder temporairement le fichier
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         content = await file.read()
         tmp.write(content)
         tmp_path = tmp.name
-    
+
     try:
         with SyncOCRClient(OCR_API_URL) as client:
             task = client.create_job(tmp_path)
             result = client.wait_for_task(task.id)
             text = client.get_task_text(task.id)
-            
+
             return {
                 "task_id": task.id,
                 "status": result.status,

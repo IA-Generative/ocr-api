@@ -22,8 +22,8 @@ dependencies = [
     "aiofiles>=25.1.0",
     "pymupdf>=1.28.2",
     "cryptography>=50.0.0",
-    
-    
+
+
 
 ]
 

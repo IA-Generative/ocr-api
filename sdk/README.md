@@ -39,17 +39,17 @@ with SyncOCRClient("http://localhost:5000") as client:
     # Vérifier l'état de santé de l'API
     health = client.get_health()
     print(f"API Status: {health.status}")
-    
+
     # Créer un job OCR
     task = client.create_job(
         "path/to/document.pdf",
         task_operation=TaskOperation.DEFAULT
     )
     print(f"Task created: {task.id}")
-    
+
     # Attendre la fin du traitement
     completed_task = client.wait_for_task(task.id)
-    
+
     # Récupérer le texte extrait
     if completed_task.status == "completed":
         text = client.get_task_text(task.id)
@@ -68,17 +68,17 @@ async def main():
         # Vérifier l'état de santé
         health = await client.get_health()
         print(f"API Status: {health.status}")
-        
+
         # Créer un job OCR
         task = await client.create_job(
             "path/to/document.pdf",
             task_operation=TaskOperation.DEFAULT
         )
         print(f"Task created: {task.id}")
-        
+
         # Attendre la fin du traitement
         completed_task = await client.wait_for_task(task.id)
-        
+
         # Récupérer le texte extrait
         if completed_task.status == "completed":
             text = await client.get_task_text(task.id)
@@ -98,7 +98,7 @@ from ocr_sdk import SyncOCRClient
 with SyncOCRClient("http://localhost:5000") as client:
     # Traite le document et attend les résultats
     results = client.process_document("path/to/document.pdf")
-    
+
     for result in results:
         print(f"Page content: {result.page_content}")
         print(f"Metadata: {result.metadata}")
@@ -126,7 +126,7 @@ from ocr_sdk import SyncOCRClient
 with SyncOCRClient("http://localhost:5000") as client:
     # Récupérer les tâches (pagination)
     tasks = client.get_user_tasks(page=1, page_size=10)
-    
+
     for task in tasks:
         print(f"Task {task.id}: {task.status}")
 ```
@@ -193,7 +193,7 @@ try:
     with SyncOCRClient("http://localhost:5000") as client:
         task = client.create_job("document.pdf")
         result = client.wait_for_task(task.id, max_wait_time=60)
-        
+
 except OCRTimeoutError as e:
     print(f"Timeout: {e}")
 except OCRAPIError as e:
