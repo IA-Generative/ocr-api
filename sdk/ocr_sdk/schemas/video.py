@@ -27,5 +27,7 @@ class VideoDescriptionResult(BaseModel):
     audio_transcription: Optional[AudioTranscriptionResult] = Field(
         default=None, description="Transcription of the video's audio track"
     )
-    description: str = Field(default="", description="Global description of the video content")
+    description: str = Field(
+        default="", description="Global description of the video content"
+    )
     extras: Optional[dict] = None
