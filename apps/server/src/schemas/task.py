@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String, func
+from sqlalchemy import FLOAT, JSON, BigInteger, Boolean, Column, Integer, String, func
 from sqlalchemy.orm import object_session
 
 from src.connector.db_connector import Base, get_db
@@ -65,6 +65,11 @@ class Task(Base):
 
     extras = Column(JSON, nullable=True)
     content_hash = Column(String, nullable=True, index=True, unique=False)
+    # True dès que `output` est stocké chiffré (enveloppe {"__enc__": ...}). False pour
+    # les lignes legacy écrites avant l'activation du chiffrement, ou sans output.
+    # Indexé pour permettre au job de backfill de cibler les lignes restant à chiffrer
+    # sans scanner toute la table.
+    output_encrypted = Column(Boolean, nullable=False, default=False, index=True)
 
 
 class TaskModel(BaseModel):
@@ -82,6 +87,9 @@ class TaskModel(BaseModel):
     extras: Optional[Dict[str, Any]] = None
     position: Optional[int] = None
     content_hash: Optional[str] = None
+    # Champ informatif, géré uniquement par TaskTable — jamais accepté depuis TaskForm/
+    # TaskUpdateForm (le client ne doit pas pouvoir le manipuler directement).
+    output_encrypted: bool = False
 
 
 class TaskForm(BaseModel):
@@ -166,6 +174,31 @@ class TaskTable:
         task.output = _decrypt_output(task.output)
         return task
 
+    def encrypt_pending_output(self, batch_size: int = 500) -> int:
+        """Backfill : chiffre les `output` restés en clair (lignes écrites avant
+        l'activation du chiffrement). Idempotent — ne touche que les lignes marquées
+        `output_encrypted=False`, à rappeler jusqu'à ce qu'il renvoie 0. Renvoie le
+        nombre de lignes traitées (chiffrées, ou simplement marquées si elles n'ont pas
+        d'output) dans cet appel.
+
+        Filtre uniquement sur `output_encrypted`, pas sur `Task.output.isnot(None)` :
+        avec le type JSON de SQLAlchemy, un `output` Python égal à None peut être
+        persisté comme le littéral JSON `null` plutôt qu'un vrai SQL NULL, ce qui rend
+        `isnot(None)` peu fiable en SQL. Le None est donc filtré côté Python après
+        déchiffrement, jamais dans le WHERE.
+        """
+        with self.get_db() as db:
+            tasks = db.query(Task).filter(Task.output_encrypted.is_(False)).limit(batch_size).all()
+
+            for task in tasks:
+                decrypted = _decrypt_output(task.output)
+                if decrypted is not None:
+                    task.output = _encrypt_output(decrypted)
+                task.output_encrypted = True
+
+            db.commit()
+            return len(tasks)
+
     def insert_new_task(self, user_id: str, form_data: TaskForm) -> Optional[TaskModel]:
         with self.get_db() as db:
             knowledge = TaskModel(
@@ -177,6 +210,8 @@ class TaskTable:
                     "updated_at": int(time.time()),
                 }
             )
+
+            knowledge.output_encrypted = knowledge.output is not None
 
             task_data = knowledge.model_dump()
             task_data["output"] = _encrypt_output(task_data["output"])
@@ -230,6 +265,7 @@ class TaskTable:
 
             if form_data.output:
                 task.output = _encrypt_output(form_data.output.model_dump())
+                task.output_encrypted = True
 
             task.updated_at = int(time.time())
             db.commit()
