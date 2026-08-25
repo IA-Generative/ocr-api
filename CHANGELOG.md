@@ -29,6 +29,20 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc](https://github.com/IA-Generative/ocr-api/compare/v0.19.12-rc...v0.20.0-rc) (2026-08-25)
+
+
+### Features
+
+* gpu available ([7bb22c4](https://github.com/IA-Generative/ocr-api/commit/7bb22c457399da376ef68194b9c5a58c91167068))
+
+
+### Bug Fixes
+
+* delete commitizen ([539b022](https://github.com/IA-Generative/ocr-api/commit/539b022f12ba09444665c4052310800aa8f408f5))
+* linting helm ([5453e69](https://github.com/IA-Generative/ocr-api/commit/5453e691fb6d435f0ca0effb548b721cb311a334))
+* refresh gitleaksignore fingerprint after history rewrite ([ec5c09f](https://github.com/IA-Generative/ocr-api/commit/ec5c09fcee517d497c06cd031fcf570ff21e9e68))
+
 ## [0.19.12-rc](https://github.com/IA-Generative/ocr-api/compare/v0.19.11...v0.19.12-rc) (2026-08-24)
 
 
