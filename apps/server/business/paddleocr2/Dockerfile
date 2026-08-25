@@ -86,6 +86,11 @@ COPY apps/server/configs /app/configs/
 
 ENV PATH=$PATH:/app/.venv/bin/
 
+# No HTTP server here (Celery worker, started via `celery -A services.main worker ...` in
+# docker-compose/helm's command override) - `inspect ping` is Celery's own liveness check
+# instead. Long start-period: model loading + broker registration can take a while on cold start.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD celery -A services.main inspect ping || exit 1
 
 FROM builder AS test
 RUN uv sync --no-cache --group business-forms \
