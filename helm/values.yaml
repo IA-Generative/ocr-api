@@ -479,6 +479,32 @@ api:
     AWS_BUCKET_NAME: "ocr"
     AWS_DEFAULT_REGION: "us-east-1"
     VERIFY_SSL: "False"
+    # Encrypts Task.output at rest (src/schemas/task.py) - required as soon as any task
+    # actually has an output to persist/read back: without it the API can't decrypt a
+    # previously-encrypted task's output (ValueError from LocalEncryptionProvider). Points at a
+    # Secret you create/populate yourself (not chart-managed, unlike ocr-postgres/ocr-rustfs
+    # above) - same key must also back `worker.env` and `jobs.encrypt-backfill.env` below, all
+    # three need to agree or they can't read each other's ciphertext.
+    # ENCRYPTION_PROVIDER: "vault" + the VAULT_* vars (see src/config/encryption.py) switches to
+    # centralized Vault Transit encryption instead, with no code change required.
+    ENCRYPTION_PROVIDER: "local"
+    ENCRYPTION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: "ocr-encryption"
+          key: "encryption-key"
+    # Vault Transit instead of the local key above - uncomment ENCRYPTION_PROVIDER: "vault" here,
+    # remove/comment ENCRYPTION_KEY above, and set these (same VAULT_* Secret/values must also back
+    # `worker.env` and `jobs.encrypt-backfill.env` below - same key name, same Vault policy access).
+    # ENCRYPTION_PROVIDER: "vault"
+    # VAULT_ADDR: "https://vault.example.com"
+    # VAULT_TOKEN:
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: "ocr-vault"
+    #       key: "token"
+    # VAULT_TRANSIT_KEY_NAME: "ocr-api-task-content"
+    # VAULT_TRANSIT_MOUNT_PATH: "transit"
     # Logging identity: SERVICE_NAME picks the logger name in the app's dictConfig (defaults to
     # "ocr_worker" for BOTH components, so without this override the API would log under the
     # worker's name); COMPONENT feeds the `component` log field.
@@ -2058,6 +2084,24 @@ worker:
     AWS_BUCKET_NAME: "ocr"
     AWS_DEFAULT_REGION: "us-east-1"
     VERIFY_SSL: "False"
+    # See `api.env.ENCRYPTION_KEY` above - same Secret/key, must match across api/worker/
+    # jobs.encrypt-backfill or they can't read each other's ciphertext.
+    ENCRYPTION_PROVIDER: "local"
+    ENCRYPTION_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: "ocr-encryption"
+          key: "encryption-key"
+    # See `api.env.ENCRYPTION_KEY`'s Vault comment above - same VAULT_* Secret/values here too.
+    # ENCRYPTION_PROVIDER: "vault"
+    # VAULT_ADDR: "https://vault.example.com"
+    # VAULT_TOKEN:
+    #   valueFrom:
+    #     secretKeyRef:
+    #       name: "ocr-vault"
+    #       key: "token"
+    # VAULT_TRANSIT_KEY_NAME: "ocr-api-task-content"
+    # VAULT_TRANSIT_MOUNT_PATH: "transit"
     # Logging identity + noise suppression. SERVICE_NAME/COMPONENT: see `api.env` above (same
     # convention, "ocr_worker"/"worker" here). The HF/TQDM/GLOG vars stop huggingface_hub / tqdm
     # progress bars and Paddle C++ chatter from being printed straight to stdout/stderr (bypassing
@@ -2794,6 +2838,228 @@ jobs:
     # -- Number of retries before considering the Job as failed.
     # @section -- Jobs
     backoffLimit: 10
+    # -- Time to live (in seconds) after the Job finishes before it is garbage collected.
+    # @section -- Jobs
+    ttlSecondsAfterFinished: 300
+    # -- Active deadline (in seconds) for the Job. If specified, the job will be terminated if it runs longer than this duration.
+    # @section -- Jobs
+    activeDeadlineSeconds: null
+    # -- Number of successful completions required for the Job to be considered complete. If specified, the job will be considered complete when this many successful completions are reached.
+    # @section -- Jobs
+    completions: null
+    # -- Number of pods to run in parallel for the Job. If specified, the job will run this many pods in parallel.
+    # @section -- Jobs
+    parallelism: 1
+    # -- Restart policy for the Job's pods. Can be `Always`, `OnFailure`, or `Never`.
+    # @section -- Jobs
+    restartPolicy: "Never"
+  encrypt-backfill:
+    # -- Backfill job: encrypts at rest any `Task.output` still in clear text (rows written
+    # before `ENCRYPTION_KEY`/Vault Transit was turned on - see `output_encrypted` column,
+    # `TaskTable.encrypt_pending_output`, `ocr_encrypt_backfill/main.py`). Idempotent and safe to
+    # re-run - only processes rows still flagged `output_encrypted=False`, stops once none remain
+    # (a no-op, fast pass once the whole table is caught up). Independent one-off Job, same
+    # mechanism as `jobs.migration` above - not tied to the api/worker Deployments' lifecycle.
+    #
+    # Runs on every `helm install`/`upgrade` alongside `jobs.migration` (no per-job on/off switch
+    # in `templates/jobs.yaml`, deliberately - see git history if you want to reintroduce one).
+    # This means the `ocr-encryption` Secret (see `api.env.ENCRYPTION_KEY` above - not chart-
+    # managed, unlike `ocr-postgres`) MUST exist before the first install, or this hook fails the
+    # release the same way `jobs.migration` would without `ocr-postgres`.
+    # @section -- Jobs
+    hook:
+      # -- Enable the Helm hook for this job.
+      # @section -- Jobs
+      enabled: true
+      # -- Hook events to trigger this job. `post-install` and `post-upgrade` are the most common.
+      # @section -- Jobs
+      types:
+      - "post-install"
+      - "post-upgrade"
+      # -- Hook weight to control the order of execution when multiple hooks are defined. Lower
+      # weights execute first - runs after `jobs.migration` (weight 1), since it needs the
+      # `output_encrypted` column that migration adds to exist first.
+      # @section -- Jobs
+      weight: 2
+      # -- Hook delete policy to control when the job is deleted. `before-hook-creation` and `hook-succeeded` are common choices.
+      # @section -- Jobs
+      deletePolicy: "before-hook-creation,hook-succeeded"
+    image:
+      # -- Registry to use for the backfill job.
+      # @section -- Jobs
+      registry: "ghcr.io"
+      # -- Repository to use for the backfill job. Same image as the api (ocr_encrypt_backfill
+      # ships inside it, see apps/server/ocr_backend/Dockerfile) - only the command differs.
+      # @section -- Jobs
+      repository: "ia-generative/ocr-api/api"
+      # -- Image pull policy for the backfill job.
+      # @section -- Jobs
+      pullPolicy: "IfNotPresent"
+      # -- Tag to use for the backfill job.
+      # Overrides the image tag whose default is the chart appVersion.
+      # @section -- Jobs
+      tag: ""
+    # -- Image credentials configuration.
+    # @section -- Jobs
+    imagePullSecrets: []
+    serviceAccount:
+      enabled: false
+      create: false
+      name: ""
+      annotations: {}
+      automountServiceAccountToken: false
+    podAnnotations: {}
+    podLabels: {}
+    # -- Pod-level security context. Rendered via `toYaml`, so any other `PodSecurityContext`
+    # field (e.g. `runAsGroup`, `sysctls`, `supplementalGroups`) can be added here too, even
+    # though not pre-populated below.
+    podSecurityContext:
+      runAsNonRoot: true
+      fsGroup: 10001
+      seccompProfile:
+        type: "RuntimeDefault"
+    # -- Container-level security context. Rendered via `toYaml`, so any other
+    # `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though
+    # not pre-populated below.
+    securityContext:
+      runAsUser: 10001
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+      runAsNonRoot: true
+      seccompProfile:
+        type: "RuntimeDefault"
+      readOnlyRootFilesystem: true
+    initContainers:
+    -  # -- Init container to wait for the bundled `postgres` (default database backend) to accept connections. Update/remove this (e.g. to target CNPG's own service instead) when switching `cnpg.enabled: true` for production.
+      # @section -- Jobs
+      name: wait-for-postgres
+      # -- Init container image to use for the wait-for-postgres init container.
+      # @section -- Jobs
+      image: docker.io/busybox:1.37
+      # -- Init container image pull policy for the wait-for-postgres init container.
+      # @section -- Jobs
+      imagePullPolicy: "IfNotPresent"
+      # -- Init container command to wait for the bundled `postgres` (default database backend) to accept connections. Update/remove this (e.g. to target CNPG's own service instead) when switching `cnpg.enabled: true` for production.
+      # @section -- Jobs
+      command: ["sh", "-c", "until nc -z ocr-postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done"]
+      # -- Init container-level security context for the wait-for-postgres init container. Rendered via `toYaml`, so any other `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though not pre-populated below.
+      # @section -- Jobs
+      securityContext:
+        runAsUser: 10001
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        seccompProfile:
+          type: "RuntimeDefault"
+      resources:
+        requests:
+          # -- CPU request for the wait-for-postgres init container.
+          # @section -- Jobs
+          cpu: "10m"
+          # -- Memory request for the wait-for-postgres init container.
+          # @section -- Jobs
+          memory: "16Mi"
+        limits:
+          # -- CPU limit for the wait-for-postgres init container.
+          # @section -- Jobs
+          cpu: "50m"
+          # -- Memory limit for the wait-for-postgres init container.
+          # @section -- Jobs
+          memory: "32Mi"
+    # -- Additional containers to run with the backfill container.
+    # @section -- Jobs
+    extraContainers: []
+    # -- Backfill container command.
+    # @section -- Jobs
+    command:
+    - "python"
+    - "-m"
+    - "ocr_encrypt_backfill.main"
+    # -- Backfill container command args.
+    # @section -- Jobs
+    args: []
+    # -- Backfill container env variables loaded from configmap or secret reference. List or map
+    # (merged with `global.envFrom` above, global entries first); see `global.envFrom` for both forms.
+    # @section -- Jobs
+    envFrom: []
+    # -- Points at the top-level `postgres` values (the bundled, default database backend) and at
+    # the `ocr-encryption` Secret (see `hook` comment above - not chart-managed, create it first).
+    # Switching to `cnpg.enabled: true` for production requires overriding (or unsetting, e.g.
+    # `null`) DATABASE_URL to point at CNPG's own credentials/secret instead - see `postgres`/`cnpg`.
+    # @section -- Jobs
+    env:
+      DATABASE_URL:
+        valueFrom:
+          secretKeyRef:
+            name: "ocr-postgres"
+            key: "uri"
+      ENCRYPTION_PROVIDER: "local"
+      ENCRYPTION_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: "ocr-encryption"
+            key: "encryption-key"
+      # See `api.env.ENCRYPTION_KEY`'s Vault comment above - same VAULT_* Secret/values here too.
+      # ENCRYPTION_PROVIDER: "vault"
+      # VAULT_ADDR: "https://vault.example.com"
+      # VAULT_TOKEN:
+      #   valueFrom:
+      #     secretKeyRef:
+      #       name: "ocr-vault"
+      #       key: "token"
+      # VAULT_TRANSIT_KEY_NAME: "ocr-api-task-content"
+      # VAULT_TRANSIT_MOUNT_PATH: "transit"
+    envCm: {}
+    # -- Map of environment variables to inject into a secret loaded by the backfill container (`valueFrom` not supported).
+    # @section -- Jobs
+    envSecret: {}
+    resources:
+      requests:
+        # -- Memory request for the backfill job.
+        # @section -- Jobs
+        memory: "128Mi"
+        # -- CPU request for the backfill job.
+        # @section -- Jobs
+        cpu: "50m"
+      limits:
+        # -- Memory limit for the backfill job.
+        # @section -- Jobs
+        memory: "256Mi"
+        # -- CPU limit for the backfill job.
+        # @section -- Jobs
+        cpu: "200m"
+    # -- List of volumes to add to the backfill job.
+    # @section -- Jobs
+    volumes: []
+    # -- List of extra volumes to add to the backfill job.
+    # @section -- Jobs
+    extraVolumes: []
+    # -- List of volume mounts to add to the backfill job.
+    # @section -- Jobs
+    volumeMounts: []
+    # -- List of extra volume mounts to add to the backfill job.
+    # @section -- Jobs
+    extraVolumeMounts: []
+    # -- List of host aliases to add to the backfill job.
+    # @section -- Jobs
+    hostAliases: []
+    # -- Default node selector for the backfill job.
+    # @section -- Jobs
+    nodeSelector: {}
+    # -- Default affinity for the backfill job.
+    # @section -- Jobs
+    affinity: {}
+    # -- Default tolerations for the backfill job.
+    # @section -- Jobs
+    tolerations: []
+    # -- Number of retries before considering the Job as failed. Kept low relative to migration's
+    # 10 - encrypt_pending_output is idempotent/resumable, but a stuck DB/secret misconfiguration
+    # shouldn't retry forever on every hook run.
+    # @section -- Jobs
+    backoffLimit: 3
     # -- Time to live (in seconds) after the Job finishes before it is garbage collected.
     # @section -- Jobs
     ttlSecondsAfterFinished: 300

@@ -51,7 +51,7 @@ A Helm chart to deploy ocr.
 | api.containerPort | int | `5000` | Api container port number. |
 | api.containerPortName | string | `"http"` | Api container port name. |
 | api.deploymentType | string | `"Deployment"` | Workload kind to deploy the app as. One of "Deployment" or "StatefulSet". |
-| api.env | object | `{"AWS_ACCESS_KEY_ID":"rustfsadmin","AWS_BUCKET_NAME":"ocr","AWS_DEFAULT_REGION":"us-east-1","AWS_ENDPOINT_URL":"http://ocr-rustfs:9000","AWS_SECRET_ACCESS_KEY":{"valueFrom":{"secretKeyRef":{"key":"secret-key","name":"ocr-rustfs"}}},"CELERY_APP_NAME":"ocr","COMPONENT":"api","DATABASE_URL":{"valueFrom":{"secretKeyRef":{"key":"uri","name":"ocr-postgres"}}},"REDIS_HOST":"ocr-redis-master","SEND_DEFAULT_PII":"False","SERVICE_NAME":"ocr_api","VERIFY_SSL":"False","VERIFY_TOKEN_MODEL":"keycloak"}` | Map or array of environment variables to inject into the app container (`valueFrom` supported). |
+| api.env | object | `{"AWS_ACCESS_KEY_ID":"rustfsadmin","AWS_BUCKET_NAME":"ocr","AWS_DEFAULT_REGION":"us-east-1","AWS_ENDPOINT_URL":"http://ocr-rustfs:9000","AWS_SECRET_ACCESS_KEY":{"valueFrom":{"secretKeyRef":{"key":"secret-key","name":"ocr-rustfs"}}},"CELERY_APP_NAME":"ocr","COMPONENT":"api","DATABASE_URL":{"valueFrom":{"secretKeyRef":{"key":"uri","name":"ocr-postgres"}}},"ENCRYPTION_KEY":{"valueFrom":{"secretKeyRef":{"key":"encryption-key","name":"ocr-encryption"}}},"ENCRYPTION_PROVIDER":"local","REDIS_HOST":"ocr-redis-master","SEND_DEFAULT_PII":"False","SERVICE_NAME":"ocr_api","VERIFY_SSL":"False","VERIFY_TOKEN_MODEL":"keycloak"}` | Map or array of environment variables to inject into the app container (`valueFrom` supported). |
 | api.envCm | object | `{}` | Map of environment variables to inject into a configmap loaded by the app container (`valueFrom` not supported). |
 | api.envFrom | list | `[]` | Api container env variables loaded from configmap or secret reference. List or map (merged with `global.envFrom` above, global entries first); see `global.envFrom` for both forms. |
 | api.envSecret | object | `{}` | Map of environment variables to inject into a secret loaded by the app container (`valueFrom` not supported). |
@@ -478,6 +478,64 @@ A Helm chart to deploy ocr.
 
 ### Jobs
 
+#### EncryptBackfill
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| jobs.encrypt-backfill.activeDeadlineSeconds | string | `nil` | Active deadline (in seconds) for the Job. If specified, the job will be terminated if it runs longer than this duration. |
+| jobs.encrypt-backfill.affinity | object | `{}` | Default affinity for the backfill job. |
+| jobs.encrypt-backfill.args | list | `[]` | Backfill container command args. |
+| jobs.encrypt-backfill.backoffLimit | int | `3` | Number of retries before considering the Job as failed. Kept low relative to migration's 10 - encrypt_pending_output is idempotent/resumable, but a stuck DB/secret misconfiguration shouldn't retry forever on every hook run. |
+| jobs.encrypt-backfill.command | list | `["python","-m","ocr_encrypt_backfill.main"]` | Backfill container command. |
+| jobs.encrypt-backfill.completions | string | `nil` | Number of successful completions required for the Job to be considered complete. If specified, the job will be considered complete when this many successful completions are reached. |
+| jobs.encrypt-backfill.env | object | `{"DATABASE_URL":{"valueFrom":{"secretKeyRef":{"key":"uri","name":"ocr-postgres"}}},"ENCRYPTION_KEY":{"valueFrom":{"secretKeyRef":{"key":"encryption-key","name":"ocr-encryption"}}},"ENCRYPTION_PROVIDER":"local"}` | Points at the top-level `postgres` values (the bundled, default database backend) and at the `ocr-encryption` Secret (see `hook` comment above - not chart-managed, create it first). Switching to `cnpg.enabled: true` for production requires overriding (or unsetting, e.g. `null`) DATABASE_URL to point at CNPG's own credentials/secret instead - see `postgres`/`cnpg`. |
+| jobs.encrypt-backfill.envCm | object | `{}` |  |
+| jobs.encrypt-backfill.envFrom | list | `[]` | Backfill container env variables loaded from configmap or secret reference. List or map (merged with `global.envFrom` above, global entries first); see `global.envFrom` for both forms. |
+| jobs.encrypt-backfill.envSecret | object | `{}` | Map of environment variables to inject into a secret loaded by the backfill container (`valueFrom` not supported). |
+| jobs.encrypt-backfill.extraContainers | list | `[]` | Additional containers to run with the backfill container. |
+| jobs.encrypt-backfill.extraVolumeMounts | list | `[]` | List of extra volume mounts to add to the backfill job. |
+| jobs.encrypt-backfill.extraVolumes | list | `[]` | List of extra volumes to add to the backfill job. |
+| jobs.encrypt-backfill.hook | object | `{"deletePolicy":"before-hook-creation,hook-succeeded","enabled":true,"types":["post-install","post-upgrade"],"weight":2}` | Backfill job: encrypts at rest any `Task.output` still in clear text (rows written before `ENCRYPTION_KEY`/Vault Transit was turned on - see `output_encrypted` column, `TaskTable.encrypt_pending_output`, `ocr_encrypt_backfill/main.py`). Idempotent and safe to re-run - only processes rows still flagged `output_encrypted=False`, stops once none remain (a no-op, fast pass once the whole table is caught up). Independent one-off Job, same mechanism as `jobs.migration` above - not tied to the api/worker Deployments' lifecycle.  Runs on every `helm install`/`upgrade` alongside `jobs.migration` (no per-job on/off switch in `templates/jobs.yaml`, deliberately - see git history if you want to reintroduce one). This means the `ocr-encryption` Secret (see `api.env.ENCRYPTION_KEY` above - not chart- managed, unlike `ocr-postgres`) MUST exist before the first install, or this hook fails the release the same way `jobs.migration` would without `ocr-postgres`. |
+| jobs.encrypt-backfill.hook.deletePolicy | string | `"before-hook-creation,hook-succeeded"` | Hook delete policy to control when the job is deleted. `before-hook-creation` and `hook-succeeded` are common choices. |
+| jobs.encrypt-backfill.hook.enabled | bool | `true` | Enable the Helm hook for this job. |
+| jobs.encrypt-backfill.hook.types | list | `["post-install","post-upgrade"]` | Hook events to trigger this job. `post-install` and `post-upgrade` are the most common. |
+| jobs.encrypt-backfill.hook.weight | int | `2` | Hook weight to control the order of execution when multiple hooks are defined. Lower weights execute first - runs after `jobs.migration` (weight 1), since it needs the `output_encrypted` column that migration adds to exist first. |
+| jobs.encrypt-backfill.hostAliases | list | `[]` | List of host aliases to add to the backfill job. |
+| jobs.encrypt-backfill.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy for the backfill job. |
+| jobs.encrypt-backfill.image.registry | string | `"ghcr.io"` | Registry to use for the backfill job. |
+| jobs.encrypt-backfill.image.repository | string | `"ia-generative/ocr-api/api"` | Repository to use for the backfill job. Same image as the api (ocr_encrypt_backfill ships inside it, see apps/server/ocr_backend/Dockerfile) - only the command differs. |
+| jobs.encrypt-backfill.image.tag | string | `""` | Tag to use for the backfill job. Overrides the image tag whose default is the chart appVersion. |
+| jobs.encrypt-backfill.imagePullSecrets | list | `[]` | Image credentials configuration. |
+| jobs.encrypt-backfill.initContainers[0].command | list | `["sh","-c","until nc -z ocr-postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 2; done"]` | Init container command to wait for the bundled `postgres` (default database backend) to accept connections. Update/remove this (e.g. to target CNPG's own service instead) when switching `cnpg.enabled: true` for production. |
+| jobs.encrypt-backfill.initContainers[0].image | string | `"docker.io/busybox:1.37"` | Init container image to use for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].imagePullPolicy | string | `"IfNotPresent"` | Init container image pull policy for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].name | string | `"wait-for-postgres"` | Init container to wait for the bundled `postgres` (default database backend) to accept connections. Update/remove this (e.g. to target CNPG's own service instead) when switching `cnpg.enabled: true` for production. |
+| jobs.encrypt-backfill.initContainers[0].resources.limits.cpu | string | `"50m"` | CPU limit for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].resources.limits.memory | string | `"32Mi"` | Memory limit for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].resources.requests.cpu | string | `"10m"` | CPU request for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].resources.requests.memory | string | `"16Mi"` | Memory request for the wait-for-postgres init container. |
+| jobs.encrypt-backfill.initContainers[0].securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":10001,"seccompProfile":{"type":"RuntimeDefault"}}` | Init container-level security context for the wait-for-postgres init container. Rendered via `toYaml`, so any other `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though not pre-populated below. |
+| jobs.encrypt-backfill.nodeSelector | object | `{}` | Default node selector for the backfill job. |
+| jobs.encrypt-backfill.parallelism | int | `1` | Number of pods to run in parallel for the Job. If specified, the job will run this many pods in parallel. |
+| jobs.encrypt-backfill.podAnnotations | object | `{}` |  |
+| jobs.encrypt-backfill.podLabels | object | `{}` |  |
+| jobs.encrypt-backfill.podSecurityContext | object | `{"fsGroup":10001,"runAsNonRoot":true,"seccompProfile":{"type":"RuntimeDefault"}}` | Pod-level security context. Rendered via `toYaml`, so any other `PodSecurityContext` field (e.g. `runAsGroup`, `sysctls`, `supplementalGroups`) can be added here too, even though not pre-populated below. |
+| jobs.encrypt-backfill.resources.limits.cpu | string | `"200m"` | CPU limit for the backfill job. |
+| jobs.encrypt-backfill.resources.limits.memory | string | `"256Mi"` | Memory limit for the backfill job. |
+| jobs.encrypt-backfill.resources.requests.cpu | string | `"50m"` | CPU request for the backfill job. |
+| jobs.encrypt-backfill.resources.requests.memory | string | `"128Mi"` | Memory request for the backfill job. |
+| jobs.encrypt-backfill.restartPolicy | string | `"Never"` | Restart policy for the Job's pods. Can be `Always`, `OnFailure`, or `Never`. |
+| jobs.encrypt-backfill.securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":10001,"seccompProfile":{"type":"RuntimeDefault"}}` | Container-level security context. Rendered via `toYaml`, so any other `SecurityContext` field (e.g. `runAsGroup`, `procMount`) can be added here too, even though not pre-populated below. |
+| jobs.encrypt-backfill.serviceAccount.annotations | object | `{}` |  |
+| jobs.encrypt-backfill.serviceAccount.automountServiceAccountToken | bool | `false` |  |
+| jobs.encrypt-backfill.serviceAccount.create | bool | `false` |  |
+| jobs.encrypt-backfill.serviceAccount.enabled | bool | `false` |  |
+| jobs.encrypt-backfill.serviceAccount.name | string | `""` |  |
+| jobs.encrypt-backfill.tolerations | list | `[]` | Default tolerations for the backfill job. |
+| jobs.encrypt-backfill.ttlSecondsAfterFinished | int | `300` | Time to live (in seconds) after the Job finishes before it is garbage collected. |
+| jobs.encrypt-backfill.volumeMounts | list | `[]` | List of volume mounts to add to the backfill job. |
+| jobs.encrypt-backfill.volumes | list | `[]` | List of volumes to add to the backfill job. |
+
 #### Migration
 
 | Key | Type | Default | Description |
@@ -735,7 +793,7 @@ A Helm chart to deploy ocr.
 | worker.containerPort | string | `nil` | Worker container port number. Set to `null` since this component only consumes a Celery queue and never accepts traffic (see `service.enabled` below). |
 | worker.containerPortName | string | `"http"` | Worker container port name. |
 | worker.deploymentType | string | `"Deployment"` | Workload kind to deploy the app as. One of "Deployment" or "StatefulSet". |
-| worker.env | object | `{"AWS_ACCESS_KEY_ID":"rustfsadmin","AWS_BUCKET_NAME":"ocr","AWS_DEFAULT_REGION":"us-east-1","AWS_ENDPOINT_URL":"http://ocr-rustfs:9000","AWS_SECRET_ACCESS_KEY":{"valueFrom":{"secretKeyRef":{"key":"secret-key","name":"ocr-rustfs"}}},"CELERY_APP_NAME":"ocr","COMPONENT":"worker","DATABASE_URL":{"valueFrom":{"secretKeyRef":{"key":"uri","name":"ocr-postgres"}}},"GLOG_minloglevel":"2","HF_HUB_DISABLE_PROGRESS_BARS":"1","PROCESS_NAME":"paddleocr-2.10.0","REDIS_HOST":"ocr-redis-master","SEND_DEFAULT_PII":"False","SERVICE_NAME":"ocr_worker","TQDM_DISABLE":"1","UV_CACHE_DIR":"/app/.cache/","VERIFY_SSL":"False","WORKER_NAME":"worker.tasks.ocr"}` | Map or array of environment variables to inject into the app container (`valueFrom` supported). |
+| worker.env | object | `{"AWS_ACCESS_KEY_ID":"rustfsadmin","AWS_BUCKET_NAME":"ocr","AWS_DEFAULT_REGION":"us-east-1","AWS_ENDPOINT_URL":"http://ocr-rustfs:9000","AWS_SECRET_ACCESS_KEY":{"valueFrom":{"secretKeyRef":{"key":"secret-key","name":"ocr-rustfs"}}},"CELERY_APP_NAME":"ocr","COMPONENT":"worker","DATABASE_URL":{"valueFrom":{"secretKeyRef":{"key":"uri","name":"ocr-postgres"}}},"ENCRYPTION_KEY":{"valueFrom":{"secretKeyRef":{"key":"encryption-key","name":"ocr-encryption"}}},"ENCRYPTION_PROVIDER":"local","GLOG_minloglevel":"2","HF_HUB_DISABLE_PROGRESS_BARS":"1","PROCESS_NAME":"paddleocr-2.10.0","REDIS_HOST":"ocr-redis-master","SEND_DEFAULT_PII":"False","SERVICE_NAME":"ocr_worker","TQDM_DISABLE":"1","UV_CACHE_DIR":"/app/.cache/","VERIFY_SSL":"False","WORKER_NAME":"worker.tasks.ocr"}` | Map or array of environment variables to inject into the app container (`valueFrom` supported). |
 | worker.envCm | object | `{}` | Map of environment variables to inject into a configmap loaded by the app container (`valueFrom` not supported). |
 | worker.envFrom | list | `[]` | Worker container env variables loaded from configmap or secret reference. List or map (merged with `global.envFrom` above, global entries first); see `global.envFrom` for both forms. |
 | worker.envSecret | object | `{}` | Map of environment variables to inject into a secret loaded by the app container (`valueFrom` not supported). |

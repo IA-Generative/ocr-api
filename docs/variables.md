@@ -81,6 +81,26 @@ Le reste des identifiants/endpoint est **lu nativement par boto3/botocore** (jam
 
 ---
 
+### Variables pour le chiffrement au repos (`Task.output`)
+
+Le contenu texte des résultats (OCR/transcription/description, `Task.output` en base) est chiffré au repos (`src/connector/encryption/`, `src/schemas/task.py`). Deux providers disponibles derrière une interface commune (`EncryptionProvider`), sélectionnés via `ENCRYPTION_PROVIDER` :
+
+| Variable | Obligatoire | Description | Default | Utilisation |
+|:---|:---:|:---|:---|:---|
+| `ENCRYPTION_PROVIDER` | ❌ | Provider de chiffrement : `local` (clé symétrique Fernet dans la config) ou `vault` (Vault Transit, clé jamais dans l'app). | `local` | `EncryptionSettings` (`src/config/encryption.py`) |
+| `ENCRYPTION_KEY` | ✅ si `ENCRYPTION_PROVIDER=local` **et** qu'une tâche a un `output` à écrire/lire | Clé Fernet (générée via `LocalEncryptionProvider.generate_key()`). Absente → `ValueError` dès qu'un `output` réel doit être chiffré/déchiffré (pas au démarrage : l'erreur n'apparaît qu'à l'usage). | - | `LocalEncryptionProvider` |
+| `VAULT_ADDR` | ✅ si `ENCRYPTION_PROVIDER=vault` | URL du serveur Vault. | - | `VaultEncryptionProvider` |
+| `VAULT_TOKEN` | ✅ si `ENCRYPTION_PROVIDER=vault` | Token Vault avec droits `encrypt`/`decrypt` sur la clé Transit. | - | `VaultEncryptionProvider` |
+| `VAULT_TRANSIT_KEY_NAME` | ✅ si `ENCRYPTION_PROVIDER=vault` | Nom de la clé Transit à utiliser. | - | `VaultEncryptionProvider` |
+| `VAULT_TRANSIT_MOUNT_PATH` | ❌ | Mount path du moteur Transit. | `transit` | `VaultEncryptionProvider` |
+| `VAULT_NAMESPACE` | ❌ | Namespace Vault (Vault Enterprise). | - | `VaultEncryptionProvider` |
+
+> ⚠️ **`api` ET `worker` ont besoin de cette config**, pas seulement le worker qui écrit l'`output` : l'API doit pouvoir déchiffrer pour renvoyer le résultat en clair au client. Les trois doivent utiliser la **même** clé/config Vault (sinon impossible de déchiffrer ce que l'autre a chiffré) — voir `helm/values.yaml` (`api.env`, `worker.env`, `jobs.encrypt-backfill.env`, tous pointés vers le même Secret `ocr-encryption`).
+>
+> Les lignes écrites avant l'activation du chiffrement restent lisibles (dual-read transparent, colonne `output_encrypted` à `False`). Un job de backfill dédié (`ocr_encrypt_backfill`, Job Helm `jobs.encrypt-backfill`) les rechiffre a posteriori, indépendamment du cycle de vie de l'API/du worker — il tourne à **chaque** `helm install`/`upgrade` (comme `jobs.migration`, pas de flag on/off dédié), donc le Secret `ocr-encryption` doit exister **avant le tout premier déploiement**, sans quoi ce hook fait échouer le release.
+
+---
+
 ### Variables pour la configuration Redis
 
 Redis est utilisé comme broker Celery (`RedisSettings`, `src/config/redis.py` + `src/connector/broker_connector.py`) et pour le health-check applicatif.
@@ -237,6 +257,14 @@ LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxxxxxxxxx
 LANGFUSE_HOST=https://cloud.langfuse.com
 LANGFUSE_DEBUG=true
 LANGFUSE_TRACING_ENVIRONMENT=preprod
+
+# Chiffrement au repos du contenu texte (Task.output) - "local" ou "vault"
+ENCRYPTION_PROVIDER=local
+ENCRYPTION_KEY=<clé générée via LocalEncryptionProvider.generate_key()>
+# Si ENCRYPTION_PROVIDER=vault :
+# VAULT_ADDR=https://vault.example.com
+# VAULT_TOKEN=<token avec droits encrypt/decrypt>
+# VAULT_TRANSIT_KEY_NAME=ocr-api-task-content
 
 # Monitoring
 MONITOR_RESSOURCE_EVERY=5
