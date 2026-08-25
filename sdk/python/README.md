@@ -55,8 +55,7 @@ with SyncOCRClient("http://localhost:5000") as client:
 
     # Créer un job OCR
     task = client.create_job(
-        "path/to/document.pdf",
-        task_operation=TaskOperation.DEFAULT
+        "path/to/document.pdf", task_operation=TaskOperation.DEFAULT
     )
     print(f"Task created: {task.id}")
 
@@ -75,6 +74,7 @@ with SyncOCRClient("http://localhost:5000") as client:
 import asyncio
 from ocr_sdk import AsyncOCRClient, TaskOperation
 
+
 async def main():
     # Utiliser le context manager async
     async with AsyncOCRClient("http://localhost:5000") as client:
@@ -84,8 +84,7 @@ async def main():
 
         # Créer un job OCR
         task = await client.create_job(
-            "path/to/document.pdf",
-            task_operation=TaskOperation.DEFAULT
+            "path/to/document.pdf", task_operation=TaskOperation.DEFAULT
         )
         print(f"Task created: {task.id}")
 
@@ -96,6 +95,7 @@ async def main():
         if completed_task.status == "completed":
             text = await client.get_task_text(task.id)
             print(f"Extracted text: {text}")
+
 
 # Exécuter la fonction async
 asyncio.run(main())
@@ -123,10 +123,7 @@ with SyncOCRClient("http://localhost:5000") as client:
 from ocr_sdk import SyncOCRClient
 
 # Fournir un token API
-with SyncOCRClient(
-    "http://localhost:5000",
-    api_key="your-api-token"
-) as client:
+with SyncOCRClient("http://localhost:5000", api_key="your-api-token") as client:
     health = client.get_health()
     print(health)
 ```
@@ -184,13 +181,13 @@ Le SDK expose tous les modèles Pydantic nécessaires:
 
 ```python
 from ocr_sdk import (
-    TaskModel,      # Modèle de tâche
-    TaskStatus,     # Enum des statuts de tâche
+    TaskModel,  # Modèle de tâche
+    TaskStatus,  # Enum des statuts de tâche
     TaskOperation,  # Enum des types d'opération
-    Health,         # Modèle de santé API
-    OCRResult,      # Résultat OCR
-    Page,           # Page de document
-    Bbox,           # Boîte englobante
+    Health,  # Modèle de santé API
+    OCRResult,  # Résultat OCR
+    Page,  # Page de document
+    Bbox,  # Boîte englobante
 )
 ```
 
@@ -200,15 +197,15 @@ from ocr_sdk import (
 from ocr_sdk import TaskStatus
 
 # Statuts disponibles
-TaskStatus.CREATED       # Tâche créée
-TaskStatus.QUEUED        # En file d'attente
-TaskStatus.STARTED       # Démarrée
-TaskStatus.IN_PROGRESS   # En cours
-TaskStatus.COMPLETED     # Terminée
-TaskStatus.FAILED        # Échouée
-TaskStatus.RETRYING      # Nouvelle tentative
-TaskStatus.CANCELED      # Annulée
-TaskStatus.TIMEOUT       # Timeout
+TaskStatus.CREATED  # Tâche créée
+TaskStatus.QUEUED  # En file d'attente
+TaskStatus.STARTED  # Démarrée
+TaskStatus.IN_PROGRESS  # En cours
+TaskStatus.COMPLETED  # Terminée
+TaskStatus.FAILED  # Échouée
+TaskStatus.RETRYING  # Nouvelle tentative
+TaskStatus.CANCELED  # Annulée
+TaskStatus.TIMEOUT  # Timeout
 ```
 
 ### Types d'Opération
@@ -217,13 +214,13 @@ TaskStatus.TIMEOUT       # Timeout
 from ocr_sdk import TaskOperation
 
 # Opérations disponibles
-TaskOperation.DEFAULT         # Opération par défaut
-TaskOperation.OCR            # OCR standard
+TaskOperation.DEFAULT  # Opération par défaut
+TaskOperation.OCR  # OCR standard
 TaskOperation.SAVE_TEMPLATE  # Sauvegarder comme template
-TaskOperation.FORMS          # Extraction de formulaires
-TaskOperation.VECTORIZE      # Vectorisation
-TaskOperation.VLM_OCR        # OCR avec VLM
-TaskOperation.DOCLING        # Traitement Docling
+TaskOperation.FORMS  # Extraction de formulaires
+TaskOperation.VECTORIZE  # Vectorisation
+TaskOperation.VLM_OCR  # OCR avec VLM
+TaskOperation.DOCLING  # Traitement Docling
 ```
 
 ## Gestion des Erreurs
