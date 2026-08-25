@@ -37,6 +37,13 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
+        self.client.put_bucket_encryption(
+            Bucket=self.bucket_name,
+            ServerSideEncryptionConfiguration={
+                "Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]
+            },
+        )
+
     def get_by_task_id(self, user_id: str, task_id: str) -> str:
         object_key = f"{user_id}/{task_id}"
         try:
@@ -92,7 +99,12 @@ class S3Connector(BaseFileConnector):
             filename = os.path.basename(file_path)
         object_key = f"{user_id}/{task_id}/{filename}"
         try:
-            self.client.upload_file(file_path, self.bucket_name, object_key)
+            self.client.upload_file(
+                file_path,
+                self.bucket_name,
+                object_key,
+                ExtraArgs={"ServerSideEncryption": "AES256"},
+            )
             return object_key
         except ClientError as e:
             raise Exception(f"Erreur lors de la sauvegarde du fichier : {e}")
