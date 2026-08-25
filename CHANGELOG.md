@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.1](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc...v0.20.0-rc.1) (2026-08-25)
+
+
+### Bug Fixes
+
+* sync gitleaksignore fingerprints onto this branch ([7c15ce7](https://github.com/IA-Generative/ocr-api/commit/7c15ce7b8c643c1d46716a959b834b8b06cc2876))
+
 ## [0.20.0-rc](https://github.com/IA-Generative/ocr-api/compare/v0.19.12-rc...v0.20.0-rc) (2026-08-25)
 
 
