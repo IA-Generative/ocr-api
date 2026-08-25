@@ -23,6 +23,8 @@ ENV HOST=0.0.0.0
 ENV PYTHONPATH=/app/
 ENV PORT=5000
 ENV TORCHINDUCTOR_CACHE_DIR=/app/.cache/torchinductor/
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD python3 -c "import urllib.request as u; u.urlopen('http://127.0.0.1:${PORT}/api/health', timeout=2)" || exit 1
 CMD ["./scripts/run.sh"]
 
 FROM builder AS test
