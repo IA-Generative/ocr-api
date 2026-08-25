@@ -26,6 +26,7 @@ class TaskModel(BaseModel):
     extras: Optional[Dict[str, Any]] = None
     position: Optional[int] = None
     content_hash: Optional[str] = None
+    output_encrypted: bool = False
 
 
 class TaskForm(BaseModel):
