@@ -27,12 +27,16 @@ RUN pnpm run build
 # prod
 FROM docker.io/nginxinc/nginx-unprivileged:1.28.0-alpine AS prod
 
-COPY --from=build --chown=nginx:nginx /app/dist /usr/share/nginx/html
-COPY --chown=nginx:nginx nginx/50x.html /usr/share/nginx/html
-COPY --chown=nginx:nginx nginx/40x.html /usr/share/nginx/html
-COPY --chown=nginx:nginx nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx/50x.html /usr/share/nginx/html
+COPY nginx/40x.html /usr/share/nginx/html
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
-USER nginx
+# Deliberately no `USER` here. nginx-unprivileged already ends on `USER 101`, and the
+# numeric form is what `runAsNonRoot: true` needs to verify - re-declaring it as `USER
+# nginx` would replace a verifiable user with an unverifiable name. The base image also
+# already owns /var/cache/nginx and /etc/nginx by group root for arbitrary UIDs, and
+# these assets are only ever read, never written.
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

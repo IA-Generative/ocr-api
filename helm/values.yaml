@@ -405,6 +405,13 @@ api:
   # -- Api container command args.
   # @section -- Api
   args: []
+  # `runAsUser`/`runAsGroup` here - and `fsGroup` on `podSecurityContext` above, for every
+  # component - are correct for a plain Kubernetes cluster but must be dropped on OpenShift:
+  # its `restricted-v2` SCC allocates UIDs per namespace (`MustRunAsRange`) and rejects a pod
+  # asking for one outside that range rather than overriding it. Leave `runAsNonRoot`,
+  # `seccompProfile`, `drop: ["ALL"]` and `readOnlyRootFilesystem` in place there and let the
+  # SCC assign the identity; the images own their files by group root precisely so that an
+  # arbitrary assigned UID still works (see the `chown -R 10001:0` in each Dockerfile).
   # -- Container-level security context. Rendered via `toYaml`, so any other
   # `SecurityContext` field (e.g. `procMount`) can be added here too, even though
   # not pre-populated below.
@@ -1177,11 +1184,15 @@ frontend:
     runAsNonRoot: true
     seccompProfile:
       type: "RuntimeDefault"
-    # nginx-unprivileged still needs two writable paths under a read-only root: `/run` for its pid
-    # file (`pid /run/nginx.pid;` in the image's nginx.conf) and `/var/cache/nginx` for request
-    # buffering temp files. Both are provided as `emptyDir`s in `extraVolumes`/`extraVolumeMounts`
-    # below - not `volumes`/`volumeMounts`, which real deployments already use for the optional
-    # `viteEnv` config.js mount (see mirai-values) and would otherwise silently replace these.
+    # nginx-unprivileged still needs three writable paths under a read-only root: `/run` for its
+    # pid file (`pid /run/nginx.pid;` in the image's nginx.conf), `/var/cache/nginx` for request
+    # buffering, and `/tmp` for the `*_temp_path` directories its nginx.conf points there
+    # (`client_body_temp`, `proxy_temp`, ...). nginx creates those at startup, so missing `/tmp`
+    # is not a degraded cache - it is `[emerg] mkdir() "/tmp/proxy_temp" failed` and a container
+    # that never serves. All three are provided as `emptyDir`s in
+    # `extraVolumes`/`extraVolumeMounts` below - not `volumes`/`volumeMounts`, which real
+    # deployments already use for the optional `viteEnv` config.js mount (see mirai-values) and
+    # would otherwise silently replace these.
     readOnlyRootFilesystem: true
   # -- Frontend runtime config, rendered as `window.KEY = value` assignments into the
   # `templates/frontend/vite-config.yaml` ConfigMap (mounted as `config.js` - see
@@ -1353,7 +1364,7 @@ frontend:
   #     reference: quay.io/crio/artifact:v2
   #     pullPolicy: IfNotPresent
   # -- Additional volumes to add, concatenated with `volumes` above at render time. Defaults to the
-  # two `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this
+  # three `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this
   # list rather than overriding it outright, or these will need restating.
   # @section -- Frontend
   extraVolumes:
@@ -1363,6 +1374,9 @@ frontend:
   - name: nginx-cache
     emptyDir:
       sizeLimit: 100Mi
+  - name: nginx-tmp
+    emptyDir:
+      sizeLimit: 16Mi
   # -- List of volumeClaims to add.
   # @section -- Frontend
   volumeClaims: []
@@ -1400,6 +1414,8 @@ frontend:
     mountPath: /run
   - name: nginx-cache
     mountPath: /var/cache/nginx
+  - name: nginx-tmp
+    mountPath: /tmp
   service:
     # -- Whether or not to create a Service for the app. Set to `false` for components that
     # don't accept traffic (e.g. a queue consumer with no `containerPort`).
