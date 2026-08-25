@@ -19,3 +19,27 @@ b5241ba7bea24d3f524700a8792ad1242aafcbc1:helm/test-values.yaml:kubernetes-secret
 # Same fixture, refingerprinted after 904228f "chore(helm): move the ocr
 # chart into the repository" reintroduced the line under a new commit SHA.
 904228f9624a6c0e650d04d1950a04f6754cce99:helm/test-values.yaml:kubernetes-secret-yaml:457
+
+# Local dev/test-only key material, not used anywhere in production. High entropy is inherent
+# to what these values are (a Fernet key, MinIO's single-master KMS key) - there is no "less
+# secret-looking" valid value, and both are only ever read by the bundled local
+# postgres/redis/minio containers spun up by docker-compose(-test).yaml for local dev and CI
+# integration tests (see feat/s3-encryption's MinIO SSE fix and the encryption-at-rest work).
+#
+# ENCRYPTION_KEY (.env): the app's LocalEncryptionProvider Fernet key
+# (src/connector/encryption/local_provider.py) - decrypts nothing outside this repo's own
+# local/CI database, generated once with LocalEncryptionProvider.generate_key().
+8231bf4d85dccc4b64943514d46361b4bb8ca170:.env:generic-api-key:20
+# MINIO_KMS_SECRET_KEY (docker-compose.yaml / docker-compose-test.yaml): MinIO's built-in
+# static KMS key, required so MinIO accepts SSE-S3 (AES256) at all (it otherwise rejects
+# PutBucketEncryption/PutObject with "KMS is not configured") - only ever protects the throwaway
+# `minio_data` volume of the local/CI MinIO container.
+8231bf4d85dccc4b64943514d46361b4bb8ca170:docker-compose.yaml:generic-api-key:14
+8231bf4d85dccc4b64943514d46361b4bb8ca170:docker-compose-test.yaml:generic-api-key:14
+# Same three findings, refingerprinted for `dev`: identical file content, but the commit that
+# introduced it there has a different SHA (squash/rebase onto dev, not a straight merge of the
+# commit above) - gitleaks' git-mode fingerprint is tied to the introducing commit, so both SHAs
+# need an entry for the same lines.
+9a088c902e1002b3fa2142bf42513ed1ddf11998:.env:generic-api-key:20
+9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose.yaml:generic-api-key:14
+9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose-test.yaml:generic-api-key:14
