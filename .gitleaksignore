@@ -29,17 +29,20 @@ b5241ba7bea24d3f524700a8792ad1242aafcbc1:helm/test-values.yaml:kubernetes-secret
 # ENCRYPTION_KEY (.env): the app's LocalEncryptionProvider Fernet key
 # (src/connector/encryption/local_provider.py) - decrypts nothing outside this repo's own
 # local/CI database, generated once with LocalEncryptionProvider.generate_key().
-8231bf4d85dccc4b64943514d46361b4bb8ca170:.env:generic-api-key:20
+#
 # MINIO_KMS_SECRET_KEY (docker-compose.yaml / docker-compose-test.yaml): MinIO's built-in
 # static KMS key, required so MinIO accepts SSE-S3 (AES256) at all (it otherwise rejects
 # PutBucketEncryption/PutObject with "KMS is not configured") - only ever protects the throwaway
 # `minio_data` volume of the local/CI MinIO container.
-8231bf4d85dccc4b64943514d46361b4bb8ca170:docker-compose.yaml:generic-api-key:14
-8231bf4d85dccc4b64943514d46361b4bb8ca170:docker-compose-test.yaml:generic-api-key:14
-# Same three findings, refingerprinted for `dev`: identical file content, but the commit that
-# introduced it there has a different SHA (squash/rebase onto dev, not a straight merge of the
-# commit above) - gitleaks' git-mode fingerprint is tied to the introducing commit, so both SHAs
-# need an entry for the same lines.
+#
+# Same content, three fingerprints: the commit introducing these lines gets rewritten (rebase/
+# amend/squash) on every branch it lands on, each time under a new SHA - refresh here whenever
+# gitleaks flags it again on a branch not yet listed below, same as the test-values.yaml fixture
+# above. Currently covers: dev (9a088c9), feat/s3-encryption (55d74c6, refreshed from 8231bf4
+# after a history rewrite).
 9a088c902e1002b3fa2142bf42513ed1ddf11998:.env:generic-api-key:20
 9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose.yaml:generic-api-key:14
 9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose-test.yaml:generic-api-key:14
+55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:.env:generic-api-key:20
+55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:docker-compose.yaml:generic-api-key:14
+55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:docker-compose-test.yaml:generic-api-key:14
