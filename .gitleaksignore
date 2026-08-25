@@ -35,14 +35,20 @@ b5241ba7bea24d3f524700a8792ad1242aafcbc1:helm/test-values.yaml:kubernetes-secret
 # PutBucketEncryption/PutObject with "KMS is not configured") - only ever protects the throwaway
 # `minio_data` volume of the local/CI MinIO container.
 #
-# Same content, three fingerprints: the commit introducing these lines gets rewritten (rebase/
-# amend/squash) on every branch it lands on, each time under a new SHA - refresh here whenever
-# gitleaks flags it again on a branch not yet listed below, same as the test-values.yaml fixture
-# above. Currently covers: dev (9a088c9), feat/s3-encryption (55d74c6, refreshed from 8231bf4
-# after a history rewrite).
+# Same content, three fingerprints per introducing commit: gitleaks scans the *entire* repo
+# history (all refs), not just the branch/PR under test, so every SHA that has ever introduced
+# this content anywhere in the repo needs an entry here - it doesn't matter whether the branch
+# being linted contains that commit or not. The commit itself also keeps getting rewritten
+# (rebase/amend/squash) on whichever branch it lands on next, each time under a new SHA - append
+# a fresh set here whenever gitleaks flags it again, same as the test-values.yaml fixture above.
+# Currently covers: dev (9a088c9), feat/s3-encryption (8231bf4 -> 55d74c6 -> e4a5e33, rewritten
+# twice so far).
 9a088c902e1002b3fa2142bf42513ed1ddf11998:.env:generic-api-key:20
 9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose.yaml:generic-api-key:14
 9a088c902e1002b3fa2142bf42513ed1ddf11998:docker-compose-test.yaml:generic-api-key:14
 55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:.env:generic-api-key:20
 55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:docker-compose.yaml:generic-api-key:14
 55d74c65b5f11c5ed0da83dc9c9a5d0f011e1069:docker-compose-test.yaml:generic-api-key:14
+e4a5e3324d4b0910c4c5ac6c9730859cf0aafac5:.env:generic-api-key:20
+e4a5e3324d4b0910c4c5ac6c9730859cf0aafac5:docker-compose.yaml:generic-api-key:14
+e4a5e3324d4b0910c4c5ac6c9730859cf0aafac5:docker-compose-test.yaml:generic-api-key:14
