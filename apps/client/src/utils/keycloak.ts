@@ -23,6 +23,41 @@ export const keycloakConfig: KeycloakConfig = {
 
 let keycloak: Keycloak
 
+// Depuis Keycloak 26.7, une redirect_uri contenant un paramètre de réponse OIDC dans sa
+// query string est rejetée (protection HTTP Parameter Pollution), même si la valid redirect
+// URI du client utilise un wildcard.
+const OIDC_RESPONSE_PARAMS = [
+  'code',
+  'state',
+  'session_state',
+  'iss',
+  'error',
+  'error_description',
+  'id_token',
+  'access_token',
+  'token_type',
+  'expires_in',
+  'response',
+  'kc_action',
+  'kc_action_status',
+]
+
+function cleanAuthParamsFromUrl () {
+  const url = new URL(window.location.href)
+  const mutated = OIDC_RESPONSE_PARAMS.reduce((acc, param) => {
+    if (!url.searchParams.has(param)) {
+      return acc
+    }
+    url.searchParams.delete(param)
+    return true
+  }, false)
+  if (!mutated) {
+    return
+  }
+  const query = url.searchParams.toString()
+  window.history.replaceState({}, document.title, `${url.origin}${url.pathname}${query ? `?${query}` : ''}${url.hash}`)
+}
+
 function isRefreshTokenValid (keycloak: Keycloak): boolean {
   const refreshExp = keycloak.refreshTokenParsed?.exp
   const now = Date.now() / 1000
@@ -104,24 +139,16 @@ export async function keycloakInit () {
   try {
     const { onLoad, flow } = keycloakInitOptions
     const keycloak = getKeycloak()
+    // Nettoyage AVANT init : check-sso construit sa redirect_uri à partir de location.href,
+    // qui contient encore les paramètres de réponse de la connexion précédente.
+    cleanAuthParamsFromUrl()
     await keycloak.init({
       onLoad,
       flow,
       // on laisse Keycloak utiliser la redirectUri définie dans la config (évite boucles avec ?code=)
     })
     // Nettoyage de l'URL (suppression des paramètres d'auth une fois le token acquis)
-    const url = new URL(window.location.href)
-    let mutated = false
-    ;['code', 'session_state', 'state'].forEach((p) => {
-      if (url.searchParams.has(p)) {
-        url.searchParams.delete(p)
-        mutated = true
-      }
-    })
-    if (mutated) {
-      const clean = url.origin + url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') + url.hash
-      window.history.replaceState({}, document.title, clean)
-    }
+    cleanAuthParamsFromUrl()
   }
   catch (error) {
     // Si CORS: on log et on laisse l’app fonctionner (les guards feront une redirection manuelle).
