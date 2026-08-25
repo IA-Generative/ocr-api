@@ -2,12 +2,15 @@ import time
 import uuid
 from datetime import datetime
 from enum import Enum
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import FLOAT, JSON, BigInteger, Column, Integer, String, func
+from sqlalchemy.orm import object_session
 
 from src.connector.db_connector import Base, get_db
+from src.connector.encryption import EncryptionProvider, create_encryption_provider, decrypt_json, encrypt_json
 from src.logger import logger
 from src.schemas.audio import AudioTranscriptionResult
 from src.schemas.input import InputForm
@@ -15,6 +18,29 @@ from src.schemas.output import OCRResult
 from src.schemas.video import VideoDescriptionResult
 
 TaskOutput = Union[OCRResult, AudioTranscriptionResult, VideoDescriptionResult]
+
+
+@lru_cache(maxsize=1)
+def _get_encryption_provider() -> EncryptionProvider:
+    return create_encryption_provider()
+
+
+def _encrypt_output(output: Optional[dict]) -> Optional[dict]:
+    # Le contenu texte du résultat (OCR/transcription/description) est chiffré au repos.
+    # Le provider n'est instancié qu'ici, à la demande — les tâches sans output (la
+    # plupart des écritures : création, mises à jour de statut/progression) n'ont donc
+    # jamais besoin d'ENCRYPTION_KEY / de Vault configuré.
+    if output is None:
+        return None
+    return encrypt_json(_get_encryption_provider(), output)
+
+
+def _decrypt_output(output: Optional[dict]) -> Optional[dict]:
+    if output is None:
+        return None
+    # Les tâches écrites avant l'activation du chiffrement n'ont pas d'enveloppe :
+    # decrypt_json les renvoie telles quelles (donnée legacy en clair).
+    return decrypt_json(_get_encryption_provider(), output)
 
 
 class Task(Base):
@@ -129,6 +155,17 @@ class TaskTable:
     def __init__(self, get_db):
         self.get_db = get_db
 
+    @staticmethod
+    def _with_decrypted_output(task: "Task") -> "Task":
+        # On détache l'objet de la session avant de muter .output : sans ça, un futur
+        # commit sur cette même session (ex: une autre écriture plus tard dans la même
+        # requête) pourrait réécrire le texte en clair en base à la place du chiffré.
+        session = object_session(task)
+        if session is not None:
+            session.expunge(task)
+        task.output = _decrypt_output(task.output)
+        return task
+
     def insert_new_task(self, user_id: str, form_data: TaskForm) -> Optional[TaskModel]:
         with self.get_db() as db:
             knowledge = TaskModel(
@@ -141,11 +178,14 @@ class TaskTable:
                 }
             )
 
-            result = Task(**knowledge.model_dump())
+            task_data = knowledge.model_dump()
+            task_data["output"] = _encrypt_output(task_data["output"])
+
+            result = Task(**task_data)
             db.add(result)
             db.commit()
             db.refresh(result)
-            return TaskModel.model_validate(result)
+            return knowledge
 
     def get_task_by_id(self, task_id: str) -> Optional[TaskModel]:
         with self.get_db() as db:
@@ -153,7 +193,7 @@ class TaskTable:
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
                 return None
-            return TaskModel.model_validate(task)
+            return TaskModel.model_validate(self._with_decrypted_output(task))
 
     def get_tasks_by_id(self, task_id: str) -> Optional[list[TaskModel]]:
         with self.get_db() as db:
@@ -161,7 +201,7 @@ class TaskTable:
             if not tasks:
                 logger.warning(f"Task with id {task_id} not found.")
                 return None
-            return [TaskModel.model_validate(task) for task in tasks]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks]
 
     def get_task_by_pks(self, task_id: str, task_type: str) -> Optional[TaskModel]:
         with self.get_db() as db:
@@ -169,7 +209,7 @@ class TaskTable:
             if not task:
                 logger.warning(f"Task with id {task_id} not found.")
                 return None
-            return TaskModel.model_validate(task)
+            return TaskModel.model_validate(self._with_decrypted_output(task))
 
     def update_task(self, task_id: str, form_data: TaskUpdateForm) -> Optional[TaskModel]:
         with self.get_db() as db:
@@ -179,6 +219,7 @@ class TaskTable:
                 return None
 
             updates = form_data.model_dump(exclude_unset=True)
+            updates.pop("output", None)
 
             for key, value in updates.items():
                 if hasattr(task, key):
@@ -188,12 +229,13 @@ class TaskTable:
                 task.input = form_data.input.model_dump()
 
             if form_data.output:
-                task.output = form_data.output.model_dump()
+                task.output = _encrypt_output(form_data.output.model_dump())
 
             task.updated_at = int(time.time())
             db.commit()
             db.refresh(task)
-            return TaskModel.model_validate(task)
+
+            return TaskModel.model_validate(self._with_decrypted_output(task))
 
     def delete_task_by_id(self, task_id: str) -> Optional[TaskModel]:
         with self.get_db() as db:
@@ -203,7 +245,7 @@ class TaskTable:
                 return None
             db.delete(task)
             db.commit()
-            return TaskModel.model_validate(task)
+            return TaskModel.model_validate(self._with_decrypted_output(task))
 
     def get_tasks_by_user_id(self, user_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
@@ -214,7 +256,7 @@ class TaskTable:
                 logger.warning(f"No tasks found for user {user_id}.")
                 return None
 
-            return [TaskModel.model_validate(task) for task in tasks]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks]
 
     def count_tasks_by_user_id(self, user_id: str) -> int:
         with self.get_db() as db:
@@ -233,7 +275,7 @@ class TaskTable:
                 db.delete(task)
             db.commit()
 
-            return [TaskModel.model_validate(task) for task in tasks_to_delete]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks_to_delete]
 
     def get_position_in_queue(self, task_id: str) -> int | None:
         if task_id:
@@ -259,7 +301,7 @@ class TaskTable:
     def get_task_by_content_hash(self, content_hash_value: str) -> Optional[TaskModel]:
         with self.get_db() as db:
             task = db.query(Task).filter(Task.content_hash == content_hash_value).first()
-            return TaskModel.model_validate(task) if task else None
+            return TaskModel.model_validate(self._with_decrypted_output(task)) if task else None
 
     def delete_tasks_by_date_and_status(
         self, start_date: datetime, end_date: datetime, status: TaskStatus
@@ -283,7 +325,7 @@ class TaskTable:
                 db.delete(task)
             db.commit()
 
-            return [TaskModel.model_validate(task) for task in tasks_to_delete]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks_to_delete]
 
     def get_tasks_by_group_id(self, group_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
@@ -294,7 +336,7 @@ class TaskTable:
                 logger.warning(f"No tasks found for group {group_id}.")
                 return None
 
-            return [TaskModel.model_validate(task) for task in tasks]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks]
 
     def delete_tasks_by_group_id(self, group_id: str) -> Optional[List[TaskModel]]:
         with self.get_db() as db:
@@ -308,7 +350,7 @@ class TaskTable:
                 db.delete(task)
             db.commit()
 
-            return [TaskModel.model_validate(task) for task in tasks_to_delete]
+            return [TaskModel.model_validate(self._with_decrypted_output(task)) for task in tasks_to_delete]
 
     def statistics(self, user_id: str, is_admin: bool = False, skip: int = 0, limit: int = 10) -> TaskStats:
         with get_db() as db:
