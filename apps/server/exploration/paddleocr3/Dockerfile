@@ -50,16 +50,23 @@ ENV HOME=/app
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
   CMD celery -A services.main inspect ping || exit 1
 
+# OpenShift's restricted-v2 SCC ignores the image's USER and runs the container as an
+# arbitrary UID from the namespace's range, always with GID 0. Owning the tree by group
+# root and mirroring the owner bits onto the group is what lets one image work both as
+# 10001 on the current cluster and as that arbitrary UID later.
 RUN groupadd --gid 10001 appuser \
   && useradd --uid 10001 --gid appuser --no-create-home --home-dir /app --shell /usr/sbin/nologin appuser \
   && mkdir -p /app/.tmp/paddlex \
-  && chown -R appuser:appuser /app
+  && chown -R 10001:0 /app \
+  && chmod -R g=u /app
 
-USER appuser
+# Numeric, not `appuser`: with `runAsNonRoot: true` and no explicit `runAsUser`, the
+# kubelet cannot resolve a named user and refuses to start the container.
+USER 10001:10001
 
 CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
 RUN uv sync --group test --group ocr-service-paddle --group llm
-COPY --chown=appuser:appuser apps/server/tests /app/tests
+COPY --chown=10001:0 apps/server/tests /app/tests
 CMD ["uv", "run", "services/main.py"]
