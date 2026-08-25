@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.2](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.1...v0.20.0-rc.2) (2026-08-25)
+
+
+### Bug Fixes
+
+* non root user into container ([13a3504](https://github.com/IA-Generative/ocr-api/commit/13a350430f0f44bec9100b52aeceb26116eefef6))
+* **security:** make the images usable under an arbitrary UID ([ad4609f](https://github.com/IA-Generative/ocr-api/commit/ad4609f251df57312d7b78aff2cc53caff0a7abe))
+
 ## [0.20.0-rc.1](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc...v0.20.0-rc.1) (2026-08-25)
 
 
