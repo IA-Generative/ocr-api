@@ -10,13 +10,6 @@ export const OCR_API_URL = (window as any).VITE_OCR_API_URL ?? import.meta.env.V
 export const MATOMO_SITE_URL = (window as any).VITE_MATOMO_SITE_URL ?? import.meta.env.VITE_MATOMO_SITE_URL
 export const MATOMO_SITE_ID = (window as any).VITE_MATOMO_SITE_ID ?? import.meta.env.VITE_MATOMO_SITE_ID
 
-// KEYCLOAK
-export const KEYCLOAK_URL = (window as any).VITE_KEYCLOAK_URL ?? import.meta.env.VITE_KEYCLOAK_URL
-export const KEYCLOAK_CLIENT_ID = (window as any).VITE_KEYCLOAK_CLIENT_ID ?? import.meta.env.VITE_KEYCLOAK_CLIENT_ID
-export const KEYCLOAK_REALM = (window as any).VITE_KEYCLOAK_REALM ?? import.meta.env.VITE_KEYCLOAK_REALM
-export const ENABLE_KEYCLOAK = (window as any).VITE_ENABLE_KEYCLOAK ?? import.meta.env.VITE_ENABLE_KEYCLOAK
-export const KEYCLOAK_REDIRECT_URI = (window as any).VITE_REDIRECT_URI ?? import.meta.env.VITE_REDIRECT_URI
-
 // EXTERNAL LINKS
 export const USER_REVIEW_URL = (window as any).VITE_USER_REVIEW_URL ?? import.meta.env.VITE_USER_REVIEW_URL
 export const TCHAP_CANAL_URL = (window as any).VITE_TCHAP_CANAL_URL ?? import.meta.env.VITE_TCHAP_CANAL_URL

@@ -1,0 +1,154 @@
+import base64
+import hashlib
+import secrets
+from urllib.parse import urlencode
+
+from fastapi import APIRouter, HTTPException, Query, Request, Response, status
+from fastapi.responses import RedirectResponse
+
+from ocr_backend.core.security import keycloak_client
+from ocr_backend.core.security.claims import extract_identity
+from src.logger import logger
+
+router = APIRouter(tags=["Auth"])
+
+_keycloak_openid = keycloak_client.keycloak_openid
+_keycloak_settings = keycloak_client.keycloak_settings
+_session_store = keycloak_client.session_store
+
+
+def _is_safe_internal_path(path: str | None) -> bool:
+    """Only accept app-relative paths: an absolute or protocol-relative value
+    ("//evil.tld") would turn the post-login redirect into an open redirect."""
+    return bool(path) and path.startswith("/") and not path.startswith("//")
+
+
+def _build_pkce_pair() -> tuple[str, str]:
+    code_verifier = secrets.token_urlsafe(64)
+    digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
+    code_challenge = base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")
+    return code_verifier, code_challenge
+
+
+def _set_session_cookie(response: Response, sid: str) -> None:
+    response.set_cookie(
+        key=_keycloak_settings.SESSION_COOKIE_NAME,
+        value=sid,
+        httponly=True,
+        secure=_keycloak_settings.SESSION_COOKIE_SECURE,
+        samesite=_keycloak_settings.SESSION_COOKIE_SAMESITE,
+        path="/",
+        max_age=_keycloak_settings.SESSION_TTL_SECONDS,
+    )
+
+
+def _clear_session_cookie(response: Response) -> None:
+    response.delete_cookie(
+        key=_keycloak_settings.SESSION_COOKIE_NAME,
+        path="/",
+        secure=_keycloak_settings.SESSION_COOKIE_SECURE,
+        samesite=_keycloak_settings.SESSION_COOKIE_SAMESITE,
+    )
+
+
+@router.get("/login")
+async def login(redirect: str | None = Query(default=None)):
+    next_path = redirect if _is_safe_internal_path(redirect) else "/"
+
+    code_verifier, code_challenge = _build_pkce_pair()
+    state = secrets.token_urlsafe(32)
+    _session_store.save_pending(state, code_verifier, next_path)
+
+    # Built by hand rather than via `KeycloakOpenID.auth_url()`: that helper resolves the
+    # authorization endpoint through `well_known()` on the *server-to-server* connection,
+    # which in local docker compose points at the internal `keycloak:8080` hostname - not
+    # reachable from the browser. `KEYCLOAK_PUBLIC_URL` is the address we redirect the
+    # browser to instead.
+    params = {
+        "client_id": _keycloak_settings.KEYCLOAK_CLIENT_ID,
+        "response_type": "code",
+        "redirect_uri": _keycloak_settings.callback_url,
+        "scope": "openid profile email",
+        "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256",
+    }
+    auth_url = (
+        f"{_keycloak_settings.public_url}/realms/{_keycloak_settings.KEYCLOAK_REALM}"
+        f"/protocol/openid-connect/auth?{urlencode(params)}"
+    )
+    return RedirectResponse(auth_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+
+@router.get("/callback")
+async def callback(
+    code: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    error: str | None = Query(default=None),
+):
+    if error or not code or not state:
+        logger.warning(
+            "Keycloak auth callback failed: error=%s code_present=%s state_present=%s", error, bool(code), bool(state)
+        )
+        return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
+
+    pending = _session_store.pop_pending(state)
+    if not pending:
+        logger.warning("Rejecting auth callback with unknown/expired/reused state")
+        return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
+
+    try:
+        token_response = _keycloak_openid.token(
+            grant_type="authorization_code",
+            code=code,
+            redirect_uri=_keycloak_settings.callback_url,
+            code_verifier=pending.code_verifier,
+        )
+        claims = _keycloak_openid.introspect(token_response["access_token"])
+    except Exception:
+        logger.exception("Keycloak token exchange failed")
+        return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
+
+    identity = extract_identity(claims, _keycloak_settings.KEYCLOAK_CLIENT_ID)
+    sid = _session_store.create(token_response, identity)
+
+    response = RedirectResponse(
+        f"{_keycloak_settings.FRONTEND_URL}{pending.next_path}",
+        status_code=status.HTTP_302_FOUND,
+    )
+    _set_session_cookie(response, sid)
+    return response
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(request: Request, response: Response):
+    sid = request.cookies.get(_keycloak_settings.SESSION_COOKIE_NAME)
+    if sid:
+        session = _session_store.get(sid)
+        if session:
+            try:
+                _keycloak_openid.logout(session.refresh_token)
+            except Exception:
+                # Local session is dropped regardless - a Keycloak-side revocation failure
+                # (e.g. already-expired refresh token) must not leave the user stuck logged in.
+                logger.warning("Keycloak refresh token revocation failed", exc_info=True)
+        _session_store.delete(sid)
+    _clear_session_cookie(response)
+
+
+@router.get("/me")
+async def me(request: Request):
+    sid = request.cookies.get(_keycloak_settings.SESSION_COOKIE_NAME)
+    session = _session_store.get(sid) if sid else None
+    if session:
+        session = _session_store.ensure_fresh(sid, session)
+    if not session:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
+
+    return {
+        "id": session.user_id,
+        "email": session.email,
+        "firstName": session.first_name,
+        "lastName": session.last_name,
+        "groups": session.groups,
+    }
