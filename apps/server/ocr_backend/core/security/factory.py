@@ -1,8 +1,9 @@
 import logging
 import os
 import warnings
-from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
-from keycloak import KeycloakOpenID
+from ocr_backend.core.security import keycloak_client
+from ocr_backend.core.security.token import BaseVerifyToken, RequestContext, parse_header_context
+from fastapi import HTTPException, Request, status
 
 # Pas de `logging.basicConfig` ici : ce module est importé, pas un point d'entrée. L'appel
 # était sans effet en production (le logger racine a déjà des handlers via sentry-sdk), ce
@@ -60,66 +61,46 @@ class ApiToken(BaseVerifyToken):
 
 
 class KeycloakToken(BaseVerifyToken):
+    """Authenticates a request either via a service `Authorization: Bearer <API key>`
+    header, or via the BFF session cookie set by `/api/auth/callback`.
+
+    The browser never holds a Keycloak token: the frontend only ever sends the opaque
+    session cookie, and the actual access/refresh tokens stay server-side in Redis
+    (see `ocr_backend.core.security.session.SessionStore`).
+    """
+
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logger.info("Using Keycloak for token verification")
-
-        # Configuration Keycloak depuis les variables d'environnement
-        self.keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8080")
-        self.realm_name = os.environ.get("KEYCLOAK_REALM", "master")
-        self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "your-client-id")
-        self.keycloak_openid = KeycloakOpenID(
-            server_url=self.keycloak_url,
-            client_id=self.client_id,
-            realm_name=self.realm_name,
-            client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
-        )
-        logger.debug("Keycloak URL: %s, Realm: %s, Client ID: %s", self.keycloak_url, self.realm_name, self.client_id)
+        logger.info("Using Keycloak session-cookie verification")
         self.__api_token_verifier = ApiToken()
 
-    def verify(self, ctx: RequestContext) -> bool:
-        """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
+    def verify(self, ctx: RequestContext) -> bool:  # pragma: no cover - unused, see __call__
+        raise NotImplementedError("KeycloakToken reads the session cookie via __call__, not verify()")
+
+    def __call__(self, request: Request) -> RequestContext:
+        ctx = parse_header_context(request, is_fastapi=self.is_fastapi)
+
         if self.__api_token_verifier.verify(ctx):
-            logger.info("API token valid, skipping Keycloak verification")
-            return True
-        if not ctx.token:
-            logger.warning("Rejecting request without a bearer token")
-            return False
+            logger.info("API token valid, skipping session verification")
+            return ctx
 
-        try:
-            user_info = self.keycloak_openid.introspect(ctx.token)
-            logger.debug("Token introspection claims: %s", sorted(user_info.keys()))
-            if user_info.get("active") is False:
-                # Keycloak répond 200 {"active": false} sans jamais dire pourquoi. Depuis
-                # 26.6.2 la cause la plus fréquente n'est pas un jeton expiré mais un `aud`
-                # qui ne contient pas le client d'introspection : sans ce log, le rejet est
-                # indiscernable d'un jeton invalide.
-                logger.warning(
-                    "Token introspection returned inactive for client %s "
-                    "(expired/revoked token, or client absent from the token audience)",
-                    self.client_id,
-                )
-                return False
+        sid = request.cookies.get(keycloak_client.keycloak_settings.SESSION_COOKIE_NAME)
+        session = keycloak_client.session_store.get(sid) if sid else None
+        if session:
+            session = keycloak_client.session_store.ensure_fresh(sid, session)
 
-            # Remplir le contexte avec les informations récupérées
-            ctx.user_id = user_info.get("sub", "")  # Subject = user ID
-            logger.info("User ID: %s is connected", ctx.user_id)
-            ctx.email = user_info.get("email", "")
-            ctx.groups = user_info.get("groups", [])
+        if not session:
+            logger.warning("Rejecting request without a valid session")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
 
-            # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
-            # Ou si les rôles sont dans realm_access :
-            # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
-
-            # Déterminer si l'utilisateur est admin
-            ctx.is_admin = "admin" in ctx.roles or "realm-admin" in ctx.roles
-
-            return True
-
-        except Exception as e:
-            logger.error("Erreur lors de la vérification du token: %s", e, exc_info=True)
-            return False
+        ctx.user_id = session.user_id
+        ctx.email = session.email
+        ctx.roles = session.roles
+        ctx.groups = session.groups
+        ctx.is_admin = session.is_admin
+        ctx.token = session.access_token
+        logger.info("User ID: %s is connected", ctx.user_id)
+        return ctx
 
 
 SECURITY_FACTORY: dict[str, BaseVerifyToken] = {

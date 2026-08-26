@@ -219,6 +219,10 @@ services:
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
+      # Unit tests hit routes directly with no session/API-key auth mocked, unlike the
+      # real Keycloak flow `.env` is configured for (VERIFY_TOKEN_MODEL=keycloak) - override
+      # it here so CI doesn't need a live Keycloak/session to exercise these routes.
+      VERIFY_TOKEN_MODEL: full-access
     depends_on:
       - redis
       - db

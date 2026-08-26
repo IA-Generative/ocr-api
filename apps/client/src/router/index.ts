@@ -2,24 +2,28 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useUserStore } from '@/stores/user'
-import { getKeycloak, keycloakLogin, rememberPostLoginRedirect } from '@/utils/keycloak'
 import Home from '../views/AppHome.vue'
 import TaskDetailView from '../views/TaskDetailView.vue'
 
-// La connexion passe par keycloak-js et non par une URL d'autorisation construite à la main :
-// on hérite ainsi de PKCE (S256 par défaut), du `state`, du `nonce` et du response_mode
-// `fragment`. La redirect_uri est fixe, la route demandée est rejouée après `init()`.
+// L'authentification passe entièrement par le backend (BFF) : le navigateur ne fait
+// jamais de redirection OIDC lui-même. `checkAuth` interroge `/api/auth/me` (cookie de
+// session), et une navigation complète vers `/api/auth/login?redirect=...` déclenche le
+// flow côté backend, qui revient directement sur la route demandée après le callback.
 function authGuard () {
   return async (
     to: RouteLocationNormalized,
     _from: RouteLocationNormalized,
     next: NavigationGuardNext,
   ) => {
-    const keycloak = getKeycloak()
+    const userStore = useUserStore()
     const ssoBypass = import.meta.env.VITE_SSO_BYPASS === 'true' || (window as any).VITE_SSO_BYPASS === 'true'
-    if (!keycloak.authenticated && !ssoBypass) {
-      rememberPostLoginRedirect(to.fullPath)
-      await keycloakLogin()
+    if (ssoBypass) {
+      next()
+      return
+    }
+    const isLoggedIn = await userStore.checkAuth()
+    if (!isLoggedIn) {
+      userStore.login(to.fullPath)
       return
     }
     next()
@@ -46,20 +50,20 @@ const routes = [
   {
     path: '/login',
     name: 'Login',
-    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    // `login`/`logout` are full-page navigations (see utils/auth.ts) - the guard never
+    // reaches `next()` because the browser leaves the SPA before it would resolve.
+    beforeEnter: () => {
       const userStore = useUserStore()
-      await userStore.login()
-      next()
+      userStore.login()
     },
     component: Home,
   },
   {
     path: '/logout',
     name: 'Logout',
-    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    beforeEnter: () => {
       const userStore = useUserStore()
-      await userStore.logout()
-      next()
+      void userStore.logout()
     },
     component: Home,
   },

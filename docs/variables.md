@@ -116,6 +116,30 @@ Redis est utilisé comme broker Celery (`RedisSettings`, `src/config/redis.py` +
 
 ---
 
+### Variables pour l'authentification Keycloak (BFF)
+
+Le frontend ne parle plus jamais directement à Keycloak : c'est le backend qui possède tout le
+flow OAuth2 Authorization Code + PKCE, via `/api/auth/{login,callback,logout,me}`
+(`ocr_backend/routers/auth.py`). Le navigateur ne reçoit qu'un cookie de session opaque
+(`httpOnly`) ; les jetons Keycloak eux-mêmes restent côté backend, dans Redis
+(`ocr_backend/core/security/session.py`).
+
+| Variable | Obligatoire | Description | Default | Utilisation |
+|:---|:---:|:---|:---|:---|
+| `KEYCLOAK_URL` | ❌ | URL de Keycloak jointe **par le backend** (échange de code, refresh, introspection, logout). | `http://localhost:8080` | `ocr_backend/core/security/keycloak_client.py` |
+| `KEYCLOAK_PUBLIC_URL` | ❌ | URL de Keycloak vue **par le navigateur** lors de la redirection `/api/auth/login`. Retombe sur `KEYCLOAK_URL` si absente — à renseigner uniquement si le backend et le navigateur ne résolvent pas Keycloak de la même façon (ex : docker compose local, où c'est un nom de service interne côté backend mais un port exposé sur l'hôte côté navigateur). | `KEYCLOAK_URL` | `ocr_backend/routers/auth.py` |
+| `KEYCLOAK_REALM` | ❌ | Realm Keycloak utilisé. | `master` | `ocr_backend/core/security/keycloak_client.py` |
+| `KEYCLOAK_CLIENT_ID` | ❌ | Client OpenID Connect **confidentiel** utilisé par le backend (le client ne doit pas être public : seul le backend échange le code d'autorisation). | `your-client-id` | `ocr_backend/core/security/keycloak_client.py` |
+| `KEYCLOAK_CLIENT_SECRET` | ✅ (hors dev local) | Secret du client confidentiel. | - | `ocr_backend/core/security/keycloak_client.py` |
+| `BACKEND_PUBLIC_URL` | ✅ (hors défaut local) | URL publique de cette API, utilisée pour construire le `redirect_uri` fixe envoyé à Keycloak (`{BACKEND_PUBLIC_URL}/api/auth/callback`) — doit correspondre exactement à une redirect URI enregistrée sur le client Keycloak. | `http://localhost:5000` | `src/config/keycloak.py` |
+| `FRONTEND_URL` | ✅ (hors défaut local) | URL publique du frontend : origine CORS autorisée (`allow_credentials: true` + `allow_origins: ["*"]` est rejeté par les navigateurs, l'origine doit être explicite) et cible de redirection après `/callback`. | `http://localhost:8081` | `ocr_backend/main.py`, `ocr_backend/routers/auth.py` |
+| `SESSION_COOKIE_NAME` | ❌ | Nom du cookie de session BFF. | `ocr_session` | `ocr_backend/routers/auth.py` |
+| `SESSION_COOKIE_SECURE` | ❌ | Marque le cookie `Secure` (HTTPS uniquement). À désactiver **uniquement** en dev local HTTP (voir `docker-compose.yaml`) — jamais en production. | `True` | `ocr_backend/routers/auth.py` |
+| `SESSION_COOKIE_SAMESITE` | ❌ | Attribut `SameSite` du cookie de session. | `lax` | `ocr_backend/routers/auth.py` |
+| `SESSION_TTL_SECONDS` | ❌ | Durée de vie max. de la session côté Redis ; l'expiration réelle reste bornée par celle du refresh token Keycloak. | `604800` (7 jours) | `ocr_backend/core/security/session.py` |
+
+---
+
 ### Variables diverses
 
 | Variable | Obligatoire | Description | Default | Utilisation |
@@ -125,7 +149,7 @@ Redis est utilisé comme broker Celery (`RedisSettings`, `src/config/redis.py` +
 | `ENVIRONMENT` | ❌ | Environnement d'exécution (`development`, `production`, ...). | - | `services/main.py`, `src/logger.py`, `ocr_backend/main.py` |
 | `SERVICE_NAME` | ❌ | Nom du service pour les logs structurés. | - | `src/logger.py` |
 | `API_KEYS` | ❌ | Clés API acceptées par l'API backend. | - | `ocr_backend/core/security/factory.py` |
-| `KEYCLOAK_URL` / `KEYCLOAK_REALM` / `KEYCLOAK_CLIENT_ID` / `KEYCLOAK_CLIENT_SECRET` / `VERIFY_TOKEN_MODEL` | ❌ | Configuration Keycloak pour l'auth OIDC. | - | `ocr_backend/core/security/factory.py` |
+| `VERIFY_TOKEN_MODEL` | ❌ | Sélectionne le vérificateur d'auth des routes API (`keycloak` = cookie de session BFF ci-dessus, ou `full-access`/`dev`). | `keycloak` | `ocr_backend/core/security/factory.py` |
 | `MODEL_FEATURE_NAME` | ❌ | Nom du modèle de features utilisé par les collections. | - | `ocr_backend/routers/collections.py` |
 
 > ℹ️ **Vues dans Vault, vérifiées contre le code** :
@@ -215,4 +239,12 @@ MONITOR_RESSOURCE_EVERY=5
 
 # Database (obligatoire)
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+
+# Keycloak (BFF - voir "Variables pour l'authentification Keycloak" ci-dessus)
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM=mon-realm
+KEYCLOAK_CLIENT_ID=mon-client
+KEYCLOAK_CLIENT_SECRET=mon-secret
+BACKEND_PUBLIC_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:8081
 ```
