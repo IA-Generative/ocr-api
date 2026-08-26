@@ -1,7 +1,7 @@
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import axios from 'axios'
 
-import { getKeycloak } from '@/utils/keycloak'
+import { getKeycloak, keycloakLogin, rememberPostLoginRedirect } from '@/utils/keycloak'
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
@@ -23,7 +23,9 @@ function createHttpClient (baseURL: string): AxiosInstance {
 
       if (keycloak.authenticated && keycloak.token) {
         if (config.headers && typeof config.headers.set === 'function') {
-          config.headers.set('Authorization', `${keycloak.tokenParsed?.typ || 'Bearer'} ${keycloak.token}`)
+          // Le schéma HTTP est toujours `Bearer` (RFC 6750) : le claim `typ` du jeton
+          // décrit le type de jeton, pas le schéma, et le serveur n'accepte que `Bearer `.
+          config.headers.set('Authorization', `Bearer ${keycloak.token}`)
         }
       }
       return config
@@ -49,7 +51,8 @@ function createHttpClient (baseURL: string): AxiosInstance {
           }
         } catch (refreshError) {
           console.error('Token refresh failed:', refreshError)
-          await keycloak.login()
+          rememberPostLoginRedirect(`${window.location.pathname}${window.location.search}`)
+          await keycloakLogin()
         }
       }
       return Promise.reject(error)
