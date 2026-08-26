@@ -1,15 +1,13 @@
 import logging
 import os
-import sys
 import warnings
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
 from keycloak import KeycloakOpenID
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout,
-)
+# Pas de `logging.basicConfig` ici : ce module est importé, pas un point d'entrée. L'appel
+# était sans effet en production (le logger racine a déjà des handlers via sentry-sdk), ce
+# qui rendait muette toute cette vérification et a masqué un incident d'authentification.
+logger = logging.getLogger(__name__)
 
 
 class AllowAllAccess(BaseVerifyToken):
@@ -42,15 +40,21 @@ class DevToken(BaseVerifyToken):
 class ApiToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using API Token for verification")
+        logger.info("Using API Token for verification")
         # TODO: use db or vault to store API keys and get user info associated with the key
         # Fail closed: an unset API_KEYS means no key is accepted, not a guessable default.
         self.__api_keys = {key.strip() for key in os.environ.get("API_KEYS", "").split(",") if key.strip()}
-        logging.info(f"Loaded {len(self.__api_keys)} API key(s) for verification")
+        logger.info("Loaded %d API key(s) for verification", len(self.__api_keys))
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:
             ctx.user_id = "api_user"
+            # `parse_header_context` alimente roles/is_admin depuis l'en-tête X-Roles, que
+            # l'appelant contrôle. La branche Keycloak les réécrit depuis le jeton ; ici il
+            # n'y a pas de jeton, donc on remet à zéro plutôt que de faire confiance.
+            ctx.roles = []
+            ctx.groups = []
+            ctx.is_admin = False
             return True
         return False
 
@@ -58,7 +62,7 @@ class ApiToken(BaseVerifyToken):
 class KeycloakToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using Keycloak for token verification")
+        logger.info("Using Keycloak for token verification")
 
         # Configuration Keycloak depuis les variables d'environnement
         self.keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8080")
@@ -70,23 +74,36 @@ class KeycloakToken(BaseVerifyToken):
             realm_name=self.realm_name,
             client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
         )
-        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        logger.debug("Keycloak URL: %s, Realm: %s, Client ID: %s", self.keycloak_url, self.realm_name, self.client_id)
         self.__api_token_verifier = ApiToken()
 
     def verify(self, ctx: RequestContext) -> bool:
         """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
         if self.__api_token_verifier.verify(ctx):
-            logging.info("API token valid, skipping Keycloak verification")
+            logger.info("API token valid, skipping Keycloak verification")
             return True
+        if not ctx.token:
+            logger.warning("Rejecting request without a bearer token")
+            return False
+
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
-            logging.debug(f"Token info: {user_info.keys()}")
+            logger.debug("Token introspection claims: %s", sorted(user_info.keys()))
             if user_info.get("active") is False:
+                # Keycloak répond 200 {"active": false} sans jamais dire pourquoi. Depuis
+                # 26.6.2 la cause la plus fréquente n'est pas un jeton expiré mais un `aud`
+                # qui ne contient pas le client d'introspection : sans ce log, le rejet est
+                # indiscernable d'un jeton invalide.
+                logger.warning(
+                    "Token introspection returned inactive for client %s "
+                    "(expired/revoked token, or client absent from the token audience)",
+                    self.client_id,
+                )
                 return False
 
             # Remplir le contexte avec les informations récupérées
             ctx.user_id = user_info.get("sub", "")  # Subject = user ID
-            logging.info(f"User ID: {ctx.user_id} is connected")
+            logger.info("User ID: %s is connected", ctx.user_id)
             ctx.email = user_info.get("email", "")
             ctx.groups = user_info.get("groups", [])
 
@@ -101,7 +118,7 @@ class KeycloakToken(BaseVerifyToken):
             return True
 
         except Exception as e:
-            logging.error(f"Erreur lors de la vérification du token: {e}")
+            logger.error("Erreur lors de la vérification du token: %s", e, exc_info=True)
             return False
 
 
