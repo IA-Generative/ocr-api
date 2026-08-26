@@ -9,10 +9,30 @@ import {
   KEYCLOAK_URL,
 } from './constants'
 
+// `VITE_REDIRECT_URI` n'est pas écrit de la même façon d'un environnement à l'autre (prod
+// avec slash final, dev/staging/preprod sans). En matching exact Keycloak compare des
+// chaînes : on normalise donc une bonne fois pour que la redirect_uri envoyée soit toujours
+// exactement celle déclarée sur le client.
+const REDIRECT_URI: string | undefined = (() => {
+  if (!KEYCLOAK_REDIRECT_URI) {
+    console.warn('[keycloak] VITE_REDIRECT_URI is not set, falling back to the current URL')
+    return undefined
+  }
+  try {
+    return new URL(KEYCLOAK_REDIRECT_URI).toString()
+  }
+  catch {
+    console.warn(`[keycloak] VITE_REDIRECT_URI is not an absolute URL: ${KEYCLOAK_REDIRECT_URI}`)
+    return undefined
+  }
+})()
+
 export const keycloakInitOptions: KeycloakInitOptions = {
   onLoad: 'check-sso',
   flow: 'standard',
-  redirectUri: KEYCLOAK_REDIRECT_URI,
+  // Toujours transmise à `init()` : sans elle keycloak-js retombe sur `location.href`,
+  // et la redirect_uri devient alors dépendante de la barre d'adresse.
+  redirectUri: REDIRECT_URI,
 }
 
 export const keycloakConfig: KeycloakConfig = {
@@ -23,9 +43,11 @@ export const keycloakConfig: KeycloakConfig = {
 
 let keycloak: Keycloak
 
-// Depuis Keycloak 26.7, une redirect_uri contenant un paramètre de réponse OIDC dans sa
-// query string est rejetée (protection HTTP Parameter Pollution), même si la valid redirect
-// URI du client utilise un wildcard.
+// Depuis Keycloak 26.6.5/26.7.0, une redirect_uri dont la query string contient un paramètre
+// de réponse OIDC est rejetée (protection HTTP Parameter Pollution), avant même la comparaison
+// avec les valid redirect URIs du client - un wildcard ne rattrape donc pas le coup.
+// Toutes les redirections passent maintenant par REDIRECT_URI, cette liste ne sert donc
+// plus qu'à nettoyer la barre d'adresse (défense en profondeur).
 const OIDC_RESPONSE_PARAMS = [
   'code',
   'state',
@@ -42,6 +64,9 @@ const OIDC_RESPONSE_PARAMS = [
   'kc_action_status',
 ]
 
+// Route demandée avant la redirection SSO, rejouée au retour puisque la redirect_uri est fixe.
+const POST_LOGIN_REDIRECT_KEY = 'ocr:post-login-redirect'
+
 function cleanAuthParamsFromUrl () {
   const url = new URL(window.location.href)
   const mutated = OIDC_RESPONSE_PARAMS.reduce((acc, param) => {
@@ -56,6 +81,52 @@ function cleanAuthParamsFromUrl () {
   }
   const query = url.searchParams.toString()
   window.history.replaceState({}, document.title, `${url.origin}${url.pathname}${query ? `?${query}` : ''}${url.hash}`)
+}
+
+// Seuls les chemins relatifs à l'application sont acceptés : une valeur absolue ou
+// protocol-relative ("//evil.tld") transformerait la restauration en open redirect.
+function isSafeInternalPath (path: string | null): path is string {
+  return !!path && path.startsWith('/') && !path.startsWith('//')
+}
+
+export function rememberPostLoginRedirect (path: string) {
+  try {
+    if (isSafeInternalPath(path)) {
+      window.sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, path)
+    }
+  }
+  catch {
+    // sessionStorage indisponible (navigation privée, cookies bloqués) : on perd le
+    // retour à la page demandée, ce qui ne doit pas empêcher la connexion.
+  }
+}
+
+function consumePostLoginRedirect (): string | null {
+  try {
+    const path = window.sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY)
+    window.sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY)
+    return isSafeInternalPath(path) ? path : null
+  }
+  catch {
+    return null
+  }
+}
+
+// Rejoue la route demandée avant connexion. Appelé avant le montage de l'application :
+// le router n'a pas encore navigué, donc réécrire l'historique suffit et évite à la fois
+// une double navigation et l'affichage furtif de la route par défaut.
+export function restorePostLoginRedirect () {
+  if (!getKeycloak().authenticated) {
+    return
+  }
+  const path = consumePostLoginRedirect()
+  if (!path) {
+    return
+  }
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  if (path !== current) {
+    window.history.replaceState({}, document.title, path)
+  }
 }
 
 function isRefreshTokenValid (keycloak: Keycloak): boolean {
@@ -111,42 +182,16 @@ export function getUserProfile (): IUser {
   }
 }
 
-export function buildAuthUrl (opts?: { register?: boolean, redirectUri?: string }) {
-  const redirect = encodeURIComponent(opts?.redirectUri || KEYCLOAK_REDIRECT_URI)
-  const base = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth`
-  const params = new URLSearchParams({
-    client_id: KEYCLOAK_CLIENT_ID,
-    redirect_uri: redirect,
-    response_type: 'code',
-    scope: 'openid',
-  })
-  if (opts?.register) {
-    params.set('kc_action', 'register')
-  }
-  return `${base}?${params.toString()}`
-}
-
-export function redirectToKeycloakLogin (redirectUri?: string) {
-  window.location.href = buildAuthUrl({ redirectUri })
-}
-
-export function redirectToKeycloakRegister (redirectUri?: string) {
-  window.location.href = buildAuthUrl({ register: true, redirectUri })
-}
-
 export async function keycloakInit () {
   try {
-    const { onLoad, flow } = keycloakInitOptions
+    const { onLoad, flow, redirectUri } = keycloakInitOptions
     const keycloak = getKeycloak()
     // Nettoyage AVANT init : check-sso construit sa redirect_uri à partir de location.href,
     // qui contient encore les paramètres de réponse de la connexion précédente.
     cleanAuthParamsFromUrl()
-    await keycloak.init({
-      onLoad,
-      flow,
-      // on laisse Keycloak utiliser la redirectUri définie dans la config (évite boucles avec ?code=)
-    })
-    // Nettoyage de l'URL (suppression des paramètres d'auth une fois le token acquis)
+    await keycloak.init({ onLoad, flow, redirectUri })
+    // Le callback nominal arrive dans le fragment et keycloak-js le retire lui-même ;
+    // ce nettoyage couvre les paramètres laissés par une autre source de redirection.
     cleanAuthParamsFromUrl()
   } catch (error) {
     // Si CORS: on log et on laisse l’app fonctionner (les guards feront une redirection manuelle).
@@ -162,9 +207,7 @@ export async function keycloakInit () {
 export async function keycloakLogin () {
   try {
     const keycloak = getKeycloak()
-    const currentUrl = new URL(window.location.href)
-    const redirectUri = `${window.location.origin}${currentUrl.pathname}${currentUrl.search}`
-    await keycloak.login({ redirectUri })
+    await keycloak.login({ redirectUri: REDIRECT_URI })
   } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
@@ -176,9 +219,7 @@ export async function keycloakLogin () {
 export async function keycloakRegister () {
   try {
     const keycloak = getKeycloak()
-    const currentUrl = new URL(window.location.href)
-    const redirectUri = `${window.location.origin}${currentUrl.pathname}${currentUrl.search}`
-    await keycloak.register({ redirectUri })
+    await keycloak.register({ redirectUri: REDIRECT_URI })
   } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
