@@ -1,7 +1,7 @@
-ARG PNPM_VERSION=10.17.1
+ARG PNPM_VERSION=11.24.0
 
 # dev
-FROM docker.io/node:24.20.0-slim AS dev
+FROM docker.io/node:24.19.0-slim AS dev
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN pnpm run build
 
 
 # prod
-FROM docker.io/nginxinc/nginx-unprivileged:1.28.0-alpine AS prod
+FROM docker.io/nginxinc/nginx-unprivileged:1.30.4-alpine AS prod
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx/50x.html /usr/share/nginx/html
