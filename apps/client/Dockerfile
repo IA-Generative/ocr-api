@@ -6,8 +6,16 @@ FROM docker.io/node:24.19.0-slim AS dev
 WORKDIR /app
 
 RUN npm install --ignore-scripts --location=global pnpm@${PNPM_VERSION}
-COPY ./package.json ./
-RUN pnpm install --ignore-scripts
+# The lockfile and pnpm-workspace.yaml have to land *before* the install, not
+# with the rest of the sources: installing from package.json alone re-resolves
+# every range, so the image ignored the committed lockfile entirely. It also
+# left node_modules out of sync with the lockfile that `COPY . .` then brought
+# in, which pnpm's verify-deps-before-run check turns into a hard failure
+# (it wants to reinstall, that needs to remove node_modules, and there is no
+# TTY in a build to confirm it).
+# Build scripts are restricted by `allowBuilds` in pnpm-workspace.yaml.
+COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
 # node_modules is re-mounted as an anonymous volume at runtime (see
 # docker-compose.frontend.yaml): chown it (and the rest of /app) so the
