@@ -1,1 +1,3 @@
-pnpm dlx commitlint --edit $1
+# `@commitlint/cli` is a root devDependency — run it from node_modules instead of
+# re-downloading it through `dlx` on every commit.
+pnpm exec commitlint --edit "$1"

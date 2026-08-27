@@ -3,7 +3,11 @@
   "type": "module",
   "version": "0.19.11",
   "private": true,
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
   "pnpm": {
     "overrides": {
       "form-data": ">=4.0.6",
@@ -12,21 +16,22 @@
     }
   },
   "scripts": {
-    "clean:dist": "rimraf dist",
+    "build": "run-s build-only type-check",
     "build-only": "vite build",
+    "clean": "rimraf dist node_modules/.tmp node_modules/.vite",
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
     "format": "eslint . --fix",
+    "generate-openapi": "openapi-typescript ${VITE_OCR_API_URL}/openapi.json -o ./src/api/types/api.schema.d.ts",
     "lint": "eslint .",
-    "prepare": "cd .. && husky apps/client/.husky",
     "preview": "vite preview",
     "test": "run-s test:unit test:e2e",
+    "test:cov": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps",
+    "test:e2e:ui": "playwright test --ui",
     "test:unit": "vitest run",
     "test:watch": "vitest",
-    "test:e2e-ci": "playwright test",
-    "test:e2e-ui": "playwright test --ui",
-    "type-check": "vue-tsc --build --force || exit 0",
-    "generate-openapi": "pnpx openapi-typescript ${VITE_OCR_API_URL}/openapi.json -o ./src/api/types/api.schema.d.ts"
+    "type-check": "vue-tsc --build"
   },
   "dependencies": {
     "@gouvfr/dsfr": "~1.14.4",
@@ -37,7 +42,6 @@
     "axios": "^1.18.1",
     "focus-trap": "^7.8.0",
     "focus-trap-vue": "^4.1.0",
-    "husky": "^9.1.7",
     "keycloak-js": "^26.2.4",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.3.2",
@@ -56,6 +60,7 @@
     "@types/node": "^24.13.2",
     "@vitejs/plugin-vue": "^6.0.7",
     "@vitejs/plugin-vue-jsx": "^5.1.6",
+    "@vitest/coverage-v8": "^3.2.7",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.8.1",
     "dotenv": "^17.4.2",

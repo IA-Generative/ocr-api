@@ -7,22 +7,20 @@ type Health = components['schemas']['Health']
 
 const http = createHttpClient(OCR_API_URL)
 
-export function useBackendHealth() {
+export function useBackendHealth () {
   const health = ref<Health | null>(null)
   const loading = ref(false)
   const error = ref(false)
 
-  async function fetchHealth() {
+  async function fetchHealth () {
     loading.value = true
     error.value = false
     try {
       const { data } = await http.get<Health>('/health')
       health.value = data
-    }
-    catch {
+    } catch {
       error.value = true
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }

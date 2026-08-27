@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/vue'
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 
-// @ts-expect-error vue-matomo
 import VueMatomo from 'vue-matomo'
 import App from './App.vue'
 import router from './router/index'
@@ -40,8 +39,7 @@ async function initializeApp () {
         environment: ENVIRONMENT,
         sendDefaultPii: false,
       })
-    }
-    catch (e) {
+    } catch (e) {
       console.error('Sentry initialization failed, continuing without it:', e)
     }
   }
