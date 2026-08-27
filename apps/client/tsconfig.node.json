@@ -8,6 +8,9 @@
     "moduleResolution": "Bundler",
     "types": ["node"],
     "noEmit": true,
+    // vitest.config.ts imports ./vite.config.ts with its extension, which is
+    // what Vite 8's native config loader requires.
+    "allowImportingTsExtensions": true,
 
     "noImplicitOverride": true,
     "noImplicitReturns": true,

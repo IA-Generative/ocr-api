@@ -1,7 +1,7 @@
 // use-toaster.ts
 import { reactive } from 'vue'
 
-const alphanumBase = 'abcdefghijklmnopqrstuvwyz0123456789'
+const alphanumBase = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 const alphanum = alphanumBase.repeat(10)
 

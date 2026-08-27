@@ -117,7 +117,11 @@ export const useOcrStore = defineStore('ocr', () => {
     previousPosition.value = null
 
     try {
-      const check = async (): Promise<void> => {
+      // A loop rather than recursion: `check()` used to await itself, so the
+      // promise chain grew for the whole lifetime of a job and there was no way
+      // to interrupt it. Re-reading `isPolling` each turn makes the poll
+      // cancellable — see `stopPolling()`.
+      while (isPolling.value) {
         const task = await getTask(taskId)
 
         status.value = task.status
@@ -174,9 +178,7 @@ export const useOcrStore = defineStore('ocr', () => {
         }
 
         await new Promise(res => setTimeout(res, intervalMs))
-        await check()
       }
-      await check()
     } catch (err: any) {
       error.value = err.message ?? 'Erreur inconnue lors du polling.'
       isPolling.value = false
@@ -259,6 +261,16 @@ export const useOcrStore = defineStore('ocr', () => {
     }
   }
 
+  /**
+   * Stops an in-flight `pollTask` loop. Safe to call when nothing is polling.
+   */
+  function stopPolling () {
+    isPolling.value = false
+    if (processingState.value === 'processing') {
+      processingState.value = 'idle'
+    }
+  }
+
   function reset () {
     status.value = null
     percentage.value = 0
@@ -317,6 +329,8 @@ export const useOcrStore = defineStore('ocr', () => {
     getPageImageUrl,
     createYoutubeTask,
     sendFileAndPoll,
+    pollTask,
+    stopPolling,
     reset,
     validateFile,
     downloadText,
