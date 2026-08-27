@@ -1,7 +1,7 @@
 ARG PNPM_VERSION=10.17.1
 
 # dev
-FROM docker.io/node:22.17.1-slim AS dev
+FROM docker.io/node:24.20.0-slim AS dev
 
 WORKDIR /app
 

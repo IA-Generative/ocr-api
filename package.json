@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.17.1",
   "engines": {
-    "node": ">=20",
+    "node": ">=24",
     "pnpm": ">=10"
   },
   "scripts": {
@@ -21,10 +21,10 @@
     "test": "make test"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^5.4.1",
-    "@commitlint/cli": "^20.5.3",
-    "@commitlint/config-conventional": "^20.5.3",
-    "eslint": "^9.39.5",
+    "@antfu/eslint-config": "^9.3.0",
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "eslint": "^10.9.1",
     "husky": "^9.1.7"
   }
 }
