@@ -16,7 +16,7 @@ on:
         description: Node version used to run the frontend linter
         required: false
         type: string
-        default: "22"
+        default: "24"
   workflow_dispatch:
     inputs:
       PYTHON_VERSION:
@@ -28,7 +28,7 @@ on:
         description: Node version used to run the frontend linter
         required: false
         type: string
-        default: "22"
+        default: "24"
 
 jobs:
   lint:
