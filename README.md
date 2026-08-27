@@ -44,7 +44,8 @@ Dans cette section vous trouverez le fonctionnement de cette application [docs/s
 - [Docker](https://docs.docker.com/get-docker/) installé
 - [Docker Compose](https://docs.docker.com/compose/) (version 2+ recommandée)
 - [make](https://www.gnu.org/software/make/) — point d'entrée unique du dépôt
-- [uv](https://docs.astral.sh/uv/) pour le backend Python, [pnpm](https://pnpm.io/) pour le frontend
+- [uv](https://docs.astral.sh/uv/) pour le backend Python
+- [Node](https://nodejs.org/) 24 (LTS) et [pnpm](https://pnpm.io/) 11 pour le frontend
 - Un fichier `.env` configuré à la racine du projet (voir exemple ci-dessous)
 
 `make doctor` indique quels outils sont présents sur la machine.
