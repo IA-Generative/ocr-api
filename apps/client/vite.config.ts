@@ -15,7 +15,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 
 const env = loadEnv('', process.cwd(), '')
-const { version } = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf-8'))
 
 // https://vitejs.dev/config/
 export default defineConfig({
