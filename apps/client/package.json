@@ -3,15 +3,15 @@
   "type": "module",
   "version": "0.19.11",
   "private": true,
-  "packageManager": "pnpm@10.17.1",
+  "packageManager": "pnpm@11.24.0",
   "engines": {
     "node": ">=24",
-    "pnpm": ">=10"
+    "pnpm": ">=11"
   },
   "scripts": {
     "build": "run-s build-only type-check",
     "build-only": "vite build",
-    "clean": "rimraf dist node_modules/.tmp node_modules/.vite",
+    "clean:dist": "rimraf dist node_modules/.tmp node_modules/.vite",
     "dev": "vite",
     "format": "eslint . --fix",
     "generate-openapi": "openapi-typescript ${VITE_OCR_API_URL}/openapi.json -o ./src/api/types/api.schema.d.ts",
@@ -49,7 +49,6 @@
     "@types/jsdom": "^30.0.0",
     "@types/node": "^26.4.0",
     "@vitejs/plugin-vue": "^6.0.8",
-    "@vitejs/plugin-vue-jsx": "^5.1.6",
     "@vitest/coverage-v8": "^4.1.11",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
