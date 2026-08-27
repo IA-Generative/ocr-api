@@ -49,8 +49,7 @@ function formatDate (ts: any) {
       n = n * 1000
     }
     return new Date(n).toLocaleString()
-  }
-  catch {
+  } catch {
     return String(ts)
   }
 }
@@ -60,11 +59,9 @@ async function load () {
   loadError.value = null
   try {
     task.value = await store.getTask(taskId.value)
-  }
-  catch (err: any) {
+  } catch (err: any) {
     loadError.value = err?.message ?? 'Erreur inconnue'
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -114,7 +111,10 @@ function goBack () {
             <div class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle fr-mb-1w">
               <div class="fr-col fr-col-12 fr-col-md-auto">
                 <p class="fr-text--xl fr-text--bold fr-mb-0">
-                  <span class="fr-icon-file-line fr-mr-1w" aria-hidden="true" />
+                  <span
+                    class="fr-icon-file-line fr-mr-1w"
+                    aria-hidden="true"
+                  />
                   {{ task.input?.raw_filename ?? 'Fichier inconnu' }}
                 </p>
               </div>
@@ -131,7 +131,10 @@ function goBack () {
                   {{ task.status }}
                 </p>
               </div>
-              <div v-if="task.input?.content_type" class="fr-col-auto">
+              <div
+                v-if="task.input?.content_type"
+                class="fr-col-auto"
+              >
                 <p class="fr-badge fr-badge--new fr-mb-0">
                   {{ task.input.content_type.split('/').pop() }}
                 </p>
@@ -141,28 +144,58 @@ function goBack () {
             <!-- Ligne 2 : métriques clés -->
             <div class="fr-grid-row fr-grid-row--gutters fr-text--sm fr-text--mention-grey">
               <div class="fr-col-auto">
-                <span class="fr-icon-price-tag-3-line fr-mr-1v" aria-hidden="true" />
+                <span
+                  class="fr-icon-price-tag-3-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 <span class="fr-text--bold">ID :</span>
                 <code class="fr-ml-1v">{{ task.id }}</code>
               </div>
-              <div v-if="task.input?.size" class="fr-col-auto">
-                <span class="fr-icon-file-download-line fr-mr-1v" aria-hidden="true" />
+              <div
+                v-if="task.input?.size"
+                class="fr-col-auto"
+              >
+                <span
+                  class="fr-icon-file-download-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 {{ formatSize(task.input.size) }}
               </div>
-              <div v-if="task.output?.total_pages" class="fr-col-auto">
-                <span class="fr-icon-article-line fr-mr-1v" aria-hidden="true" />
+              <div
+                v-if="task.output?.total_pages"
+                class="fr-col-auto"
+              >
+                <span
+                  class="fr-icon-article-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 {{ task.output.total_pages }} page{{ task.output.total_pages > 1 ? 's' : '' }}
               </div>
-              <div v-if="task.output?.model_name" class="fr-col-auto">
-                <span class="fr-icon-robot-2-line fr-mr-1v" aria-hidden="true" />
+              <div
+                v-if="task.output?.model_name"
+                class="fr-col-auto"
+              >
+                <span
+                  class="fr-icon-robot-2-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 {{ task.output.model_name }}
               </div>
               <div class="fr-col-auto">
-                <span class="fr-icon-calendar-event-line fr-mr-1v" aria-hidden="true" />
+                <span
+                  class="fr-icon-calendar-event-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 {{ formatDate(task.created_at) }}
               </div>
-              <div v-if="task.updated_at !== task.created_at" class="fr-col-auto">
-                <span class="fr-icon-refresh-line fr-mr-1v" aria-hidden="true" />
+              <div
+                v-if="task.updated_at !== task.created_at"
+                class="fr-col-auto"
+              >
+                <span
+                  class="fr-icon-refresh-line fr-mr-1v"
+                  aria-hidden="true"
+                />
                 mis à jour {{ formatDate(task.updated_at) }}
               </div>
             </div>

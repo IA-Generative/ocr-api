@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import MediaResultViewer from '@/components/MediaResultViewer.vue'
 import useToaster from '@/composables/use-toaster'
 import { useOcrStore } from '@/stores/ocr'
-import MediaResultViewer from '@/components/MediaResultViewer.vue'
 
 interface TranscriptionSegment {
   start_time: number
@@ -36,18 +36,18 @@ const resultOutput = ref<AudioTranscriptionResult | null>(null)
 const resultSourceUrl = ref('')
 
 const youtubeEmbedUrl = computed(() => {
-  const match = youtubeUrl.value.match(/(?:youtu\.be\/|[?&]v=|embed\/)([a-zA-Z0-9_-]{11})/)
+  const match = youtubeUrl.value.match(/(?:youtu\.be\/|[?&]v=|embed\/)([\w-]{11})/)
   return match ? `https://www.youtube.com/embed/${match[1]}` : null
 })
 
 const canProcess = computed(() => !!youtubeEmbedUrl.value)
 
-function resetResult() {
+function resetResult () {
   resultOutput.value = null
   resultSourceUrl.value = ''
 }
 
-async function pollYoutubeTask(taskId: string, intervalMs = 2000): Promise<void> {
+async function pollYoutubeTask (taskId: string, intervalMs = 2000): Promise<void> {
   const task = await store.getTask(taskId)
 
   if (task.status === 'completed') {
@@ -68,8 +68,8 @@ async function pollYoutubeTask(taskId: string, intervalMs = 2000): Promise<void>
   await pollYoutubeTask(taskId, intervalMs)
 }
 
-async function processMedia() {
-  if (!canProcess.value) return
+async function processMedia () {
+  if (!canProcess.value) { return }
 
   isProcessing.value = true
   resetResult()
@@ -77,8 +77,7 @@ async function processMedia() {
   try {
     const task = await store.createYoutubeTask(youtubeUrl.value)
     await pollYoutubeTask(task.id)
-  }
-  catch (err) {
+  } catch (err) {
     isProcessing.value = false
     addErrorMessage({ title: 'Erreur', description: `Impossible de lancer l'analyse : ${err}` })
   }
@@ -120,7 +119,10 @@ async function processMedia() {
       @click="processMedia"
     />
 
-    <div v-if="isProcessing" class="mt-4 text-sm text-gray-500">
+    <div
+      v-if="isProcessing"
+      class="mt-4 text-sm text-gray-500"
+    >
       Récupération de la transcription en cours...
     </div>
 

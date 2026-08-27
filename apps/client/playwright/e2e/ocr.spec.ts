@@ -18,7 +18,8 @@ test.describe('OCR with Document', () => {
     await expect(extractButton).toBeEnabled({ timeout: 5000 })
 
     await extractButton.click()
-    await page.waitForTimeout(8000)
-    await expect(page.getByRole('button', { name: 'Télécharger' })).toBeVisible()
+    // OCR duration varies with the document; wait on the outcome rather than on
+    // a fixed sleep, which is both slower on fast runs and flaky on slow ones.
+    await expect(page.getByRole('button', { name: 'Télécharger' })).toBeVisible({ timeout: 60000 })
   })
 })

@@ -1,22 +1,12 @@
 {
-  "compilerOptions": {
-    "target": "ES2015",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "types": ["node", "vite/client"],
-    "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true
-  },
+  // Solution-style root config: it owns no files of its own, it only wires the
+  // three project references together so `vue-tsc --build` type-checks app,
+  // tooling and test code in one pass. Compiler options belong in the leaves —
+  // anything set here is silently ignored.
+  "files": [],
   "references": [
-    {
-      "path": "./tsconfig.node.json"
-    },
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.vitest.json"
-    }
-  ],
-  "files": []
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.vitest.json" }
+  ]
 }

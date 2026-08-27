@@ -7,7 +7,10 @@ const { health, loading, error } = useBackendHealth()
 </script>
 
 <template>
-  <footer class="fr-footer fr-mt-auto" role="contentinfo">
+  <footer
+    class="fr-footer fr-mt-auto"
+    role="contentinfo"
+  >
     <div class="fr-container">
       <div class="fr-footer__body">
         <div class="fr-footer__bottom">
@@ -22,8 +25,14 @@ const { health, loading, error } = useBackendHealth()
                 <span class="fr-text--xs fr-text--disabled">Backend&nbsp;…</span>
               </template>
               <template v-else-if="error || !health">
-                <span class="fr-text--xs" style="color: var(--text-default-error);">
-                  <span class="fr-icon-close-circle-fill fr-icon--sm" aria-hidden="true" />
+                <span
+                  class="fr-text--xs"
+                  style="color: var(--text-default-error);"
+                >
+                  <span
+                    class="fr-icon-close-circle-fill fr-icon--sm"
+                    aria-hidden="true"
+                  />
                   Backend&nbsp;injoignable
                 </span>
               </template>

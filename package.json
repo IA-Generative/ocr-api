@@ -1,16 +1,30 @@
 {
   "name": "ocr-monorepo",
+  "type": "module",
   "private": true,
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "prepare": "husky",
-    "lint:frontend": "cd apps/client && pnpm run lint",
-    "lint:backend": "make lint",
-    "lint:all": "pnpm run lint:frontend && pnpm run lint:backend"
+    "check": "make check",
+    "lint": "make lint",
+    "lint:root": "eslint .",
+    "lint:frontend": "pnpm --dir apps/client run lint",
+    "lint:backend": "make lint-backend",
+    "format": "make format",
+    "format:root": "eslint . --fix",
+    "format:frontend": "pnpm --dir apps/client run format",
+    "type-check": "pnpm --dir apps/client run type-check",
+    "test": "make test"
   },
   "devDependencies": {
+    "@antfu/eslint-config": "^5.4.1",
     "@commitlint/cli": "^20.5.3",
     "@commitlint/config-conventional": "^20.5.3",
+    "eslint": "^9.39.5",
     "husky": "^9.1.7"
-  },
-  "packageManager": "pnpm@10.17.1"
+  }
 }

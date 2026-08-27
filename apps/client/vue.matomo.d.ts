@@ -10,6 +10,7 @@ declare module 'vue-matomo' {
     enableLinkTracking?: boolean
     requireConsent?: boolean
     trackInitialView?: boolean
+    debug?: boolean
   }
 
   const VueMatomo: {

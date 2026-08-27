@@ -8,8 +8,20 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["@testing-library/jest-dom"]
+    "types": ["vite/client", "vite-plugin-pwa/client"],
+
+    // @vue/tsconfig already provides `strict`, `noUncheckedIndexedAccess`,
+    // `verbatimModuleSyntax` and `forceConsistentCasingInFileNames`. These are
+    // the checks it leaves to the project.
+    "isolatedModules": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false
   },
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
-  "exclude": ["src/**/__tests__/*"]
+  // `*.d.ts` rather than just `env.d.ts` so ambient module declarations added at
+  // the project root (vue.matomo.d.ts, ...) are picked up automatically.
+  "include": ["*.d.ts", "src/**/*", "src/**/*.vue"],
+  "exclude": ["src/**/__tests__/*", "src/**/*.spec.ts", "src/**/*.test.ts"]
 }

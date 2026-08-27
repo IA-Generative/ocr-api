@@ -9,10 +9,10 @@ test.describe('Login with Keycloak', () => {
   test('should show error with invalid credentials', async ({ page }) => {
     await page.goto('/')
 
-    await page.fill('input[name="username"]', 'test@gouv.fr')
-    await page.fill('input[name="password"]', 'testinho')
+    await page.locator('input[name="username"]').fill('test@gouv.fr')
+    await page.locator('input[name="password"]').fill('testinho')
 
-    await page.click('#kc-login')
+    await page.locator('#kc-login').click()
 
     // Verify error message on Keycloak page
     await expect(page.locator('#input-\\:r2\\:-desc-error')).toBeVisible()

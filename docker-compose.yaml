@@ -48,17 +48,15 @@ services:
           memory: 4000M
     container_name: ocr-service
     command:
-      [
-        "celery",
-        "-A",
-        "services.main",
-        "worker",
-        "--pool=solo",
-        "--loglevel=info",
-        "--concurrency=1",
-        "-E",
-        "--hostname=paddle_worker@%h",
-      ]
+      - "celery"
+      - "-A"
+      - "services.main"
+      - "worker"
+      - "--pool=solo"
+      - "--loglevel=info"
+      - "--concurrency=1"
+      - "-E"
+      - "--hostname=paddle_worker@%h"
     image: ocr-service-paddle
     volumes:
       - ./apps/server/src/:/app/src/
@@ -75,7 +73,7 @@ services:
     depends_on:
       - redis
       - minio
-      #- migration
+      # - migration
       - db
     environment:
       - PROCESS_NAME=paddleocr-2.10.0
@@ -111,7 +109,7 @@ services:
       - redis
       - db
       - minio
-      #- migration
+      # - migration
 
     env_file:
       - .env

@@ -60,12 +60,10 @@ export const useOcrStore = defineStore('ocr', () => {
         throw new Error(`Statut inattendu: ${data.status}`)
       }
       return true
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.message ?? 'Erreur inconnue lors du health check.'
       return false
-    }
-    finally {
+    } finally {
       if (processingState.value === 'validating') {
         processingState.value = 'idle'
       }
@@ -76,8 +74,7 @@ export const useOcrStore = defineStore('ocr', () => {
     try {
       const { data } = await http.get<TaskModel>(`/tasks/${taskId}`)
       return data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors de la récupération de la tâche ${taskId}: ${err}`,
@@ -98,8 +95,7 @@ export const useOcrStore = defineStore('ocr', () => {
       form.append('group_id', groupId)
       const { data } = await http.post<TaskModel>('/jobs/youtube', form)
       return data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors du lancement de l'analyse YouTube : ${err}`,
@@ -181,8 +177,7 @@ export const useOcrStore = defineStore('ocr', () => {
         await check()
       }
       await check()
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.message ?? 'Erreur inconnue lors du polling.'
       isPolling.value = false
       processingState.value = 'idle'
@@ -238,8 +233,7 @@ export const useOcrStore = defineStore('ocr', () => {
       }
 
       await pollTask(task.id)
-    }
-    catch (err: any) {
+    } catch (err: any) {
       // Extraire le message d'erreur le plus pertinent
       let errorMessage = 'Erreur lors de l\'envoi du fichier.'
       if (err.response) {
@@ -256,8 +250,7 @@ export const useOcrStore = defineStore('ocr', () => {
             errorMessage = err.response.data.message
             break
         }
-      }
-      else if (err.message) {
+      } else if (err.message) {
         errorMessage = err.message
       }
       error.value = errorMessage
@@ -303,8 +296,7 @@ export const useOcrStore = defineStore('ocr', () => {
       document.body.removeChild(a)
 
       URL.revokeObjectURL(url)
-    }
-    catch (error) {
+    } catch (error) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors du téléchargement du texte OCR : ${error}`,

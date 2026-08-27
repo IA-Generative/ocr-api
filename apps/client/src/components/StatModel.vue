@@ -1,72 +1,11 @@
-<template>
-  <div class="modal-overlay" @click.self="close">
-    <div class="modal fr-card" @click.stop>
-      <header class="modal-header">
-        <h3 class="fr-h3">Statistiques des tâches</h3>
-        <button class="modal-close" @click="close">✕</button>
-      </header>
-
-      <section class="modal-section charts two-columns">
-        <div class="chart-col">
-          <div class="section-title">Statistiques globales</div>
-          <div class="section-content center-col">
-            <div class="stat-row"><strong>Total de tâches :</strong> {{ stats.global_stats.total_tasks }}</div>
-            <div class="chart-block">
-              <svg :width="180" :height="180" viewBox="0 0 32 32" class="pie">
-                <template v-for="(v, i) in globalSlices" :key="i">
-                  <path :d="v.path" :fill="v.color" stroke="#fff" stroke-width="0.6" stroke-linejoin="round" stroke-linecap="round"></path>
-                </template>
-                <circle cx="16" cy="16" r="5" fill="#fff"></circle>
-              </svg>
-              <div class="legend">
-                <div v-for="(item, idx) in globalLegend" :key="idx" class="legend-item">
-                  <span class="legend-color" :style="{ background: item.color }"></span>
-                  <span class="legend-label">{{ item.label }}: {{ item.value }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="chart-col">
-          <div class="section-title">Statistiques utilisateur</div>
-          <div class="section-content center-col">
-            <div class="stat-row"><strong>Utilisateur :</strong> Vous </div>
-            <div class="stat-row"><strong>Total :</strong> {{ stats.user_stats.total_tasks }}</div>
-            <div class="chart-block">
-              <svg :width="180" :height="180" viewBox="0 0 32 32" class="pie">
-                <template v-for="(v, i) in userSlices" :key="i">
-                  <path :d="v.path" :fill="v.color" stroke="#fff" stroke-width="0.6" stroke-linejoin="round" stroke-linecap="round"></path>
-                </template>
-                <circle cx="16" cy="16" r="5" fill="#fff"></circle>
-              </svg>
-              <div class="legend">
-                <div v-for="(item, idx) in userLegend" :key="idx" class="legend-item">
-                  <span class="legend-color" :style="{ background: item.color }"></span>
-                  <span class="legend-label">{{ item.label }}: {{ item.value }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer class="modal-footer">
-        <button class="fr-btn fr-btn--secondary" @click="close">Fermer</button>
-      </footer>
-    </div>
-  </div>
-</template>
-
 <script setup>
-import { reactive, ref, computed, onMounted } from 'vue'
-import { defineEmits } from 'vue'
+import { computed, defineEmits, onMounted, reactive, ref } from 'vue'
 import createHttpClient from '@/api/http-client'
 import { OCR_API_URL } from '@/utils/constants'
 
 const emit = defineEmits(['close'])
 
-function close() {
+function close () {
   emit('close')
 }
 
@@ -91,12 +30,12 @@ const stats = reactive({
 
 const COLORS = ['#4caf50', '#2196f3', '#ff9800', '#e91e63', '#9c27b0']
 
-function polarToCartesian(cx, cy, r, angle) {
+function polarToCartesian (cx, cy, r, angle) {
   const a = (angle - 90) * Math.PI / 180.0
   return { x: cx + (r * Math.cos(a)), y: cy + (r * Math.sin(a)) }
 }
 
-function describeArc(cx, cy, r, startAngle, endAngle) {
+function describeArc (cx, cy, r, startAngle, endAngle) {
   const start = polarToCartesian(cx, cy, r, endAngle)
   const end = polarToCartesian(cx, cy, r, startAngle)
   const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
@@ -110,7 +49,7 @@ function describeArc(cx, cy, r, startAngle, endAngle) {
 }
 
 // fetch real stats from backend
-const loadStats = async () => {
+async function loadStats () {
   loading.value = true
   error.value = null
   try {
@@ -119,11 +58,9 @@ const loadStats = async () => {
       stats.global_stats = data.global_stats ?? stats.global_stats
       stats.user_stats = data.user_stats ?? stats.user_stats
     }
-  }
-  catch (e) {
+  } catch (e) {
     error.value = e?.message ?? String(e)
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -163,6 +100,148 @@ const globalSlices = computed(() => {
 const globalLegend = computed(() => globalSlices.value.map(s => ({ label: s.label, value: s.value, color: s.color })))
 </script>
 
+<template>
+  <div
+    class="modal-overlay"
+    @click.self="close"
+  >
+    <div
+      class="modal fr-card"
+      @click.stop
+    >
+      <header class="modal-header">
+        <h3 class="fr-h3">
+          Statistiques des tâches
+        </h3>
+        <button
+          class="modal-close"
+          @click="close"
+        >
+          ✕
+        </button>
+      </header>
+
+      <section class="modal-section charts two-columns">
+        <div class="chart-col">
+          <div class="section-title">
+            Statistiques globales
+          </div>
+          <div class="section-content center-col">
+            <div class="stat-row">
+              <strong>Total de tâches :</strong> {{ stats.global_stats.total_tasks }}
+            </div>
+            <div class="chart-block">
+              <svg
+                :width="180"
+                :height="180"
+                viewBox="0 0 32 32"
+                class="pie"
+              >
+                <template
+                  v-for="(v, i) in globalSlices"
+                  :key="i"
+                >
+                  <path
+                    :d="v.path"
+                    :fill="v.color"
+                    stroke="#fff"
+                    stroke-width="0.6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                </template>
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="5"
+                  fill="#fff"
+                />
+              </svg>
+              <div class="legend">
+                <div
+                  v-for="(item, idx) in globalLegend"
+                  :key="idx"
+                  class="legend-item"
+                >
+                  <span
+                    class="legend-color"
+                    :style="{ background: item.color }"
+                  />
+                  <span class="legend-label">{{ item.label }}: {{ item.value }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-col">
+          <div class="section-title">
+            Statistiques utilisateur
+          </div>
+          <div class="section-content center-col">
+            <div class="stat-row">
+              <strong>Utilisateur :</strong> Vous
+            </div>
+            <div class="stat-row">
+              <strong>Total :</strong> {{ stats.user_stats.total_tasks }}
+            </div>
+            <div class="chart-block">
+              <svg
+                :width="180"
+                :height="180"
+                viewBox="0 0 32 32"
+                class="pie"
+              >
+                <template
+                  v-for="(v, i) in userSlices"
+                  :key="i"
+                >
+                  <path
+                    :d="v.path"
+                    :fill="v.color"
+                    stroke="#fff"
+                    stroke-width="0.6"
+                    stroke-linejoin="round"
+                    stroke-linecap="round"
+                  />
+                </template>
+                <circle
+                  cx="16"
+                  cy="16"
+                  r="5"
+                  fill="#fff"
+                />
+              </svg>
+              <div class="legend">
+                <div
+                  v-for="(item, idx) in userLegend"
+                  :key="idx"
+                  class="legend-item"
+                >
+                  <span
+                    class="legend-color"
+                    :style="{ background: item.color }"
+                  />
+                  <span class="legend-label">{{ item.label }}: {{ item.value }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="modal-footer">
+        <button
+          class="fr-btn fr-btn--secondary"
+          @click="close"
+        >
+          Fermer
+        </button>
+      </footer>
+    </div>
+  </div>
+</template>
+
 <style scoped>
 .modal-close { background: transparent; border: none; font-size: 1.25rem; cursor: pointer; }
 .stat-row { margin-bottom: 6px; }
@@ -184,5 +263,4 @@ const globalLegend = computed(() => globalSlices.value.map(s => ({ label: s.labe
 .two-columns .chart-col { display:flex; flex-direction:column; align-items:center; gap:12px; }
 .center-col { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .chart-block { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:240px; gap:8px; }
-
 </style>

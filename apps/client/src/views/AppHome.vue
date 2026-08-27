@@ -46,8 +46,7 @@ async function startOcr () {
     const form = new FormData()
     form.append('file', selectedFile.value)
     await store.sendFileAndPoll(form)
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }
@@ -99,12 +98,12 @@ const routeForTabIndex: Record<number, string> = { 0: '/ocr' }
 const activeTabIndex = ref(0)
 
 watch(() => route.path, (path) => {
-  if (path === '/ocr') activeTabIndex.value = 0
+  if (path === '/ocr') { activeTabIndex.value = 0 }
 })
 
 watch(activeTabIndex, (index) => {
   const target = routeForTabIndex[index]
-  if (target && target !== route.path) router.push(target)
+  if (target && target !== route.path) { router.push(target) }
 })
 
 const cardTitle = `Comment utiliser “Extraire un texte” ?`
@@ -134,7 +133,10 @@ onBeforeUnmount(() => {
         </h1>
       </div>
 
-      <CustomTabs v-model="activeTabIndex" :tabs-data="tabs">
+      <CustomTabs
+        v-model="activeTabIndex"
+        :tabs-data="tabs"
+      >
         <template #tab-0-content>
           <InfoBulle />
           <div class="page-container">

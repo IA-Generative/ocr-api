@@ -1,4 +1,3 @@
-import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
@@ -71,15 +70,10 @@ export default defineConfig({
         /\.vue\?vue/,
       ],
       imports: [
-        // @ts-expect-error TS2322
         'vue',
-        // @ts-expect-error TS2322
         'vue-router',
-        // @ts-expect-error TS2322
         'pinia',
-        // @ts-expect-error TS2322
         'vitest',
-        // @ts-expect-error TS2322
         vueDsfrAutoimportPreset,
       ],
       vueTemplate: true,

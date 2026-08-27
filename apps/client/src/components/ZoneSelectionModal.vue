@@ -48,15 +48,15 @@ const imgStyle = computed(() => {
   return {
     position: 'absolute' as const,
     width: `${(1 / (w || 0.001)) * 100}%`,
-    height: 'auto',                          // ratio naturel maintenu automatiquement
-    left: `-${(x / (w || 0.001)) * 100}%`,  // % de la largeur du container
-    top: `-${(y / (h || 0.001)) * 100}%`,   // % de la hauteur du container
+    height: 'auto', // ratio naturel maintenu automatiquement
+    left: `-${(x / (w || 0.001)) * 100}%`, // % de la largeur du container
+    top: `-${(y / (h || 0.001)) * 100}%`, // % de la hauteur du container
     maxWidth: 'none',
     display: 'block',
   }
 })
 
-function copyText() {
+function copyText () {
   navigator.clipboard.writeText(props.text)
     .then(() => addSuccessMessage({ title: 'Copié', description: props.text.slice(0, 100) }))
     .catch(err => addErrorMessage({ title: 'Erreur copie', description: String(err) }))
@@ -81,7 +81,10 @@ function copyText() {
             title="Fermer"
             @click="emit('close')"
           >
-            <span class="fr-icon-close-line" aria-hidden="true" />
+            <span
+              class="fr-icon-close-line"
+              aria-hidden="true"
+            />
           </button>
         </div>
 

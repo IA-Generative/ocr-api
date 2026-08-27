@@ -1,4 +1,4 @@
-ARG PNPM_VERSION=10.14.0
+ARG PNPM_VERSION=10.17.1
 
 # dev
 FROM docker.io/node:22.17.1-slim AS dev

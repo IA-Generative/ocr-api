@@ -7,9 +7,8 @@ import { openLink } from '@/utils/methods'
 
 defineProps({
   otherTools: {
-    name: 'otherTools',
     type: Array as () => DsfrTileProps[],
-    required: true,
+    required: false,
     default: () => [
       {
         title: 'Converser avec le Chatbot',

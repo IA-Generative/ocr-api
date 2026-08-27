@@ -68,8 +68,7 @@ export function getUserProfile (): IUser {
       lastName,
       groups,
     }
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
@@ -122,8 +121,7 @@ export async function keycloakInit () {
       const clean = url.origin + url.pathname + (url.searchParams.toString() ? `?${url.searchParams.toString()}` : '') + url.hash
       window.history.replaceState({}, document.title, clean)
     }
-  }
-  catch (error) {
+  } catch (error) {
     // Si CORS: on log et on laisse l’app fonctionner (les guards feront une redirection manuelle).
     // If CORS: log the error and let the app continue (guards will handle manual redirection).
     console.error('[keycloakInit] init failed (often CORS). Manual redirections active.', error)
@@ -140,8 +138,7 @@ export async function keycloakLogin () {
     const currentUrl = new URL(window.location.href)
     const redirectUri = `${window.location.origin}${currentUrl.pathname}${currentUrl.search}`
     await keycloak.login({ redirectUri })
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
@@ -155,8 +152,7 @@ export async function keycloakRegister () {
     const currentUrl = new URL(window.location.href)
     const redirectUri = `${window.location.origin}${currentUrl.pathname}${currentUrl.search}`
     await keycloak.register({ redirectUri })
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }
@@ -169,8 +165,7 @@ export async function keycloakLogout () {
     const keycloak = getKeycloak()
     await keycloak.logout()
     await keycloak.clearToken()
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof Error) {
       throw new TypeError(error.message)
     }

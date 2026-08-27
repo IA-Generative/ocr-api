@@ -19,7 +19,7 @@ function authGuard (_path: string) {
   return async (
     _to: RouteLocationNormalized,
     _from: RouteLocationNormalized,
-    next: NavigationGuardNext
+    next: NavigationGuardNext,
   ) => {
     const keycloak = getKeycloak()
     const ssoBypass = import.meta.env.VITE_SSO_BYPASS === 'true' || (window as any).VITE_SSO_BYPASS === 'true'
@@ -67,7 +67,7 @@ const routes = [
       next()
     },
     component: Home,
-  }
+  },
 ]
 
 const router = createRouter({
