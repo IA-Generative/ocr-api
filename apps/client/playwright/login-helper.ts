@@ -1,5 +1,5 @@
-import process from 'node:process'
-import { expect, type Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 export async function login (page: Page) {
   const username = process.env.VITE_USERNAME_KEYCLOAK
@@ -10,9 +10,8 @@ export async function login (page: Page) {
   }
 
   await page.goto('/')
-  await page.fill('input[name="username"]', username)
-  await page.fill('input[name="password"]', password)
-  await page.click('#kc-login')
-  await page.waitForLoadState('networkidle')
+  await page.locator('input[name="username"]').fill(username)
+  await page.locator('input[name="password"]').fill(password)
+  await page.locator('#kc-login').click()
   await expect(page.getByTitle('Reconnaître un texte scanné')).toBeVisible()
 }

@@ -13,7 +13,11 @@ repos:
         args: ['--maxkb=1000']
       - id: check-merge-conflict
       - id: end-of-file-fixer
+        # unplugin-* rewrite these on every `vite build` without a trailing
+        # newline; re-adding one here just makes the file permanently dirty.
+        exclude: ^apps/client/src/(components|auto-imports)\.d\.ts$
       - id: trailing-whitespace
+        exclude: ^apps/client/src/(components|auto-imports)\.d\.ts$
 
   - repo: https://github.com/zricethezav/gitleaks
     rev: v8.30.1

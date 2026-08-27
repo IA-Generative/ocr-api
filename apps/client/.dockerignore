@@ -1,0 +1,28 @@
+# Build context hygiene: without this the host's node_modules (macOS-native
+# esbuild / @tailwindcss/oxide binaries) is copied over the Linux one installed
+# in the image, and the context balloons to several GB.
+node_modules
+.pnpm-store
+
+# Build output — regenerated inside the image.
+dist
+.output
+.nuxt
+coverage
+playwright-report
+test-results
+
+# Never ship secrets or VCS metadata.
+.env
+.env.*
+.git
+.gitignore
+
+# Tooling artefacts the image does not need.
+.husky
+*.log
+.DS_Store
+Dockerfile
+.dockerignore
+README.md
+CHANGELOG.md

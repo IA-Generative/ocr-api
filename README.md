@@ -1,4 +1,3 @@
-
 # OCR API
 
 Cette API fournit un service d’extraction de texte à partir de fichiers PDF ou d’images. Elle repose sur un pipeline de traitement asynchrone utilisant Redis (queue), S3 (stockage), et PaddleOCR pour effectuer la reconnaissance de texte.
@@ -44,7 +43,42 @@ Dans cette section vous trouverez le fonctionnement de cette application [docs/s
 
 - [Docker](https://docs.docker.com/get-docker/) installé
 - [Docker Compose](https://docs.docker.com/compose/) (version 2+ recommandée)
+- [make](https://www.gnu.org/software/make/) — point d'entrée unique du dépôt
+- [uv](https://docs.astral.sh/uv/) pour le backend Python, [pnpm](https://pnpm.io/) pour le frontend
 - Un fichier `.env` configuré à la racine du projet (voir exemple ci-dessous)
+
+`make doctor` indique quels outils sont présents sur la machine.
+
+---
+
+## Développement
+
+Toutes les commandes passent par le `Makefile`. `make` (ou `make help`) affiche la
+liste complète, groupée par thème.
+
+```bash
+# Installation complète : backend (uv), frontend (pnpm), hooks git
+make install
+
+# Démarrer la stack conteneurisée
+make up
+
+# Vérifier le dépôt : lint + types + tests unitaires
+make check
+```
+
+Les vérifications sont également disponibles séparément :
+
+| Commande            | Effet                                                  |
+| ------------------- | ------------------------------------------------------ |
+| `make lint`         | ruff (`apps/server`) + ESLint (`apps/client` et racine) |
+| `make format`       | Corrige automatiquement ce qui peut l'être              |
+| `make type-check`   | `vue-tsc` sur le frontend                               |
+| `make test`         | pytest (backend) + vitest (frontend)                    |
+| `make test-e2e`     | Playwright                                              |
+
+Les mêmes hooks tournent avant chaque commit (`pre-commit` pour Python, ESLint
+pour le frontend et les fichiers de la racine).
 
 ---
 
@@ -147,14 +181,16 @@ Vous pouvez aussi passé par l'ui dédié [Frontend](#frontend)
 
 ## Frontend
 
-### Installation
-
-Utilisation d'un Makefile pour exécuter les commandes ***(installation de `make` requis)***.
-
 ```sh
-# Démarrer l'environnement de développement
+# Installer les dépendances
+make install-frontend
+
+# Serveur de développement Vite sur la machine hôte
+make dev-frontend
+
+# ... ou dans un conteneur
 make up-frontend
 
-# Démarrer & mettre à jour les types
+# Régénérer les types depuis l'OpenAPI de l'API
 make generate-openapi
 ```

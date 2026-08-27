@@ -39,7 +39,7 @@ const transcripts = computed(() => props.output.transcripts ?? [])
 
 const defaultLanguage = computed(() => {
   const preferred = props.output.extras?.default_language
-  if (preferred && transcripts.value.some(t => t.language === preferred)) return preferred
+  if (preferred && transcripts.value.some(t => t.language === preferred)) { return preferred }
   return transcripts.value[0]?.language ?? null
 })
 
@@ -60,45 +60,44 @@ const languageDisplayNames = typeof Intl !== 'undefined' && 'DisplayNames' in In
   ? new Intl.DisplayNames(['fr'], { type: 'language' })
   : null
 
-function languageLabel(transcript: LanguageTranscript): string {
+function languageLabel (transcript: LanguageTranscript): string {
   let label = transcript.language
   try {
     label = languageDisplayNames?.of(transcript.language) ?? transcript.language
-  }
-  catch {
+  } catch {
     label = transcript.language
   }
   return transcript.is_original ? `${label} (langue d'origine)` : label
 }
 
 const youtubeEmbedUrl = computed(() => {
-  const match = props.sourceUrl.match(/(?:youtu\.be\/|[?&]v=|embed\/)([a-zA-Z0-9_-]{11})/)
+  const match = props.sourceUrl.match(/(?:youtu\.be\/|[?&]v=|embed\/)([\w-]{11})/)
   return match ? `https://www.youtube.com/embed/${match[1]}` : null
 })
 
-function seekTo(time: number) {
+function seekTo (time: number) {
   currentTime.value = time
 }
 
-function onTimelineInput(e: Event) {
+function onTimelineInput (e: Event) {
   seekTo(Number((e.target as HTMLInputElement).value))
 }
 
-function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '00:00'
+function formatTime (seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) { return '00:00' }
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
-function segmentStyle(seg: { start_time: number, end_time: number }) {
+function segmentStyle (seg: { start_time: number, end_time: number }) {
   const total = duration.value || 1
   const left = (seg.start_time / total) * 100
   const width = ((seg.end_time - seg.start_time) / total) * 100
   return { left: `${left}%`, width: `${Math.max(width, 0.5)}%` }
 }
 
-function isActiveSegment(seg: { start_time: number, end_time: number }) {
+function isActiveSegment (seg: { start_time: number, end_time: number }) {
   return currentTime.value >= seg.start_time && currentTime.value < seg.end_time
 }
 
@@ -106,8 +105,8 @@ const playheadStyle = computed(() => ({ left: `${(currentTime.value / (duration.
 
 const activeTranscriptionSegment = computed(() => transcription.value.find(isActiveSegment))
 
-function downloadTranscription() {
-  if (!currentTranscriptText.value) return
+function downloadTranscription () {
+  if (!currentTranscriptText.value) { return }
   const blob = new Blob([currentTranscriptText.value], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -122,7 +121,10 @@ function downloadTranscription() {
 
 <template>
   <div class="media-result-viewer">
-    <div v-if="youtubeEmbedUrl" class="media-player">
+    <div
+      v-if="youtubeEmbedUrl"
+      class="media-player"
+    >
       <iframe
         :src="youtubeEmbedUrl"
         class="w-full aspect-video"
@@ -155,7 +157,10 @@ function downloadTranscription() {
           <div class="track-label mb-0">
             Transcription
           </div>
-          <div v-if="transcripts.length" class="flex flex-wrap items-center gap-2">
+          <div
+            v-if="transcripts.length"
+            class="flex flex-wrap items-center gap-2"
+          >
             <div class="flex gap-1">
               <button
                 v-for="t in transcripts"
@@ -177,7 +182,10 @@ function downloadTranscription() {
           </div>
         </div>
         <div class="track">
-          <div class="playhead" :style="playheadStyle" />
+          <div
+            class="playhead"
+            :style="playheadStyle"
+          />
           <button
             v-for="(seg, idx) in transcription"
             :key="idx"

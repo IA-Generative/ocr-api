@@ -31,8 +31,7 @@ function MapStatusToLabel (status: string) {
 function sortBy (key: string) {
   if (sortKey.value === key) {
     sortAsc.value = !sortAsc.value
-  }
-  else {
+  } else {
     sortKey.value = key
     sortAsc.value = true
   }
@@ -91,8 +90,7 @@ async function downloadTaskResult (task: any) {
     a.click()
     a.remove()
     URL.revokeObjectURL(url)
-  }
-  catch (e) {
+  } catch (e) {
     console.error('Téléchargement échoué', e)
   }
 }
@@ -104,8 +102,7 @@ async function removeTask (taskId: string) {
   }
   try {
     await store.deleteTask(taskId)
-  }
-  catch {
+  } catch {
     // store already shows error toast
   }
 }
@@ -123,8 +120,7 @@ function formatDate (ts: any) {
       n = n * 1000
     }
     return new Date(n).toLocaleString()
-  }
-  catch {
+  } catch {
     return String(ts)
   }
 }
