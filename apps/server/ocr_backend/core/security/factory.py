@@ -78,6 +78,11 @@ class KeycloakToken(BaseVerifyToken):
         if self.__api_token_verifier.verify(ctx):
             logging.info("API token valid, skipping Keycloak verification")
             return True
+
+        if not ctx.token:
+            logging.info("No bearer token provided, rejecting the request")
+            return False
+
         try:
             user_info = self.keycloak_openid.introspect(ctx.token)
             logging.debug(f"Token info: {user_info.keys()}")

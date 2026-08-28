@@ -153,6 +153,7 @@ major_version_zero = true
 [tool.pytest.ini_options]
 env_override_existing_values = 1
 env_files = ["tests/.env.testing"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 
 [tool.ruff]
