@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.4](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.3...v0.20.0-rc.4) (2026-08-31)
+
+
+### Bug Fixes
+
+* **ci:** tag Harbor images with the chart appVersion ([ce88a38](https://github.com/IA-Generative/ocr-api/commit/ce88a38207a05d2fc018a9d08455c85dd82ba9a0))
+
 ## [0.20.0-rc.3](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.2...v0.20.0-rc.3) (2026-08-31)
 
 
