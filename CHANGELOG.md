@@ -29,6 +29,20 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.3](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.2...v0.20.0-rc.3) (2026-08-31)
+
+
+### Bug Fixes
+
+* **auth:** strip OIDC response params before Keycloak check-sso ([366269b](https://github.com/IA-Generative/ocr-api/commit/366269bc9af05c6da11c3aca971ebc4bc54687ce))
+* **client:** install from the committed lockfile in the Docker image ([0e00ce2](https://github.com/IA-Generative/ocr-api/commit/0e00ce2e81921f16d02726ac8db14fa0f86660b7))
+
+
+### Dependencies
+
+* **deps:** bump Node to 24 LTS and upgrade the JS dependencies ([0d2df77](https://github.com/IA-Generative/ocr-api/commit/0d2df7722576046bcfa7f3af60ae598111b8bfb0))
+* **deps:** migrate to pnpm 11 and refresh the container base images ([f5bc195](https://github.com/IA-Generative/ocr-api/commit/f5bc1957e3e902b5322942673defc8d5af861fad))
+
 ## [0.20.0-rc.2](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.1...v0.20.0-rc.2) (2026-08-25)
 
 
