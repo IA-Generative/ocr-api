@@ -1,4 +1,0 @@
-[submodule "infra"]
-	path = infra
-	url = https://github.com/IA-Generative/mirai-infra
-	branch = feat/queue
