@@ -23,6 +23,21 @@ def _is_safe_internal_path(path: str | None) -> bool:
     return bool(path) and path.startswith("/") and not path.startswith("//")
 
 
+def _is_same_origin(request: Request) -> bool:
+    """CSRF defense in depth for state-changing routes, on top of `SameSite=Lax`. Rejects
+    only requests that positively identify as cross-site; missing headers (old browsers,
+    non-browser clients) fall through to `SameSite` rather than fail closed here."""
+    sec_fetch_site = request.headers.get("sec-fetch-site")
+    if sec_fetch_site is not None:
+        return sec_fetch_site in ("same-origin", "same-site", "none")
+
+    origin = request.headers.get("origin")
+    if origin is not None:
+        return origin.rstrip("/") == _keycloak_settings.FRONTEND_URL
+
+    return True
+
+
 def _build_pkce_pair() -> tuple[str, str]:
     code_verifier = secrets.token_urlsafe(64)
     digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
@@ -131,6 +146,10 @@ async def callback(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(request: Request, response: Response):
+    if not _is_same_origin(request):
+        logger.warning("Rejecting cross-site logout request")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="FORBIDDEN")
+
     sid = request.cookies.get(_keycloak_settings.SESSION_COOKIE_NAME)
     if sid:
         session = _session_store.get(sid)

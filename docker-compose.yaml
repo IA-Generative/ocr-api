@@ -141,7 +141,9 @@ services:
       - "8080:8080"
     healthcheck:
       # KC_HEALTH_ENABLED serves /health on the management port (9000), not 8080.
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"]
+      test:
+        - "CMD-SHELL"
+        - "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"
       interval: 10s
       timeout: 5s
       retries: 10
