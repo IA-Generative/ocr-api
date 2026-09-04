@@ -3,9 +3,16 @@ ARG PNPM_VERSION=11.24.0
 # dev
 FROM docker.io/node:24.19.0-slim AS dev
 
-WORKDIR /app
-
 RUN npm install --ignore-scripts --location=global pnpm@${PNPM_VERSION}
+
+WORKDIR /app
+# Single, non-recursive chown of the empty directory: switching to `node` before
+# installing anything means `node_modules` and the copied source are owned by
+# `node` from the moment they're created, instead of a slow `chown -R` afterwards.
+RUN chown node:node /app
+
+USER node
+
 # The lockfile and pnpm-workspace.yaml have to land *before* the install, not
 # with the rest of the sources: installing from package.json alone re-resolves
 # every range, so the image ignored the committed lockfile entirely. It also
@@ -14,22 +21,18 @@ RUN npm install --ignore-scripts --location=global pnpm@${PNPM_VERSION}
 # (it wants to reinstall, that needs to remove node_modules, and there is no
 # TTY in a build to confirm it).
 # Build scripts are restricted by `allowBuilds` in pnpm-workspace.yaml.
-COPY ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
+COPY --chown=node:node ./package.json ./pnpm-lock.yaml ./pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
-COPY . .
-# node_modules is re-mounted as an anonymous volume at runtime (see
-# docker-compose.frontend.yaml): chown it (and the rest of /app) so the
-# non-root `node` user can still write there (pnpm store, vite cache, ...).
-RUN chown -R node:node /app
-
-USER node
+COPY --chown=node:node . .
 
 CMD ["pnpm", "run", "dev"]
+
 
 # build
 FROM dev AS build
 
 RUN pnpm run build
+
 
 
 # prod
