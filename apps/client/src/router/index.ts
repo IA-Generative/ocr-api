@@ -16,11 +16,6 @@ function authGuard () {
     next: NavigationGuardNext,
   ) => {
     const userStore = useUserStore()
-    const ssoBypass = import.meta.env.VITE_SSO_BYPASS === 'true' || (window as any).VITE_SSO_BYPASS === 'true'
-    if (ssoBypass) {
-      next()
-      return
-    }
     // Already confirmed by a previous guarded navigation this session - skip the
     // `/api/auth/me` round trip. A session that expires afterwards surfaces as a 401 on
     // the next API call, which the http-client interceptor already sends through `login()`.
