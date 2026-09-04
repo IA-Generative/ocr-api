@@ -85,6 +85,27 @@ client confidentiel `ocr`, un utilisateur de test) — aucune configuration manu
 nécessaire pour tester le flow de bout en bout localement. Voir les variables `KEYCLOAK_*` déjà
 renseignées dans `.env` à la racine du repo pour un exemple fonctionnel complet.
 
+## Actions requises sur le Keycloak de production (déploiement)
+
+Le passage au modèle BFF change le rôle du client Keycloak désigné par `KEYCLOAK_CLIENT_ID` :
+avant, c'était un client API confidentiel utilisé uniquement pour l'introspection ; maintenant
+c'est aussi le client qui porte le flow auth-code (login du navigateur) et qui définit le rôle
+`admin`. Ces changements de configuration Keycloak/Vault ne sont **pas** couverts par le code de
+cette PR et doivent être faits manuellement avant/au déploiement :
+
+- [ ] **Mettre à jour `prod/ocr/keycloak` dans Vault** avec la bonne valeur de client (celle qui
+  porte le flow auth-code), pas l'ancien client API confidentiel.
+- [ ] **Enregistrer `/api/auth/callback` comme redirect URI** sur ce client.
+- [ ] **Enregistrer l'URL du frontend comme redirect URI post-logout** (`post.logout.redirect.uris`)
+  sur ce client — voir `docker/keycloak/realm-mirai.json` pour l'exemple local.
+- [ ] **Passer le client `ocr` de public à confidentiel** (`publicClient: false`) : le navigateur
+  ne parle plus du tout à Keycloak, seul le backend en a besoin.
+- [ ] **Supprimer/nettoyer les `VITE_KEYCLOAK_*` / `VITE_REDIRECT_URI`** dans `mirai-values` —
+  devenus morts avec le passage en BFF, le frontend ne les lit plus.
+- [ ] **Documenter/retirer du runbook le réglage *Allow token introspection without audience
+  check*** : devenu sans objet, le backend n'introspecte plus (`userinfo()` à la place), donc ce
+  réglage prod ne conditionne plus rien côté auth.
+
 ---
 Pour plus d'informations, consultez la documentation Keycloak et celle de votre gestionnaire de
 secrets.
