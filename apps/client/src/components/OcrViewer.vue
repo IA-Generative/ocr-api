@@ -29,6 +29,7 @@ const currentPage = ref(0)
 
 const paginationPages = computed<PaginationPage[]>(() =>
   pages.map((_, idx) => ({
+    href: '#',
     label: String(idx + 1),
     title: `Page ${idx + 1}`,
   })),
@@ -63,8 +64,8 @@ onBeforeUnmount(revokeCurrentImageUrl)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
 const showImage = ref(true)
 
-// Feature 3 : bboxes cachees par defaut
-const showBboxes = ref(false)
+// Feature 3 : bboxes affichees par defaut
+const showBboxes = ref(true)
 
 // Feature 1 : recherche
 const searchQuery = ref('')
