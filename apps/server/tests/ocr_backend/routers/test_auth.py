@@ -7,11 +7,13 @@ from fastapi import HTTPException, Response
 from ocr_backend.routers import auth as auth_router
 
 
-def make_request(cookies: dict | None = None):
+def make_request(cookies: dict | None = None, headers: dict | None = None):
     header_list = []
     if cookies:
         cookie_header = "; ".join(f"{k}={v}" for k, v in cookies.items())
         header_list.append((b"cookie", cookie_header.encode()))
+    for key, value in (headers or {}).items():
+        header_list.append((key.lower().encode(), value.encode()))
     scope = {"type": "http", "headers": header_list}
     from fastapi import Request
 
@@ -164,6 +166,45 @@ async def test_logout_without_cookie_is_a_noop(fake_store, fake_openid):
 
     fake_store.delete.assert_not_called()
     fake_openid.logout.assert_not_called()
+
+
+async def test_logout_rejects_cross_site_sec_fetch_site(fake_store, fake_openid):
+    response = Response()
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.logout(
+            make_request(cookies={"ocr_session": "sid-1"}, headers={"sec-fetch-site": "cross-site"}),
+            response,
+        )
+
+    assert exc.value.status_code == 403
+    fake_store.delete.assert_not_called()
+    fake_openid.logout.assert_not_called()
+
+
+async def test_logout_rejects_mismatched_origin(fake_store, fake_openid):
+    response = Response()
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.logout(
+            make_request(cookies={"ocr_session": "sid-1"}, headers={"origin": "https://evil.tld"}),
+            response,
+        )
+
+    assert exc.value.status_code == 403
+    fake_store.delete.assert_not_called()
+
+
+async def test_logout_allows_matching_origin(fake_store, fake_openid):
+    fake_store.get.return_value = Mock(refresh_token="ref-token")
+    response = Response()
+
+    await auth_router.logout(
+        make_request(cookies={"ocr_session": "sid-1"}, headers={"origin": "http://localhost:8081"}),
+        response,
+    )
+
+    fake_store.delete.assert_called_once_with("sid-1")
 
 
 async def test_logout_clears_local_session_even_if_keycloak_revocation_fails(fake_store, fake_openid):
