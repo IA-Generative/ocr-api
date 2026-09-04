@@ -14,6 +14,13 @@ const http = createHttpClient(OCR_API_URL)
 const sortKey = ref('created_at')
 const sortAsc = ref(false)
 
+const sortOptions = [
+  { key: 'type', label: 'Type' },
+  { key: 'percentage', label: 'Pourcentage' },
+  { key: 'created_at', label: 'Créé le' },
+  { key: 'updated_at', label: 'Mis à jour le' },
+]
+
 function goToDetail (taskId: string) {
   router.push(`/tasks/${taskId}`)
 }
@@ -132,82 +139,74 @@ function formatDate (ts: any) {
       Liste des tâches
     </h2>
 
-    <div class="table-responsive">
-      <table class="fr-table task-table">
-        <thead>
-          <tr>
-            <th @click="sortBy('type')">
-              Type ⬍
-            </th>
-            <th @click="sortBy('percentage')">
-              Pourcentage ⬍
-            </th>
-            <th @click="sortBy('created_at')">
-              Créé le ⬍
-            </th>
-            <th @click="sortBy('updated_at')">
-              Mis à jour le ⬍
-            </th>
-            <th>Détail</th>
-            <th>Voir résultat</th>
-            <th>Supprimer</th>
-          </tr>
-        </thead>
+    <div class="task-sort-bar">
+      <span class="fr-text--sm task-sort-label">Trier par :</span>
+      <DsfrButton
+        v-for="option in sortOptions"
+        :key="option.key"
+        size="sm"
+        :priority="sortKey === option.key ? 'primary' : 'tertiary'"
+        @click="sortBy(option.key)"
+      >
+        {{ option.label }}<span v-if="sortKey === option.key">{{ sortAsc ? ' ↑' : ' ↓' }}</span>
+      </DsfrButton>
+    </div>
 
-        <tbody>
-          <tr
-            v-for="task in sortedTasks"
-            :key="task.id"
+    <div class="task-tile-grid">
+      <div
+        v-for="task in sortedTasks"
+        :key="task.id"
+        class="task-tile"
+      >
+        <div class="task-tile-title">
+          <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
+          <span v-else>Inconnu</span>
+        </div>
+
+        <ProgressBar
+          :visible="true"
+          :progress="(task.percentage ?? 0) * 100"
+          :text="MapStatusToLabel(task.status)"
+        />
+
+        <dl class="task-tile-dates">
+          <div>
+            <dt>Créé le</dt>
+            <dd>{{ formatDate(task.created_at) }}</dd>
+          </div>
+          <div>
+            <dt>Mis à jour le</dt>
+            <dd>{{ formatDate(task.updated_at) }}</dd>
+          </div>
+        </dl>
+
+        <div class="task-tile-actions">
+          <DsfrButton
+            size="sm"
+            priority="tertiary"
+            @click="goToDetail(task.id)"
           >
-            <td>
-              <span v-if="task.input?.raw_filename">{{ task.input.raw_filename }}</span>
-              <span v-else>Inconnu</span>
-            </td>
+            Voir le détail
+          </DsfrButton>
 
-            <td>
-              <ProgressBar
-                :visible="true"
-                :progress="(task.percentage ?? 0) * 100"
-                :text="MapStatusToLabel(task.status)"
-              />
-            </td>
+          <DsfrButton
+            size="sm"
+            priority="secondary"
+            :disabled="task.status !== 'completed'"
+            @click="downloadTaskResult(task)"
+          >
+            Voir résultat
+          </DsfrButton>
 
-            <td>{{ formatDate(task.created_at) }}</td>
-            <td>{{ formatDate(task.updated_at) }}</td>
-
-            <td>
-              <DsfrButton
-                size="sm"
-                priority="tertiary"
-                @click="goToDetail(task.id)"
-              >
-                Voir le détail
-              </DsfrButton>
-            </td>
-
-            <td>
-              <DsfrButton
-                size="sm"
-                priority="secondary"
-                :disabled="task.status !== 'completed'"
-                @click="downloadTaskResult(task)"
-              >
-                Voir résultat
-              </DsfrButton>
-            </td>
-
-            <td>
-              <DsfrButton
-                size="sm"
-                priority="tertiary"
-                @click="removeTask(task.id)"
-              >
-                Supprimer
-              </DsfrButton>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+          <DsfrButton
+            size="sm"
+            priority="tertiary"
+            @click="removeTask(task.id)"
+          >
+            Supprimer
+          </DsfrButton>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -217,29 +216,60 @@ function formatDate (ts: any) {
   padding: 20px;
 }
 
-.table-responsive {
-  width: 100%;
-  overflow-x: auto;
+.task-sort-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
-.task-table {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-  table-layout: auto;
+.task-sort-label {
+  margin-right: 0.25rem;
 }
 
-.task-table th,
-.task-table td {
+.task-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.task-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   border: 1px solid #ddd;
-  padding: 8px;
-  text-align: center;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fff;
+}
+
+.task-tile-title {
+  font-weight: bold;
   overflow-wrap: anywhere;
   word-break: break-word;
-  white-space: normal;
 }
 
-.task-table th {
-  cursor: pointer;
+.task-tile-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.task-tile-dates dt {
+  color: #666;
+}
+
+.task-tile-dates dd {
+  margin: 0;
+}
+
+.task-tile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: auto;
 }
 </style>
