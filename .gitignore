@@ -32,3 +32,6 @@ node_modules/
 .pnpm-store/
 # Helm chart dependencies (resolved from Chart.lock)
 helm/charts/*.tgz
+
+# Local working notes, not meant to be committed.
+TODO.md
