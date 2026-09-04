@@ -16,6 +16,11 @@ _keycloak_openid = keycloak_client.keycloak_openid
 _keycloak_settings = keycloak_client.keycloak_settings
 _session_store = keycloak_client.session_store
 
+# Each hit writes an unauthenticated `PendingAuth` entry to Redis (5 min TTL); bounding
+# it per caller stops that from being spammed into unbounded growth between expiries.
+_LOGIN_RATE_LIMIT = 20
+_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60
+
 
 def _is_safe_internal_path(path: str | None) -> bool:
     """Only accept app-relative paths: an absolute or protocol-relative value
@@ -89,7 +94,16 @@ def _clear_session_cookie(response: Response) -> None:
 
 
 @router.get("/login")
-async def login(redirect: str | None = Query(default=None)):
+async def login(request: Request, redirect: str | None = Query(default=None)):
+    # `request.client.host` is whatever peer terminates the TCP connection - the load
+    # balancer/reverse proxy in front of this service, unless it forwards the real client
+    # IP some other way. Good enough to bound abuse from a single connection; not a
+    # substitute for rate limiting at the edge.
+    client_ip = request.client.host if request.client else "unknown"
+    if not _session_store.check_rate_limit(f"login:{client_ip}", _LOGIN_RATE_LIMIT, _LOGIN_RATE_LIMIT_WINDOW_SECONDS):
+        logger.warning("Rate-limiting /api/auth/login for %s", client_ip)
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="TOO_MANY_REQUESTS")
+
     next_path = redirect if _is_safe_internal_path(redirect) else "/"
 
     code_verifier, code_challenge = _build_pkce_pair()

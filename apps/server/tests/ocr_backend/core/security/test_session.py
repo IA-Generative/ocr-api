@@ -43,7 +43,7 @@ def keycloak_openid():
 
 @pytest.fixture
 def store(fake_redis, keycloak_openid) -> SessionStore:
-    return SessionStore(redis_client=fake_redis, keycloak_openid=keycloak_openid, ttl_seconds=3600)
+    return SessionStore(redis_client=fake_redis, keycloak_openid=keycloak_openid, ttl_seconds=3600)  # gitleaks:allow
 
 
 def test_create_then_get_round_trips_identity(store):
@@ -123,7 +123,9 @@ def test_ensure_fresh_second_caller_reuses_first_callers_refresh(store, keycloak
     # Simulate a concurrent request already holding the refresh lock.
     fake_redis.set(f"bff_session_refresh_lock:{sid}", "1", nx=True, ex=10)
     fake_redis.setex(
-        f"bff_session:{sid}", 3600, session.model_copy(update={"expires_at": time.time() + 3600}).model_dump_json()
+        f"bff_session:{sid}",
+        3600,
+        session.model_copy(update={"expires_at": time.time() + 3600}).model_dump_json(),
     )
 
     refreshed = store.ensure_fresh(sid, session)
@@ -177,3 +179,17 @@ def test_pending_auth_round_trips_and_is_single_use(store):
 
 def test_pop_pending_unknown_state_returns_none(store):
     assert store.pop_pending("never-saved") is None
+
+
+def test_check_rate_limit_allows_up_to_the_limit(store):
+    for _ in range(3):
+        assert store.check_rate_limit("ip-1", limit=3, window_seconds=60) is True
+
+    assert store.check_rate_limit("ip-1", limit=3, window_seconds=60) is False
+
+
+def test_check_rate_limit_tracks_keys_independently(store):
+    for _ in range(3):
+        store.check_rate_limit("ip-1", limit=3, window_seconds=60)
+
+    assert store.check_rate_limit("ip-2", limit=3, window_seconds=60) is True

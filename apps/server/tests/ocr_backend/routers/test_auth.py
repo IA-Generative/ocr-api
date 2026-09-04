@@ -54,7 +54,7 @@ def patch_openid(monkeypatch, fake_openid):
 
 
 async def test_login_redirects_to_keycloak_with_pkce_and_state(fake_store):
-    response = await auth_router.login(redirect="/tasks/42")
+    response = await auth_router.login(make_request(), redirect="/tasks/42")
 
     assert response.status_code == 307
     location = urlparse(response.headers["location"])
@@ -75,10 +75,20 @@ async def test_login_redirects_to_keycloak_with_pkce_and_state(fake_store):
 
 
 async def test_login_rejects_unsafe_redirect_and_falls_back_to_root(fake_store):
-    _ = await auth_router.login(redirect="//evil.tld/phish")
+    _ = await auth_router.login(make_request(), redirect="//evil.tld/phish")
 
     (_, _, next_path), _ = fake_store.save_pending.call_args
     assert next_path == "/"
+
+
+async def test_login_rejects_when_rate_limited(fake_store):
+    fake_store.check_rate_limit.return_value = False
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.login(make_request(), redirect="/tasks/42")
+
+    assert exc.value.status_code == 429
+    fake_store.save_pending.assert_not_called()
 
 
 async def test_callback_exchanges_code_and_sets_session_cookie(fake_store, fake_openid):
