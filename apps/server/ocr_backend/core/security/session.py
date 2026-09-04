@@ -12,6 +12,7 @@ from src.logger import logger
 _SESSION_KEY_PREFIX = "bff_session:"
 _PENDING_KEY_PREFIX = "bff_oauth_pending:"
 _PENDING_TTL_SECONDS = 5 * 60
+_RATE_LIMIT_KEY_PREFIX = "bff_rate_limit:"
 # Refresh proactively before actual expiry, so a request never races a token that
 # expires mid-flight.
 _REFRESH_SKEW_SECONDS = 30
@@ -127,7 +128,11 @@ class SessionStore:
                     **identity_update,
                 }
             )
-            self._redis.setex(_SESSION_KEY_PREFIX + sid, self._ttl_seconds, refreshed.model_dump_json())
+            self._redis.setex(
+                _SESSION_KEY_PREFIX + sid,
+                self._ttl_seconds,
+                refreshed.model_dump_json(),
+            )
             return refreshed
         finally:
             self._redis.delete(lock_key)
@@ -146,3 +151,13 @@ class SessionStore:
         if not raw:
             return None
         return PendingAuth.model_validate_json(raw)
+
+    def check_rate_limit(self, key: str, limit: int, window_seconds: int) -> bool:
+        """Returns True while `key` has made at most `limit` calls within `window_seconds`,
+        incrementing the counter as a side effect. Used to bound how many unauthenticated
+        writes (e.g. pending OAuth states) a single caller can make per window."""
+        full_key = _RATE_LIMIT_KEY_PREFIX + key
+        count = self._redis.incr(full_key)
+        if count == 1:
+            self._redis.expire(full_key, window_seconds)
+        return count <= limit

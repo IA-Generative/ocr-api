@@ -36,6 +36,17 @@ class FakeRedis:
     def delete(self, key: str) -> None:
         self._store.pop(key, None)
 
+    def incr(self, key: str) -> int:
+        current = int(self.get(key) or 0)
+        current += 1
+        expires_at = self._store.get(key, (None, None))[1]
+        self._store[key] = (str(current), expires_at)
+        return current
+
+    def expire(self, key: str, ttl_seconds: int) -> None:
+        value, _ = self._store.get(key, (None, None))
+        self._store[key] = (value, time.time() + ttl_seconds)
+
 
 @pytest.fixture
 def fake_redis() -> FakeRedis:
