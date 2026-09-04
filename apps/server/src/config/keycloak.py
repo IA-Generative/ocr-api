@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Literal, Optional
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,10 +23,17 @@ class KeycloakSettings(BaseSettings):
 
     SESSION_COOKIE_NAME: str = "ocr_session"
     SESSION_COOKIE_SECURE: bool = True
-    SESSION_COOKIE_SAMESITE: str = "lax"
+    SESSION_COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
     SESSION_TTL_SECONDS: int = 7 * 24 * 60 * 60
 
     model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")
+
+    @field_validator("FRONTEND_URL", mode="after")
+    @classmethod
+    def _strip_trailing_slash(cls, value: str) -> str:
+        # A trailing slash here doubles up wherever it's concatenated with a path
+        # ("//ocr") or compared as a CORS `Origin` header (which never has one).
+        return value.rstrip("/")
 
     @property
     def public_url(self) -> str:

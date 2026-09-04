@@ -22,6 +22,17 @@ class FakeRedis:
             return None
         return value
 
+    def set(self, key: str, value: str, nx: bool = False, ex: int | None = None) -> bool:
+        if nx and self.get(key) is not None:
+            return False
+        self._store[key] = (value, time.time() + ex if ex is not None else None)
+        return True
+
+    def getdel(self, key: str) -> str | None:
+        value = self.get(key)
+        self._store.pop(key, None)
+        return value
+
     def delete(self, key: str) -> None:
         self._store.pop(key, None)
 
