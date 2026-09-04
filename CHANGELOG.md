@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.7](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.6...v0.20.0-rc.7) (2026-09-04)
+
+
+### Features
+
+* **client:** display tasks as a tile grid instead of a table ([a30e898](https://github.com/IA-Generative/ocr-api/commit/a30e898101c1c8cf9ea6942671bbe02dbf912779))
+
 ## [0.20.0-rc.6](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.5...v0.20.0-rc.6) (2026-09-04)
 
 
