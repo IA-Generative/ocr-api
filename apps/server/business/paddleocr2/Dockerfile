@@ -18,7 +18,10 @@ RUN pip install --no-cache-dir uv
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
-RUN apt update -qy && apt install -qy \
+# Trivy triage (#469): `apt upgrade` before installing anything closes out the
+# util-linux/openssl family of fixable HIGHs that just trail the base image's own
+# package snapshot, on top of the packages this Dockerfile adds below.
+RUN apt update -qy && apt upgrade -qy && apt install -qy \
   curl \
   ffmpeg \
   libsm6 \
