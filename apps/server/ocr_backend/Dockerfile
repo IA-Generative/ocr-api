@@ -2,6 +2,13 @@ ARG HARBOR_PROXY_URL
 
 FROM ${HARBOR_PROXY_URL:-docker.io}/python:3.13-slim AS builder
 
+# Trivy triage (#469): closes out the util-linux/openssl family of fixable HIGHs that
+# just trail the base image's own package snapshot - not pulled in by anything this
+# Dockerfile installs.
+RUN apt-get update -qy \
+    && apt-get upgrade -qy \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
