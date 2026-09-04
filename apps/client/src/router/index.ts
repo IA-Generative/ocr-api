@@ -21,6 +21,13 @@ function authGuard () {
       next()
       return
     }
+    // Already confirmed by a previous guarded navigation this session - skip the
+    // `/api/auth/me` round trip. A session that expires afterwards surfaces as a 401 on
+    // the next API call, which the http-client interceptor already sends through `login()`.
+    if (userStore.isLoggedIn) {
+      next()
+      return
+    }
     const isLoggedIn = await userStore.checkAuth()
     if (!isLoggedIn) {
       userStore.login(to.fullPath)
