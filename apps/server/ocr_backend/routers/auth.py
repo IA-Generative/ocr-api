@@ -104,13 +104,22 @@ async def callback(
             redirect_uri=_keycloak_settings.callback_url,
             code_verifier=pending.code_verifier,
         )
-        claims = _keycloak_openid.introspect(token_response["access_token"])
+        # `userinfo()` rather than `introspect()`: since Keycloak 26.6.2 (CVE-2026-37979),
+        # introspection requires the authenticating client to be in the token's `aud`, which
+        # a client's own token never is (only ever in `azp`) - this client would reject its
+        # own tokens. userinfo has no such restriction and the access token was just received
+        # straight from the token endpoint over an authenticated TLS channel, so there's
+        # nothing left to validate. A rejected/expired token 401s here and falls into the
+        # except below rather than silently producing an empty-but-valid identity.
+        claims = _keycloak_openid.userinfo(token_response["access_token"])
+        identity = extract_identity(claims, _keycloak_settings.KEYCLOAK_CLIENT_ID)
+        if identity is None:
+            logger.warning("Keycloak userinfo response had no subject, rejecting callback")
+            return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
+        sid = _session_store.create(token_response, identity)
     except Exception:
         logger.exception("Keycloak token exchange failed")
         return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
-
-    identity = extract_identity(claims, _keycloak_settings.KEYCLOAK_CLIENT_ID)
-    sid = _session_store.create(token_response, identity)
 
     response = RedirectResponse(
         f"{_keycloak_settings.FRONTEND_URL}{pending.next_path}",
