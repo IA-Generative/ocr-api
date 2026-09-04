@@ -150,22 +150,39 @@ async def test_callback_rejects_unknown_state(fake_store, fake_openid):
 
 
 async def test_logout_revokes_refresh_token_and_clears_cookie(fake_store, fake_openid):
-    fake_store.get.return_value = Mock(refresh_token="ref-token")
+    fake_store.get.return_value = Mock(refresh_token="ref-token", id_token="")
 
     response = Response()
-    await auth_router.logout(make_request(cookies={"ocr_session": "sid-1"}), response)
+    result = await auth_router.logout(make_request(cookies={"ocr_session": "sid-1"}), response)
 
     fake_openid.logout.assert_called_once_with("ref-token")
     fake_store.delete.assert_called_once_with("sid-1")
     assert "ocr_session=" in response.headers["set-cookie"]
+    assert result["redirectUrl"].startswith("http://localhost:8080/realms/mirai/protocol/openid-connect/logout?")
 
 
-async def test_logout_without_cookie_is_a_noop(fake_store, fake_openid):
+async def test_logout_redirect_url_hints_the_id_token_when_available(fake_store, fake_openid):
+    fake_store.get.return_value = Mock(refresh_token="ref-token", id_token="the-id-token")
+
     response = Response()
-    await auth_router.logout(make_request(), response)
+    result = await auth_router.logout(make_request(cookies={"ocr_session": "sid-1"}), response)
+
+    location = urlparse(result["redirectUrl"])
+    params = parse_qs(location.query)
+    assert params["client_id"] == ["ocr"]
+    assert params["post_logout_redirect_uri"] == ["http://localhost:8081"]
+    assert params["id_token_hint"] == ["the-id-token"]
+
+
+async def test_logout_without_cookie_still_returns_a_redirect_url(fake_store, fake_openid):
+    response = Response()
+    result = await auth_router.logout(make_request(), response)
 
     fake_store.delete.assert_not_called()
     fake_openid.logout.assert_not_called()
+    location = urlparse(result["redirectUrl"])
+    params = parse_qs(location.query)
+    assert "id_token_hint" not in params
 
 
 async def test_logout_rejects_cross_site_sec_fetch_site(fake_store, fake_openid):
@@ -173,7 +190,10 @@ async def test_logout_rejects_cross_site_sec_fetch_site(fake_store, fake_openid)
 
     with pytest.raises(HTTPException) as exc:
         await auth_router.logout(
-            make_request(cookies={"ocr_session": "sid-1"}, headers={"sec-fetch-site": "cross-site"}),
+            make_request(
+                cookies={"ocr_session": "sid-1"},
+                headers={"sec-fetch-site": "cross-site"},
+            ),
             response,
         )
 
@@ -196,11 +216,14 @@ async def test_logout_rejects_mismatched_origin(fake_store, fake_openid):
 
 
 async def test_logout_allows_matching_origin(fake_store, fake_openid):
-    fake_store.get.return_value = Mock(refresh_token="ref-token")
+    fake_store.get.return_value = Mock(refresh_token="ref-token", id_token="")
     response = Response()
 
     await auth_router.logout(
-        make_request(cookies={"ocr_session": "sid-1"}, headers={"origin": "http://localhost:8081"}),
+        make_request(
+            cookies={"ocr_session": "sid-1"},
+            headers={"origin": "http://localhost:8081"},
+        ),
         response,
     )
 
@@ -208,7 +231,7 @@ async def test_logout_allows_matching_origin(fake_store, fake_openid):
 
 
 async def test_logout_clears_local_session_even_if_keycloak_revocation_fails(fake_store, fake_openid):
-    fake_store.get.return_value = Mock(refresh_token="ref-token")
+    fake_store.get.return_value = Mock(refresh_token="ref-token", id_token="")
     fake_openid.logout.side_effect = ConnectionError("keycloak unreachable")
 
     response = Response()

@@ -45,6 +45,28 @@ def _build_pkce_pair() -> tuple[str, str]:
     return code_verifier, code_challenge
 
 
+def _end_session_url(id_token: str | None) -> str:
+    """Built by hand for the same reason as `login()`'s auth_url: `well_known()` resolves
+    against the server-to-server `KEYCLOAK_URL`, not the browser-facing `KEYCLOAK_PUBLIC_URL`.
+
+    Ending the local session and revoking the refresh token (done by the caller) is not
+    enough to log the user out: Keycloak's own SSO cookie survives that, and the next
+    `/api/auth/login` silently signs the browser back in. Redirecting it here to
+    `end_session_endpoint` is what actually ends that SSO session.
+    """
+    params = {
+        "client_id": _keycloak_settings.KEYCLOAK_CLIENT_ID,
+        "post_logout_redirect_uri": _keycloak_settings.FRONTEND_URL,
+    }
+    if id_token:
+        # Lets Keycloak end the session without an intermediate confirmation prompt.
+        params["id_token_hint"] = id_token
+    return (
+        f"{_keycloak_settings.public_url}/realms/{_keycloak_settings.KEYCLOAK_REALM}"
+        f"/protocol/openid-connect/logout?{urlencode(params)}"
+    )
+
+
 def _set_session_cookie(response: Response, sid: str) -> None:
     response.set_cookie(
         key=_keycloak_settings.SESSION_COOKIE_NAME,
@@ -103,7 +125,10 @@ async def callback(
 ):
     if error or not code or not state:
         logger.warning(
-            "Keycloak auth callback failed: error=%s code_present=%s state_present=%s", error, bool(code), bool(state)
+            "Keycloak auth callback failed: error=%s code_present=%s state_present=%s",
+            error,
+            bool(code),
+            bool(state),
         )
         return RedirectResponse(_keycloak_settings.FRONTEND_URL, status_code=status.HTTP_302_FOUND)
 
@@ -144,16 +169,18 @@ async def callback(
     return response
 
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/logout")
 async def logout(request: Request, response: Response):
     if not _is_same_origin(request):
         logger.warning("Rejecting cross-site logout request")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="FORBIDDEN")
 
     sid = request.cookies.get(_keycloak_settings.SESSION_COOKIE_NAME)
+    id_token = None
     if sid:
         session = _session_store.get(sid)
         if session:
+            id_token = session.id_token or None
             try:
                 _keycloak_openid.logout(session.refresh_token)
             except Exception:
@@ -162,6 +189,7 @@ async def logout(request: Request, response: Response):
                 logger.warning("Keycloak refresh token revocation failed", exc_info=True)
         _session_store.delete(sid)
     _clear_session_cookie(response)
+    return {"redirectUrl": _end_session_url(id_token)}
 
 
 @router.get("/me")

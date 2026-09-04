@@ -31,8 +31,11 @@ Pour que ce flow fonctionne correctement, **toutes les valeurs de configuration 
   à une redirect URI enregistrée sur le client Keycloak.
 - `FRONTEND_URL` : URL publique du frontend. Sert d'origine CORS autorisée (une origine explicite
   est obligatoire dès lors que le cookie de session est envoyé avec les requêtes —
-  `allow_origins: ["*"]` est rejeté par les navigateurs en présence de `allow_credentials: true`)
-  et de cible de redirection après le callback de login.
+  `allow_origins: ["*"]` est rejeté par les navigateurs en présence de `allow_credentials: true`),
+  de cible de redirection après le callback de login, et de `post_logout_redirect_uri` après le
+  logout — **doit aussi être enregistrée comme redirect URI post-logout valide** sur le client
+  Keycloak, sans quoi `/api/auth/logout` échoue à rediriger l'utilisateur après la fin de sa
+  session SSO.
 
 **Aucune valeur par défaut ne doit être utilisée en production.**
 Toutes ces valeurs doivent être stockées et injectées de façon sécurisée via Vault.
