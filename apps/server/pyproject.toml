@@ -130,7 +130,11 @@ ocr-service-features = [
     "torch>=2.13.0",
     "torchvision>=0.28.0",
     "transformers>=5.15.1; sys_platform != 'darwin'",
-    "transformers>=5.4.0,<5.9.0; sys_platform == 'darwin'",
+    # GHSA-xrqw-3rrv-vx5w: fixed in 5.10.0, so the previous <5.9.0 cap pinned
+    # this platform to a known-vulnerable version. No recorded reason for the
+    # upper bound (dev-only, macOS never ships in a container) - dropped rather
+    # than picked a new one blind.
+    "transformers>=5.10.0; sys_platform == 'darwin'",
 ]
 ocr-docling = [
     "docling>=2.121.0",
