@@ -1,0 +1,8 @@
+shellEmulator: true
+
+trustPolicy: no-downgrade
+
+overrides:
+  # Transitive, security-only bumps (Dependabot); no direct dependency needs pinning.
+  fast-uri: '>=3.1.6'
+  js-yaml: '>=4.3.1'
