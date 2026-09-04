@@ -124,6 +124,10 @@ flow OAuth2 Authorization Code + PKCE, via `/api/auth/{login,callback,logout,me}
 (`httpOnly`) ; les jetons Keycloak eux-mêmes restent côté backend, dans Redis
 (`ocr_backend/core/security/session.py`).
 
+> 📘 Pour la configuration côté console d'administration Keycloak (créer le client, les
+> redirect URIs, les rôles, le mapper `groups`...), voir
+> [`docs/keycloak-setup.md`](./keycloak-setup.md).
+
 | Variable | Obligatoire | Description | Default | Utilisation |
 |:---|:---:|:---|:---|:---|
 | `KEYCLOAK_URL` | ❌ | URL de Keycloak jointe **par le backend** (échange de code, refresh, introspection, logout). | `http://localhost:8080` | `ocr_backend/core/security/keycloak_client.py` |
