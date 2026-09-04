@@ -147,8 +147,6 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
-    env_file:
-      - .env
 
   ocr_frontend:
     container_name: ocr_frontend

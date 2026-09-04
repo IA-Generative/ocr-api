@@ -40,7 +40,6 @@ def store(fake_redis) -> SessionStore:
 
 @pytest.fixture
 def keycloak_verifier(monkeypatch, store) -> KeycloakToken:
-    monkeypatch.setenv("KEYCLOAK_CLIENT_ID", "ocr-api")
     monkeypatch.setenv("API_KEYS", "secret-api-key")
     monkeypatch.setattr(keycloak_client, "session_store", store)
     return KeycloakToken()
