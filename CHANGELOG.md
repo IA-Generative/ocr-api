@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.6](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.5...v0.20.0-rc.6) (2026-09-04)
+
+
+### Bug Fixes
+
+* **client:** correct pagination cursor and default bounding boxes display ([b6183ba](https://github.com/IA-Generative/ocr-api/commit/b6183ba99e9f1afa922a1f88d307dd4f0511487c))
+
 ## [0.20.0-rc.5](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.4...v0.20.0-rc.5) (2026-09-04)
 
 
