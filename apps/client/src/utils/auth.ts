@@ -17,15 +17,23 @@ export function login (redirectPath?: string): void {
 }
 
 export async function logout (): Promise<void> {
+  // Ends the local session, then falls back to `/` if the backend response can't be read -
+  // clearing the local state must never leave the user stuck on a dead page.
+  let redirectUrl = '/'
   try {
-    await fetch(`${OCR_API_URL}/auth/logout`, {
+    const response = await fetch(`${OCR_API_URL}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     })
+    const data = await response.json() as { redirectUrl?: string }
+    redirectUrl = data.redirectUrl ?? redirectUrl
   } catch (error) {
     console.error('[auth] logout request failed, clearing local state anyway:', error)
   }
-  window.location.href = '/'
+  // Redirects through Keycloak's end_session_endpoint (which then redirects back here):
+  // the local session cookie alone doesn't end the browser's Keycloak SSO session, so
+  // skipping this would sign the user silently back in on the next login.
+  window.location.href = redirectUrl
 }
 
 export async function fetchMe (): Promise<IUser | null> {

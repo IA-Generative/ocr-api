@@ -17,7 +17,10 @@
       "implicitFlowEnabled": false,
       "serviceAccountsEnabled": false,
       "redirectUris": ["http://localhost:5000/api/auth/callback"],
-      "webOrigins": ["http://localhost:8081"]
+      "webOrigins": ["http://localhost:8081"],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8081"
+      }
     }
   ],
   "users": [
