@@ -31,7 +31,6 @@ export default antfu(
       // YAML, and the value files are validated by `helm lint` / chart-testing
       // in CI rather than by a JS style linter.
       'helm/**',
-      'infra/**',
       // Not a format ESLint understands.
       '**/*.toml',
       // Generated.
