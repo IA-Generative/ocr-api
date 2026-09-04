@@ -84,10 +84,11 @@ async def test_callback_exchanges_code_and_sets_session_cookie(fake_store, fake_
     fake_openid.token.return_value = {
         "access_token": "tok",
         "refresh_token": "ref",
+        "id_token": "idtok",
         "expires_in": 300,
         "refresh_expires_in": 3600,
     }
-    fake_openid.introspect.return_value = {
+    fake_openid.userinfo.return_value = {
         "sub": "user-123",
         "email": "user@example.com",
         "resource_access": {"ocr": {"roles": ["admin"]}},
@@ -102,10 +103,30 @@ async def test_callback_exchanges_code_and_sets_session_cookie(fake_store, fake_
         redirect_uri="http://localhost:5000/api/auth/callback",
         code_verifier="verifier-xyz",
     )
+    fake_openid.userinfo.assert_called_once_with("tok")
     assert response.status_code == 302
     assert response.headers["location"] == "http://localhost:8081/tasks/42"
     assert "ocr_session=new-session-id" in response.headers["set-cookie"]
     assert "HttpOnly" in response.headers["set-cookie"]
+
+
+async def test_callback_rejects_response_without_subject(fake_store, fake_openid):
+    fake_store.pop_pending.return_value = Mock(code_verifier="verifier-xyz", next_path="/tasks/42")
+    fake_openid.token.return_value = {
+        "access_token": "tok",
+        "refresh_token": "ref",
+        "id_token": "idtok",
+        "expires_in": 300,
+        "refresh_expires_in": 3600,
+    }
+    fake_openid.userinfo.return_value = {"active": False}
+
+    response = await auth_router.callback(code="auth-code", state="state-abc", error=None)
+
+    fake_store.create.assert_not_called()
+    assert response.status_code == 302
+    assert response.headers["location"] == "http://localhost:8081"
+    assert "set-cookie" not in response.headers
 
 
 async def test_callback_without_code_redirects_without_touching_keycloak(fake_store, fake_openid):
