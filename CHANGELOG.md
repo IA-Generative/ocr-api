@@ -29,6 +29,16 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.5](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.4...v0.20.0-rc.5) (2026-09-04)
+
+
+### Bug Fixes
+
+* **deps:** bump aiohttp, h2, tornado and transformers (darwin) to patched versions ([c516d88](https://github.com/IA-Generative/ocr-api/commit/c516d88cb33417cdb384dcaf08eba85e5e480d28))
+* **deps:** pin transitive npm packages to patched versions via pnpm overrides ([9add913](https://github.com/IA-Generative/ocr-api/commit/9add9139a15a6c616e340d75e54efd0983405aa9))
+* **security:** apt upgrade the api image's base packages ([#469](https://github.com/IA-Generative/ocr-api/issues/469)) ([b3f3788](https://github.com/IA-Generative/ocr-api/commit/b3f3788272d3c1be6aa37caf9e4495ff8c153b9a))
+* **security:** apt upgrade the worker image's base packages ([#469](https://github.com/IA-Generative/ocr-api/issues/469)) ([915d2d8](https://github.com/IA-Generative/ocr-api/commit/915d2d8b7d0eb70c32a659074aa2d9d4e22ff29e))
+
 ## [0.20.0-rc.4](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.3...v0.20.0-rc.4) (2026-08-31)
 
 
