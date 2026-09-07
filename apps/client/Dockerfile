@@ -3,6 +3,13 @@ ARG PNPM_VERSION=11.24.0
 # dev
 FROM docker.io/node:24.19.0-slim AS dev
 
+# pnpm's native binary (@pnpm/exe) needs libatomic, which the slim base image doesn't
+# ship - without it the binary fails at runtime with "libatomic.so.1: cannot open
+# shared object file", not at install time.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libatomic1 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN npm install --ignore-scripts --location=global pnpm@${PNPM_VERSION}
 
 WORKDIR /app
