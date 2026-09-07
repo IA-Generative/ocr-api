@@ -29,6 +29,33 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.8](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.7...v0.20.0-rc.8) (2026-09-07)
+
+
+### Features
+
+* **bakend:** add auth other backend only ([b5acaee](https://github.com/IA-Generative/ocr-api/commit/b5acaee3870d4fcc00281d1454fe52ffff850ec1))
+
+
+### Bug Fixes
+
+* **auth:** add API_KEYS for machine-to-machine authentication ([5474913](https://github.com/IA-Generative/ocr-api/commit/5474913a7d3bd8ff73c60716b510e01aa0972471))
+* **auth:** end the Keycloak SSO session on logout ([fb09c99](https://github.com/IA-Generative/ocr-api/commit/fb09c998fc120017037d8983c8d58e1ca1f40a25))
+* **auth:** rate-limit /api/auth/login per client IP ([f531b66](https://github.com/IA-Generative/ocr-api/commit/f531b66465b5eefb9f470a6fb67996cbee7207d2))
+* **auth:** reject cross-site logout requests as CSRF defense in depth ([d4faef6](https://github.com/IA-Generative/ocr-api/commit/d4faef63dc3f4d985e2b6534b58194e7c1a73bcf))
+* **auth:** remove the VITE_SSO_BYPASS frontend auth-guard bypass ([5ca919c](https://github.com/IA-Generative/ocr-api/commit/5ca919c1496a5e4507cd5bd5d89322771ff4432d))
+* **auth:** route login through keycloak-js and pin the redirect_uri ([5e7e835](https://github.com/IA-Generative/ocr-api/commit/5e7e8355d46f0814bb84acb8db4a6bb686198085))
+* **auth:** stop trusting empty-subject/introspection claims and freeze roles ([b5522e6](https://github.com/IA-Generative/ocr-api/commit/b5522e66c6707361e69696692655b67981873fde))
+* **auth:** strip trailing slash from BACKEND_PUBLIC_URL too ([449ae94](https://github.com/IA-Generative/ocr-api/commit/449ae94e7a37aeffbeb1ed2095364d6bc7484268))
+* **client:** install libatomic1 for pnpm's native binary in the slim image ([b6e7a66](https://github.com/IA-Generative/ocr-api/commit/b6e7a66e3d0940b6a96131292e50addab3c39f6f))
+* **security:** stop leaking secrets into the keycloak container and drop an unread test env var ([b8474b2](https://github.com/IA-Generative/ocr-api/commit/b8474b2850d6594405db4c21a9886ada6cd84698))
+
+
+### Performance Improvements
+
+* **client:** short-circuit the auth guard on an already-confirmed session ([43d5aa7](https://github.com/IA-Generative/ocr-api/commit/43d5aa7dd938aa4ebbfb2cdb19cd20d7606b8e78))
+* **client:** stop copying node_modules into the docker build context ([ab81a23](https://github.com/IA-Generative/ocr-api/commit/ab81a23303059a7a284d764e86368ef2fe263307))
+
 ## [0.20.0-rc.7](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.6...v0.20.0-rc.7) (2026-09-04)
 
 
