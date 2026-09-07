@@ -28,11 +28,13 @@ class KeycloakSettings(BaseSettings):
 
     model_config = SettingsConfigDict(from_attributes=True, case_sensitive=True, env_file=".env", extra="allow")
 
-    @field_validator("FRONTEND_URL", mode="after")
+    @field_validator("FRONTEND_URL", "BACKEND_PUBLIC_URL", mode="after")
     @classmethod
     def _strip_trailing_slash(cls, value: str) -> str:
         # A trailing slash here doubles up wherever it's concatenated with a path
-        # ("//ocr") or compared as a CORS `Origin` header (which never has one).
+        # ("//ocr", or BACKEND_PUBLIC_URL + "/api/auth/callback" -> ".../api/auth/callback"
+        # with a leading double slash that 404s at the ingress) or compared as a CORS
+        # `Origin` header (which never has one).
         return value.rstrip("/")
 
     @property
