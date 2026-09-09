@@ -4,6 +4,19 @@ SDK Python pour interagir avec l'API OCR. Supporte les clients synchrones et asy
 
 ## Installation
 
+### Depuis le dépôt Git (méthode recommandée pour un projet tiers)
+
+`sdk/` vit dans un sous-dossier de ce monorepo, pas dans son propre dépôt : il faut le
+fragment `#subdirectory=` pour que `pip`/`uv` trouve `sdk/pyproject.toml`.
+
+```bash
+pip install "git+https://github.com/IA-Generative/ocr-api.git#subdirectory=sdk"
+# ou avec uv
+uv add "git+https://github.com/IA-Generative/ocr-api.git#subdirectory=sdk"
+```
+
+### En local (développement du SDK lui-même)
+
 Avec `uv` (recommandé):
 
 ```bash
@@ -124,12 +137,32 @@ with SyncOCRClient(
 from ocr_sdk import SyncOCRClient
 
 with SyncOCRClient("http://localhost:5000") as client:
-    # Récupérer les tâches (pagination)
+    # Récupérer les tâches (pagination) - retourne un objet paginé, pas une liste brute
     tasks = client.get_user_tasks(page=1, page_size=10)
 
-    for task in tasks:
+    print(f"{tasks.total} tâche(s) au total")
+    for task in tasks.items:
         print(f"Task {task.id}: {task.status}")
 ```
+
+### Authentification par identifiants Keycloak (username/password)
+
+Pour une clé API statique, passez `api_key=...` au constructeur. Pour s'authentifier
+comme un vrai utilisateur Keycloak (les requêtes portent alors ses rôles/groupes réels),
+appelez `login()` une fois dans le context manager :
+
+```python
+from ocr_sdk import SyncOCRClient
+
+with SyncOCRClient("http://localhost:5000") as client:
+    client.login("user@example.com", "hunter2")
+    task = client.create_job("document.pdf")
+```
+
+`login()` appelle `POST /api/auth/token` sur cette API : c'est le backend qui échange
+les identifiants avec Keycloak (Resource Owner Password Credentials grant), le secret
+du client Keycloak ne quitte jamais le backend. Le jeton renvoyé expire (5 minutes par
+défaut côté Keycloak) - il faut rappeler `login()` une fois expiré.
 
 ## Modèles
 

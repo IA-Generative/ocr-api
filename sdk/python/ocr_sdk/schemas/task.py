@@ -72,3 +72,21 @@ class TaskOperation(str, Enum):
     VECTORIZE: str = "vectorize"
     VLM_OCR: str = "vlm_ocr"
     DOCLING: str = "docling"
+
+
+class TaskStatsGlobal(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    total_tasks: int
+    # Clé = status, Valeur = nombre de tâches
+    tasks_stats: Dict[TaskStatus, int]
+
+
+class TaskStatsUser(TaskStatsGlobal):
+    model_config = ConfigDict(from_attributes=True)
+    user_id: str
+
+
+class TaskStats(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    global_stats: TaskStatsGlobal
+    user_stats: TaskStatsUser

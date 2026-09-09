@@ -10,9 +10,18 @@ from ocr_sdk.models import (
     OCRResult,
     Page,
     Bbox,
+    Checkbox,
+    Layout,
+    FormEntry,
+    LLMFormField,
+    ImageFormDetector,
+    Vector,
+    PaginatedTasks,
+    TaskStats,
+    ProcessResponse,
 )
 
-__version__ = "0.1.4"
+__version__ = "0.2.0"
 
 __all__ = [
     "AsyncOCRClient",
@@ -24,4 +33,13 @@ __all__ = [
     "OCRResult",
     "Page",
     "Bbox",
+    "Checkbox",
+    "Layout",
+    "FormEntry",
+    "LLMFormField",
+    "ImageFormDetector",
+    "Vector",
+    "PaginatedTasks",
+    "TaskStats",
+    "ProcessResponse",
 ]
