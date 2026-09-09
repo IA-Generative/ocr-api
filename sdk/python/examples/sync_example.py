@@ -92,8 +92,10 @@ def main():
         print("6. Liste des tâches récentes...")
         try:
             tasks = client.get_user_tasks(page=1, page_size=5)
-            print(f"   ✓ {len(tasks)} tâches trouvées:")
-            for t in tasks:
+            print(
+                f"   ✓ {tasks.total} tâche(s) au total, {len(tasks.items)} affichée(s):"
+            )
+            for t in tasks.items:
                 print(f"     - {t.id[:8]}... | {t.status} | {t.type}")
         except OCRAPIError as e:
             print(f"   ✗ Erreur: {e}")

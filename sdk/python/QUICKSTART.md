@@ -40,6 +40,17 @@ uv pip install -e .
 
 ### Using pip
 
+#### From Git Repository (subdirectory)
+
+`sdk/` lives inside this monorepo rather than its own repository, so `pip` needs the
+`#subdirectory=` fragment to find `sdk/pyproject.toml`:
+
+```bash
+pip install "git+https://github.com/IA-Generative/ocr-api.git#subdirectory=sdk"
+```
+
+#### From Local Directory
+
 ```bash
 cd sdk
 pip install -e .
@@ -86,6 +97,23 @@ async def process_document():
 asyncio.run(process_document())
 ```
 
+### Authenticating as a Keycloak User (username/password)
+
+For a static API key, pass `api_key=...` to the constructor. To authenticate as a real
+Keycloak identity instead (so requests carry your actual roles/groups), call `login()`
+after entering the context manager - it exchanges your credentials for an access token
+via this API's own `POST /api/auth/token` (the Keycloak client secret never leaves the
+backend):
+
+```python
+with SyncOCRClient("http://localhost:5000") as client:
+    client.login("user@example.com", "hunter2")
+    task = client.create_job("document.pdf")
+```
+
+The access token expires (5 minutes by default in Keycloak) - call `login()` again once
+it does.
+
 ## Import in Your Project
 
 Once installed, you can import the SDK in any Python file:
@@ -113,13 +141,25 @@ Check the `examples/` directory for complete usage examples:
 
 Both clients have the same methods (async methods use `await`):
 
+- `login(username, password)` - Authenticate as a Keycloak user (see above)
 - `get_health()` - Get API health status
 - `create_job(file_path, ...)` - Upload file and create OCR job
+- `create_job_from_youtube(url, ...)` - Create a job from a YouTube URL
 - `get_task(task_id)` - Get task details
-- `get_user_tasks(page, page_size)` - List user's tasks
+- `get_task_page_image(task_id, page_number)` - Download a page's rendered image
+- `get_user_tasks(page, page_size)` - List user's tasks (paginated - `.items`/`.total`)
+- `get_task_stats(...)` - Global and per-user task statistics
+- `get_users_count_today()` - Count distinct users active today
+- `delete_task(task_id)` - Delete a task
+- `delete_tasks_by_date_and_status(...)` - Bulk-delete tasks (admin only)
 - `get_task_text(task_id)` - Get extracted text
+- `get_task_value(task_id, transform=...)` - Get task output as text/form/CSV/raw JSON
 - `wait_for_task(task_id, ...)` - Wait for task completion
 - `process_document(file_path, ...)` - One-step upload and wait
+
+> `template`/`collections` API routes exist in the backend codebase but aren't
+> currently mounted on the running app (see `ocr_backend/main.py`) - no SDK methods
+> call them, since they'd 404.
 
 ### Configuration
 
