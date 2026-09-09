@@ -2,6 +2,7 @@ import logging
 import os
 import warnings
 from ocr_backend.core.security import keycloak_client
+from ocr_backend.core.security.claims import extract_identity
 from ocr_backend.core.security.token import BaseVerifyToken, RequestContext, parse_header_context
 from fastapi import HTTPException, Request, status
 
@@ -61,12 +62,16 @@ class ApiToken(BaseVerifyToken):
 
 
 class KeycloakToken(BaseVerifyToken):
-    """Authenticates a request either via a service `Authorization: Bearer <API key>`
-    header, or via the BFF session cookie set by `/api/auth/callback`.
+    """Authenticates a request via, in order: a service `Authorization: Bearer <API
+    key>` header, a genuine Keycloak access token (e.g. from an SDK's password-grant
+    login, see `SyncOCRClient.login`/`AsyncOCRClient.login`), or the BFF session
+    cookie set by `/api/auth/callback`.
 
-    The browser never holds a Keycloak token: the frontend only ever sends the opaque
-    session cookie, and the actual access/refresh tokens stay server-side in Redis
-    (see `ocr_backend.core.security.session.SessionStore`).
+    The browser itself never holds a Keycloak token: the frontend only ever sends the
+    opaque session cookie, and the actual access/refresh tokens stay server-side in
+    Redis (see `ocr_backend.core.security.session.SessionStore`). The access-token
+    path exists for non-browser callers (the SDK, scripts) that authenticate as a real
+    Keycloak identity instead of a static API key.
     """
 
     def __init__(self):
@@ -77,11 +82,38 @@ class KeycloakToken(BaseVerifyToken):
     def verify(self, ctx: RequestContext) -> bool:  # pragma: no cover - unused, see __call__
         raise NotImplementedError("KeycloakToken reads the session cookie via __call__, not verify()")
 
+    def _verify_access_token(self, ctx: RequestContext) -> bool:
+        """Accepts `ctx.token` as a genuine Keycloak access token, populating `ctx`
+        from it on success. `userinfo()` rather than `introspect()`, for the same
+        reason as the BFF callback (see `ocr_backend/routers/auth.py`): since
+        Keycloak 26.6.2 (CVE-2026-37979), introspection requires the authenticating
+        client to be in the token's `aud`, which this client's own tokens never are.
+        """
+        try:
+            claims = keycloak_client.keycloak_openid.userinfo(ctx.token)
+        except Exception:
+            return False
+
+        identity = extract_identity(claims, keycloak_client.keycloak_settings.KEYCLOAK_CLIENT_ID)
+        if identity is None:
+            return False
+
+        ctx.user_id = identity["user_id"]
+        ctx.email = identity["email"]
+        ctx.roles = identity["roles"]
+        ctx.groups = identity["groups"]
+        ctx.is_admin = identity["is_admin"]
+        logger.info("Keycloak access token valid for user %s", ctx.user_id)
+        return True
+
     def __call__(self, request: Request) -> RequestContext:
         ctx = parse_header_context(request, is_fastapi=self.is_fastapi)
 
         if self.__api_token_verifier.verify(ctx):
             logger.info("API token valid, skipping session verification")
+            return ctx
+
+        if ctx.token and self._verify_access_token(ctx):
             return ctx
 
         sid = request.cookies.get(keycloak_client.keycloak_settings.SESSION_COOKIE_NAME)
