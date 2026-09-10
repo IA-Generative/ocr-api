@@ -25,7 +25,8 @@ export default antfu(
       '**/coverage/',
       // Owned by apps/client/eslint.config.js.
       'apps/**',
-      // Python, linted by ruff.
+      // sdk/ (Python, linted by ruff) and sdk/js/ (TypeScript, ships its own flat
+      // config and installs its own ESLint - same pattern as apps/client above).
       'sdk/**',
       // Helm charts and Kubernetes manifests: Go templates are not parseable as
       // YAML, and the value files are validated by `helm lint` / chart-testing
