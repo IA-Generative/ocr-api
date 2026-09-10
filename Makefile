@@ -22,7 +22,7 @@ COLOR_CYAN    := \033[36m
 PROJECT_ROOT   := $(shell pwd)
 SERVER_DIR     := $(PROJECT_ROOT)/apps/server
 CLIENT_DIR     := $(PROJECT_ROOT)/apps/client
-SDK_DIR        := $(PROJECT_ROOT)/sdk
+SDK_DIR        := $(PROJECT_ROOT)/sdk/python
 
 # Compose files
 COMPOSE_DEV      := $(PROJECT_ROOT)/docker-compose.yaml
