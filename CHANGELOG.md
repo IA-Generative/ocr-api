@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.11](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.10...v0.20.0-rc.11) (2026-09-10)
+
+
+### Features
+
+* **client:** add GitHub and API docs links to the footer ([20984c6](https://github.com/IA-Generative/ocr-api/commit/20984c6fafa6f2596aae606e38413bd72e911c2a))
+
 ## [0.20.0-rc.10](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.9...v0.20.0-rc.10) (2026-09-10)
 
 
