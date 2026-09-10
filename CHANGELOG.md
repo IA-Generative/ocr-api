@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.9](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.8...v0.20.0-rc.9) (2026-09-10)
+
+
+### Bug Fixes
+
+* **release:** bump pyproject.toml/package.json on prerelease too ([138b0f0](https://github.com/IA-Generative/ocr-api/commit/138b0f03c678ccd79596341169c2e2dae3abb21d))
+* **version:** correct path to pyproject.toml for version detection ([42cf336](https://github.com/IA-Generative/ocr-api/commit/42cf3367e199341a8ef589e2114f57d53342a510))
+
 ## [0.20.0-rc.8](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.7...v0.20.0-rc.8) (2026-09-07)
 
 
