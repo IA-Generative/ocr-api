@@ -72,8 +72,9 @@ const sortedTasks = computed(() => {
     return items
   }
   return [...items].sort((a, b) => {
-    const valA = a[sortKey.value]
-    const valB = b[sortKey.value]
+    // `percentage` can be null (task not yet processed); treat it as 0 for sorting.
+    const valA = a[sortKey.value] ?? 0
+    const valB = b[sortKey.value] ?? 0
     if (valA === valB) {
       return 0
     }
