@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import createHttpClient from '@/api/http-client'
 import { useTasksStore } from '@/stores/tasks'
@@ -9,6 +9,24 @@ import ProgressBar from './ProgressBar.vue'
 const store = useTasksStore()
 const router = useRouter()
 const http = createHttpClient(OCR_API_URL)
+
+const PAGE_SIZE = 20
+
+// DsfrPagination's `current-page` is 0-indexed; the API's `page` query param is 1-indexed.
+const currentPage = ref(0)
+
+const totalPages = computed(() => {
+  const total = store.userTasksPaginated?.total ?? 0
+  return total > 0 ? Math.ceil(total / PAGE_SIZE) : 0
+})
+
+const paginationPages = computed(() =>
+  Array.from({ length: totalPages.value }, (_, idx) => ({
+    href: '#',
+    label: String(idx + 1),
+    title: `Page ${idx + 1}`,
+  })),
+)
 
 // ----- TRI -----
 const sortKey = ref('created_at')
@@ -62,12 +80,16 @@ const sortedTasks = computed(() => {
   })
 })
 
-async function loadAll () {
-  await store.fetchUserTasks(1, 1000)
+async function loadPage (page: number) {
+  await store.fetchUserTasks(page + 1, PAGE_SIZE)
 }
 
+watch(currentPage, (page) => {
+  void loadPage(page)
+})
+
 onMounted(() => {
-  void loadAll()
+  void loadPage(currentPage.value)
 })
 
 onBeforeUnmount(() => {
@@ -137,6 +159,12 @@ function formatDate (ts: any) {
   <div class="task-container fr-container">
     <h2 class="fr-h2">
       Liste des tâches
+      <span
+        v-if="store.userTasksPaginated?.total"
+        class="fr-text--sm task-total"
+      >
+        ({{ store.userTasksPaginated.total }} au total)
+      </span>
     </h2>
 
     <div class="task-sort-bar">
@@ -208,6 +236,17 @@ function formatDate (ts: any) {
         </div>
       </div>
     </div>
+
+    <div
+      v-if="totalPages > 1"
+      class="task-pagination"
+    >
+      <DsfrPagination
+        v-model:current-page="currentPage"
+        :pages="paginationPages"
+        :trunc-limit="5"
+      />
+    </div>
   </div>
 </template>
 
@@ -226,6 +265,17 @@ function formatDate (ts: any) {
 
 .task-sort-label {
   margin-right: 0.25rem;
+}
+
+.task-total {
+  font-weight: normal;
+  color: #666;
+}
+
+.task-pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.5rem;
 }
 
 .task-tile-grid {

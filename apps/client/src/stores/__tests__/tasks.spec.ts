@@ -23,7 +23,7 @@ describe('tasks store', () => {
 
       await store.fetchUserTasks(2, 25)
 
-      expect(http.get).toHaveBeenCalledWith('/tasks/user/', { params: { page: 2, limit: 25 } })
+      expect(http.get).toHaveBeenCalledWith('/tasks/user/', { params: { page: 2, page_size: 25 } })
       expect(store.userTasksPaginated).toMatchObject({ page: 2, page_size: 25, total: 42 })
       expect(store.userTasksPaginated.items).toHaveLength(2)
     })
@@ -33,7 +33,7 @@ describe('tasks store', () => {
 
       await useTasksStore().fetchUserTasks()
 
-      expect(http.get).toHaveBeenCalledWith('/tasks/user/', { params: { page: 1, limit: 10 } })
+      expect(http.get).toHaveBeenCalledWith('/tasks/user/', { params: { page: 1, page_size: 10 } })
     })
 
     it('falls back to the requested paging when the API omits it', async () => {
