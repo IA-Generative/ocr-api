@@ -29,6 +29,19 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.10](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.9...v0.20.0-rc.10) (2026-09-10)
+
+
+### Bug Fixes
+
+* **frontend:** handle nullable percentage in the task sort comparator ([38f5f9e](https://github.com/IA-Generative/ocr-api/commit/38f5f9eec19bae0b3f473d207ff4166433d01ecb))
+* **frontend:** paginate the user tasks list correctly ([1c76ab0](https://github.com/IA-Generative/ocr-api/commit/1c76ab050d1656ec72d72b562dd85a44addf99d1))
+
+
+### Code Refactoring
+
+* **frontend:** tighten task list types, drop any ([944d8c9](https://github.com/IA-Generative/ocr-api/commit/944d8c91125559e32d40ec5198b2851ecc3ad007))
+
 ## [0.20.0-rc.9](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.8...v0.20.0-rc.9) (2026-09-10)
 
 
