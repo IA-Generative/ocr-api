@@ -1,10 +1,14 @@
 <script setup lang="ts">
+import type { components } from '@/api/types/api.schema'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import createHttpClient from '@/api/http-client'
 import { useTasksStore } from '@/stores/tasks'
 import { OCR_API_URL } from '@/utils/constants'
 import ProgressBar from './ProgressBar.vue'
+
+type TaskModel = components['schemas']['TaskModel']
+type SortableTaskKey = 'type' | 'percentage' | 'created_at' | 'updated_at'
 
 const store = useTasksStore()
 const router = useRouter()
@@ -29,10 +33,10 @@ const paginationPages = computed(() =>
 )
 
 // ----- TRI -----
-const sortKey = ref('created_at')
+const sortKey = ref<SortableTaskKey>('created_at')
 const sortAsc = ref(false)
 
-const sortOptions = [
+const sortOptions: { key: SortableTaskKey, label: string }[] = [
   { key: 'type', label: 'Type' },
   { key: 'percentage', label: 'Pourcentage' },
   { key: 'created_at', label: 'Créé le' },
@@ -53,7 +57,7 @@ function MapStatusToLabel (status: string) {
   return map[status] || status
 }
 
-function sortBy (key: string) {
+function sortBy (key: SortableTaskKey) {
   if (sortKey.value === key) {
     sortAsc.value = !sortAsc.value
   } else {
@@ -63,7 +67,7 @@ function sortBy (key: string) {
 }
 
 const sortedTasks = computed(() => {
-  const items: any[] = store.userTasksPaginated?.items ?? []
+  const items: TaskModel[] = store.userTasksPaginated?.items ?? []
   if (!sortKey.value) {
     return items
   }
@@ -99,7 +103,7 @@ onBeforeUnmount(() => {
 })
 
 // ----- TÉLÉCHARGEMENT -----
-async function downloadTaskResult (task: any) {
+async function downloadTaskResult (task: TaskModel) {
   if (!task || task.status !== 'completed') {
     return
   }
@@ -136,8 +140,8 @@ async function removeTask (taskId: string) {
   }
 }
 
-function formatDate (ts: any) {
-  if (ts === null || ts === undefined || ts === '') {
+function formatDate (ts: number | null | undefined) {
+  if (ts === null || ts === undefined) {
     return ''
   }
   try {
