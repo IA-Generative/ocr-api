@@ -1,0 +1,7 @@
+minimumReleaseAgeExcludePrune: true
+trustPolicy: no-downgrade
+shellEmulator: true
+# Stops pnpm from walking up to the repo-root pnpm-workspace.yaml and treating this
+# directory as an unlisted member of that workspace (which silently no-ops `pnpm
+# install` here instead of installing this package's own deps). This file makes
+# sdk/js its own workspace root, standalone - same as apps/client's own lockfile.
