@@ -6,22 +6,22 @@ Cette API fournit un service d’extraction de texte à partir de fichiers PDF o
 
 ![DEMO](docs/images/demo-ocr.gif)
 
-## SDK Python
+## SDKs
 
-Un SDK Python est disponible pour faciliter l'intégration de l'API OCR dans vos projets. Le SDK supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+Deux SDKs sont disponibles pour faciliter l'intégration de l'API OCR dans vos projets, un par langage, dans `sdk/<langage>/`.
 
-📦 **[Voir le SDK](sdk/README.md)** - Client Python avec support async/sync
+### SDK Python
 
-### Installation rapide du SDK
+Supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+
+📦 **[Voir le SDK](sdk/python/README.md)** - Client Python avec support async/sync
 
 ```bash
-cd sdk
+cd sdk/python
 uv pip install -e .
 # ou
 pip install -e .
 ```
-
-### Utilisation du SDK
 
 ```python
 from ocr_sdk import SyncOCRClient
@@ -33,7 +33,29 @@ with SyncOCRClient("http://localhost:5000") as client:
     print(text)
 ```
 
-Pour plus de détails, consultez la [documentation du SDK](sdk/README.md).
+Pour plus de détails, consultez la [documentation du SDK Python](sdk/python/README.md).
+
+### SDK JS/TypeScript
+
+Client Node.js (≥ 18, `fetch` natif) avec des types TypeScript pour toutes les entrées/sorties.
+
+📦 **[Voir le SDK](sdk/js/README.md)** - Client TypeScript pour Node.js
+
+```bash
+npm install "git+https://github.com/IA-Generative/ocr-api.git#path:sdk/js"
+```
+
+```ts
+import { OCRClient } from 'ocr-sdk'
+
+const client = new OCRClient('http://localhost:5000')
+const task = await client.createJob('document.pdf')
+const result = await client.waitForTask(task.id)
+const text = await client.getTaskText(task.id)
+console.log(text)
+```
+
+Pour plus de détails, consultez la [documentation du SDK JS](sdk/js/README.md).
 
 ## [Fonctionnement](docs/server/asyncronus.md)
 
