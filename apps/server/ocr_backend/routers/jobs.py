@@ -79,7 +79,18 @@ def verify_interest_zone(
         )
 
 
-@router.post("/jobs/", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+@router.post(
+    "/jobs/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TaskModel,
+    summary="Upload a file for OCR/extraction",
+    description=(
+        "Uploads a file (PDF or image) and queues it for processing. Returns "
+        "immediately with the created task in `queued` status - poll `GET "
+        "/tasks/{task_id}` or use `PUT /process` for a blocking one-shot call."
+    ),
+    responses={400: {"description": "Invalid or missing `interest_zone` for the file's content type"}},
+)
 async def upload_file(
     file: UploadFile = File(...),
     group_id: str = Form("DEFAULT"),
@@ -180,7 +191,16 @@ async def upload_file(
         )
 
 
-@router.post("/jobs/youtube", status_code=status.HTTP_201_CREATED, response_model=TaskModel)
+@router.post(
+    "/jobs/youtube",
+    status_code=status.HTTP_201_CREATED,
+    response_model=TaskModel,
+    summary="Create a transcription/extraction job from a YouTube URL",
+    description=(
+        "Queues a YouTube video for processing (transcription/description) instead of "
+        "an uploaded file. Same task lifecycle as `POST /jobs/`."
+    ),
+)
 async def create_youtube_job(
     url: str = Form(...),
     group_id: str = Form("DEFAULT"),
