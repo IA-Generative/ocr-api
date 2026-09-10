@@ -42,7 +42,16 @@ def get_task_by_id(task_id: str) -> TaskModel:
     return task
 
 
-@router.get("/tasks/{task_id}", response_model=Optional[TaskModel])
+@router.get(
+    "/tasks/{task_id}",
+    response_model=Optional[TaskModel],
+    summary="Get a task by ID",
+    description=(
+        "Returns the task's current status/progress, and its full output once "
+        "`status` is `completed`. Only the task's owner can read it."
+    ),
+    responses={404: {"description": "Task not found, or not owned by the caller"}},
+)
 async def get_task_by_id_user(
     task_id: str,
     ctx: RequestContext = Depends(TokenVerifier),
@@ -54,7 +63,12 @@ async def get_task_by_id_user(
     return task
 
 
-@router.get("/tasks/{task_id}/page/{page_number}")
+@router.get(
+    "/tasks/{task_id}/page/{page_number}",
+    summary="Download a page's rendered image",
+    description="Streams the rendered image of one page (1-indexed) of a completed task's output.",
+    responses={404: {"description": "Task, page, or stored image not found"}},
+)
 async def get_task_page(
     task_id: str,
     page_number: int,
@@ -112,6 +126,8 @@ def get_tasks_by_user_id(
 @router.get(
     "/tasks/user/",
     response_model=Pagination[TaskModel],
+    summary="List the caller's tasks",
+    description="Paginated list of tasks created by the authenticated user.",
 )
 async def get_tasks_by_user(
     page: int = Query(1, ge=1),
@@ -126,6 +142,8 @@ async def get_tasks_by_user(
 @router.get(
     "/stats/tasks",
     response_model=TaskStats,
+    summary="Get task statistics",
+    description="Counts of tasks by status, both globally and for the authenticated user.",
 )
 async def get_tasks_stats(
     page: int = Query(1, ge=1),
@@ -138,7 +156,11 @@ async def get_tasks_stats(
     return task_table.statistics(user_id=ctx.user_id or "", is_admin=bool(ctx.is_admin), skip=skip, limit=page_size)
 
 
-@router.get("/users/count-users-today")
+@router.get(
+    "/users/count-users-today",
+    summary="Count distinct active users today",
+    description="Number of distinct users who created at least one task since midnight (server time).",
+)
 async def count_users_today(
     ctx: RequestContext = Depends(TokenVerifier),
 ):
@@ -151,7 +173,13 @@ async def count_users_today(
     return {"users_today": count}
 
 
-@router.delete("/tasks/{task_id}", status_code=204)
+@router.delete(
+    "/tasks/{task_id}",
+    status_code=204,
+    summary="Delete a task",
+    description="Deletes a task and its stored result. Only the task's owner or an admin can delete it.",
+    responses={404: {"description": "Task not found, or not owned by the caller"}},
+)
 async def delete_task_by_id(
     task_id: str,
     ctx: RequestContext = Depends(TokenVerifier),
@@ -166,7 +194,13 @@ async def delete_task_by_id(
         logger.error(f"Error occurred while deleting task from S3: {e}")
 
 
-@router.delete("/v1/tasks/", status_code=204)
+@router.delete(
+    "/v1/tasks/",
+    status_code=204,
+    summary="Bulk-delete tasks by date range and status (admin only)",
+    description="Deletes every task created between `start_date` and `end_date` (inclusive) matching `status`.",
+    responses={403: {"description": "Caller is not an admin"}},
+)
 async def delete_tasks_by_date_and_status(
     start_date: datetime,
     end_date: datetime,

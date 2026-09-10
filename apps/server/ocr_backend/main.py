@@ -15,7 +15,7 @@ from .routers.openwebui import openwebui_router
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # from .routers.template import template_router
-from src import __name__, __version__
+from src import __version__
 from src.config import KeycloakSettings, SentrySettings
 from src.logger import logger
 
@@ -33,11 +33,34 @@ if _sentry_settings.SENTRY_API_DSN and _environment != "testing":
         logger.warning(f"Sentry initialization failed, continuing without it: {e}")
 
 app = FastAPI(
-    title=__name__,
+    title="MIrAI OCR API",
     version=__version__,
+    description=(
+        "OCR/document extraction API: upload a file (or a YouTube URL) as a job, poll or "
+        "wait for it to complete, then pull the extracted text/structured content.\n\n"
+        "Authenticate with an `Authorization: Bearer <API key>` header on the `Jobs`/"
+        "`Process`/`Tasks`/`Text` routes."
+    ),
     docs_url="/api/docs",
     redoc_url="/api/redocs",
     openapi_url="/api/openapi.json",
+    openapi_tags=[
+        {"name": "Jobs", "description": "Create OCR/extraction jobs from a file or a YouTube URL."},
+        {
+            "name": "Process",
+            "description": "One-shot upload-and-wait endpoint (OpenWebUI-style): "
+            "combines creating a job and waiting for its result in a single call.",
+        },
+        {"name": "Tasks", "description": "Look up, list, and delete jobs (called tasks once created)."},
+        {"name": "Text", "description": "Pull a completed task's output as plain text, form fields, or CSV."},
+        {"name": "Health", "description": "Liveness/readiness check for this API and its dependencies."},
+        {
+            "name": "Auth",
+            "description": "Backend-for-frontend (BFF) Keycloak session for the browser SPA. Not "
+            "usable from a script/API client - see the `Jobs`/`Tasks`/etc. routes for "
+            "the `Authorization: Bearer <API key>` alternative.",
+        },
+    ],
 )
 Instrumentator().instrument(app).expose(app)
 

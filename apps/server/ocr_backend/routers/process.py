@@ -11,7 +11,7 @@ from ocr_backend.core.security.factory import TokenVerifier
 from src.schemas.task import TaskOperation, TaskStatus, TaskModel
 from src.logger import logger
 
-process_router = APIRouter(tags=["Jobs"])
+process_router = APIRouter(tags=["Process"])
 
 
 # TODO: Refactor to avoid code duplication with jobs.py
@@ -33,7 +33,23 @@ def get_pages_content(task: TaskModel, size_bytes: int, filename: str, mime_type
     return response
 
 
-@process_router.put("/process")
+@process_router.put(
+    "/process",
+    summary="Upload a document and wait for its result",
+    description=(
+        "One-shot alternative to `POST /jobs/` + polling `GET /tasks/{task_id}`: "
+        "uploads the raw request body as a file, then blocks (up to `max_wait_time` "
+        "seconds, checking every `poll_interval` seconds) until the job completes, "
+        "returning the extracted per-page content directly.\n\n"
+        "The file itself is the request body (not multipart) - set `X-Filename` and "
+        "`Content-Type` to describe it, e.g. from `curl --data-binary @file.pdf`."
+    ),
+    responses={
+        400: {"description": "Empty request body"},
+        408: {"description": "Job didn't complete within `max_wait_time`"},
+        500: {"description": "Job processing failed"},
+    },
+)
 async def process_document(
     request: Request,
     max_wait_time: int = Header(300),

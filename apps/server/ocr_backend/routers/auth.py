@@ -93,7 +93,18 @@ def _clear_session_cookie(response: Response) -> None:
     )
 
 
-@router.get("/login")
+@router.get(
+    "/login",
+    summary="Start the browser login flow",
+    description=(
+        "Redirects the browser to Keycloak's login page (OAuth2 Authorization Code + "
+        "PKCE). Not for API clients - the browser must follow the redirect and submit "
+        "credentials on Keycloak's own page. On success, Keycloak redirects back to "
+        "`GET /callback`, which sets the session cookie and lands the browser on "
+        "`redirect`."
+    ),
+    responses={429: {"description": "Too many login attempts from this client"}},
+)
 async def login(request: Request, redirect: str | None = Query(default=None)):
     # `request.client.host` is whatever peer terminates the TCP connection - the load
     # balancer/reverse proxy in front of this service, unless it forwards the real client
@@ -131,7 +142,16 @@ async def login(request: Request, redirect: str | None = Query(default=None)):
     return RedirectResponse(auth_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
-@router.get("/callback")
+@router.get(
+    "/callback",
+    summary="OAuth2 redirect target (browser only)",
+    description=(
+        "Keycloak redirects the browser here after `/login`. Exchanges the "
+        "authorization code for tokens, creates a server-side session, sets the "
+        "session cookie, then redirects the browser to the originally requested path. "
+        "Never call this directly - it's driven entirely by the `/login` redirect."
+    ),
+)
 async def callback(
     code: str | None = Query(default=None),
     state: str | None = Query(default=None),
@@ -183,7 +203,17 @@ async def callback(
     return response
 
 
-@router.post("/logout")
+@router.post(
+    "/logout",
+    summary="End the current session",
+    description=(
+        "Revokes the Keycloak refresh token, drops the local session, and clears the "
+        "session cookie. Returns a `redirectUrl` to Keycloak's own end-session "
+        "endpoint - the caller must navigate there to also end the Keycloak SSO "
+        "session, or the next login will silently re-authenticate."
+    ),
+    responses={403: {"description": "Cross-site logout request rejected (CSRF defense)"}},
+)
 async def logout(request: Request, response: Response):
     if not _is_same_origin(request):
         logger.warning("Rejecting cross-site logout request")
@@ -206,7 +236,12 @@ async def logout(request: Request, response: Response):
     return {"redirectUrl": _end_session_url(id_token)}
 
 
-@router.get("/me")
+@router.get(
+    "/me",
+    summary="Get the current session's identity",
+    description="Returns the profile (id/email/name/groups) of the currently logged-in browser session.",
+    responses={401: {"description": "No valid session cookie"}},
+)
 async def me(request: Request):
     sid = request.cookies.get(_keycloak_settings.SESSION_COOKIE_NAME)
     session = _session_store.get(sid) if sid else None
