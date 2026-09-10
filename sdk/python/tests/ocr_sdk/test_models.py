@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 
-path_to_task = Path(__file__).parent.parent.parent.parent / "apps" / "server"
+path_to_task = Path(__file__).parent.parent.parent.parent.parent / "apps" / "server"
 
 
 @pytest.fixture(scope="session", autouse=True)
