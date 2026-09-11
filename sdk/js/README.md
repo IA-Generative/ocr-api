@@ -53,7 +53,7 @@ await client.login('user@example.com', 'hunter2')
 const task = await client.createJob('path/to/document.pdf')
 ```
 
-`login()` appelle `POST /api/auth/token` sur cette API : c'est le backend qui échange les identifiants avec Keycloak, le secret du client Keycloak ne quitte jamais le backend. Le jeton renvoyé expire (5 minutes par défaut côté Keycloak) — il faut rappeler `login()` une fois expiré.
+`login()` appelle `POST /api/auth/token` sur cette API : c'est le backend qui échange les identifiants avec Keycloak, le secret du client Keycloak ne quitte jamais le backend. Le jeton d'accès expire (5 minutes par défaut côté Keycloak), mais un refresh token est aussi stocké automatiquement — dès qu'une requête reçoit un 401, le client se rafraîchit tout seul avant de rejouer la requête. Pour rafraîchir explicitement, appelez `await client.refresh()` ; si le refresh token lui-même a expiré, `refresh()` lève `OCRAuthenticationError` et il faut rappeler `login()`.
 
 ### Traitement direct avec `processDocument`
 
@@ -100,6 +100,7 @@ catch (err) {
 `OCRClient` (constructeur : `new OCRClient(baseUrl, { apiKey?, timeoutMs? })`) :
 
 - `login(username, password)` — authentification Keycloak
+- `refresh()` — renouvelle le jeton d'accès de façon proactive (appelé automatiquement sur un 401)
 - `getHealth()`
 - `createJob(filePath, { groupId?, interestZone?, taskOperation? })`
 - `createJobFromYoutube(url, { groupId?, taskOperation? })`

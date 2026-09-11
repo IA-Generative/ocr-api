@@ -161,8 +161,22 @@ with SyncOCRClient("http://localhost:5000") as client:
 
 `login()` appelle `POST /api/auth/token` sur cette API : c'est le backend qui échange
 les identifiants avec Keycloak (Resource Owner Password Credentials grant), le secret
-du client Keycloak ne quitte jamais le backend. Le jeton renvoyé expire (5 minutes par
-défaut côté Keycloak) - il faut rappeler `login()` une fois expiré.
+du client Keycloak ne quitte jamais le backend. Le jeton d'accès renvoyé expire (5
+minutes par défaut côté Keycloak), mais un `refresh_token` est aussi renvoyé et stocké
+automatiquement — dès qu'une requête reçoit un 401, le client rafraîchit tout seul
+avant de rejouer la requête, sans rien à faire de votre côté :
+
+```python
+with SyncOCRClient("http://localhost:5000") as client:
+    client.login("user@example.com", "hunter2")
+    # ... même après 10 minutes d'inactivité, l'appel suivant se rafraîchit tout seul
+    task = client.create_job("document.pdf")
+```
+
+Pour rafraîchir explicitement (par exemple avant une longue attente), appelez
+`client.refresh()`. Si le refresh token lui-même a expiré (au-delà de sa propre durée
+de vie côté Keycloak), `refresh()` lève `OCRAuthenticationError` — il faut alors
+rappeler `login()`.
 
 ## Modèles
 

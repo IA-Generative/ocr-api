@@ -278,3 +278,74 @@ async def test_me_without_session_is_unauthorized(fake_store):
     with pytest.raises(HTTPException) as exc:
         await auth_router.me(make_request())
     assert exc.value.status_code == 401
+
+
+async def test_token_exchanges_password_for_access_and_refresh_tokens(fake_openid):
+    fake_openid.token.return_value = {
+        "access_token": "access-tok",
+        "refresh_token": "refresh-tok",
+        "expires_in": 300,
+    }
+    body = auth_router.PasswordGrantRequest(username="user@example.com", password="hunter2")
+
+    result = await auth_router.token(make_request(), body)
+
+    fake_openid.token.assert_called_once_with(
+        username="user@example.com",
+        password="hunter2",
+        scope="openid profile email",
+    )
+    assert result.access_token == "access-tok"
+    assert result.refresh_token == "refresh-tok"
+    assert result.expires_in == 300
+
+
+async def test_token_rejects_invalid_credentials(fake_openid):
+    fake_openid.token.side_effect = Exception("invalid_grant")
+    body = auth_router.PasswordGrantRequest(username="user@example.com", password="wrong")
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.token(make_request(), body)
+    assert exc.value.status_code == 401
+
+
+async def test_token_is_rate_limited(fake_store):
+    fake_store.check_rate_limit.return_value = False
+    body = auth_router.PasswordGrantRequest(username="user@example.com", password="hunter2")
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.token(make_request(), body)
+    assert exc.value.status_code == 429
+
+
+async def test_refresh_exchanges_refresh_token_for_a_new_pair(fake_openid):
+    fake_openid.refresh_token.return_value = {
+        "access_token": "new-access-tok",
+        "refresh_token": "new-refresh-tok",
+        "expires_in": 300,
+    }
+    body = auth_router.RefreshTokenRequest(refresh_token="old-refresh-tok")
+
+    result = await auth_router.refresh(make_request(), body)
+
+    fake_openid.refresh_token.assert_called_once_with("old-refresh-tok")
+    assert result.access_token == "new-access-tok"
+    assert result.refresh_token == "new-refresh-tok"
+
+
+async def test_refresh_rejects_invalid_refresh_token(fake_openid):
+    fake_openid.refresh_token.side_effect = Exception("invalid_grant")
+    body = auth_router.RefreshTokenRequest(refresh_token="expired")
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.refresh(make_request(), body)
+    assert exc.value.status_code == 401
+
+
+async def test_refresh_is_rate_limited(fake_store):
+    fake_store.check_rate_limit.return_value = False
+    body = auth_router.RefreshTokenRequest(refresh_token="tok")
+
+    with pytest.raises(HTTPException) as exc:
+        await auth_router.refresh(make_request(), body)
+    assert exc.value.status_code == 429
