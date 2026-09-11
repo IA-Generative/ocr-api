@@ -3,6 +3,7 @@ import pytest
 from business.liteparse.worker.liteparse_worker import LiteparseWorker
 from business.liteparse.models.liteparse_model import LITEPARSE_CONTENT_TYPES
 from src.schemas.input import InputForm
+from src.schemas.output import Page
 from src.schemas.task import TaskForm, TaskModel, TaskOperation, task_table
 from unittest.mock import MagicMock
 
@@ -137,3 +138,77 @@ def test_all_liteparse_types_trigger_worker(worker):
     for mime in LITEPARSE_CONTENT_TYPES:
         task = _make_task(mime, "file.bin")
         assert worker.is_applicable(task) is True, f"Expected True for {mime}"
+
+
+# ===========================================================================
+# predict_on_pages — regression: a single uploaded file expands into N real
+# document pages/slides via LiteparseExtractionModel.batch_predict. The base
+# BaseWorker.predict_on_pages/_predict_on_ocr_batch only ever kept page 0 of
+# that expansion (1 input item -> 1 output page), silently dropping every
+# other page for a multi-page DOCX/PPTX/etc.
+# ===========================================================================
+
+
+def _multi_page_model(pages_to_return: list[Page]):
+    """A fake model whose batch_predict ignores the (single-item) input batch
+    and returns `pages_to_return`, exactly like LiteparseExtractionModel does
+    for a real multi-page/multi-slide document."""
+    model = MagicMock()
+    model.batch_predict.return_value = pages_to_return
+    return model
+
+
+def test_predict_on_pages_keeps_every_page_from_a_multi_page_document(worker):
+    task = _make_task(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "doc.docx",
+    )
+    expected_pages = [Page(page=i, boxes=[]) for i in range(1, 6)]  # 5-page document
+    worker.models = [_multi_page_model(expected_pages)]
+
+    result = worker.predict_on_pages(task, pages=[b"fake docx bytes"])
+
+    assert result.output.total_pages == 5
+    assert result.output.pages == expected_pages
+
+
+def test_predict_on_pages_single_page_document_still_works(worker):
+    task = _make_task("text/csv", "data.csv")
+    expected_pages = [Page(page=1, boxes=[])]
+    worker.models = [_multi_page_model(expected_pages)]
+
+    result = worker.predict_on_pages(task, pages=[b"col1,col2\n1,2"])
+
+    assert result.output.total_pages == 1
+    assert result.output.pages == expected_pages
+
+
+def test_predict_on_pages_empty_model_result_does_not_crash(worker):
+    """No pages parsed (e.g. an empty file) must not divide by zero in the
+    percentage checkpoint - total_pages ends up 0, not left at the file count."""
+    task = _make_task("text/csv", "data.csv")
+    worker.models = [_multi_page_model([])]
+
+    result = worker.predict_on_pages(task, pages=[b""])
+
+    assert result.output.total_pages == 0
+    assert result.output.pages == []
+
+
+def test_predict_on_pages_chains_multiple_models(worker):
+    """Each model in `self.models` receives the previous model's `pages` output,
+    same contract as BaseWorker._predict_on_ocr_batch."""
+    task = _make_task(
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "doc.docx",
+    )
+    first_pass = [Page(page=1, boxes=[]), Page(page=2, boxes=[])]
+    second_pass = [Page(page=1, boxes=[]), Page(page=2, boxes=[])]
+    model_a = _multi_page_model(first_pass)
+    model_b = _multi_page_model(second_pass)
+    worker.models = [model_a, model_b]
+
+    result = worker.predict_on_pages(task, pages=[b"fake docx bytes"])
+
+    model_b.batch_predict.assert_called_once_with(images=[b"fake docx bytes"], pages=first_pass)
+    assert result.output.pages == second_pass
