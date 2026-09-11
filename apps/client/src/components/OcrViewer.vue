@@ -2,9 +2,9 @@
 import type { CSSProperties } from 'vue'
 import type { components } from '@/api/types/api.schema'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import ZoneSelectionModal from '@/components/ZoneSelectionModal.vue'
 import useToaster from '@/composables/use-toaster'
 import { useOcrStore } from '@/stores/ocr'
-import ZoneSelectionModal from '@/components/ZoneSelectionModal.vue'
 
 type Bbox = components['schemas']['Bbox']
 type Page = components['schemas']['Page']
@@ -20,7 +20,7 @@ interface SearchResult {
   text: string
 }
 
-const props = defineProps<{ data: { id?: string; pages: Page[] } }>()
+const props = defineProps<{ data: { id?: string, pages: Page[] } }>()
 
 const store = useOcrStore()
 const { addErrorMessage, addSuccessMessage } = useToaster()
@@ -29,6 +29,7 @@ const currentPage = ref(0)
 
 const paginationPages = computed<PaginationPage[]>(() =>
   pages.map((_, idx) => ({
+    href: '#',
     label: String(idx + 1),
     title: `Page ${idx + 1}`,
   })),
@@ -36,11 +37,11 @@ const paginationPages = computed<PaginationPage[]>(() =>
 
 const imageUrl = ref<string | undefined>(undefined)
 
-function revokeCurrentImageUrl() {
-  if (imageUrl.value) URL.revokeObjectURL(imageUrl.value)
+function revokeCurrentImageUrl () {
+  if (imageUrl.value) { URL.revokeObjectURL(imageUrl.value) }
 }
 
-async function loadCurrentPageImage() {
+async function loadCurrentPageImage () {
   const taskId = props.data.id
   const page = pages[currentPage.value]
   if (!taskId || !page?.page_url) {
@@ -52,8 +53,7 @@ async function loadCurrentPageImage() {
     const url = await store.getPageImageUrl(taskId, currentPage.value + 1)
     revokeCurrentImageUrl()
     imageUrl.value = url
-  }
-  catch (err) {
+  } catch (err) {
     imageUrl.value = undefined
     addErrorMessage({ title: 'Erreur', description: `Impossible de charger l'image de la page : ${err}` })
   }
@@ -64,8 +64,8 @@ onBeforeUnmount(revokeCurrentImageUrl)
 const boxes = computed<Bbox[]>(() => pages[currentPage.value]?.boxes || [])
 const showImage = ref(true)
 
-// Feature 3 : bboxes cachees par defaut
-const showBboxes = ref(false)
+// Feature 3 : bboxes affichees par defaut
+const showBboxes = ref(true)
 
 // Feature 1 : recherche
 const searchQuery = ref('')
@@ -73,25 +73,24 @@ const showSearchResults = ref(false)
 
 const searchResults = computed<SearchResult[]>(() => {
   const q = searchQuery.value.toLowerCase().trim()
-  if (!q) return []
+  if (!q) { return [] }
   const results: SearchResult[] = []
   pages.forEach((page, pageIdx) => {
     page.boxes?.forEach((box, boxIdx) => {
-      if (box.text.toLowerCase().includes(q))
-        results.push({ pageIdx, boxIdx, text: box.text })
+      if (box.text.toLowerCase().includes(q)) { results.push({ pageIdx, boxIdx, text: box.text }) }
     })
   })
   return results
 })
 
 const matchingBoxIndices = computed<Set<number>>(() => {
-  if (!searchQuery.value.trim()) return new Set()
+  if (!searchQuery.value.trim()) { return new Set() }
   return new Set(
     searchResults.value.filter(r => r.pageIdx === currentPage.value).map(r => r.boxIdx),
   )
 })
 
-function goToResult(result: SearchResult) {
+function goToResult (result: SearchResult) {
   currentPage.value = result.pageIdx
   showSearchResults.value = false
 }
@@ -133,8 +132,8 @@ const selectionStyle = computed<CSSProperties>(() => {
   }
 })
 
-function getRelativeCoords(e: MouseEvent) {
-  if (!containerRef.value) return { x: 0, y: 0 }
+function getRelativeCoords (e: MouseEvent) {
+  if (!containerRef.value) { return { x: 0, y: 0 } }
   const rect = containerRef.value.getBoundingClientRect()
   const W = imgDimensions.value.width || 1
   const H = imgDimensions.value.height || 1
@@ -144,22 +143,22 @@ function getRelativeCoords(e: MouseEvent) {
   }
 }
 
-function onMouseDown(e: MouseEvent) {
-  if (!isSelectMode.value) return
+function onMouseDown (e: MouseEvent) {
+  if (!isSelectMode.value) { return }
   isSelecting.value = true
   const c = getRelativeCoords(e)
   selStart.value = c
   selEnd.value = c
 }
-function onGlobalMouseMove(e: MouseEvent) {
-  if (!isSelecting.value) return
+function onGlobalMouseMove (e: MouseEvent) {
+  if (!isSelecting.value) { return }
   selEnd.value = getRelativeCoords(e)
 }
-function onGlobalMouseUp() {
-  if (!isSelecting.value) return
+function onGlobalMouseUp () {
+  if (!isSelecting.value) { return }
   isSelecting.value = false
   const sel = normalizedSel.value
-  if (sel.w < 0.005 || sel.h < 0.005) return
+  if (sel.w < 0.005 || sel.h < 0.005) { return }
   const boxesInZone = boxes.value.filter(box =>
     box.x < sel.x + sel.w && box.x + box.width > sel.x
     && box.y < sel.y + sel.h && box.y + box.height > sel.y,
@@ -171,11 +170,10 @@ function onGlobalMouseUp() {
 
 let resizeObserver: ResizeObserver
 onMounted(() => {
-  if (!imgRef.value) return
+  if (!imgRef.value) { return }
   imgDimensions.value = { width: imgRef.value.clientWidth, height: imgRef.value.clientHeight }
   resizeObserver = new ResizeObserver((entries) => {
-    for (const { contentRect } of entries)
-      imgDimensions.value = { width: contentRect.width, height: contentRect.height }
+    for (const { contentRect } of entries) { imgDimensions.value = { width: contentRect.width, height: contentRect.height } }
   })
   resizeObserver.observe(imgRef.value)
   // Listeners globaux pour capturer mouseup même hors du container
@@ -188,7 +186,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('mouseup', onGlobalMouseUp)
 })
 
-function styleForBox(box: Bbox, isMatch: boolean): CSSProperties {
+function styleForBox (box: Bbox, isMatch: boolean): CSSProperties {
   const W = imgDimensions.value.width
   const H = imgDimensions.value.height
   return {
@@ -203,19 +201,18 @@ function styleForBox(box: Bbox, isMatch: boolean): CSSProperties {
   }
 }
 
-function copyText(text: string) {
+function copyText (text: string) {
   navigator.clipboard.writeText(text)
     .then(() => addSuccessMessage({ title: 'Copie', description: text }))
     .catch(err => addErrorMessage({ title: 'Erreur copie', description: String(err) }))
 }
 
-async function onDownloadText() {
-  if (!props.data.id) return
+async function onDownloadText () {
+  if (!props.data.id) { return }
   try {
     await store.downloadText(props.data.id)
     addSuccessMessage({ title: 'Succes', description: 'Document telecharge.' })
-  }
-  catch (error) {
+  } catch (error) {
     addErrorMessage({ title: 'Erreur', description: String(error) })
   }
 }
@@ -225,12 +222,37 @@ async function onDownloadText() {
   <div class="w-full max-w-4xl mx-auto">
     <!-- Barre d'outils -->
     <div class="my-4 flex flex-wrap gap-2 items-center">
-      <DsfrButton size="sm" :label="showImage ? 'Masquer image' : 'Afficher image'" secondary class="hidden md:inline-flex" @click="showImage = !showImage" />
+      <DsfrButton
+        size="sm"
+        :label="showImage ? 'Masquer image' : 'Afficher image'"
+        secondary
+        class="hidden md:inline-flex"
+        @click="showImage = !showImage"
+      />
       <!-- Feature 3 : toggle bboxes -->
-      <DsfrButton size="sm" :icon="showBboxes ? 'fr-icon-eye-off-line' : 'fr-icon-eye-line'" :label="showBboxes ? 'Masquer zones' : 'Afficher zones'" secondary class="hidden md:inline-flex" @click="showBboxes = !showBboxes" />
+      <DsfrButton
+        size="sm"
+        :icon="showBboxes ? 'fr-icon-eye-off-line' : 'fr-icon-eye-line'"
+        :label="showBboxes ? 'Masquer zones' : 'Afficher zones'"
+        secondary
+        class="hidden md:inline-flex"
+        @click="showBboxes = !showBboxes"
+      />
       <!-- Feature 2 : mode selection -->
-      <DsfrButton size="sm" icon="fr-icon-crop-line" :label="isSelectMode ? 'Annuler selection' : 'Selectionner zone'" :secondary="!isSelectMode" class="hidden md:inline-flex" @click="isSelectMode = !isSelectMode" />
-      <DsfrButton size="sm" label="Telecharger" secondary @click="onDownloadText" />
+      <DsfrButton
+        size="sm"
+        icon="fr-icon-crop-line"
+        :label="isSelectMode ? 'Annuler selection' : 'Selectionner zone'"
+        :secondary="!isSelectMode"
+        class="hidden md:inline-flex"
+        @click="isSelectMode = !isSelectMode"
+      />
+      <DsfrButton
+        size="sm"
+        label="Telecharger"
+        secondary
+        @click="onDownloadText"
+      />
     </div>
 
     <!-- Feature 1 : recherche -->
@@ -242,7 +264,10 @@ async function onDownloadText() {
         :show-label="false"
         @input="showSearchResults = true"
       />
-      <div v-if="showSearchResults && searchQuery.trim() && searchResults.length" class="absolute z-50 w-full bg-white border border-gray-200 shadow-lg max-h-60 overflow-y-auto">
+      <div
+        v-if="showSearchResults && searchQuery.trim() && searchResults.length"
+        class="absolute z-50 w-full bg-white border border-gray-200 shadow-lg max-h-60 overflow-y-auto"
+      >
         <div
           v-for="(result, i) in searchResults"
           :key="i"
@@ -253,10 +278,16 @@ async function onDownloadText() {
           <span class="text-sm truncate">{{ result.text }}</span>
         </div>
       </div>
-      <div v-if="showSearchResults && searchQuery.trim() && !searchResults.length" class="absolute z-50 w-full bg-white border border-gray-200 shadow px-3 py-2 text-sm text-gray-500">
+      <div
+        v-if="showSearchResults && searchQuery.trim() && !searchResults.length"
+        class="absolute z-50 w-full bg-white border border-gray-200 shadow px-3 py-2 text-sm text-gray-500"
+      >
         Aucun resultat
       </div>
-      <div v-if="searchResults.length && searchQuery.trim()" class="mt-1 text-xs text-gray-500">
+      <div
+        v-if="searchResults.length && searchQuery.trim()"
+        class="mt-1 text-xs text-gray-500"
+      >
         {{ searchResults.length }} resultat{{ searchResults.length > 1 ? 's' : '' }} — {{ new Set(searchResults.map(r => r.pageIdx)).size }} page{{ new Set(searchResults.map(r => r.pageIdx)).size > 1 ? 's' : '' }}
       </div>
     </div>
@@ -268,7 +299,14 @@ async function onDownloadText() {
       :class="isSelectMode ? 'cursor-crosshair' : ''"
       @mousedown="onMouseDown"
     >
-      <img ref="imgRef" :src="imageUrl" alt="OCR page" class="block w-full h-auto select-none transition-opacity duration-300" :class="showImage ? 'opacity-100' : 'opacity-0'" draggable="false">
+      <img
+        ref="imgRef"
+        :src="imageUrl"
+        alt="OCR page"
+        class="block w-full h-auto select-none transition-opacity duration-300"
+        :class="showImage ? 'opacity-100' : 'opacity-0'"
+        draggable="false"
+      >
 
       <!-- Feature 3 : bboxes conditionnelles -->
       <template v-if="showBboxes || matchingBoxIndices.size > 0">
@@ -278,14 +316,23 @@ async function onDownloadText() {
           :style="styleForBox(box, matchingBoxIndices.has(idx))"
           :class="(showBboxes || matchingBoxIndices.has(idx)) ? 'pointer-events-auto' : 'pointer-events-none opacity-0'"
         >
-          <button class="absolute top-[-10px] left-[-25px] z-30" @click.stop="copyText(box.text)">
-            <span class="fr-icon-draft-line" aria-hidden="true" />
+          <button
+            class="absolute top-[-10px] left-[-25px] z-30"
+            @click.stop="copyText(box.text)"
+          >
+            <span
+              class="fr-icon-draft-line"
+              aria-hidden="true"
+            />
           </button>
         </div>
       </template>
 
       <!-- Rectangle selection en cours -->
-      <div v-if="isSelecting && normalizedSel.w > 0" :style="selectionStyle" />
+      <div
+        v-if="isSelecting && normalizedSel.w > 0"
+        :style="selectionStyle"
+      />
     </div>
 
     <div class="my-4">
@@ -295,7 +342,11 @@ async function onDownloadText() {
     </div>
 
     <div class="mt-4 hidden md:flex justify-center">
-      <DsfrPagination v-model:current-page="currentPage" :pages="paginationPages" :trunc-limit="5" />
+      <DsfrPagination
+        v-model:current-page="currentPage"
+        :pages="paginationPages"
+        :trunc-limit="5"
+      />
     </div>
 
     <!-- Feature 2 : modal zone selectionnee (composant separe) -->

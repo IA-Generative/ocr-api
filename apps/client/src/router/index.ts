@@ -2,29 +2,30 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 import { createRouter, createWebHistory } from 'vue-router'
 
 import { useUserStore } from '@/stores/user'
-import { KEYCLOAK_CLIENT_ID, KEYCLOAK_REALM, KEYCLOAK_REDIRECT_URI, KEYCLOAK_URL } from '@/utils/constants'
-import { getKeycloak } from '@/utils/keycloak'
 import Home from '../views/AppHome.vue'
 import TaskDetailView from '../views/TaskDetailView.vue'
 
-function redirectToSSO () {
-  const loginUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/auth?client_id=${encodeURIComponent(KEYCLOAK_CLIENT_ID)}&redirect_uri=${encodeURIComponent(KEYCLOAK_REDIRECT_URI)}&response_type=code`
-  window.location.href = loginUrl
-}
-
-// Force la redirection explicite vers le serveur
-// Si l'utilisateur n'est pas authentifié, provoque
-// alors le processus SSO (trappé par oauth2-proxy)
-function authGuard (_path: string) {
+// L'authentification passe entièrement par le backend (BFF) : le navigateur ne fait
+// jamais de redirection OIDC lui-même. `checkAuth` interroge `/api/auth/me` (cookie de
+// session), et une navigation complète vers `/api/auth/login?redirect=...` déclenche le
+// flow côté backend, qui revient directement sur la route demandée après le callback.
+function authGuard () {
   return async (
-    _to: RouteLocationNormalized,
+    to: RouteLocationNormalized,
     _from: RouteLocationNormalized,
-    next: NavigationGuardNext
+    next: NavigationGuardNext,
   ) => {
-    const keycloak = getKeycloak()
-    const ssoBypass = import.meta.env.VITE_SSO_BYPASS === 'true' || (window as any).VITE_SSO_BYPASS === 'true'
-    if (!keycloak.authenticated && !ssoBypass) {
-      redirectToSSO()
+    const userStore = useUserStore()
+    // Already confirmed by a previous guarded navigation this session - skip the
+    // `/api/auth/me` round trip. A session that expires afterwards surfaces as a 401 on
+    // the next API call, which the http-client interceptor already sends through `login()`.
+    if (userStore.isLoggedIn) {
+      next()
+      return
+    }
+    const isLoggedIn = await userStore.checkAuth()
+    if (!isLoggedIn) {
+      userStore.login(to.fullPath)
       return
     }
     next()
@@ -40,34 +41,34 @@ const routes = [
     path: '/ocr',
     name: 'Ocr',
     component: Home,
-    beforeEnter: authGuard('/ocr'),
+    beforeEnter: authGuard(),
   },
   {
     path: '/tasks/:id',
     name: 'TaskDetail',
     component: TaskDetailView,
-    beforeEnter: authGuard('/tasks/:id'),
+    beforeEnter: authGuard(),
   },
   {
     path: '/login',
     name: 'Login',
-    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    // `login`/`logout` are full-page navigations (see utils/auth.ts) - the guard never
+    // reaches `next()` because the browser leaves the SPA before it would resolve.
+    beforeEnter: () => {
       const userStore = useUserStore()
-      await userStore.login()
-      next()
+      userStore.login()
     },
     component: Home,
   },
   {
     path: '/logout',
     name: 'Logout',
-    beforeEnter: async (_to: RouteLocationNormalized, _from: RouteLocationNormalized, next: NavigationGuardNext) => {
+    beforeEnter: () => {
       const userStore = useUserStore()
-      await userStore.logout()
-      next()
+      void userStore.logout()
     },
     component: Home,
-  }
+  },
 ]
 
 const router = createRouter({

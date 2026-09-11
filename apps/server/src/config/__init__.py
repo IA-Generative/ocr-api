@@ -1,4 +1,5 @@
 from .celery import CelerySettings
+from .keycloak import KeycloakSettings
 from .llm import OpenAISettings
 from .ocr_model import OCRModelSettings
 from .redis import RedisSettings
@@ -12,4 +13,5 @@ __all__ = [
     "CelerySettings",
     "SentrySettings",
     "OpenAISettings",
+    "KeycloakSettings",
 ]

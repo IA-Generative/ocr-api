@@ -21,6 +21,9 @@ env:
   LATEST_TAG: ${{ github.ref_name == 'main' }}
   USE_QEMU: false
   TAG_MAJOR_AND_MINOR: false
+  # Matches ci.yml: this repository has no use for a per-commit SHA tag on
+  # any of its images, release builds included.
+  TAG_SHORT_SHA: false
   # Automerge needs a GitHub App or a PAT; this repository authenticates with
   # GITHUB_TOKEN alone, so release-please's pull request is merged by hand.
   # Turning either of these on without a credential fails the job by design.
@@ -52,6 +55,7 @@ jobs:
       LATEST_TAG: ${{ env.LATEST_TAG }}
       USE_QEMU: ${{ env.USE_QEMU }}
       TAG_MAJOR_AND_MINOR: ${{ env.TAG_MAJOR_AND_MINOR }}
+      TAG_SHORT_SHA: ${{ env.TAG_SHORT_SHA }}
       AUTOMERGE_PRERELEASE: ${{ env.AUTOMERGE_PRERELEASE }}
       AUTOMERGE_RELEASE: ${{ env.AUTOMERGE_RELEASE }}
       PRERELEASE_BRANCH: ${{ env.PRERELEASE_BRANCH }}
@@ -95,10 +99,22 @@ jobs:
       PRERELEASE_CONFIG_FILE: ${{ needs.expose-vars.outputs.PRERELEASE_CONFIG_FILE }}
       PRERELEASE_MANIFEST_FILE: ${{ needs.expose-vars.outputs.PRERELEASE_MANIFEST_FILE }}
       ENABLE_PRERELEASE: ${{ needs.expose-vars.outputs.ENABLE_PRERELEASE == 'true' }}
-    # No `secrets:` block: without an App or PAT the workflow falls back to
-    # GITHUB_TOKEN. The trade-off is that the release pull request does not
-    # trigger `pull_request` workflows, so it lands without CI and is merged
-    # manually. Wire APP_CLIENT_ID/APP_PRIVATE_KEY here to get both back.
+    # App token: release-please then pushes its release pull request as the
+    # App instead of GITHUB_TOKEN, so that pull request finally triggers
+    # ci.yml's `pull_request` checks instead of landing with no CI - it is
+    # still merged by hand (AUTOMERGE_* above stay false; this only changes
+    # who authenticates the push, not whether anything auto-merges). Same for
+    # the manifest-sync step on dev: it can now push an amended commit that
+    # re-triggers checks too, instead of the GITHUB_TOKEN path's checks never
+    # re-running on that commit.
+    # No loop risk from this, unlike bump-chart: every push this credential
+    # makes here targets release-please's own pull request branch, never
+    # dev/main directly - see the checkout step in release-app.yml, which
+    # stays on GITHUB_TOKEN regardless and is what actually pushes tags and
+    # cuts the release.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
   build-docker:
     uses: dnum-mi/fabnum-cicd/.github/workflows/build-docker.yml@v0
@@ -139,6 +155,7 @@ jobs:
       LATEST_TAG: ${{ needs.expose-vars.outputs.LATEST_TAG == 'true' }}
       USE_QEMU: ${{ needs.expose-vars.outputs.USE_QEMU == 'true' }}
       TAG_MAJOR_AND_MINOR: ${{ needs.expose-vars.outputs.TAG_MAJOR_AND_MINOR == 'true' && needs.expose-vars.outputs.LATEST_TAG == 'true' }}
+      TAG_SHORT_SHA: ${{ needs.expose-vars.outputs.TAG_SHORT_SHA == 'true' }}
       CACHE: true
       CACHE_MODE: min
       BUILD_ARGS: |
@@ -166,8 +183,40 @@ jobs:
       # cycle vs release selected by the shape of APP_VERSION. The chart keeps
       # its own version line - a 0.19.12 app can ship as chart 0.1.1.
       APP_VERSION: ${{ needs.release.outputs.version }}
-    # Automerge is off (see AUTOMERGE_* above) and local mode opens no pull
-    # request, so no credential is needed here either.
+    # dev/staging/preprod's and main's branch rulesets both require a pull
+    # request for every push, with no exception for GITHUB_TOKEN - only a
+    # GitHub App can be named in a bypass list. Supplying these secrets
+    # switches this push (and only this push - see update-helm-chart.yml)
+    # from GITHUB_TOKEN to the App token, which is what lets it clear that
+    # rule on both. That trade also lifts GITHUB_TOKEN's usual guarantee that
+    # this push cannot retrigger this very pipeline; safe here because a
+    # re-triggered run finds nothing new to release (release-please is
+    # idempotent) and stops at `release`.
+    secrets:
+      APP_CLIENT_ID: ${{ secrets.APP_CLIENT_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+
+  sync-cpin:
+    name: Sync CPiN after release
+    uses: dnum-mi/fabnum-cicd/.github/workflows/sync-cpin.yml@v0
+    needs:
+    - release
+    - bump-chart
+    if: ${{ needs.release.outputs.release-created == 'true' }}
+    # The only automatic CPiN sync left: dso-auto-sync.yaml is manual-only
+    # (see that file) precisely because this job already covers every push
+    # that matters - and does so correctly, since it only fires once
+    # bump-chart has actually landed the version bump, instead of racing it
+    # the way a plain per-push trigger would.
+    permissions: {}
+    with:
+      GITLAB_URL: ${{ vars.GITLAB_URL }}
+      GIT_MIRROR_PROJECT_ID: ${{ vars.GITLAB_MIRROR_ID }}
+      REPOSITORY_NAME: ${{ vars.GILTAB_PROJECT_NAME }}
+      BRANCH_TO_SYNC: ${{ github.ref_name }}
+      SYNC_ALL: false
+    secrets:
+      GIT_MIRROR_TOKEN: ${{ secrets.GITLAB_TRIGGER_TOKEN }}
 
   release-chart:
     uses: dnum-mi/fabnum-cicd/.github/workflows/release-helm-local.yml@v0

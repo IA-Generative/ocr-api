@@ -60,12 +60,10 @@ export const useOcrStore = defineStore('ocr', () => {
         throw new Error(`Statut inattendu: ${data.status}`)
       }
       return true
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.message ?? 'Erreur inconnue lors du health check.'
       return false
-    }
-    finally {
+    } finally {
       if (processingState.value === 'validating') {
         processingState.value = 'idle'
       }
@@ -76,8 +74,7 @@ export const useOcrStore = defineStore('ocr', () => {
     try {
       const { data } = await http.get<TaskModel>(`/tasks/${taskId}`)
       return data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors de la récupération de la tâche ${taskId}: ${err}`,
@@ -98,8 +95,7 @@ export const useOcrStore = defineStore('ocr', () => {
       form.append('group_id', groupId)
       const { data } = await http.post<TaskModel>('/jobs/youtube', form)
       return data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors du lancement de l'analyse YouTube : ${err}`,
@@ -121,7 +117,11 @@ export const useOcrStore = defineStore('ocr', () => {
     previousPosition.value = null
 
     try {
-      const check = async (): Promise<void> => {
+      // A loop rather than recursion: `check()` used to await itself, so the
+      // promise chain grew for the whole lifetime of a job and there was no way
+      // to interrupt it. Re-reading `isPolling` each turn makes the poll
+      // cancellable — see `stopPolling()`.
+      while (isPolling.value) {
         const task = await getTask(taskId)
 
         status.value = task.status
@@ -178,11 +178,8 @@ export const useOcrStore = defineStore('ocr', () => {
         }
 
         await new Promise(res => setTimeout(res, intervalMs))
-        await check()
       }
-      await check()
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.message ?? 'Erreur inconnue lors du polling.'
       isPolling.value = false
       processingState.value = 'idle'
@@ -238,8 +235,7 @@ export const useOcrStore = defineStore('ocr', () => {
       }
 
       await pollTask(task.id)
-    }
-    catch (err: any) {
+    } catch (err: any) {
       // Extraire le message d'erreur le plus pertinent
       let errorMessage = 'Erreur lors de l\'envoi du fichier.'
       if (err.response) {
@@ -256,12 +252,21 @@ export const useOcrStore = defineStore('ocr', () => {
             errorMessage = err.response.data.message
             break
         }
-      }
-      else if (err.message) {
+      } else if (err.message) {
         errorMessage = err.message
       }
       error.value = errorMessage
       isPolling.value = false
+      processingState.value = 'idle'
+    }
+  }
+
+  /**
+   * Stops an in-flight `pollTask` loop. Safe to call when nothing is polling.
+   */
+  function stopPolling () {
+    isPolling.value = false
+    if (processingState.value === 'processing') {
       processingState.value = 'idle'
     }
   }
@@ -303,8 +308,7 @@ export const useOcrStore = defineStore('ocr', () => {
       document.body.removeChild(a)
 
       URL.revokeObjectURL(url)
-    }
-    catch (error) {
+    } catch (error) {
       addErrorMessage({
         title: 'Erreur :',
         description: `Erreur lors du téléchargement du texte OCR : ${error}`,
@@ -325,6 +329,8 @@ export const useOcrStore = defineStore('ocr', () => {
     getPageImageUrl,
     createYoutubeTask,
     sendFileAndPoll,
+    pollTask,
+    stopPolling,
     reset,
     validateFile,
     downloadText,

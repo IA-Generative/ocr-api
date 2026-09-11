@@ -1,15 +1,15 @@
 import logging
 import os
-import sys
 import warnings
-from ocr_backend.core.security.token import BaseVerifyToken, RequestContext
-from keycloak import KeycloakOpenID
+from ocr_backend.core.security import keycloak_client
+from ocr_backend.core.security.claims import extract_identity
+from ocr_backend.core.security.token import BaseVerifyToken, RequestContext, parse_header_context
+from fastapi import HTTPException, Request, status
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    stream=sys.stdout,
-)
+# Pas de `logging.basicConfig` ici : ce module est importé, pas un point d'entrée. L'appel
+# était sans effet en production (le logger racine a déjà des handlers via sentry-sdk), ce
+# qui rendait muette toute cette vérification et a masqué un incident d'authentification.
+logger = logging.getLogger(__name__)
 
 
 class AllowAllAccess(BaseVerifyToken):
@@ -42,67 +42,97 @@ class DevToken(BaseVerifyToken):
 class ApiToken(BaseVerifyToken):
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using API Token for verification")
+        logger.info("Using API Token for verification")
         # TODO: use db or vault to store API keys and get user info associated with the key
         # Fail closed: an unset API_KEYS means no key is accepted, not a guessable default.
         self.__api_keys = {key.strip() for key in os.environ.get("API_KEYS", "").split(",") if key.strip()}
-        logging.info(f"Loaded {len(self.__api_keys)} API key(s) for verification")
+        logger.info("Loaded %d API key(s) for verification", len(self.__api_keys))
 
     def verify(self, ctx: RequestContext) -> bool:
         if ctx.token in self.__api_keys:
             ctx.user_id = "api_user"
+            # `parse_header_context` alimente roles/is_admin depuis l'en-tête X-Roles, que
+            # l'appelant contrôle. La branche Keycloak les réécrit depuis le jeton ; ici il
+            # n'y a pas de jeton, donc on remet à zéro plutôt que de faire confiance.
+            ctx.roles = []
+            ctx.groups = []
+            ctx.is_admin = False
             return True
         return False
 
 
 class KeycloakToken(BaseVerifyToken):
+    """Authenticates a request via, in order: a service `Authorization: Bearer <API
+    key>` header, a genuine Keycloak access token (e.g. from an SDK's password-grant
+    login, see `SyncOCRClient.login`/`AsyncOCRClient.login`), or the BFF session
+    cookie set by `/api/auth/callback`.
+
+    The browser itself never holds a Keycloak token: the frontend only ever sends the
+    opaque session cookie, and the actual access/refresh tokens stay server-side in
+    Redis (see `ocr_backend.core.security.session.SessionStore`). The access-token
+    path exists for non-browser callers (the SDK, scripts) that authenticate as a real
+    Keycloak identity instead of a static API key.
+    """
+
     def __init__(self):
         super().__init__(verify_token=True, is_fastapi=True)
-        logging.info("Using Keycloak for token verification")
-
-        # Configuration Keycloak depuis les variables d'environnement
-        self.keycloak_url = os.environ.get("KEYCLOAK_URL", "http://localhost:8080")
-        self.realm_name = os.environ.get("KEYCLOAK_REALM", "master")
-        self.client_id = os.environ.get("KEYCLOAK_CLIENT_ID", "your-client-id")
-        self.keycloak_openid = KeycloakOpenID(
-            server_url=self.keycloak_url,
-            client_id=self.client_id,
-            realm_name=self.realm_name,
-            client_secret_key=os.environ.get("KEYCLOAK_CLIENT_SECRET", "secret"),
-        )
-        logging.debug(f"Keycloak URL: {self.keycloak_url}, Realm: {self.realm_name}, Client ID: {self.client_id}")
+        logger.info("Using Keycloak session-cookie verification")
         self.__api_token_verifier = ApiToken()
 
-    def verify(self, ctx: RequestContext) -> bool:
-        """Vérifie le token JWT avec Keycloak et remplit ctx avec les infos utilisateur"""
-        if self.__api_token_verifier.verify(ctx):
-            logging.info("API token valid, skipping Keycloak verification")
-            return True
+    def verify(self, ctx: RequestContext) -> bool:  # pragma: no cover - unused, see __call__
+        raise NotImplementedError("KeycloakToken reads the session cookie via __call__, not verify()")
+
+    def _verify_access_token(self, ctx: RequestContext) -> bool:
+        """Accepts `ctx.token` as a genuine Keycloak access token, populating `ctx`
+        from it on success. `userinfo()` rather than `introspect()`, for the same
+        reason as the BFF callback (see `ocr_backend/routers/auth.py`): since
+        Keycloak 26.6.2 (CVE-2026-37979), introspection requires the authenticating
+        client to be in the token's `aud`, which this client's own tokens never are.
+        """
         try:
-            user_info = self.keycloak_openid.introspect(ctx.token)
-            logging.debug(f"Token info: {user_info.keys()}")
-            if user_info.get("active") is False:
-                return False
-
-            # Remplir le contexte avec les informations récupérées
-            ctx.user_id = user_info.get("sub", "")  # Subject = user ID
-            logging.info(f"User ID: {ctx.user_id} is connected")
-            ctx.email = user_info.get("email", "")
-            ctx.groups = user_info.get("groups", [])
-
-            # Récupérer les rôles (peut varier selon la config Keycloak)
-            ctx.roles = user_info.get("resource_access", {}).get(self.client_id, {}).get("roles", [])
-            # Ou si les rôles sont dans realm_access :
-            # ctx.roles = user_info.get("realm_access", {}).get("roles", [])
-
-            # Déterminer si l'utilisateur est admin
-            ctx.is_admin = "admin" in ctx.roles or "realm-admin" in ctx.roles
-
-            return True
-
-        except Exception as e:
-            logging.error(f"Erreur lors de la vérification du token: {e}")
+            claims = keycloak_client.keycloak_openid.userinfo(ctx.token)
+        except Exception:
             return False
+
+        identity = extract_identity(claims, keycloak_client.keycloak_settings.KEYCLOAK_CLIENT_ID)
+        if identity is None:
+            return False
+
+        ctx.user_id = identity["user_id"]
+        ctx.email = identity["email"]
+        ctx.roles = identity["roles"]
+        ctx.groups = identity["groups"]
+        ctx.is_admin = identity["is_admin"]
+        logger.info("Keycloak access token valid for user %s", ctx.user_id)
+        return True
+
+    def __call__(self, request: Request) -> RequestContext:
+        ctx = parse_header_context(request, is_fastapi=self.is_fastapi)
+
+        if self.__api_token_verifier.verify(ctx):
+            logger.info("API token valid, skipping session verification")
+            return ctx
+
+        if ctx.token and self._verify_access_token(ctx):
+            return ctx
+
+        sid = request.cookies.get(keycloak_client.keycloak_settings.SESSION_COOKIE_NAME)
+        session = keycloak_client.session_store.get(sid) if sid else None
+        if session:
+            session = keycloak_client.session_store.ensure_fresh(sid, session)
+
+        if not session:
+            logger.warning("Rejecting request without a valid session")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UNAUTHORIZED")
+
+        ctx.user_id = session.user_id
+        ctx.email = session.email
+        ctx.roles = session.roles
+        ctx.groups = session.groups
+        ctx.is_admin = session.is_admin
+        ctx.token = session.access_token
+        logger.info("User ID: %s is connected", ctx.user_id)
+        return ctx
 
 
 SECURITY_FACTORY: dict[str, BaseVerifyToken] = {

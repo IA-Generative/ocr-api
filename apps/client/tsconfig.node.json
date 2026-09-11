@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node20/tsconfig.json",
+  "extends": "@tsconfig/node24/tsconfig.json",
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
@@ -7,14 +7,20 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "types": ["node"],
-    "noEmit": true
+    "noEmit": true,
+    // vitest.config.ts imports ./vite.config.ts with its extension, which is
+    // what Vite 8's native config loader requires.
+    "allowImportingTsExtensions": true,
+
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "vite.config.*",
     "vitest.config.*",
-    "cypress.config.*",
-    "nightwatch.conf.*",
     "playwright.config.*",
-    "playwright/**/*"
+    "playwright/**/*",
+    "eslint.config.*"
   ]
 }

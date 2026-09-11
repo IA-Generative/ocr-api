@@ -1,4 +1,3 @@
-import process from 'node:process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
@@ -9,7 +8,6 @@ import {
 } from '@gouvminint/vue-dsfr/meta'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
-import vueJsx from '@vitejs/plugin-vue-jsx'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig, loadEnv } from 'vite'
@@ -17,7 +15,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import VueDevTools from 'vite-plugin-vue-devtools'
 
 const env = loadEnv('', process.cwd(), '')
-const { version } = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'))
+const { version } = JSON.parse(readFileSync(resolve(import.meta.dirname, 'package.json'), 'utf-8'))
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -34,7 +32,6 @@ export default defineConfig({
   },
   plugins: [
     vue(),
-    vueJsx(),
     VueDevTools(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -71,15 +68,10 @@ export default defineConfig({
         /\.vue\?vue/,
       ],
       imports: [
-        // @ts-expect-error TS2322
         'vue',
-        // @ts-expect-error TS2322
         'vue-router',
-        // @ts-expect-error TS2322
         'pinia',
-        // @ts-expect-error TS2322
         'vitest',
-        // @ts-expect-error TS2322
         vueDsfrAutoimportPreset,
       ],
       vueTemplate: true,

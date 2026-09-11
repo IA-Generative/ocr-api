@@ -1,4 +1,3 @@
-
 # OCR API
 
 Cette API fournit un service d’extraction de texte à partir de fichiers PDF ou d’images. Elle repose sur un pipeline de traitement asynchrone utilisant Redis (queue), S3 (stockage), et PaddleOCR pour effectuer la reconnaissance de texte.
@@ -7,22 +6,22 @@ Cette API fournit un service d’extraction de texte à partir de fichiers PDF o
 
 ![DEMO](docs/images/demo-ocr.gif)
 
-## SDK Python
+## SDKs
 
-Un SDK Python est disponible pour faciliter l'intégration de l'API OCR dans vos projets. Le SDK supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+Deux SDKs sont disponibles pour faciliter l'intégration de l'API OCR dans vos projets, un par langage, dans `sdk/<langage>/`.
 
-📦 **[Voir le SDK](sdk/README.md)** - Client Python avec support async/sync
+### SDK Python
 
-### Installation rapide du SDK
+Supporte les clients synchrones et asynchrones avec des modèles Pydantic pour une validation stricte des données.
+
+📦 **[Voir le SDK](sdk/python/README.md)** - Client Python avec support async/sync
 
 ```bash
-cd sdk
+cd sdk/python
 uv pip install -e .
 # ou
 pip install -e .
 ```
-
-### Utilisation du SDK
 
 ```python
 from ocr_sdk import SyncOCRClient
@@ -34,7 +33,29 @@ with SyncOCRClient("http://localhost:5000") as client:
     print(text)
 ```
 
-Pour plus de détails, consultez la [documentation du SDK](sdk/README.md).
+Pour plus de détails, consultez la [documentation du SDK Python](sdk/python/README.md).
+
+### SDK JS/TypeScript
+
+Client Node.js (≥ 18, `fetch` natif) avec des types TypeScript pour toutes les entrées/sorties.
+
+📦 **[Voir le SDK](sdk/js/README.md)** - Client TypeScript pour Node.js
+
+```bash
+npm install "git+https://github.com/IA-Generative/ocr-api.git#path:sdk/js"
+```
+
+```ts
+import { OCRClient } from 'ocr-sdk'
+
+const client = new OCRClient('http://localhost:5000')
+const task = await client.createJob('document.pdf')
+const result = await client.waitForTask(task.id)
+const text = await client.getTaskText(task.id)
+console.log(text)
+```
+
+Pour plus de détails, consultez la [documentation du SDK JS](sdk/js/README.md).
 
 ## [Fonctionnement](docs/server/asyncronus.md)
 
@@ -44,7 +65,43 @@ Dans cette section vous trouverez le fonctionnement de cette application [docs/s
 
 - [Docker](https://docs.docker.com/get-docker/) installé
 - [Docker Compose](https://docs.docker.com/compose/) (version 2+ recommandée)
+- [make](https://www.gnu.org/software/make/) — point d'entrée unique du dépôt
+- [uv](https://docs.astral.sh/uv/) pour le backend Python
+- [Node](https://nodejs.org/) 24 (LTS) et [pnpm](https://pnpm.io/) 11 pour le frontend
 - Un fichier `.env` configuré à la racine du projet (voir exemple ci-dessous)
+
+`make doctor` indique quels outils sont présents sur la machine.
+
+---
+
+## Développement
+
+Toutes les commandes passent par le `Makefile`. `make` (ou `make help`) affiche la
+liste complète, groupée par thème.
+
+```bash
+# Installation complète : backend (uv), frontend (pnpm), hooks git
+make install
+
+# Démarrer la stack conteneurisée
+make up
+
+# Vérifier le dépôt : lint + types + tests unitaires
+make check
+```
+
+Les vérifications sont également disponibles séparément :
+
+| Commande            | Effet                                                  |
+| ------------------- | ------------------------------------------------------ |
+| `make lint`         | ruff (`apps/server`) + ESLint (`apps/client` et racine) |
+| `make format`       | Corrige automatiquement ce qui peut l'être              |
+| `make type-check`   | `vue-tsc` sur le frontend                               |
+| `make test`         | pytest (backend) + vitest (frontend)                    |
+| `make test-e2e`     | Playwright                                              |
+
+Les mêmes hooks tournent avant chaque commit (`pre-commit` pour Python, ESLint
+pour le frontend et les fichiers de la racine).
 
 ---
 
@@ -79,8 +136,20 @@ no_proxy=minio
 PROCESS_NAME="mixed-classic-and-vlm"
 WORKER_NAME=worker.tasks.ocr
 DEVICE=cpu
+```
 
-````
+Liste complète des variables (obligatoires/optionnelles, description, valeur par défaut) : [`docs/variables.md`](docs/variables.md).
+
+---
+
+## Authentification
+
+L'API accepte deux modes d'authentification, sur les mêmes routes :
+
+- **Clé API statique** — `Authorization: Bearer <clé>`, la clé venant de la variable `API_KEYS`.
+- **Identité Keycloak réelle** — via le flow BFF du frontend (cookie de session), ou via `POST /api/auth/token` (username/password) pour un script/SDK, avec renouvellement automatique du jeton (`POST /api/auth/refresh`).
+
+Pour configurer un client Keycloak côté console d'administration (redirect URIs, rôles, mapper `groups`...) : [`docs/keycloak-setup.md`](docs/keycloak-setup.md).
 
 ---
 
@@ -99,10 +168,13 @@ Cette commande construit les images si nécessaire et démarre tous les containe
 ## Accès aux services
 
 - API OCR (FastAPI) : [http://localhost:5000](http://localhost:5000)
+  — Documentation Swagger : [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+- Frontend (Vue) : [http://localhost:8081](http://localhost:8081)
+- Keycloak (dev, realm auto-provisionné) : [http://localhost:8080](http://localhost:8080)
+  — Admin : `admin` / `admin`
 - Interface MinIO : [http://localhost:9001](http://localhost:9001)
   — Identifiant : `minioadmin`
   — Mot de passe : `minioadmin`
-- Monitoring Celery (Flower) : [http://localhost:5555](http://localhost:5555)
 
 ---
 
@@ -124,19 +196,26 @@ docker compose down -v
 
 ## Tester l’API
 
-Tu peux tester l’API OCR avec un script simple, par exemple :
+📖 **Documentation interactive (Swagger)** : [http://localhost:5000/api/docs](http://localhost:5000/api/docs) — toutes les routes, leurs paramètres et leurs réponses, testables directement depuis le navigateur. Version ReDoc : [http://localhost:5000/api/redocs](http://localhost:5000/api/redocs).
+
+Les routes nécessitent une authentification, soit une clé API statique (`Authorization: Bearer <clé>`, voir `API_KEYS` dans [`docs/variables.md`](docs/variables.md)), soit un utilisateur Keycloak (voir [Authentification](#authentification) ci-dessus).
+
+Envoyer un fichier à traiter :
 
 ```bash
-curl -X POST "http://localhost:5000/jobs/ton_user_id" \
-  -F "file=@/chemin/vers/ton/fichier.jpg"
+curl -X POST "http://localhost:5000/api/jobs/" \
+  -H "Authorization: Bearer <ta_clé_api>" \
+  -F "file=@/chemin/vers/ton/fichier.pdf"
 ```
 
-Obtenir l'état de la taches :
+Obtenir l'état de la tâche (l'`id` renvoyé par l'appel précédent) :
 
 ```bash
-curl -X GET "http://localhost:5000/tasks/ton_task_id"
+curl -X GET "http://localhost:5000/api/tasks/<task_id>" \
+  -H "Authorization: Bearer <ta_clé_api>"
 ```
-Vous pouvez aussi passé par l'ui dédié [Frontend](#frontend)
+
+Tu peux aussi passer par l'ui dédiée [Frontend](#frontend), ou par l'un des [SDKs](#sdks) ci-dessus.
 
 ---
 
@@ -147,14 +226,16 @@ Vous pouvez aussi passé par l'ui dédié [Frontend](#frontend)
 
 ## Frontend
 
-### Installation
-
-Utilisation d'un Makefile pour exécuter les commandes ***(installation de `make` requis)***.
-
 ```sh
-# Démarrer l'environnement de développement
+# Installer les dépendances
+make install-frontend
+
+# Serveur de développement Vite sur la machine hôte
+make dev-frontend
+
+# ... ou dans un conteneur
 make up-frontend
 
-# Démarrer & mettre à jour les types
+# Régénérer les types depuis l'OpenAPI de l'API
 make generate-openapi
 ```

@@ -1,0 +1,36 @@
+{
+  "name": "ocr-sdk",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "TypeScript/Node.js client for the MIrAI OCR API",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "format": "eslint . --fix",
+    "type-check": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.3.0",
+    "@types/node": "^24.0.0",
+    "eslint": "^10.9.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

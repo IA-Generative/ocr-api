@@ -1,6 +1,6 @@
 # ocr
 
-![Version: 0.1.0](https://img.shields.io/badge/Version-0.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.19.11](https://img.shields.io/badge/AppVersion-0.19.11-informational?style=flat-square)
+![Version: 0.2.0-rc.13](https://img.shields.io/badge/Version-0.2.0--rc.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.20.0-rc.13](https://img.shields.io/badge/AppVersion-0.20.0--rc.13-informational?style=flat-square)
 
 A Helm chart to deploy ocr.
 
@@ -273,8 +273,8 @@ A Helm chart to deploy ocr.
 | frontend.extraContainers | list | `[]` | Extra containers to add to the app pod as sidecars. |
 | frontend.extraPorts | list | `[]` | Frontend extra container ports. |
 | frontend.extraVolumeClaims | list | `[]` | Additional volumeClaims to add, concatenated with `volumeClaims` above at render time. |
-| frontend.extraVolumeMounts | list | `[{"mountPath":"/run","name":"nginx-run"},{"mountPath":"/var/cache/nginx","name":"nginx-cache"}]` | Additional volumeMounts to add, concatenated with `volumeMounts` above at render time. Defaults to the mounts matching `extraVolumes` above. |
-| frontend.extraVolumes | list | `[{"emptyDir":{"sizeLimit":"10Mi"},"name":"nginx-run"},{"emptyDir":{"sizeLimit":"100Mi"},"name":"nginx-cache"}]` | Additional volumes to add, concatenated with `volumes` above at render time. Defaults to the two `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this list rather than overriding it outright, or these will need restating. |
+| frontend.extraVolumeMounts | list | `[{"mountPath":"/run","name":"nginx-run"},{"mountPath":"/var/cache/nginx","name":"nginx-cache"},{"mountPath":"/tmp","name":"nginx-tmp"}]` | Additional volumeMounts to add, concatenated with `volumeMounts` above at render time. Defaults to the mounts matching `extraVolumes` above. |
+| frontend.extraVolumes | list | `[{"emptyDir":{"sizeLimit":"10Mi"},"name":"nginx-run"},{"emptyDir":{"sizeLimit":"100Mi"},"name":"nginx-cache"},{"emptyDir":{"sizeLimit":"16Mi"},"name":"nginx-tmp"}]` | Additional volumes to add, concatenated with `volumes` above at render time. Defaults to the three `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this list rather than overriding it outright, or these will need restating. |
 | frontend.hostAliases | list | `[]` | Host aliases that will be injected at pod-level into /etc/hosts. |
 | frontend.imagePullSecrets | list | `[]` | Image credentials configuration. |
 | frontend.initContainers | list | `[]` | Init containers to add to the app pod. |

@@ -48,17 +48,15 @@ services:
           memory: 4000M
     container_name: ocr-service
     command:
-      [
-        "celery",
-        "-A",
-        "services.main",
-        "worker",
-        "--pool=solo",
-        "--loglevel=info",
-        "--concurrency=1",
-        "-E",
-        "--hostname=paddle_worker@%h",
-      ]
+      - "celery"
+      - "-A"
+      - "services.main"
+      - "worker"
+      - "--pool=solo"
+      - "--loglevel=info"
+      - "--concurrency=1"
+      - "-E"
+      - "--hostname=paddle_worker@%h"
     image: ocr-service-paddle
     volumes:
       - ./apps/server/src/:/app/src/
@@ -68,10 +66,14 @@ services:
     build:
       context: .
       dockerfile: apps/server/business/paddleocr2/Dockerfile
+      # Uncomment to build a GPU-enabled image; also set DEVICE=gpu below and give the
+      # container GPU access (e.g. `runtime: nvidia` / `deploy.resources.reservations.devices`).
+      # args:
+      #   PADDLE_DEVICE: gpu
     depends_on:
       - redis
       - minio
-      #- migration
+      # - migration
       - db
     environment:
       - PROCESS_NAME=paddleocr-2.10.0
@@ -79,6 +81,7 @@ services:
       - CELERY_APP_NAME=default
       - SERVICE_NAME=ocr_worker
       - ENVIRONMENT=development
+      # - DEVICE=gpu # requires the image above to be built with PADDLE_DEVICE=gpu
     env_file:
       - .env
 
@@ -106,10 +109,46 @@ services:
       - redis
       - db
       - minio
-      #- migration
+      - keycloak
+      # - migration
 
     env_file:
       - .env
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2
+    container_name: keycloak
+    # Auto-provisions the "mirai" realm/client/test user below on every start, so local
+    # login works out of the box without any manual admin-console setup.
+    command: start-dev --import-realm
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=admin
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
+      - KC_HEALTH_ENABLED=true
+      # Without a fixed hostname, Keycloak derives the token `iss` from whichever Host
+      # header reached it - the browser hits it as `localhost:8080`, but `ocr_backend`
+      # hits it as `keycloak:8080`. That mismatch makes Keycloak itself reject any
+      # backend call carrying a token minted during the browser's `/auth` request
+      # (token exchange, refresh, logout: "Invalid token issuer"). Pinning the hostname
+      # makes Keycloak report the same issuer everywhere, regardless of which internal
+      # path reached it - the backend still physically connects via `keycloak:8080`.
+      - KC_HOSTNAME=localhost
+      - KC_HOSTNAME_PORT=8080
+      - KC_HOSTNAME_STRICT=false
+    volumes:
+      - ./docker/keycloak/realm-mirai.json:/opt/keycloak/data/import/realm-mirai.json:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      # KC_HEALTH_ENABLED serves /health on the management port (9000), not 8080.
+      test:
+        - "CMD-SHELL"
+        - "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nhost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '\"status\": \"UP\"'"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
 
   ocr_frontend:
     container_name: ocr_frontend
@@ -121,8 +160,6 @@ services:
       target: dev
     env_file:
       - .env
-    environment:
-      - VITE_SSO_BYPASS=true
     ports:
       - 8081:3000
     volumes:

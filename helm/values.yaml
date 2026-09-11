@@ -405,6 +405,13 @@ api:
   # -- Api container command args.
   # @section -- Api
   args: []
+  # `runAsUser`/`runAsGroup` here - and `fsGroup` on `podSecurityContext` above, for every
+  # component - are correct for a plain Kubernetes cluster but must be dropped on OpenShift:
+  # its `restricted-v2` SCC allocates UIDs per namespace (`MustRunAsRange`) and rejects a pod
+  # asking for one outside that range rather than overriding it. Leave `runAsNonRoot`,
+  # `seccompProfile`, `drop: ["ALL"]` and `readOnlyRootFilesystem` in place there and let the
+  # SCC assign the identity; the images own their files by group root precisely so that an
+  # arbitrary assigned UID still works (see the `chown -R 10001:0` in each Dockerfile).
   # -- Container-level security context. Rendered via `toYaml`, so any other
   # `SecurityContext` field (e.g. `procMount`) can be added here too, even though
   # not pre-populated below.
@@ -479,11 +486,37 @@ api:
     COMPONENT: "api"
     # "keycloak" is already `ocr_backend`'s own code default (`VERIFY_TOKEN_MODEL` in
     # `ocr_backend/core/security/factory.py`) - set explicit here so it doesn't silently depend on
-    # that code default.
+    # that code default. With this mode, the API only ever authenticates a request via the BFF
+    # session cookie (see below) or an `API_KEYS` bearer token - never a Keycloak bearer token
+    # directly, the browser doesn't hold one any more.
     VERIFY_TOKEN_MODEL: "keycloak"
     # PII scrubbing default for whichever Sentry DSN is wired via `envFrom` (see `SENTRY_API_DSN`/
     # `SENTRY_WORKER_DSN` in each real environment's Vault-managed secret).
     SEND_DEFAULT_PII: "False"
+    # Backend-for-frontend Keycloak auth (`ocr_backend/routers/auth.py`): the browser never talks
+    # to Keycloak or holds a token, only the backend does, via `/api/auth/{login,callback,logout,me}`
+    # and an opaque `httpOnly` session cookie. None of these are set here - like the Sentry DSNs
+    # above, they're per-environment and belong in that same Vault-managed secret wired via
+    # `envFrom`, not hardcoded in this chart:
+    #   KEYCLOAK_URL             - reached backend-to-Keycloak (token exchange/refresh/introspect/
+    #                               logout). Usually the same public URL Keycloak is reachable at.
+    #   KEYCLOAK_PUBLIC_URL      - optional, falls back to KEYCLOAK_URL. Only needs to differ if the
+    #                               backend and the browser don't resolve Keycloak the same way (e.g.
+    #                               local docker compose, where it's an internal service name for the
+    #                               backend but a host-mapped port for the browser).
+    #   KEYCLOAK_REALM / KEYCLOAK_CLIENT_ID
+    #   KEYCLOAK_CLIENT_SECRET   - secret; the client MUST be confidential (not public), the backend
+    #                              is the only party that ever exchanges an authorization code.
+    #   BACKEND_PUBLIC_URL       - this API's own public URL, used to build the fixed
+    #                              `{BACKEND_PUBLIC_URL}/api/auth/callback` redirect_uri - must
+    #                              exactly match a redirect URI registered on the Keycloak client.
+    #   FRONTEND_URL             - the SPA's public URL: CORS allow-origin (required - the session
+    #                              cookie makes `allow_origins: ["*"]` a non-starter with
+    #                              `allow_credentials: true`) and where `/callback` redirects after
+    #                              login.
+    # SESSION_COOKIE_SECURE/SESSION_COOKIE_SAMESITE default to "True"/"lax" in code
+    # (`src/config/keycloak.py`), which is correct for this chart's HTTPS deployments - only
+    # override for HTTP-only local dev (see the top-level `docker-compose.yaml`).
   # A: "A"
   # B:
   #   valueFrom:
@@ -1177,11 +1210,15 @@ frontend:
     runAsNonRoot: true
     seccompProfile:
       type: "RuntimeDefault"
-    # nginx-unprivileged still needs two writable paths under a read-only root: `/run` for its pid
-    # file (`pid /run/nginx.pid;` in the image's nginx.conf) and `/var/cache/nginx` for request
-    # buffering temp files. Both are provided as `emptyDir`s in `extraVolumes`/`extraVolumeMounts`
-    # below - not `volumes`/`volumeMounts`, which real deployments already use for the optional
-    # `viteEnv` config.js mount (see mirai-values) and would otherwise silently replace these.
+    # nginx-unprivileged still needs three writable paths under a read-only root: `/run` for its
+    # pid file (`pid /run/nginx.pid;` in the image's nginx.conf), `/var/cache/nginx` for request
+    # buffering, and `/tmp` for the `*_temp_path` directories its nginx.conf points there
+    # (`client_body_temp`, `proxy_temp`, ...). nginx creates those at startup, so missing `/tmp`
+    # is not a degraded cache - it is `[emerg] mkdir() "/tmp/proxy_temp" failed` and a container
+    # that never serves. All three are provided as `emptyDir`s in
+    # `extraVolumes`/`extraVolumeMounts` below - not `volumes`/`volumeMounts`, which real
+    # deployments already use for the optional `viteEnv` config.js mount (see mirai-values) and
+    # would otherwise silently replace these.
     readOnlyRootFilesystem: true
   # -- Frontend runtime config, rendered as `window.KEY = value` assignments into the
   # `templates/frontend/vite-config.yaml` ConfigMap (mounted as `config.js` - see
@@ -1353,7 +1390,7 @@ frontend:
   #     reference: quay.io/crio/artifact:v2
   #     pullPolicy: IfNotPresent
   # -- Additional volumes to add, concatenated with `volumes` above at render time. Defaults to the
-  # two `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this
+  # three `emptyDir`s `readOnlyRootFilesystem` needs (see `securityContext` above); append to this
   # list rather than overriding it outright, or these will need restating.
   # @section -- Frontend
   extraVolumes:
@@ -1363,6 +1400,9 @@ frontend:
   - name: nginx-cache
     emptyDir:
       sizeLimit: 100Mi
+  - name: nginx-tmp
+    emptyDir:
+      sizeLimit: 16Mi
   # -- List of volumeClaims to add.
   # @section -- Frontend
   volumeClaims: []
@@ -1400,6 +1440,8 @@ frontend:
     mountPath: /run
   - name: nginx-cache
     mountPath: /var/cache/nginx
+  - name: nginx-tmp
+    mountPath: /tmp
   service:
     # -- Whether or not to create a Service for the app. Set to `false` for components that
     # don't accept traffic (e.g. a queue consumer with no `containerPort`).
@@ -2026,6 +2068,12 @@ worker:
     TQDM_DISABLE: "1"
     GLOG_minloglevel: "2"
     SEND_DEFAULT_PII: "False"
+    # Read by `PaddleSetting.DEVICE` (business/paddleocr2/configs/paddle.py) to select the
+    # inference device; defaults to "cpu" when unset. To actually run on GPU, the image itself
+    # must also be built with `--build-arg PADDLE_DEVICE=gpu` (apps/server/business/paddleocr2/
+    # Dockerfile) so the CUDA-enabled PaddlePaddle wheel is installed - then set this to "gpu"
+    # and request `nvidia.com/gpu` below.
+    # DEVICE: "gpu"
     # OpenAI-compatible client used by the worker for vision/LLM extraction
     # (`services/factory.py::load_worker`, `origin/main`). All three have safe fallbacks baked into
     # the app itself (`os.environ.get(..., default)`), so leaving them as-is does NOT crash the

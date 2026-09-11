@@ -1,1 +1,11 @@
-# pre-commit run --all-files
+# Python side: ruff, gitleaks, large files, whitespace (.pre-commit-config.yaml).
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit run --all-files
+else
+  echo "⚠ pre-commit is not installed — skipping the Python hooks."
+  echo "  Install it with 'make install-hooks' (or: uv tool install pre-commit)."
+fi
+
+# JS/TS side: repository-level files, then the frontend.
+pnpm run lint:root
+pnpm run lint:frontend

@@ -1,209 +1,429 @@
-IMAGE_NAME_OCR_BACKEND=ocr-api
-IMAGE_NAME_OCR_SERVICE=ocr-service
-PYTHONPATH=$(PWD)
-OCR_BACKEND_CONTAINER=ocr-api
-OCR_FRONTEND_CONTAINER=ocr-frontend
-FRONTEND_COMPOSE_FILE=docker-compose.frontend.yaml
-STRESS_HOST=http://localhost:5000
-HAS_GPU := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
+# =============================================================================
+# OCR API — developer entrypoint
+#
+# `make` (or `make help`) lists every target grouped by topic.
+# =============================================================================
 
-.PHONY: install-uv install-local linter bump-patch bump-minor \
-        up down tests tests-liteparse build-liteparse build-ocr-backend build-ocr-service build \
-        upgrade-db upgrade-revision cluster help
+# -----------------------------------------------------------------------------
+# Variables
+# -----------------------------------------------------------------------------
+
+# Colors for terminal output
+COLOR_RESET   := \033[0m
+COLOR_BOLD    := \033[1m
+COLOR_DIM     := \033[2m
+COLOR_RED     := \033[31m
+COLOR_GREEN   := \033[32m
+COLOR_YELLOW  := \033[33m
+COLOR_BLUE    := \033[34m
+COLOR_CYAN    := \033[36m
+
+# Paths
+PROJECT_ROOT   := $(shell pwd)
+SERVER_DIR     := $(PROJECT_ROOT)/apps/server
+CLIENT_DIR     := $(PROJECT_ROOT)/apps/client
+SDK_DIR        := $(PROJECT_ROOT)/sdk/python
+
+# Compose files
+COMPOSE_DEV      := $(PROJECT_ROOT)/docker-compose.yaml
+COMPOSE_TEST     := $(PROJECT_ROOT)/docker-compose-test.yaml
+COMPOSE_FRONT    := $(PROJECT_ROOT)/docker-compose.frontend.yaml
+COMPOSE_LITEPARSE := $(PROJECT_ROOT)/docker-compose-liteparse-test.override.yaml
+
+# Compose *service* names (not container_name — `docker compose` addresses services)
+SVC_BACKEND    := ocr_backend
+SVC_SERVICE    := ocr_service
+SVC_FRONTEND   := ocr_frontend
+SVC_MIGRATION  := migration
+
+# Runtime
+DOCKER_COMPOSE := docker compose
+UV             := uv
+PNPM           := pnpm
+PYTHONPATH     := $(PROJECT_ROOT)
+
+# Backend dependency groups installed by `make install`
+UV_GROUPS      := --group test --group ocr-backend --group ocr-service-paddle
+
+STRESS_HOST    := http://localhost:5000
+HAS_GPU        := $(shell nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 
 .DEFAULT_GOAL := help
 
-help:
-	@echo "Usage: make <command>"
+# Guard: fail with an actionable message instead of a cryptic "command not found".
+define _require
+	@command -v $(1) >/dev/null 2>&1 || { \
+		echo "$(COLOR_RED)✗$(COLOR_RESET) $(1) is required but not installed. $(2)"; \
+		exit 1; \
+	}
+endef
+
+# -----------------------------------------------------------------------------
+# Help
+# -----------------------------------------------------------------------------
+
+.PHONY: help
+help: ## Show this help message
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
-		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-25s\033[0m %s\n", $$1, $$2}'
+	@echo "$(COLOR_BOLD)$(COLOR_CYAN)  OCR API — available commands$(COLOR_RESET)"
+	@echo ""
+	@awk 'BEGIN {FS = ":.*##"} \
+		/^## / { printf "\n$(COLOR_BOLD)$(COLOR_YELLOW)%s$(COLOR_RESET)\n", substr($$0, 4) } \
+		/^[a-zA-Z0-9_.-]+:.*##/ { printf "  $(COLOR_CYAN)%-32s$(COLOR_RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@echo ""
 
-install: install-uv ## Installation de l'environnement pour du développement local (gestionnaire de dépendances)
-	@if [ ! -d "apps/server/.venv" ]; then \
-		echo "Synchronisation des dépendances..."; \
-		cd apps/server && uv sync --group test --group ocr-backend --group ocr-service-paddle; \
-	else \
-		echo "Dépendances déjà synchronisées (suppose .venv existant)"; \
-	fi
+# -----------------------------------------------------------------------------
+## ▸ Setup
+# -----------------------------------------------------------------------------
 
-install-uv:
-	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "uv non trouvé, installation..."; \
+.PHONY: install
+install: install-backend install-frontend install-hooks ## Install everything (backend, frontend, git hooks)
+	@echo "$(COLOR_BOLD)$(COLOR_GREEN)  ✓ Workspace ready$(COLOR_RESET)"
+	@echo "$(COLOR_DIM)  Run 'make up' to start the stack, or 'make check' to validate the repo$(COLOR_RESET)"
+
+.PHONY: install-uv
+install-uv: ## Install the uv Python package manager if missing
+	@if ! command -v $(UV) >/dev/null 2>&1; then \
+		echo "$(COLOR_BLUE)→$(COLOR_RESET) uv not found, installing..."; \
 		curl -LsSf https://astral.sh/uv/install.sh | sh; \
 	else \
-		echo "uv déjà installé"; \
+		echo "$(COLOR_GREEN)✓$(COLOR_RESET) uv already installed"; \
 	fi
 
-install-linux:
-	sudo apt update && sudo apt install -y poppler-utils
+.PHONY: install-backend
+install-backend: install-uv ## Sync the backend virtualenv (apps/server/.venv)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Syncing backend dependencies..."
+	@cd $(SERVER_DIR) && $(UV) sync $(UV_GROUPS)
+	@echo "$(COLOR_GREEN)✓$(COLOR_RESET) Backend dependencies synced"
 
-install-mac:
-	brew install poppler
+.PHONY: install-frontend
+install-frontend: ## Install frontend dependencies (apps/client)
+	$(call _require,$(PNPM),See https://pnpm.io/installation)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Installing frontend dependencies..."
+	@$(PNPM) --dir $(CLIENT_DIR) install
+	@echo "$(COLOR_GREEN)✓$(COLOR_RESET) Frontend dependencies installed"
 
-install-local: ## Installation des dépendances systèmes
+.PHONY: install-hooks
+install-hooks: ## Install git hooks (husky + pre-commit)
+	$(call _require,$(PNPM),See https://pnpm.io/installation)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Installing git hooks..."
+	@$(PNPM) install
+	@if command -v pre-commit >/dev/null 2>&1; then \
+		pre-commit install; \
+	else \
+		echo "$(COLOR_YELLOW)⚠$(COLOR_RESET) pre-commit not installed — Python hooks will be skipped."; \
+		echo "$(COLOR_DIM)  Install it with: uv tool install pre-commit  (or pipx install pre-commit)$(COLOR_RESET)"; \
+	fi
+	@echo "$(COLOR_GREEN)✓$(COLOR_RESET) Git hooks installed"
+
+.PHONY: install-system
+install-system: ## Install system dependencies (poppler)
 ifeq ($(shell uname), Linux)
-	@$(MAKE) install-linux
+	sudo apt update && sudo apt install -y poppler-utils
 else ifeq ($(shell uname), Darwin)
-	@$(MAKE) install-mac
+	brew install poppler
 else
-	@echo "Installation automatique non supportée sur cette plateforme"
+	@echo "$(COLOR_YELLOW)⚠$(COLOR_RESET) Automatic install is not supported on this platform"
 endif
 
-lint: install-uv ## Lint le code du dépôt
-	cd apps/server && \
-		uv run ruff check --exclude '**/*.ipynb' . && \
-		uv run ruff format --check .
+# Backwards-compatible alias — `install-local` was the previous name.
+.PHONY: install-local
+install-local: install-system ## Alias for install-system (deprecated)
 
-lint-fix: ## Lint et correction automatique du code backend
-	cd apps/server && \
-		uv run ruff check --exclude '**/*.ipynb' . --fix && \
-		uv run ruff format .
+.PHONY: doctor
+doctor: ## Report which required tools are present on this machine
+	@echo ""
+	@echo "$(COLOR_BOLD)  Toolchain$(COLOR_RESET)"
+	@for tool in docker uv pnpm node python3 pre-commit kind; do \
+		if command -v $$tool >/dev/null 2>&1; then \
+			printf "  $(COLOR_GREEN)✓$(COLOR_RESET) %-12s %s\n" "$$tool" "$$($$tool --version 2>&1 | head -1)"; \
+		else \
+			printf "  $(COLOR_RED)✗$(COLOR_RESET) %-12s missing\n" "$$tool"; \
+		fi; \
+	done
+	@echo ""
 
-bump:
-	@echo "Usage: make bump-patch OR make bump-minor"
+# -----------------------------------------------------------------------------
+## ▸ Development
+# -----------------------------------------------------------------------------
 
-bump-patch:
-	uv run cz bump --increment patch
+.PHONY: up
+up: ## Start the containerised development stack
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) up -d
 
-bump-minor:
-	uv run cz bump --increment minor
+.PHONY: down
+down: ## Stop the containerised development stack
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) down || true
 
-up: ## Lance l'environnement de développement en conteneurs
-	docker compose up -d
+.PHONY: restart
+restart: down up ## Restart the containerised development stack
 
-setup-frontend: clean-front ## Prépare le frontend pour le développement
-	cd apps/client && \
-		pnpm install && \
-		pnpm update
+.PHONY: ps
+ps: ## Show the state of the development stack
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) ps
 
-up-frontend: setup-frontend ## Lance l'environnement frontend en conteneur
-	docker compose -f $(FRONTEND_COMPOSE_FILE) build --no-cache
-	docker compose -f $(FRONTEND_COMPOSE_FILE) up -d ocr_frontend --force-recreate
+.PHONY: dev-frontend
+dev-frontend: ## Run the Vite dev server on the host (no container)
+	@$(PNPM) --dir $(CLIENT_DIR) run dev
 
-down: ## Eteint l'environnement de développement en conteneurs
-	docker compose down || true
+.PHONY: up-frontend
+up-frontend: install-frontend ## Build and start the frontend container
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) build
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) up -d $(SVC_FRONTEND) --force-recreate
 
-down-test: ## remove orphan containers
-	docker compose -f docker-compose-test.yaml down --remove-orphans -v || true
+.PHONY: down-frontend
+down-frontend: ## Stop the frontend container
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) down || true
 
-down-frontend: ## Eteint l'environnement frontend en conteneur
-	docker compose -f docker-compose.frontend.yaml down || true
+.PHONY: logs
+logs: ## Tail the logs of the whole development stack
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) logs -f
 
-logs-api: ## Affiche les logs du conteneur de l'API
-	docker compose logs -f $(OCR_BACKEND_CONTAINER)
+.PHONY: logs-api
+logs-api: ## Tail the API container logs
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) logs -f $(SVC_BACKEND)
 
-logs-service: ## Affiche les logs du conteneur de service
-	docker compose logs -f $(OCR_SERVICE_CONTAINER)
+.PHONY: logs-service
+logs-service: ## Tail the OCR service container logs
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) logs -f $(SVC_SERVICE)
 
-logs-frontend: ## Affiche les logs du conteneur de frontend
-	docker compose logs -f $(OCR_FRONTEND_CONTAINER)
+.PHONY: logs-frontend
+logs-frontend: ## Tail the frontend container logs
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) logs -f $(SVC_FRONTEND)
 
-clean: ## Nettoyage du dépôt
-	rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
-	rm -rf apps/client/node_modules apps/client/.nuxt apps/client/.output
-	$(MAKE) down
+.PHONY: shell-api
+shell-api: ## Open a shell in the API container
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) exec $(SVC_BACKEND) /bin/sh
 
-clean-front: ## Nettoyage du frontend
-	# Stop containers (fichier compose unifié)
-	docker compose -f $(FRONTEND_COMPOSE_FILE) down || true
-	# Si node_modules est root-owned (créé depuis un conteneur), corrige les permissions avant suppression
-	@if [ -d "apps/client/node_modules" ] && [ "$$(stat -f %Su apps/client/node_modules 2>/dev/null || echo unknown)" != "$$(whoami)" ]; then \
-		echo "Permissions node_modules incorrectes, tentative de chown..."; \
-		sudo chown -R $$(id -u):$$(id -g) apps/client/node_modules || true; \
-	fi
-	rm -rf apps/client/node_modules
-	rm -rf apps/client/dist
-	echo "Frontend nettoyé"
+.PHONY: generate-openapi
+generate-openapi: up-frontend ## Regenerate the frontend OpenAPI types from the running API
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) exec $(SVC_FRONTEND) $(PNPM) run generate-openapi
 
-########################### DOCKER BUILD ###########################
+# -----------------------------------------------------------------------------
+## ▸ Quality
+# -----------------------------------------------------------------------------
 
-build: build-ocr-backend build-ocr-service ## Lance la construction de toutes les images Docker
+.PHONY: check
+check: lint type-check test ## Run the full validation suite (lint + types + tests)
+	@echo "$(COLOR_BOLD)$(COLOR_GREEN)  ✓ All checks passed$(COLOR_RESET)"
 
-build-container-dependencies: ## Build docker dependecies
-	docker compose -f docker-compose-test.yaml build minio redis db migration
+.PHONY: lint
+lint: lint-backend lint-frontend ## Lint the whole repository
 
+.PHONY: lint-backend
+lint-backend: install-uv ## Lint the Python code (ruff check + format --check)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Linting backend..."
+	@cd $(SERVER_DIR) && \
+		$(UV) run ruff check --exclude '**/*.ipynb' . && \
+		$(UV) run ruff format --check .
 
-build-ocr-backend: ## Lance la construction de l'image Docker backend
-	docker compose build ocr_backend
+.PHONY: lint-frontend
+lint-frontend: ## Lint the frontend and repository-level files (eslint)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Linting frontend..."
+	@$(PNPM) --dir $(CLIENT_DIR) run lint
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Linting root files..."
+	@$(PNPM) run lint:root
 
+.PHONY: format
+format: format-backend format-frontend ## Auto-fix lint and formatting issues everywhere
 
-build-ocr-frontend: ## Lance la construction de l'image Docker frontend
-	docker compose -f $(FRONTEND_COMPOSE_FILE) build ocr_frontend
+.PHONY: format-backend
+format-backend: install-uv ## Auto-fix the Python code (ruff check --fix + format)
+	@cd $(SERVER_DIR) && \
+		$(UV) run ruff check --exclude '**/*.ipynb' . --fix && \
+		$(UV) run ruff format .
 
-upgrade-db: ## Applique les migrations de base de données
-	docker compose run --rm migration alembic upgrade head
+.PHONY: format-frontend
+format-frontend: ## Auto-fix the frontend and repository-level files (eslint --fix)
+	@$(PNPM) --dir $(CLIENT_DIR) run format
+	@$(PNPM) run format:root
 
-stamp-db: ## Change le pointeur alembic à une révision particulière
-	@read -p "id de la révision : " revision; \
-	docker compose run --rm migration alembic stamp $$revision
+# Backwards-compatible alias — `lint-fix` was the previous name.
+.PHONY: lint-fix
+lint-fix: format-backend ## Alias for format-backend (deprecated)
 
-list-revision: ## Liste les révisions de la base de données
-	docker compose run --rm migration alembic history
-upgrade-revision: ## Crée une nouvelle révision de base de données
-	@read -p "Message de révision : " msg; \
-	docker compose run --rm migration alembic revision --autogenerate -m "$$msg"
+.PHONY: type-check
+type-check: ## Type-check the frontend (vue-tsc)
+	@echo "$(COLOR_BLUE)→$(COLOR_RESET) Type-checking frontend..."
+	@$(PNPM) --dir $(CLIENT_DIR) run type-check
 
-cluster: ## Crée un cluster Kind local
-	kind create cluster --name ocr --config ./kind/config.yaml
+# -----------------------------------------------------------------------------
+## ▸ Testing
+# -----------------------------------------------------------------------------
 
-load-image: ## Upload les images dans le cluster
-	docker image tag ocr-api:latest ocr-api:v1
-	docker image tag ocr-service-paddle:latest ocr-service-paddle:v1
-	kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr
+.PHONY: test
+test: tests test-frontend ## Run the backend and frontend unit tests
 
-stress-test: install-uv ## Lance un test de charge
-	uv run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST)
+.PHONY: tests
+tests: install-uv ## Run the backend unit tests (pytest, on the host)
+	@cd $(SERVER_DIR) && $(UV) run pytest tests/ -v --tb=short
 
-stress-stats: install-uv ## Affiche les statistiques du test de charge
-	STRESS_HOST=$(STRESS_HOST) uv run stress-script/2-process-stats.py
+.PHONY: test-frontend
+test-frontend: ## Run the frontend unit tests (vitest)
+	@$(PNPM) --dir $(CLIENT_DIR) run test:unit
 
-tests: install-uv ## Lance les tests unitaires du backend
-	cd apps/server && uv run pytest tests/ -v --tb=short
+.PHONY: test-frontend-cov
+test-frontend-cov: ## Run the frontend unit tests with coverage
+	@$(PNPM) --dir $(CLIENT_DIR) run test:cov
 
-tests-liteparse: up-db ## Lance les tests unitaires liteparse dans Docker
-	docker compose -f docker-compose-test.yaml -f docker-compose-liteparse-test.override.yaml \
+.PHONY: test-e2e
+test-e2e: ## Run the Playwright end-to-end tests
+	@$(PNPM) --dir $(CLIENT_DIR) run test:e2e
+
+.PHONY: test-e2e-ui
+test-e2e-ui: ## Run the Playwright end-to-end tests in UI mode
+	@$(PNPM) --dir $(CLIENT_DIR) run test:e2e:ui
+
+.PHONY: test-e2e-install
+test-e2e-install: ## Install the Playwright browsers
+	@$(PNPM) --dir $(CLIENT_DIR) run test:e2e:install
+
+.PHONY: test-backend-api
+test-backend-api: build-deps up-db ## Run the backend API test suite in Docker
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up $(SVC_BACKEND) --exit-code-from $(SVC_BACKEND)
+	@$(MAKE) down-test
+
+.PHONY: test-services-paddleocr2.10.0
+test-services-paddleocr2.10.0: build-deps up-db ## Run the PaddleOCR 2.10.0 service tests
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up paddleocr2_service --exit-code-from paddleocr2_service
+	@$(MAKE) down-test
+
+.PHONY: tests-liteparse
+tests-liteparse: up-db ## Run the liteparse tests in Docker
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) -f $(COMPOSE_LITEPARSE) \
 		up liteparse_service --no-build --exit-code-from liteparse_service
-	$(MAKE) down-test
+	@$(MAKE) down-test
 
-build-liteparse: ## Construit l'image Docker liteparse (obligatoire au 1er lancement)
-	docker compose -f docker-compose-test.yaml -f docker-compose-liteparse-test.override.yaml \
-		build liteparse_service
+.PHONY: test-sdk
+test-sdk: install-uv ## Run the Python SDK test suite against a live stack
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) up -d
+	@cd $(SDK_DIR) && \
+		$(UV) sync --dev && \
+		$(UV) run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests; \
+		status=$$?; \
+		$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) down -v; \
+		exit $$status
 
-up-db: ## Lance l'environnement de développement avec la base de données
-	docker compose -f docker-compose-test.yaml up -d db minio redis migration
+.PHONY: stress-test
+stress-test: install-uv ## Run a load test (locust)
+	@cd $(SERVER_DIR) && $(UV) run locust -f stress-script/1-stress-test.py --host $(STRESS_HOST)
 
-test-services-paddleocr2.10.0: build-container-dependencies up-db ## Test PaddleOCR 2.10.0
-	docker compose -f docker-compose-test.yaml up paddleocr2_service --exit-code-from paddleocr2_service
-	make down-test
+.PHONY: stress-stats
+stress-stats: install-uv ## Print the load-test statistics
+	@cd $(SERVER_DIR) && STRESS_HOST=$(STRESS_HOST) $(UV) run stress-script/2-process-stats.py
 
-# test-services-paddleocr3.1.0: build-container-dependencies up-db ## Test PaddleOCR 3.1.0
-# 	docker compose -f docker-compose-test.yaml up paddleocr3_service --exit-code-from paddleocr3_service
-# 	make down-test
+# -----------------------------------------------------------------------------
+## ▸ Database
+# -----------------------------------------------------------------------------
 
-# test-services-paddleocr3.1.0-gpu: build-container-dependencies  ## Test PaddleOCR 3.1.0 with gpu
-# ifeq ($(HAS_GPU),yes)
-# 	@echo "✅ GPU detected. Running GPU tests..."
-# 	sudo docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
-# 	sudo docker compose -f docker-compose-test.yaml up paddleocr3_service_gpu
-# 	make down-test
-# else
-# 	@echo "⚠️ No GPU detected. Skipping GPU tests. But build the image"
-# 	docker compose -f docker-compose-test.yaml build paddleocr3_service_gpu
-# endif
+.PHONY: up-db
+up-db: ## Start only the data services (db, minio, redis) and apply migrations
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up -d db minio redis $(SVC_MIGRATION)
 
-test-backend-api: build-container-dependencies up-db ## Test ocr backend
-	docker compose -f docker-compose-test.yaml up ocr_backend --exit-code-from ocr_backend
-	make down-test
+.PHONY: upgrade-db
+upgrade-db: ## Apply the pending database migrations
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) run --rm $(SVC_MIGRATION) alembic upgrade head
 
-generate-openapi: up-frontend  ## Génère la documentation OpenAPI
-	docker compose -f $(FRONTEND_COMPOSE_FILE) exec ocr_frontend pnpm run generate-openapi
+.PHONY: list-revision
+list-revision: ## List the database revisions
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) run --rm $(SVC_MIGRATION) alembic history
 
-test-sdk: install-uv ## Test le SDK Python
-	docker compose -f docker-compose.yaml up -d
-	cd sdk && \
-	uv sync --dev && \
-	uv run pytest -s --cov=ocr_sdk --cov-report=term-missing -ra -v --maxfail=0 tests; \
-	status=$$?; \
-	docker compose -f $(PWD)/docker-compose.yaml down -v; \
-	exit $$status
+.PHONY: upgrade-revision
+upgrade-revision: ## Create a new database revision (autogenerate)
+	@read -p "Revision message: " msg; \
+	$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) run --rm $(SVC_MIGRATION) alembic revision --autogenerate -m "$$msg"
+
+.PHONY: stamp-db
+stamp-db: ## Move the alembic pointer to a given revision
+	@read -p "Revision id: " revision; \
+	$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) run --rm $(SVC_MIGRATION) alembic stamp $$revision
+
+# -----------------------------------------------------------------------------
+## ▸ Docker images
+# -----------------------------------------------------------------------------
+
+.PHONY: build
+build: build-ocr-backend build-ocr-service ## Build every backend Docker image
+
+.PHONY: build-ocr-backend
+build-ocr-backend: ## Build the backend Docker image
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) build $(SVC_BACKEND)
+
+.PHONY: build-ocr-service
+build-ocr-service: ## Build the OCR service Docker image
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) build $(SVC_SERVICE)
+
+.PHONY: build-ocr-frontend
+build-ocr-frontend: ## Build the frontend Docker image
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) build $(SVC_FRONTEND)
+
+.PHONY: build-deps
+build-deps: ## Build the Docker images the test stack depends on
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) build minio redis db $(SVC_MIGRATION)
+
+# Backwards-compatible alias — `build-container-dependencies` was the previous name.
+.PHONY: build-container-dependencies
+build-container-dependencies: build-deps ## Alias for build-deps (deprecated)
+
+.PHONY: build-liteparse
+build-liteparse: ## Build the liteparse Docker image (required on first run)
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) -f $(COMPOSE_LITEPARSE) build liteparse_service
+
+# -----------------------------------------------------------------------------
+## ▸ Kubernetes (kind)
+# -----------------------------------------------------------------------------
+
+.PHONY: cluster
+cluster: ## Create a local kind cluster
+	$(call _require,kind,See https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+	@kind create cluster --name ocr --config ./kind/config.yaml
+
+.PHONY: cluster-delete
+cluster-delete: ## Delete the local kind cluster
+	@kind delete cluster --name ocr || true
+
+.PHONY: load-image
+load-image: ## Load the locally built images into the kind cluster
+	@docker image tag ocr-api:latest ocr-api:v1
+	@docker image tag ocr-service-paddle:latest ocr-service-paddle:v1
+	@kind load docker-image ocr-service-paddle:v1 ocr-api:v1 --name ocr
+
+# -----------------------------------------------------------------------------
+## ▸ Release
+# -----------------------------------------------------------------------------
+
+.PHONY: bump-patch
+bump-patch: ## Bump the patch version (commitizen)
+	@cd $(SERVER_DIR) && $(UV) run cz bump --increment patch
+
+.PHONY: bump-minor
+bump-minor: ## Bump the minor version (commitizen)
+	@cd $(SERVER_DIR) && $(UV) run cz bump --increment minor
+
+# -----------------------------------------------------------------------------
+## ▸ Cleanup
+# -----------------------------------------------------------------------------
+
+.PHONY: down-test
+down-test: ## Stop the test stack and remove orphans/volumes
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) down --remove-orphans -v || true
+
+.PHONY: clean
+clean: down down-test clean-frontend ## Remove caches, build artefacts and containers
+	@rm -rf __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	@rm -rf $(SERVER_DIR)/.ruff_cache $(SERVER_DIR)/.pytest_cache
+	@echo "$(COLOR_GREEN)✓$(COLOR_RESET) Workspace cleaned"
+
+.PHONY: clean-frontend
+clean-frontend: down-frontend ## Remove the frontend build artefacts and node_modules
+	@# node_modules can be root-owned when it was created from inside a container.
+	@if [ -d "$(CLIENT_DIR)/node_modules" ] && [ "$$(stat -f %Su $(CLIENT_DIR)/node_modules 2>/dev/null || stat -c %U $(CLIENT_DIR)/node_modules 2>/dev/null || echo unknown)" != "$$(whoami)" ]; then \
+		echo "$(COLOR_YELLOW)⚠$(COLOR_RESET) node_modules is not owned by $$(whoami), fixing permissions..."; \
+		sudo chown -R $$(id -u):$$(id -g) $(CLIENT_DIR)/node_modules || true; \
+	fi
+	@rm -rf $(CLIENT_DIR)/node_modules $(CLIENT_DIR)/dist $(CLIENT_DIR)/.nuxt $(CLIENT_DIR)/.output
+	@echo "$(COLOR_GREEN)✓$(COLOR_RESET) Frontend cleaned"
+
+# Backwards-compatible alias — `clean-front` was the previous name.
+.PHONY: clean-front
+clean-front: clean-frontend ## Alias for clean-frontend (deprecated)

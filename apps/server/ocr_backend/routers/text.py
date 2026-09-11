@@ -11,7 +11,14 @@ import csv
 text_router = APIRouter(tags=["Text"])
 
 
-@text_router.get("/text-task/{task_id}", response_class=PlainTextResponse, response_model=None)
+@text_router.get(
+    "/text-task/{task_id}",
+    response_class=PlainTextResponse,
+    response_model=None,
+    summary="Get a task's extracted text",
+    description="Plain-text extraction result of a task (empty string if not yet completed).",
+    responses={404: {"description": "Task not found, or not owned by the caller"}},
+)
 async def download_text_content_new(
     task_id: str,
     ctx: RequestContext = Depends(TokenVerifier),
@@ -34,6 +41,16 @@ async def download_text_content_new(
 @text_router.get(
     "/task-to-value/{task_id}",
     response_model=None,
+    summary="Get a task's output in a chosen shape",
+    description=(
+        "Returns a completed task's output transformed for a specific use case, "
+        "selected via `transform`:\n\n"
+        "- `text` (default): plain extracted text\n"
+        "- `form`: list of per-page extracted form entries (JSON)\n"
+        "- `form-csv`: form entries as a downloadable CSV file\n"
+        "- `only-result`: the raw OCR result object (JSON)"
+    ),
+    responses={404: {"description": "Task, or its output, not found (or not owned by the caller)"}},
 )
 async def download_task_form(
     task_id: str,
