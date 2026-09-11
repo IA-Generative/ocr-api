@@ -374,30 +374,30 @@ wheels = [
 
 [[package]]
 name = "boto3"
-version = "1.43.78"
+version = "1.43.79"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/be/55/e026c943f7f1ed6d2f5e6035713f21233bbe9ee975008662dc64ca0d4ced/boto3-1.43.78.tar.gz", hash = "sha256:2fa59116e298171ef59e7600a8be6c01177faef8af4b9a4314b7a57a04009ada", size = 112679, upload-time = "2026-08-21T19:37:36.84Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2d/1b/d5091a11b37633c987015516fb87e1330c5e97c42ab2d6527b778bdc537a/boto3-1.43.79.tar.gz", hash = "sha256:a36b4209a8170f7f8d2c19b36f350808f313b178939c9e5df0a8f683717a6d9c", size = 112682, upload-time = "2026-08-24T19:30:13.676Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/55/288b1f0d987e15db0417f5ea43da564bfa042063f508c259eec893134628/boto3-1.43.78-py3-none-any.whl", hash = "sha256:893f06a171469618e17de78dc927aca6e74fcf45a70d2c5918e9ac9919e96cc9", size = 140028, upload-time = "2026-08-21T19:37:35.358Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/90/eef59b9b64442b4c966b027e8db407f59d99200b82b71316fc4466562a53/boto3-1.43.79-py3-none-any.whl", hash = "sha256:4c2381cf99abf749c82762a636337f4aba4800fda6525412fcae2bebe4f72748", size = 140025, upload-time = "2026-08-24T19:30:12.331Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.43.78"
+version = "1.43.79"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/67/71/490aaa384855bf3b69405ded52ae77a0e5f4eeb2165044fa65466c4d3a73/botocore-1.43.78.tar.gz", hash = "sha256:e8238d22c1e1342025d75d2e33d154a375e7caad0fc67f77d77faa2d82668b94", size = 15982895, upload-time = "2026-08-21T19:37:32.402Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/90/e67b32a388f5be5fa84adb92eb4be4d9bbe51a70fd4a208222bf6d428972/botocore-1.43.79.tar.gz", hash = "sha256:dcc0a97b65affcef80e0499745d2e6a5d120253c11b8727b8227df44ab3e958f", size = 15988663, upload-time = "2026-08-24T19:30:09.145Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/5b/b7c5c22767c0e8eb4bb2bd0a972d77bd0be3dd9908e15d4487094a31fa4b/botocore-1.43.78-py3-none-any.whl", hash = "sha256:ddd020493235e264b3bd12606f239a3d3b2dd7cfb1d25a0691061183c290c228", size = 15677214, upload-time = "2026-08-21T19:37:28.894Z" },
+    { url = "https://files.pythonhosted.org/packages/49/d5/f34b9313ca9db131ad7d74156e3459694ced17f81233a248bd00eb6d67b1/botocore-1.43.79-py3-none-any.whl", hash = "sha256:19b2c772ea2590d0baad6ae004a0e478cf2c982e0e6a39c8e2f882d9b2981445", size = 15680587, upload-time = "2026-08-24T19:30:04.397Z" },
 ]
 
 [[package]]
@@ -1892,6 +1892,18 @@ wheels = [
 ]
 
 [[package]]
+name = "hvac"
+version = "2.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e2/57/b46c397fb3842cfb02a44609aa834c887f38dd75f290c2fc5a34da4b2fee/hvac-2.4.0.tar.gz", hash = "sha256:e0056ad9064e7923e874e6769015b032580b639e29246f5ab1044f7959c1c7e0", size = 332543, upload-time = "2025-10-30T12:57:47.512Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/33/71e45a6bd6875f44a26f99da31c63b6840123e88bedf2c0b1ce429b8be12/hvac-2.4.0-py3-none-any.whl", hash = "sha256:008db5efd8c2f77bd37d2368ea5f713edceae1c65f11fd608393179478649e0f", size = 155921, upload-time = "2025-10-30T12:57:46.253Z" },
+]
+
+[[package]]
 name = "hyperframe"
 version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2353,7 +2365,7 @@ wheels = [
 
 [[package]]
 name = "locust"
-version = "2.46.3"
+version = "2.46.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "configargparse" },
@@ -2372,9 +2384,9 @@ dependencies = [
     { name = "requests" },
     { name = "werkzeug" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/f7/dfdbc33ad48daaeb3046688df0a461749db730282cc6b3558b7495ac36d6/locust-2.46.3.tar.gz", hash = "sha256:b1d313db9df0a4036d4d905b1dc8585d020a7299239a1bb2e2885b71389253c0", size = 1478452, upload-time = "2026-08-01T10:21:10.4Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/a1/6e2e204a14048fb49fcd4ff36ef7477f9188029f791a6d9b1d0905944e6a/locust-2.46.4.tar.gz", hash = "sha256:a5a5daf041bcd807053bfd86d8062740c76530beb47a6e28a43b9701a3effab9", size = 1478486, upload-time = "2026-08-24T09:03:45.43Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/59/2e/44a77d6c439d4482b86b422b1703f608593009e8e74a05715fcfd4cd03ac/locust-2.46.3-py3-none-any.whl", hash = "sha256:a51e03cc27280eb2770f5aefacc3eb4c290eafe0feb19c64fa3c99e31fa21265", size = 1498002, upload-time = "2026-08-01T10:21:08.744Z" },
+    { url = "https://files.pythonhosted.org/packages/09/51/6bc797d57628be30b45b207e25b50a45df842e2a887e0c4ae4776a60a4d1/locust-2.46.4-py3-none-any.whl", hash = "sha256:e48402a5ae3d3a5821ec38847c282f56cee810ff445bb6f887bc2b09f86f3edf", size = 1498060, upload-time = "2026-08-24T09:03:43.57Z" },
 ]
 
 [[package]]
@@ -2921,7 +2933,7 @@ wheels = [
 
 [[package]]
 name = "ocr-api"
-version = "0.20.0rc11"
+version = "0.20.0rc12"
 source = { virtual = "." }
 dependencies = [
     { name = "aiofiles" },
@@ -2930,6 +2942,7 @@ dependencies = [
     { name = "cryptography" },
     { name = "flower" },
     { name = "httpx" },
+    { name = "hvac" },
     { name = "minio" },
     { name = "psycopg2-binary" },
     { name = "pydantic-settings" },
@@ -3049,11 +3062,12 @@ version = [
 [package.metadata]
 requires-dist = [
     { name = "aiofiles", specifier = ">=25.1.0" },
-    { name = "boto3", specifier = ">=1.43.78" },
+    { name = "boto3", specifier = ">=1.43.79" },
     { name = "celery", extras = ["redis"], specifier = ">=5.6.3" },
     { name = "cryptography", specifier = ">=50.0.0" },
     { name = "flower", specifier = ">=2.1.0" },
     { name = "httpx", specifier = ">=0.28.1" },
+    { name = "hvac", specifier = ">=2.4.0" },
     { name = "minio", specifier = ">=7.2.20" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
@@ -3138,7 +3152,7 @@ services = [
     { name = "sentry-sdk", extras = ["celery"], specifier = ">=2.34.1" },
     { name = "unstructured", specifier = ">=0.27.1" },
 ]
-stress-test = [{ name = "locust", specifier = ">=2.46.3" }]
+stress-test = [{ name = "locust", specifier = ">=2.46.4" }]
 test = [
     { name = "coverage", specifier = ">=7.15.4" },
     { name = "datasets", specifier = ">=5.0.1" },

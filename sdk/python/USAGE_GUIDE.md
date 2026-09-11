@@ -87,6 +87,7 @@ import asyncio
 from pathlib import Path
 from ocr_sdk import AsyncOCRClient
 
+
 async def process_multiple_files(files):
     async with AsyncOCRClient("http://localhost:5000") as client:
         # Créer toutes les tâches
@@ -101,6 +102,7 @@ async def process_multiple_files(files):
         )
 
         return results
+
 
 # Utilisation
 files = ["doc1.pdf", "doc2.pdf", "doc3.pdf"]
@@ -143,7 +145,7 @@ interest_zones = [
         "interest_zone": [
             {"x": 0.1, "y": 0.1, "width": 0.8, "height": 0.3, "text": ""}
         ],
-        "labels": "header"
+        "labels": "header",
     }
 ]
 
@@ -151,7 +153,7 @@ with SyncOCRClient("http://localhost:5000") as client:
     task = client.create_job(
         "document.pdf",
         interest_zone=json.dumps(interest_zones),
-        task_operation=TaskOperation.OCR
+        task_operation=TaskOperation.OCR,
     )
 
     result = client.wait_for_task(task.id)
@@ -193,6 +195,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def process_with_error_handling(file_path):
     try:
         with SyncOCRClient("http://localhost:5000") as client:
@@ -216,6 +219,7 @@ def process_with_error_handling(file_path):
         logger.error(f"Erreur inattendue: {e}")
         return None
 
+
 # Utilisation
 text = process_with_error_handling("document.pdf")
 if text:
@@ -229,6 +233,7 @@ import time
 from ocr_sdk import SyncOCRClient
 from ocr_sdk.exceptions import OCRAPIError
 
+
 def process_with_retry(file_path, max_retries=3):
     with SyncOCRClient("http://localhost:5000") as client:
         for attempt in range(max_retries):
@@ -239,7 +244,7 @@ def process_with_retry(file_path, max_retries=3):
             except OCRAPIError as e:
                 if e.status_code >= 500 and attempt < max_retries - 1:
                     # Erreur serveur, retry avec backoff
-                    wait_time = 2 ** attempt
+                    wait_time = 2**attempt
                     print(f"Tentative {attempt + 1} échouée, retry dans {wait_time}s")
                     time.sleep(wait_time)
                 else:
@@ -255,6 +260,7 @@ from pathlib import Path
 from typing import Optional, List
 from ocr_sdk import SyncOCRClient, TaskModel, TaskStatus
 from ocr_sdk.exceptions import OCRAPIError, OCRTimeoutError
+
 
 class OCRService:
     """Service wrapper pour l'API OCR."""
@@ -329,6 +335,7 @@ class OCRService:
         with SyncOCRClient(self.api_url, self.api_key) as client:
             return client.get_user_tasks(page, page_size)
 
+
 # Utilisation
 if __name__ == "__main__":
     service = OCRService("http://localhost:5000")
@@ -357,6 +364,7 @@ import os
 app = FastAPI()
 OCR_API_URL = "http://localhost:5000"
 
+
 @app.post("/process-document")
 async def process_document(file: UploadFile):
     """Endpoint pour traiter un document."""
@@ -377,7 +385,7 @@ async def process_document(file: UploadFile):
                 "task_id": task.id,
                 "status": result.status,
                 "text": text,
-                "pages": result.output.total_pages if result.output else 0
+                "pages": result.output.total_pages if result.output else 0,
             }
     except OCRAPIError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)

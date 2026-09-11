@@ -114,10 +114,10 @@ metrics_config = {
         "f1_macro",
         "precision_micro",
         "recall_micro",
-        "f1_micro"
+        "f1_micro",
     ],
     "search_metrics": ["mrr", "recall_at_k"],
-    "performance_metrics": ["search_time", "memory_usage"]
+    "performance_metrics": ["search_time", "memory_usage"],
 }
 ```
 

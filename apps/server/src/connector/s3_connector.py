@@ -37,6 +37,21 @@ class S3Connector(BaseFileConnector):
             else:
                 raise e
 
+        # Best-effort : certains backends S3-compatibles (ex: MinIO sans KMS configuré)
+        # refusent PutBucketEncryption même pour du SSE-S3 AES256. Le chiffrement par
+        # objet posé explicitement dans save() (ExtraArgs ServerSideEncryption=AES256)
+        # reste actif dans tous les cas — ne pas bloquer le démarrage du service pour
+        # cette configuration de confort au niveau du bucket.
+        try:
+            self.client.put_bucket_encryption(
+                Bucket=self.bucket_name,
+                ServerSideEncryptionConfiguration={
+                    "Rules": [{"ApplyServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]
+                },
+            )
+        except ClientError as e:
+            logger.warning(f"Could not set default bucket encryption on {self.bucket_name}: {e}")
+
     def get_by_task_id(self, user_id: str, task_id: str) -> str:
         object_key = f"{user_id}/{task_id}"
         try:
@@ -92,7 +107,12 @@ class S3Connector(BaseFileConnector):
             filename = os.path.basename(file_path)
         object_key = f"{user_id}/{task_id}/{filename}"
         try:
-            self.client.upload_file(file_path, self.bucket_name, object_key)
+            self.client.upload_file(
+                file_path,
+                self.bucket_name,
+                object_key,
+                ExtraArgs={"ServerSideEncryption": "AES256"},
+            )
             return object_key
         except ClientError as e:
             raise Exception(f"Erreur lors de la sauvegarde du fichier : {e}")

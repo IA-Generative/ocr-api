@@ -448,6 +448,27 @@ api:
         scheme: "http"
         tlsConfig: {}
 
+# Backfill job test configuration (chiffrement au repos, cf. jobs.encrypt-backfill dans
+# values.yaml) - vérifie que ce Job additionnel rend/lint correctement, avec le provider Vault
+# (plutôt que "local") pour exercer aussi cette forme de valueFrom.
+jobs:
+  encrypt-backfill:
+    env:
+      DATABASE_URL:
+        valueFrom:
+          secretKeyRef:
+            name: "ocr-postgres"
+            key: "uri"
+      ENCRYPTION_PROVIDER: "vault"
+      VAULT_ADDR: "https://vault.example.com"
+      VAULT_TOKEN:
+        valueFrom:
+          secretKeyRef:
+            name: "ocr-vault"
+            key: "token"
+      VAULT_TRANSIT_KEY_NAME: "ocr-api-task-content"
+      VAULT_TRANSIT_MOUNT_PATH: "transit"
+
 extraObjects:
   my-configmap:
     apiVersion: v1

@@ -7,6 +7,11 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      # KMS statique requis par MinIO pour supporter le SSE-S3 (AES256) — sans ça,
+      # PutBucketEncryption/PutObject avec ServerSideEncryption échouent avec
+      # "Server side encryption specified but KMS is not configured". Clé locale au
+      # dev, sans lien avec un quelconque secret de prod.
+      MINIO_KMS_SECRET_KEY: "dev-sse-key:OmmYOySORcWY9VWDt3yDB/e7vPMrRaMT1aHGI6f3rzg="
     volumes:
       - minio_data:/data
     command: server /data

@@ -46,6 +46,7 @@ def test_get_task_by_id(mock_get_task_by_id):
         "extras": {"key": "value"},
         "content_hash": None,
         "group_id": None,
+        "output_encrypted": False,
     }
 
 

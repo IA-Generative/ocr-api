@@ -84,6 +84,7 @@ with SyncOCRClient("http://localhost:5000") as client:
 import asyncio
 from ocr_sdk import AsyncOCRClient
 
+
 async def process_document():
     async with AsyncOCRClient("http://localhost:5000") as client:
         # Create and wait for job
@@ -93,6 +94,7 @@ async def process_document():
         # Get text
         text = await client.get_task_text(task.id)
         print(text)
+
 
 asyncio.run(process_document())
 ```
@@ -170,8 +172,8 @@ Both clients have the same methods (async methods use `await`):
 ```python
 client = SyncOCRClient(
     base_url="http://localhost:5000",  # API URL
-    api_key="your-token",               # Optional auth token
-    timeout=30.0                        # Request timeout in seconds
+    api_key="your-token",  # Optional auth token
+    timeout=30.0,  # Request timeout in seconds
 )
 ```
 

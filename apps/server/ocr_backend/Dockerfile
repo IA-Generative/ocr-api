@@ -19,6 +19,7 @@ RUN uv sync --no-cache --group ocr-backend --group migration \
     && uv cache clean
 
 COPY apps/server/ocr_backend /app/ocr_backend
+COPY apps/server/ocr_encrypt_backfill /app/ocr_encrypt_backfill
 COPY apps/server/src /app/src
 COPY alembic.ini /app/
 COPY apps/server/migration /app/migration
