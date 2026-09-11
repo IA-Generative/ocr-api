@@ -29,6 +29,21 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.12](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.11...v0.20.0-rc.12) (2026-09-11)
+
+
+### Features
+
+* **auth,sdk:** add refresh token support end-to-end ([afb61ca](https://github.com/IA-Generative/ocr-api/commit/afb61cac45e03fe7964046cc014259ed9d69f536))
+* **auth:** add a password-grant token endpoint for non-browser clients ([bfdb8e4](https://github.com/IA-Generative/ocr-api/commit/bfdb8e41d66e6044679d135bc8b03fd1ad9b6c83))
+* **sdk:** add a TypeScript/Node.js SDK (sdk/js) ([b5bbf1d](https://github.com/IA-Generative/ocr-api/commit/b5bbf1d247e7fcaa0eaba4c10a2919bf6f7e98a9))
+* **sdk:** sync client routes/schemas with the API, add login() ([5bfb43b](https://github.com/IA-Generative/ocr-api/commit/5bfb43b3a66e28d441e58e5ac53a29840d581be0))
+
+
+### Code Refactoring
+
+* **sdk:** move the Python SDK into sdk/python ([8f0ac21](https://github.com/IA-Generative/ocr-api/commit/8f0ac21417fdd27d8f7bbaa91407b8e377ad5682))
+
 ## [0.20.0-rc.11](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.10...v0.20.0-rc.11) (2026-09-10)
 
 
