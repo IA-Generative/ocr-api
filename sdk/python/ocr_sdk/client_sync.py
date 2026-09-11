@@ -53,6 +53,7 @@ class SyncOCRClient:
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.timeout = timeout
+        self._refresh_token: Optional[str] = None
         self._client: Optional[httpx.Client] = None
 
     def __enter__(self):
@@ -84,9 +85,13 @@ class SyncOCRClient:
         self,
         method: str,
         endpoint: str,
+        _retry_on_401: bool = True,
         **kwargs,
     ) -> httpx.Response:
-        """Make an HTTP request."""
+        """Make an HTTP request. A 401 is retried once after a silent token refresh
+        if a refresh token is available (see `login`/`refresh`) - `_retry_on_401` is
+        set to `False` internally on that retry, and by `login`/`_try_refresh`
+        themselves, so a failing auth call never loops."""
         self._ensure_client()
 
         try:
@@ -96,10 +101,37 @@ class SyncOCRClient:
         except httpx.TimeoutException as e:
             raise OCRTimeoutError(f"Request timed out: {e}")
         except httpx.HTTPStatusError as e:
+            if e.response.status_code == 401 and _retry_on_401 and self._try_refresh():
+                return self._request(method, endpoint, _retry_on_401=False, **kwargs)
             raise OCRAPIError(
                 status_code=e.response.status_code,
                 message=e.response.text,
             )
+
+    def _set_tokens(self, data: dict) -> None:
+        self.api_key = data["access_token"]
+        self._refresh_token = data.get("refresh_token")
+        if self._client is not None:
+            self._client.headers["Authorization"] = f"Bearer {self.api_key}"
+
+    def _try_refresh(self) -> bool:
+        """Best-effort refresh, used internally by `_request` on a 401. Returns
+        False (never raises) if there is no refresh token or the exchange fails -
+        the caller falls back to surfacing the original 401 as `OCRAPIError`."""
+        if not self._refresh_token:
+            return False
+        try:
+            response = self._request(
+                "POST",
+                "/api/auth/refresh",
+                _retry_on_401=False,
+                json={"refresh_token": self._refresh_token},
+            )
+        except OCRAPIError:
+            self._refresh_token = None
+            return False
+        self._set_tokens(response.json())
+        return True
 
     def login(self, username: str, password: str) -> None:
         """Authenticate with a Keycloak username/password, and use the resulting
@@ -109,6 +141,11 @@ class SyncOCRClient:
         exchange server-side (the client secret never leaves the backend, and the
         SDK never talks to Keycloak directly). Requires the Keycloak client to have
         "Direct Access Grants" enabled.
+
+        The access token this returns is short-lived (5 minutes by default in
+        Keycloak); a `refresh_token` is also stored, and used automatically to
+        get a new access token whenever a request hits a 401 - `refresh()` is
+        only needed to renew it ahead of time, e.g. before a long idle period.
 
         Args:
             username: Keycloak username (or email, depending on realm config)
@@ -121,14 +158,32 @@ class SyncOCRClient:
             response = self._request(
                 "POST",
                 "/api/auth/token",
+                _retry_on_401=False,
                 json={"username": username, "password": password},
             )
         except OCRAPIError as e:
             raise OCRAuthenticationError(f"Login failed: {e.message}")
 
-        self.api_key = response.json()["access_token"]
-        if self._client is not None:
-            self._client.headers["Authorization"] = f"Bearer {self.api_key}"
+        self._set_tokens(response.json())
+
+    def refresh(self) -> None:
+        """Exchange the stored refresh token for a new access/refresh token pair.
+
+        Not required for normal use - `_request` already calls this automatically
+        the first time a request gets a 401. Useful to renew proactively (e.g.
+        before a long idle period) rather than reactively.
+
+        Raises:
+            OCRAuthenticationError: If there is no refresh token (call `login()`
+                first) or Keycloak rejects it (expired/already used/revoked) -
+                call `login()` again in that case.
+        """
+        if not self._refresh_token:
+            raise OCRAuthenticationError(
+                "No refresh token available - call login() first"
+            )
+        if not self._try_refresh():
+            raise OCRAuthenticationError("Token refresh failed - call login() again")
 
     def get_health(self) -> Health:
         """Get health status of the API.

@@ -21,8 +21,13 @@ class PasswordGrantRequest(BaseModel):
 
 class PasswordGrantResponse(BaseModel):
     access_token: str
+    refresh_token: str
     expires_in: int
     token_type: str = "Bearer"
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 
 _keycloak_openid = keycloak_client.keycloak_openid
@@ -184,6 +189,42 @@ async def token(request: Request, body: PasswordGrantRequest):
 
     return PasswordGrantResponse(
         access_token=token_response["access_token"],
+        refresh_token=token_response["refresh_token"],
+        expires_in=token_response["expires_in"],
+    )
+
+
+@router.post(
+    "/refresh",
+    response_model=PasswordGrantResponse,
+    summary="Exchange a refresh token for a new access token (non-browser clients)",
+    description=(
+        "Companion to `POST /token`: once the access token it returned expires "
+        "(5 minutes by default in Keycloak), call this with the `refresh_token` from "
+        "that same response instead of re-authenticating with a password. Returns a "
+        "new access/refresh token pair - Keycloak rotates the refresh token on every "
+        "use, so callers must store the new one and discard the old."
+    ),
+    responses={
+        401: {"description": "Refresh token invalid, expired, or already used"},
+        429: {"description": "Too many attempts from this client"},
+    },
+)
+async def refresh(request: Request, body: RefreshTokenRequest):
+    client_ip = request.client.host if request.client else "unknown"
+    if not _session_store.check_rate_limit(f"refresh:{client_ip}", _LOGIN_RATE_LIMIT, _LOGIN_RATE_LIMIT_WINDOW_SECONDS):
+        logger.warning("Rate-limiting /api/auth/refresh for %s", client_ip)
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="TOO_MANY_REQUESTS")
+
+    try:
+        token_response = _keycloak_openid.refresh_token(body.refresh_token)
+    except Exception:
+        logger.warning("Refresh token exchange failed for %s", client_ip)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="INVALID_REFRESH_TOKEN")
+
+    return PasswordGrantResponse(
+        access_token=token_response["access_token"],
+        refresh_token=token_response["refresh_token"],
         expires_in=token_response["expires_in"],
     )
 

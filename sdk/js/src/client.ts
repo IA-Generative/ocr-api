@@ -80,6 +80,7 @@ export class OCRClient {
   private readonly baseUrl: string
   private readonly timeoutMs: number
   private apiKey?: string
+  private refreshToken?: string
 
   constructor (baseUrl: string, options: OCRClientOptions = {}) {
     this.baseUrl = baseUrl.replace(/\/+$/, '')
@@ -87,7 +88,17 @@ export class OCRClient {
     this.apiKey = options.apiKey
   }
 
-  private async request (path: string, init: RequestInit = {}, timeoutMs = this.timeoutMs): Promise<Response> {
+  /**
+   * A 401 is retried once after a silent token refresh if a refresh token is
+   * available (see `login`/`refresh`) - `retryOn401: false` is passed internally on
+   * that retry, and by `login`/`tryRefresh` themselves, so a failing auth call never
+   * loops.
+   */
+  private async request (
+    path: string,
+    init: RequestInit = {},
+    { timeoutMs = this.timeoutMs, retryOn401 = true }: { timeoutMs?: number, retryOn401?: boolean } = {},
+  ): Promise<Response> {
     const headers = new Headers(init.headers)
     if (this.apiKey) {
       headers.set('Authorization', `Bearer ${this.apiKey}`)
@@ -111,10 +122,47 @@ export class OCRClient {
     }
 
     if (!response.ok) {
+      if (response.status === 401 && retryOn401 && await this.tryRefresh()) {
+        return this.request(path, init, { timeoutMs, retryOn401: false })
+      }
       const body = await response.text().catch(() => '')
       throw new OCRAPIError(response.status, body)
     }
     return response
+  }
+
+  private setTokens (data: { access_token: string, refresh_token?: string }): void {
+    this.apiKey = data.access_token
+    this.refreshToken = data.refresh_token
+  }
+
+  /**
+   * Best-effort refresh, used internally by `request` on a 401. Returns `false`
+   * (never throws) if there is no refresh token or the exchange fails - the caller
+   * falls back to surfacing the original 401 as `OCRAPIError`.
+   */
+  private async tryRefresh (): Promise<boolean> {
+    if (!this.refreshToken) {
+      return false
+    }
+    let response: Response
+    try {
+      response = await this.request(
+        '/api/auth/refresh',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: this.refreshToken }),
+        },
+        { retryOn401: false },
+      )
+    }
+    catch {
+      this.refreshToken = undefined
+      return false
+    }
+    this.setTokens((await response.json()) as { access_token: string, refresh_token: string })
+    return true
   }
 
   /**
@@ -124,17 +172,25 @@ export class OCRClient {
    * Calls this API's own `POST /api/auth/token`, which performs the Keycloak exchange
    * server-side (the client secret never leaves the backend, and the SDK never talks
    * to Keycloak directly). Requires the Keycloak client to have "Direct Access Grants"
-   * enabled. The returned token expires (5 minutes by default in Keycloak) - call
-   * `login()` again once it does.
+   * enabled.
+   *
+   * The access token this returns is short-lived (5 minutes by default in Keycloak);
+   * a refresh token is also stored, and used automatically to get a new access token
+   * whenever a request hits a 401 - `refresh()` is only needed to renew it ahead of
+   * time, e.g. before a long idle period.
    */
   async login (username: string, password: string): Promise<void> {
     let response: Response
     try {
-      response = await this.request('/api/auth/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      })
+      response = await this.request(
+        '/api/auth/token',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+        },
+        { retryOn401: false },
+      )
     }
     catch (err) {
       if (err instanceof OCRAPIError) {
@@ -143,8 +199,27 @@ export class OCRClient {
       throw err
     }
 
-    const { access_token: accessToken } = (await response.json()) as { access_token: string }
-    this.apiKey = accessToken
+    this.setTokens((await response.json()) as { access_token: string, refresh_token: string })
+  }
+
+  /**
+   * Exchange the stored refresh token for a new access/refresh token pair.
+   *
+   * Not required for normal use - `request` already calls this automatically the
+   * first time a request gets a 401. Useful to renew proactively (e.g. before a long
+   * idle period) rather than reactively.
+   *
+   * @throws {OCRAuthenticationError} If there is no refresh token (call `login()`
+   * first) or Keycloak rejects it (expired/already used/revoked) - call `login()`
+   * again in that case.
+   */
+  async refresh (): Promise<void> {
+    if (!this.refreshToken) {
+      throw new OCRAuthenticationError('No refresh token available - call login() first')
+    }
+    if (!await this.tryRefresh()) {
+      throw new OCRAuthenticationError('Token refresh failed - call login() again')
+    }
   }
 
   /** Get health status of the API. */
@@ -275,7 +350,7 @@ export class OCRClient {
           'Content-Type': options.mimeType ?? guessMimeType(filePath),
         },
       },
-      Math.max(this.timeoutMs, (maxWaitTimeSeconds + 10) * 1000),
+      { timeoutMs: Math.max(this.timeoutMs, (maxWaitTimeSeconds + 10) * 1000) },
     )
     return (await response.json()) as ProcessResponse[]
   }

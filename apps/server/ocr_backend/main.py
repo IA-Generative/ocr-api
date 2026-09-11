@@ -57,8 +57,9 @@ app = FastAPI(
         {
             "name": "Auth",
             "description": "Backend-for-frontend (BFF) Keycloak session for the browser SPA "
-            "(`/login`, `/callback`, `/logout`, `/me`), plus `POST /token` for non-browser "
-            "clients (scripts, the SDK) to get an access token from a username/password.",
+            "(`/login`, `/callback`, `/logout`, `/me`), plus `POST /token`/`POST /refresh` "
+            "for non-browser clients (scripts, the SDK) to get and renew an access token "
+            "from a username/password.",
         },
     ],
 )
