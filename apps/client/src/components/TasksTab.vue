@@ -10,6 +10,14 @@ import ProgressBar from './ProgressBar.vue'
 type TaskModel = components['schemas']['TaskModel']
 type SortableTaskKey = 'type' | 'percentage' | 'created_at' | 'updated_at'
 
+const props = defineProps<{
+  /** Whether this tab is the one currently visible (e.g. `activeTabIndex === 1` in
+   * the parent) - `CustomTabs` keeps every tab mounted (`v-show`, not `v-if`), so
+   * without this the list only ever loads once and goes stale as soon as the user
+   * switches away and back. */
+  isActive?: boolean
+}>()
+
 const store = useTasksStore()
 const router = useRouter()
 const http = createHttpClient(OCR_API_URL)
@@ -93,6 +101,14 @@ watch(currentPage, (page) => {
   void loadPage(page)
 })
 
+// Reload whenever the tab becomes the visible one, so switching back to it after
+// creating/finishing a task shows current data instead of whatever was last fetched.
+watch(() => props.isActive, (active) => {
+  if (active) {
+    void loadPage(currentPage.value)
+  }
+})
+
 onMounted(() => {
   void loadPage(currentPage.value)
 })
@@ -162,15 +178,27 @@ function formatDate (ts: number | null | undefined) {
 
 <template>
   <div class="task-container fr-container">
-    <h2 class="fr-h2">
-      Liste des tâches
-      <span
-        v-if="store.userTasksPaginated?.total"
-        class="fr-text--sm task-total"
-      >
-        ({{ store.userTasksPaginated.total }} au total)
-      </span>
-    </h2>
+    <div class="task-header">
+      <h2 class="fr-h2 task-header-title">
+        Liste des tâches
+        <span
+          v-if="store.userTasksPaginated?.total"
+          class="fr-text--sm task-total"
+        >
+          ({{ store.userTasksPaginated.total }} au total)
+        </span>
+      </h2>
+
+      <DsfrButton
+        size="sm"
+        priority="secondary"
+        icon="fr-icon-refresh-line"
+        :icon-only="false"
+        :disabled="store.loading"
+        :label="store.loading ? 'Mise à jour…' : 'Mettre à jour'"
+        @click="loadPage(currentPage)"
+      />
+    </div>
 
     <div class="task-sort-bar">
       <span class="fr-text--sm task-sort-label">Trier par :</span>
@@ -258,6 +286,18 @@ function formatDate (ts: number | null | undefined) {
 <style scoped>
 .task-container {
   padding: 20px;
+}
+
+.task-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.task-header-title {
+  margin-bottom: 0;
 }
 
 .task-sort-bar {

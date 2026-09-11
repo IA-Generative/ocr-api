@@ -174,7 +174,7 @@ onBeforeUnmount(() => {
         </template>
 
         <template #tab-1-content>
-          <TasksTab />
+          <TasksTab :is-active="activeTabIndex === 1" />
         </template>
       </CustomTabs>
 
