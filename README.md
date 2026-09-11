@@ -136,8 +136,20 @@ no_proxy=minio
 PROCESS_NAME="mixed-classic-and-vlm"
 WORKER_NAME=worker.tasks.ocr
 DEVICE=cpu
+```
 
-````
+Liste complète des variables (obligatoires/optionnelles, description, valeur par défaut) : [`docs/variables.md`](docs/variables.md).
+
+---
+
+## Authentification
+
+L'API accepte deux modes d'authentification, sur les mêmes routes :
+
+- **Clé API statique** — `Authorization: Bearer <clé>`, la clé venant de la variable `API_KEYS`.
+- **Identité Keycloak réelle** — via le flow BFF du frontend (cookie de session), ou via `POST /api/auth/token` (username/password) pour un script/SDK, avec renouvellement automatique du jeton (`POST /api/auth/refresh`).
+
+Pour configurer un client Keycloak côté console d'administration (redirect URIs, rôles, mapper `groups`...) : [`docs/keycloak-setup.md`](docs/keycloak-setup.md).
 
 ---
 
@@ -156,10 +168,13 @@ Cette commande construit les images si nécessaire et démarre tous les containe
 ## Accès aux services
 
 - API OCR (FastAPI) : [http://localhost:5000](http://localhost:5000)
+  — Documentation Swagger : [http://localhost:5000/api/docs](http://localhost:5000/api/docs)
+- Frontend (Vue) : [http://localhost:8081](http://localhost:8081)
+- Keycloak (dev, realm auto-provisionné) : [http://localhost:8080](http://localhost:8080)
+  — Admin : `admin` / `admin`
 - Interface MinIO : [http://localhost:9001](http://localhost:9001)
   — Identifiant : `minioadmin`
   — Mot de passe : `minioadmin`
-- Monitoring Celery (Flower) : [http://localhost:5555](http://localhost:5555)
 
 ---
 
@@ -181,19 +196,26 @@ docker compose down -v
 
 ## Tester l’API
 
-Tu peux tester l’API OCR avec un script simple, par exemple :
+📖 **Documentation interactive (Swagger)** : [http://localhost:5000/api/docs](http://localhost:5000/api/docs) — toutes les routes, leurs paramètres et leurs réponses, testables directement depuis le navigateur. Version ReDoc : [http://localhost:5000/api/redocs](http://localhost:5000/api/redocs).
+
+Les routes nécessitent une authentification, soit une clé API statique (`Authorization: Bearer <clé>`, voir `API_KEYS` dans [`docs/variables.md`](docs/variables.md)), soit un utilisateur Keycloak (voir [Authentification](#authentification) ci-dessus).
+
+Envoyer un fichier à traiter :
 
 ```bash
-curl -X POST "http://localhost:5000/jobs/ton_user_id" \
-  -F "file=@/chemin/vers/ton/fichier.jpg"
+curl -X POST "http://localhost:5000/api/jobs/" \
+  -H "Authorization: Bearer <ta_clé_api>" \
+  -F "file=@/chemin/vers/ton/fichier.pdf"
 ```
 
-Obtenir l'état de la taches :
+Obtenir l'état de la tâche (l'`id` renvoyé par l'appel précédent) :
 
 ```bash
-curl -X GET "http://localhost:5000/tasks/ton_task_id"
+curl -X GET "http://localhost:5000/api/tasks/<task_id>" \
+  -H "Authorization: Bearer <ta_clé_api>"
 ```
-Vous pouvez aussi passé par l'ui dédié [Frontend](#frontend)
+
+Tu peux aussi passer par l'ui dédiée [Frontend](#frontend), ou par l'un des [SDKs](#sdks) ci-dessus.
 
 ---
 
