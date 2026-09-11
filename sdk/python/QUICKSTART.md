@@ -111,8 +111,11 @@ with SyncOCRClient("http://localhost:5000") as client:
     task = client.create_job("document.pdf")
 ```
 
-The access token expires (5 minutes by default in Keycloak) - call `login()` again once
-it does.
+The access token expires (5 minutes by default in Keycloak), but a refresh token is
+stored too and used automatically to renew it whenever a request hits a 401 - no need
+to call `login()` again yourself. Call `client.refresh()` to renew proactively, or
+catch `OCRAuthenticationError` and call `login()` again if the refresh token itself has
+expired.
 
 ## Import in Your Project
 
@@ -142,6 +145,7 @@ Check the `examples/` directory for complete usage examples:
 Both clients have the same methods (async methods use `await`):
 
 - `login(username, password)` - Authenticate as a Keycloak user (see above)
+- `refresh()` - Proactively renew the access token (called automatically on a 401)
 - `get_health()` - Get API health status
 - `create_job(file_path, ...)` - Upload file and create OCR job
 - `create_job_from_youtube(url, ...)` - Create a job from a YouTube URL

@@ -124,6 +124,70 @@ describe('ocrClient', () => {
     await expect(client.login('user@example.com', 'wrong')).rejects.toBeInstanceOf(OCRAuthenticationError)
   })
 
+  it('a 401 triggers a silent refresh and retries the original request once', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ access_token: 'tok-1', refresh_token: 'refresh-1', expires_in: 300 }))
+    fetchMock.mockResolvedValueOnce(new Response('expired', { status: 401 }))
+    fetchMock.mockResolvedValueOnce(jsonResponse({ access_token: 'tok-2', refresh_token: 'refresh-2', expires_in: 300 }))
+    fetchMock.mockResolvedValueOnce(jsonResponse(makeTask({ status: 'queued' })))
+
+    const client = new OCRClient('http://localhost:5000')
+    await client.login('user@example.com', 'hunter2')
+
+    const task = await client.getTask('task-1')
+
+    expect(task.status).toBe('queued')
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    const [refreshUrl, refreshInit] = fetchMock.mock.calls[2]!
+    expect(refreshUrl).toBe('http://localhost:5000/api/auth/refresh')
+    expect(JSON.parse(refreshInit.body as string)).toEqual({ refresh_token: 'refresh-1' })
+    const [, retryInit] = fetchMock.mock.calls[3]!
+    const headers = new Headers(retryInit.headers)
+    expect(headers.get('Authorization')).toBe('Bearer tok-2')
+  })
+
+  it('a 401 with no refresh token available surfaces as OCRAPIError, no retry', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('unauthorized', { status: 401 }))
+
+    const client = new OCRClient('http://localhost:5000', { apiKey: 'static-key' })
+
+    await expect(client.getTask('task-1')).rejects.toMatchObject({ constructor: OCRAPIError, statusCode: 401 })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('a 401 with an expired refresh token surfaces the original 401, no infinite loop', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ access_token: 'tok-1', refresh_token: 'refresh-1', expires_in: 300 }))
+    fetchMock.mockResolvedValueOnce(new Response('expired', { status: 401 }))
+    fetchMock.mockResolvedValueOnce(new Response('invalid refresh token', { status: 401 }))
+
+    const client = new OCRClient('http://localhost:5000')
+    await client.login('user@example.com', 'hunter2')
+
+    await expect(client.getTask('task-1')).rejects.toMatchObject({ constructor: OCRAPIError, statusCode: 401 })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('refresh() updates the stored tokens', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ access_token: 'tok-1', refresh_token: 'refresh-1', expires_in: 300 }))
+    fetchMock.mockResolvedValueOnce(jsonResponse({ access_token: 'tok-2', refresh_token: 'refresh-2', expires_in: 300 }))
+    fetchMock.mockResolvedValueOnce(jsonResponse({ name: 'x', version: '1', up_time: '1s' }))
+
+    const client = new OCRClient('http://localhost:5000')
+    await client.login('user@example.com', 'hunter2')
+    await client.refresh()
+    await client.getHealth()
+
+    const [, healthInit] = fetchMock.mock.calls[2]!
+    const headers = new Headers(healthInit.headers)
+    expect(headers.get('Authorization')).toBe('Bearer tok-2')
+  })
+
+  it('refresh() throws OCRAuthenticationError when no refresh token is available', async () => {
+    const client = new OCRClient('http://localhost:5000', { apiKey: 'static-key' })
+
+    await expect(client.refresh()).rejects.toBeInstanceOf(OCRAuthenticationError)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('getUserTasks() encodes pagination params and returns the paginated envelope', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ total: 1, page: 2, page_size: 5, items: [makeTask()] }))
 
