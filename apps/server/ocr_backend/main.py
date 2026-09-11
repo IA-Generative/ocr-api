@@ -56,9 +56,9 @@ app = FastAPI(
         {"name": "Health", "description": "Liveness/readiness check for this API and its dependencies."},
         {
             "name": "Auth",
-            "description": "Backend-for-frontend (BFF) Keycloak session for the browser SPA. Not "
-            "usable from a script/API client - see the `Jobs`/`Tasks`/etc. routes for "
-            "the `Authorization: Bearer <API key>` alternative.",
+            "description": "Backend-for-frontend (BFF) Keycloak session for the browser SPA "
+            "(`/login`, `/callback`, `/logout`, `/me`), plus `POST /token` for non-browser "
+            "clients (scripts, the SDK) to get an access token from a username/password.",
         },
     ],
 )
