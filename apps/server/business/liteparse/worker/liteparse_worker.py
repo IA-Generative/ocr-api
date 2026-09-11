@@ -6,6 +6,7 @@ from services.base.worker import BaseWorker
 from services.base.cache import BaseCache
 from src.connector.s3_connector import S3Connector
 from src.logger import logger
+from src.schemas.output import Page
 from src.schemas.task import TaskModel, TaskOperation
 
 from business.liteparse.models.liteparse_model import LITEPARSE_CONTENT_TYPES
@@ -46,7 +47,34 @@ class LiteparseWorker(BaseWorker):
         return [content]
 
     def predict_on_pages(self, task: TaskModel, pages: List[Image.Image], save_image: bool = True) -> TaskModel:
-        # `pages` here are actually raw file bytes, not PIL images — LiteparseExtractionModel
-        # already uploads its own page screenshots and sets Page.page_url itself,
-        # so skip BaseWorker's generic image.save() upload step.
-        return super().predict_on_pages(task=task, pages=pages, save_image=False)
+        """`pages` here is always `[raw_file_bytes]` (see `transform_content` above) —
+        a single uploaded file, not one item per document page. `LiteparseExtractionModel
+        .batch_predict` internally expands that one file into any number of real pages/
+        slides (one per DOCX page, PPTX slide, CSV...). `BaseWorker.predict_on_pages` /
+        `_predict_on_ocr_batch` assume a strict 1-input-item : 1-output-page mapping and
+        only ever keep the first page of that expansion, silently dropping the rest for
+        any multi-page/multi-slide document — override the whole thing instead of
+        letting the base class truncate it.
+
+        LiteparseExtractionModel also already uploads its own page screenshots and sets
+        `Page.page_url` itself, so this skips BaseWorker's generic image.save() upload
+        step the same way the previous implementation did (there is no `save_image` path
+        here at all now, since we never call `_upload_page_image`).
+        """
+        task = self.set_output(task=task, total_pages=len(pages))
+        task.output.pages = []
+        task.output.text = ""
+
+        partial_result: List[Page] = []
+        for model in self.models:
+            model.set_current_task(task)
+            partial_result = model.batch_predict(images=pages, pages=partial_result)
+
+        task.output.pages = partial_result
+        task.output.total_pages = len(partial_result)
+
+        if not partial_result:
+            task.output.set_text()
+            return task
+
+        return self._checkpoint_progress(task, len(partial_result))
