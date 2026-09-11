@@ -29,6 +29,14 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0-rc.13](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.12...v0.20.0-rc.13) (2026-09-11)
+
+
+### Bug Fixes
+
+* **client:** keep the tasks tab up to date, add a manual refresh button ([5e9982c](https://github.com/IA-Generative/ocr-api/commit/5e9982cafeca3b46dbcf1a792e278b125ecca682))
+* **worker:** stop dropping pages 2+ of multi-page DOCX/PPTX/etc results ([883b987](https://github.com/IA-Generative/ocr-api/commit/883b987d58bae1a8b5ed13cf4fb86b5504bdac14))
+
 ## [0.20.0-rc.12](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.11...v0.20.0-rc.12) (2026-09-11)
 
 
