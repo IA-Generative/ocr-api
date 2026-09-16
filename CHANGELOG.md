@@ -29,6 +29,74 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.0](https://github.com/IA-Generative/ocr-api/compare/v0.19.11...v0.20.0) (2026-09-16)
+
+
+### Features
+
+* **auth,sdk:** add refresh token support end-to-end ([9a474ae](https://github.com/IA-Generative/ocr-api/commit/9a474ae5911a1abca7c256a710b700193e1dacc9))
+* **auth:** add a password-grant token endpoint for non-browser clients ([8777993](https://github.com/IA-Generative/ocr-api/commit/87779932ac7150515b97154c7d0357a1105b9764))
+* **bakend:** add auth other backend only ([d355acf](https://github.com/IA-Generative/ocr-api/commit/d355acf2793da7c4d45359a3fb9da75a99533010))
+* **client:** add GitHub and API docs links to the footer ([c84e780](https://github.com/IA-Generative/ocr-api/commit/c84e7809285726f4505e6d60a8f9eb653746b7bb))
+* **client:** display tasks as a tile grid instead of a table ([ec15ade](https://github.com/IA-Generative/ocr-api/commit/ec15ade25c921f90b2c4df203d9854430751a888))
+* gpu available ([7effe35](https://github.com/IA-Generative/ocr-api/commit/7effe355a90d3c72f7b213d4cd624b163872a4c2))
+* **sdk:** add a TypeScript/Node.js SDK (sdk/js) ([c3b5db2](https://github.com/IA-Generative/ocr-api/commit/c3b5db2b45c9212e88ee6979cf3b922fbd8b8c39))
+* **sdk:** sync client routes/schemas with the API, add login() ([56b9d29](https://github.com/IA-Generative/ocr-api/commit/56b9d29ae2af36c188ee257439e8027dcd4c6375))
+
+
+### Bug Fixes
+
+* **auth:** add API_KEYS for machine-to-machine authentication ([96e9c4e](https://github.com/IA-Generative/ocr-api/commit/96e9c4e3515de54b010af38729ee9ba8e4479dac))
+* **auth:** end the Keycloak SSO session on logout ([b4f16a2](https://github.com/IA-Generative/ocr-api/commit/b4f16a229b083a1c17e660f19684c08e6ec9cf4d))
+* **auth:** rate-limit /api/auth/login per client IP ([0905ab9](https://github.com/IA-Generative/ocr-api/commit/0905ab97a68d5b6bd919880f8cd7da91c63c9284))
+* **auth:** reject cross-site logout requests as CSRF defense in depth ([0d3bf39](https://github.com/IA-Generative/ocr-api/commit/0d3bf390f741610dc2cf76a3695eaac703ebf98a))
+* **auth:** remove the VITE_SSO_BYPASS frontend auth-guard bypass ([ae03b43](https://github.com/IA-Generative/ocr-api/commit/ae03b43292b49a53d4cc89228d9edd2aab288f33))
+* **auth:** route login through keycloak-js and pin the redirect_uri ([9ce9d3e](https://github.com/IA-Generative/ocr-api/commit/9ce9d3e125852fde748ad53e21581845f595ed3d))
+* **auth:** stop trusting empty-subject/introspection claims and freeze roles ([ac1f26d](https://github.com/IA-Generative/ocr-api/commit/ac1f26db833dc25158409770a6ab9b39eab9cde5))
+* **auth:** strip OIDC response params before Keycloak check-sso ([fed37aa](https://github.com/IA-Generative/ocr-api/commit/fed37aa29de52755d5ba3d25553a9e7737e52c50))
+* **auth:** strip trailing slash from BACKEND_PUBLIC_URL too ([0d3cf18](https://github.com/IA-Generative/ocr-api/commit/0d3cf183ceb625e030811053d739120cfc1952db))
+* **ci:** tag Harbor images with the chart appVersion ([1b51ed5](https://github.com/IA-Generative/ocr-api/commit/1b51ed5104d8ef4cb5f17b87cc1bcb2d169afa13))
+* **client:** correct pagination cursor and default bounding boxes display ([55c8d3c](https://github.com/IA-Generative/ocr-api/commit/55c8d3c574ae7b2e31299fda18286aee9e9ea7b8))
+* **client:** install from the committed lockfile in the Docker image ([c69e3c0](https://github.com/IA-Generative/ocr-api/commit/c69e3c09b5803a7ee048a59bd6da7af9fbb24e19))
+* **client:** install libatomic1 for pnpm's native binary in the slim image ([1142d8e](https://github.com/IA-Generative/ocr-api/commit/1142d8e22f8cd8eca20d4666cde151348ab77282))
+* **client:** keep the tasks tab up to date, add a manual refresh button ([f048142](https://github.com/IA-Generative/ocr-api/commit/f048142c6b6ab1ea457811a0ce3434ae18cad0db))
+* delete commitizen ([3d9fdb6](https://github.com/IA-Generative/ocr-api/commit/3d9fdb6c6543cf8403a26bd493008b8c3522e378))
+* **deps:** bump aiohttp, h2, tornado and transformers (darwin) to patched versions ([06cbb4e](https://github.com/IA-Generative/ocr-api/commit/06cbb4eb7f32081cfb3508a690e659ebba1b0db6))
+* **deps:** pin transitive npm packages to patched versions via pnpm overrides ([bff9a87](https://github.com/IA-Generative/ocr-api/commit/bff9a87c9ad1d1e67b0625aa3cbbbea4d14059ba))
+* **frontend:** handle nullable percentage in the task sort comparator ([27c3db6](https://github.com/IA-Generative/ocr-api/commit/27c3db6c7c63a3bc0ed1bf503fc9e00ab6cf73c0))
+* **frontend:** paginate the user tasks list correctly ([ef3737b](https://github.com/IA-Generative/ocr-api/commit/ef3737b4bda22deee93a603d52d0665010466699))
+* gitleak disbale false postif ([626bd6f](https://github.com/IA-Generative/ocr-api/commit/626bd6f61b38bf6d8dabec832a9cf82249bc20b3))
+* linting helm ([9d1aac4](https://github.com/IA-Generative/ocr-api/commit/9d1aac499031bc9bbba0e3e8daf8c4f0f69baf5b))
+* non root user into container ([8fb66d5](https://github.com/IA-Generative/ocr-api/commit/8fb66d5fc3016cc0a5ad038d5c3912297eeb5806))
+* refresh gitleaksignore fingerprint after history rewrite ([773e764](https://github.com/IA-Generative/ocr-api/commit/773e764636bfcd02aa5938812046fd2a1a32361e))
+* **release:** bump pyproject.toml/package.json on prerelease too ([ff85715](https://github.com/IA-Generative/ocr-api/commit/ff85715d5761eafa4d3d2dbda3f28e02295e333d))
+* **security:** apt upgrade the api image's base packages ([#469](https://github.com/IA-Generative/ocr-api/issues/469)) ([a1f7fc7](https://github.com/IA-Generative/ocr-api/commit/a1f7fc7fc3eb0a414b32b7f4cd1d40ea84196b89))
+* **security:** apt upgrade the worker image's base packages ([#469](https://github.com/IA-Generative/ocr-api/issues/469)) ([4c9ce58](https://github.com/IA-Generative/ocr-api/commit/4c9ce58a45e2fcb875e59038fae1c03884b07606))
+* **security:** make the images usable under an arbitrary UID ([f9e2807](https://github.com/IA-Generative/ocr-api/commit/f9e2807b16adc7296cc62a994cd1feb1500521e5))
+* **security:** stop leaking secrets into the keycloak container and drop an unread test env var ([2daf830](https://github.com/IA-Generative/ocr-api/commit/2daf8303403abb3b336ee99c0951fe7a79d8886a))
+* sync gitleaksignore fingerprints onto this branch ([f297d13](https://github.com/IA-Generative/ocr-api/commit/f297d138475da259a5885b7d130f384fdf7467d9))
+* **version:** correct path to pyproject.toml for version detection ([07f1122](https://github.com/IA-Generative/ocr-api/commit/07f112205c3f3438692e44716c30b157277f3ff2))
+* **worker:** stop dropping pages 2+ of multi-page DOCX/PPTX/etc results ([d8ce56a](https://github.com/IA-Generative/ocr-api/commit/d8ce56a30a239eccce1e63e15da91927ba0aaf4d))
+
+
+### Performance Improvements
+
+* **client:** short-circuit the auth guard on an already-confirmed session ([6c9c5b4](https://github.com/IA-Generative/ocr-api/commit/6c9c5b4ce5b2dcfce91e989359005716aa49228d))
+* **client:** stop copying node_modules into the docker build context ([627c743](https://github.com/IA-Generative/ocr-api/commit/627c74361418ad4b3815e86ea5b64a8cbfbdae60))
+* update with latest package ([ba49a8f](https://github.com/IA-Generative/ocr-api/commit/ba49a8f1488d33fd44ba57c12aa8783b8e1d5c7c))
+
+
+### Code Refactoring
+
+* **frontend:** tighten task list types, drop any ([7ee64d9](https://github.com/IA-Generative/ocr-api/commit/7ee64d938e286471fa2ab42a84445682d9c23aab))
+* **sdk:** move the Python SDK into sdk/python ([7cb0bd8](https://github.com/IA-Generative/ocr-api/commit/7cb0bd8230dd9a3ba0c267d4df80104a584ad488))
+
+
+### Dependencies
+
+* **deps:** bump Node to 24 LTS and upgrade the JS dependencies ([b76539a](https://github.com/IA-Generative/ocr-api/commit/b76539af8b8d0ca3634be857fc263cc796e17fc8))
+* **deps:** migrate to pnpm 11 and refresh the container base images ([f8ab00c](https://github.com/IA-Generative/ocr-api/commit/f8ab00cc9ce07b60f2b3a656fa81bf6a0e3e5ed3))
+
 ## [0.20.0-rc.13](https://github.com/IA-Generative/ocr-api/compare/v0.20.0-rc.12...v0.20.0-rc.13) (2026-09-11)
 
 
