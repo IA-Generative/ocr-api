@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.2-rc](https://github.com/IA-Generative/ocr-api/compare/v0.20.1...v0.20.2-rc) (2026-09-16)
+
+
+### Bug Fixes
+
+* **compose:** replace defunct minio/minio image with rustfs/rustfs ([ce10aa5](https://github.com/IA-Generative/ocr-api/commit/ce10aa5eef9edb448d9040a6ac042bc6e913af03))
+
 ## [0.20.1](https://github.com/IA-Generative/ocr-api/compare/v0.20.0...v0.20.1) (2026-09-16)
 
 
