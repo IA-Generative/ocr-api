@@ -29,6 +29,13 @@
 - code clean
 - :art: change minio vars
 
+## [0.20.1-rc](https://github.com/IA-Generative/ocr-api/compare/v0.20.0...v0.20.1-rc) (2026-09-16)
+
+
+### Bug Fixes
+
+* **dso:** fall back to full chart package when before-SHA is unreachable ([57d5eea](https://github.com/IA-Generative/ocr-api/commit/57d5eea9f1d9dca5d4c779453a6590123b569309))
+
 ## [0.20.0](https://github.com/IA-Generative/ocr-api/compare/v0.19.11...v0.20.0) (2026-09-16)
 
 
