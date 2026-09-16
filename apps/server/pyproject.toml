@@ -1,7 +1,7 @@
 [project]
 name = "ocr-api"
 
-version = "0.20.1-rc"
+version = "0.20.1"
 
 description = "Add your description here"
 readme = "README.md"
