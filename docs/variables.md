@@ -1,6 +1,6 @@
 ## Environment Variables
 
-Ce projet utilise plusieurs variables d'environnement pour configurer les modèles OCR, Celery, les connecteurs de stockage (MinIO / S3), Redis, la base de données, ainsi que le monitoring des ressources.
+Ce projet utilise plusieurs variables d'environnement pour configurer les modèles OCR, Celery, les connecteurs de stockage (RustFS / S3), Redis, la base de données, ainsi que le monitoring des ressources.
 
 Les variables sont chargées automatiquement grâce à [`pydantic-settings`](https://docs.pydantic.dev/latest/concepts/pydantic_settings/), sauf mention contraire (certaines sont lues directement via `os.environ`).
 
@@ -57,15 +57,15 @@ Légende : ✅ = obligatoire (le service plante/refuse de démarrer si absente) 
 
 ---
 
-### Variables pour la configuration du connecteur de stockage (S3 / MinIO)
+### Variables pour la configuration du connecteur de stockage (S3 / RustFS)
 
-> ⚠️ **Corrigé** : la documentation précédente mentionnait `S3_AVAILABLE`/`MINIO_AVAILABLE` et des classes `ConnectorSettings`/`MinioSettings` — **elles n'existent plus dans le code** (vérifié par recherche exhaustive, aucune occurrence). Il n'y a qu'un seul connecteur de stockage (`S3Connector`, `src/connector/s3_connector.py`), utilisé aussi bien pour un vrai bucket AWS S3 que pour une instance MinIO locale (en pointant `AWS_ENDPOINT_URL` vers MinIO) — pas de bascule applicative entre les deux.
+> ⚠️ **Corrigé** : la documentation précédente mentionnait `S3_AVAILABLE`/`MINIO_AVAILABLE` et des classes `ConnectorSettings`/`MinioSettings` — **elles n'existent plus dans le code** (vérifié par recherche exhaustive, aucune occurrence). Il n'y a qu'un seul connecteur de stockage (`S3Connector`, `src/connector/s3_connector.py`), utilisé aussi bien pour un vrai bucket AWS S3 que pour une instance RustFS locale (en pointant `AWS_ENDPOINT_URL` vers RustFS, service S3-compatible qui a remplacé MinIO) — pas de bascule applicative entre les deux.
 
 Seuls deux réglages sont propres à l'application (`S3Settings`, `src/config/s3.py`) :
 
 | Variable | Obligatoire | Description | Default | Utilisation |
 |:---|:---:|:---|:---|:---|
-| `AWS_BUCKET_NAME` | ❌ | Nom du bucket S3/MinIO utilisé. | `test` | `S3Settings` |
+| `AWS_BUCKET_NAME` | ❌ | Nom du bucket S3/RustFS utilisé. | `test` | `S3Settings` |
 | `VERIFY_SSL` | ❌ | Vérifie le certificat SSL du endpoint S3. | `False` | `S3Settings` |
 
 Le reste des identifiants/endpoint est **lu nativement par boto3/botocore** (jamais par une classe `pydantic-settings` de ce repo) — ce sont les variables standard du SDK AWS :
@@ -74,7 +74,7 @@ Le reste des identifiants/endpoint est **lu nativement par boto3/botocore** (jam
 |:---|:---:|:---|:---|:---|
 | `AWS_ACCESS_KEY_ID` | ❌ (✅ si pas de rôle IAM) | Clé d'accès. | - | résolu nativement par `boto3` |
 | `AWS_SECRET_ACCESS_KEY` | ❌ (✅ si pas de rôle IAM) | Clé secrète. | - | résolu nativement par `boto3` |
-| `AWS_ENDPOINT_URL` | ❌ | Endpoint custom (utilisé en dev pour pointer vers MinIO au lieu d'AWS). | - (AWS par défaut) | résolu nativement par `boto3` |
+| `AWS_ENDPOINT_URL` | ❌ | Endpoint custom (utilisé en dev pour pointer vers RustFS au lieu d'AWS). | - (AWS par défaut) | résolu nativement par `boto3` |
 | `AWS_DEFAULT_REGION` | ❌ | Région AWS. | - | résolu nativement par `boto3` |
 
 > 💡 **Renommé** : `S3_BUCKET_NAME` s'appelait auparavant différemment du préfixe `AWS_` des quatre autres variables de stockage (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ENDPOINT_URL`, `AWS_DEFAULT_REGION`). Renommé en `AWS_BUCKET_NAME` dans le code pour cohérence (`S3Settings.AWS_BUCKET_NAME`, `src/config/s3.py`). ⚠️ **C'est un breaking change** : il faut mettre à jour Vault (et tout `.env`) avec `AWS_BUCKET_NAME` avant/au moment du déploiement de cette version, sans quoi le connecteur retombera sur la valeur par défaut `test`.
@@ -170,7 +170,7 @@ flow OAuth2 Authorization Code + PKCE, via `/api/auth/{login,callback,logout,me}
 | Volume | Type | Point de montage | Usage |
 |:---|:---|:---|:---|
 | `postgres_data` | volume nommé (PVC en cluster) | `/var/lib/postgresql/data` | Données PostgreSQL — **doit être persistant**. |
-| `minio_data` | volume nommé (PVC en cluster) | `/data` | Stockage objet MinIO (dev-only, remplacé par du vrai S3 en prod). |
+| `rustfs_data` | volume nommé (PVC en cluster) | `/data` | Stockage objet RustFS (dev-only, remplacé par du vrai S3 en prod). |
 
 > ⚠️ **Pas de volume dédié pour le cache de modèles PaddleOCR** (`PADDLE_OCR_BASE_DIR` / `PADDLE_PDX_CACHE_HOME`) : les modèles sont téléchargés et intégrés à l'image Docker au build (`business/paddleocr2/Dockerfile`), pas montés en volume à l'exécution. Chaque rebuild d'image retélécharge les modèles, et il n'y a pas de cache partagé entre replicas/pods. À considérer côté infra si la taille d'image ou le temps de démarrage posent problème.
 >
@@ -201,22 +201,12 @@ MODEL_NAME=paddle
 # Celery (WORKER_NAME/PROCESS_NAME sont injectés par worker dans docker-compose.yaml)
 CELERY_APP_NAME=my-celery-app
 
-# Connecteurs de stockage
-S3_AVAILABLE=False
-MINIO_AVAILABLE=True
-
-# Minio
-MINIO_BUCKET_NAME=test
-MINIO_END_POINT=localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-
-# S3 (si besoin)
+# Connecteurs de stockage (S3 / RustFS, lu nativement par boto3)
 AWS_BUCKET_NAME=test
-S3_END_POINT=localhost:9000
-S3_ACCESS_KEY=S3admin
-S3_SECRET_KEY=S3admin
-S3_REGION=fr-par
+AWS_ACCESS_KEY_ID=rustfsadmin
+AWS_SECRET_ACCESS_KEY=rustfsadmin
+AWS_ENDPOINT_URL=http://localhost:9000
+AWS_DEFAULT_REGION=us-east-1
 
 # Redis
 REDIS_HOST=localhost

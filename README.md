@@ -121,16 +121,16 @@ DATABASE_URL=postgresql://postgres:secret@db:5432/example_db
 # Monitoring interval (seconds)
 MONITOR_RESSOURCE_EVERY=5
 
-# S3 (MinIO) configuration
+# S3 (RustFS) configuration
 AWS_BUCKET_NAME=test
-AWS_ACCESS_KEY_ID=minioadmin
-AWS_SECRET_ACCESS_KEY=minioadmin
-AWS_ENDPOINT_URL=http://minio:9000
+AWS_ACCESS_KEY_ID=rustfsadmin
+AWS_SECRET_ACCESS_KEY=rustfsadmin
+AWS_ENDPOINT_URL=http://rustfs:9000
 AWS_DEFAULT_REGION=us-east-1
 
 # Terminal settings
 TERM=xterm-256color
-no_proxy=minio
+no_proxy=rustfs
 
 # OCR worker settings
 PROCESS_NAME="mixed-classic-and-vlm"
@@ -172,9 +172,9 @@ Cette commande construit les images si nécessaire et démarre tous les containe
 - Frontend (Vue) : [http://localhost:8081](http://localhost:8081)
 - Keycloak (dev, realm auto-provisionné) : [http://localhost:8080](http://localhost:8080)
   — Admin : `admin` / `admin`
-- Interface MinIO : [http://localhost:9001](http://localhost:9001)
-  — Identifiant : `minioadmin`
-  — Mot de passe : `minioadmin`
+- Interface RustFS : [http://localhost:9001](http://localhost:9001)
+  — Identifiant : `rustfsadmin`
+  — Mot de passe : `rustfsadmin`
 
 ---
 
@@ -186,7 +186,7 @@ Pour stopper et supprimer les containers, exécute :
 docker compose down
 ```
 
-Pour supprimer aussi les volumes persistants (base de données, MinIO), ajoute l’option `-v` :
+Pour supprimer aussi les volumes persistants (base de données, RustFS), ajoute l’option `-v` :
 
 ```bash
 docker compose down -v
