@@ -317,8 +317,8 @@ stress-stats: install-uv ## Print the load-test statistics
 # -----------------------------------------------------------------------------
 
 .PHONY: up-db
-up-db: ## Start only the data services (db, minio, redis) and apply migrations
-	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up -d db minio redis $(SVC_MIGRATION)
+up-db: ## Start only the data services (db, rustfs, redis) and apply migrations
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up -d db rustfs redis $(SVC_MIGRATION)
 
 .PHONY: upgrade-db
 upgrade-db: ## Apply the pending database migrations
@@ -359,7 +359,7 @@ build-ocr-frontend: ## Build the frontend Docker image
 
 .PHONY: build-deps
 build-deps: ## Build the Docker images the test stack depends on
-	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) build minio redis db $(SVC_MIGRATION)
+	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) build rustfs redis db $(SVC_MIGRATION)
 
 # Backwards-compatible alias — `build-container-dependencies` was the previous name.
 .PHONY: build-container-dependencies
