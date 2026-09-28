@@ -118,6 +118,40 @@ services:
     env_file:
       - .env
 
+  # Runs the periodic purge (old tasks + their S3 files, see apps/server/ocr_backend/purge.py)
+  # as a single Celery Beat scheduler + worker process. Embedded beat (--beat) keeps this to one
+  # container; only run one replica, otherwise the purge would be scheduled multiple times.
+  beat:
+    image: ocr-api
+    build:
+      target: test
+      context: .
+      dockerfile: apps/server/ocr_backend/Dockerfile
+    container_name: ocr-beat
+    command:
+      - "celery"
+      - "-A"
+      - "ocr_backend.celery_beat:celery_app"
+      - "worker"
+      - "--beat"
+      - "--pool=solo"
+      - "--loglevel=info"
+      - "--concurrency=1"
+      - "--hostname=purge_beat@%h"
+    volumes:
+      - ./apps/server/ocr_backend/:/app/ocr_backend/
+      - ./apps/server/src/:/app/src/
+    environment:
+      - CELERY_APP_NAME=default
+      - SERVICE_NAME=ocr_beat
+      - ENVIRONMENT=development
+    depends_on:
+      - redis
+      - db
+      - rustfs
+    env_file:
+      - .env
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.2
     container_name: keycloak
