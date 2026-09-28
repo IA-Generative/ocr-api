@@ -284,6 +284,39 @@ class TaskTable:
 
             return [TaskModel.model_validate(task) for task in tasks_to_delete]
 
+    def delete_tasks_created_before(
+        self,
+        cutoff_date: datetime,
+        statuses: Optional[List[TaskStatus]] = None,
+        batch_size: int = 100,
+    ) -> List[TaskModel]:
+        """Delete every task created before `cutoff_date`, in batches of `batch_size`.
+
+        Used by the periodic purge task (see `ocr_backend/purge.py`). Restricting to
+        `statuses` avoids deleting tasks that are still queued/in-progress: without a
+        filter, a slow task older than the retention window would be purged mid-run.
+        No offset/pagination is needed between batches: each deleted row stops
+        matching `Task.created_at < cutoff_ts`, so the same query naturally yields
+        the next batch.
+        """
+        cutoff_ts = int(cutoff_date.timestamp())
+        deleted: List[TaskModel] = []
+        with self.get_db() as db:
+            query = db.query(Task).filter(Task.created_at < cutoff_ts)
+            if statuses:
+                query = query.filter(Task.status.in_([s.value for s in statuses]))
+
+            while True:
+                batch = query.limit(batch_size).all()
+                if not batch:
+                    break
+                deleted.extend(TaskModel.model_validate(task) for task in batch)
+                for task in batch:
+                    db.delete(task)
+                db.commit()
+
+        return deleted
+
     def get_tasks_by_group_id(self, group_id: str, page: int = 1, page_size: int = 10) -> Optional[List[TaskModel]]:
         offset = (page - 1) * page_size
         with self.get_db() as db:

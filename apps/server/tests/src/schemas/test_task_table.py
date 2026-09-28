@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from src.schemas import Base
 from src.schemas.input import InputForm
 from src.schemas.task import (
+    Task,
     TaskTable,
     TaskForm,
     TaskUpdateForm,
@@ -429,3 +430,75 @@ def test_delete_tasks_by_group_id(task_table: TaskTable):
     # Step 4: Try to delete again
     deleted_tasks_again = task_table.delete_tasks_by_group_id(group_id="group_1")
     assert deleted_tasks_again is None or len(deleted_tasks_again) == 0
+
+
+def _backdate_task(db_session, task_id: str, days: int):
+    """Set a task's created_at to `days` in the past (insert_new_task always uses now())."""
+    cutoff_ts = int((datetime.now() - timedelta(days=days)).timestamp())
+    db_session.query(Task).filter(Task.id == task_id).update({"created_at": cutoff_ts})
+    db_session.commit()
+
+
+def test_delete_tasks_created_before(task_table: TaskTable, db_session):
+    old_completed = task_table.insert_new_task(
+        user_id="user1",
+        form_data=TaskForm(user_id="user1", type="ocr", status=TaskStatus.COMPLETED.value, percentage=100.0),
+    )
+    old_in_progress = task_table.insert_new_task(
+        user_id="user1",
+        form_data=TaskForm(user_id="user1", type="ocr", status=TaskStatus.IN_PROGRESS.value, percentage=50.0),
+    )
+    recent_completed = task_table.insert_new_task(
+        user_id="user1",
+        form_data=TaskForm(user_id="user1", type="ocr", status=TaskStatus.COMPLETED.value, percentage=100.0),
+    )
+    for task in (old_completed, old_in_progress):
+        _backdate_task(db_session, task.id, days=400)
+
+    deleted = task_table.delete_tasks_created_before(
+        cutoff_date=datetime.now() - timedelta(days=365),
+        statuses=[TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELED, TaskStatus.TIMEOUT],
+        batch_size=100,
+    )
+
+    # Only the old *and* terminal-status task is purged: the old in-progress task must
+    # survive (a task still running shouldn't vanish just because it's outlived the
+    # retention window), and the recent completed task is under the cutoff.
+    assert [task.id for task in deleted] == [old_completed.id]
+    assert task_table.get_task_by_id(old_completed.id) is None
+    assert task_table.get_task_by_id(old_in_progress.id) is not None
+    assert task_table.get_task_by_id(recent_completed.id) is not None
+
+
+def test_delete_tasks_created_before_batches(task_table: TaskTable, db_session):
+    tasks = [
+        task_table.insert_new_task(
+            user_id="user1",
+            form_data=TaskForm(user_id="user1", type="ocr", status=TaskStatus.COMPLETED.value, percentage=100.0),
+        )
+        for _ in range(5)
+    ]
+    for task in tasks:
+        _backdate_task(db_session, task.id, days=400)
+
+    deleted = task_table.delete_tasks_created_before(
+        cutoff_date=datetime.now() - timedelta(days=365),
+        statuses=[TaskStatus.COMPLETED],
+        batch_size=2,
+    )
+
+    assert len(deleted) == 5
+    for task in tasks:
+        assert task_table.get_task_by_id(task.id) is None
+
+
+def test_delete_tasks_created_before_no_status_filter(task_table: TaskTable, db_session):
+    task = task_table.insert_new_task(
+        user_id="user1",
+        form_data=TaskForm(user_id="user1", type="ocr", status=TaskStatus.QUEUED.value, percentage=0.0),
+    )
+    _backdate_task(db_session, task.id, days=400)
+
+    deleted = task_table.delete_tasks_created_before(cutoff_date=datetime.now() - timedelta(days=365))
+
+    assert [t.id for t in deleted] == [task.id]

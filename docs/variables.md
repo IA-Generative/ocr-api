@@ -46,6 +46,19 @@ Légende : ✅ = obligatoire (le service plante/refuse de démarrer si absente) 
 
 ---
 
+### Variables pour la purge périodique des tâches (Celery Beat)
+
+Purge automatique des tâches terminales (`completed`, `failed`, `canceled`, `timeout`) et de leurs fichiers S3/RustFS associés, une fois qu'elles dépassent la rétention configurée. Planifiée via Celery Beat (service `beat` de `docker-compose.yaml`, tâche `ocr_backend.purge_old_tasks` dans `ocr_backend/purge.py`).
+
+| Variable | Obligatoire | Description | Default | Utilisation |
+|:---|:---:|:---|:---|:---|
+| `PURGE_ENABLED` | ❌ | Active/désactive l'enregistrement de la tâche planifiée. | `true` | `PurgeSettings` (`src/config/purge.py`) |
+| `TASK_RETENTION_DAYS` | ❌ | Âge (en jours, basé sur `created_at`) à partir duquel une tâche terminale est purgée. | `365` | `PurgeSettings` |
+| `PURGE_BATCH_SIZE` | ❌ | Taille des lots de suppression en base (évite une transaction unique sur un gros volume). | `100` | `PurgeSettings` |
+| `PURGE_SCHEDULE_SECONDS` | ❌ | Intervalle, en secondes, entre deux exécutions de la purge. | `86400` (1 jour) | `PurgeSettings` |
+
+---
+
 ### Variables pour la configuration du connecteur de stockage (S3 / RustFS)
 
 > ⚠️ **Corrigé** : la documentation précédente mentionnait `S3_AVAILABLE`/`MINIO_AVAILABLE` et des classes `ConnectorSettings`/`MinioSettings` — **elles n'existent plus dans le code** (vérifié par recherche exhaustive, aucune occurrence). Il n'y a qu'un seul connecteur de stockage (`S3Connector`, `src/connector/s3_connector.py`), utilisé aussi bien pour un vrai bucket AWS S3 que pour une instance RustFS locale (en pointant `AWS_ENDPOINT_URL` vers RustFS, service S3-compatible qui a remplacé MinIO) — pas de bascule applicative entre les deux.
@@ -183,6 +196,12 @@ MODEL_NAME=paddle
 
 # Celery (WORKER_NAME/PROCESS_NAME sont injectés par worker dans docker-compose.yaml)
 CELERY_APP_NAME=my-celery-app
+
+# Purge périodique (Celery Beat, service `beat`)
+PURGE_ENABLED=true
+TASK_RETENTION_DAYS=365
+PURGE_BATCH_SIZE=100
+PURGE_SCHEDULE_SECONDS=86400
 
 # Connecteurs de stockage (S3 / RustFS, lu nativement par boto3)
 AWS_BUCKET_NAME=test
