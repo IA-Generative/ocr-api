@@ -51,7 +51,6 @@ COPY apps/server/pyproject.toml apps/server/uv.lock apps/server/.python-version 
 RUN uv sync --no-cache --group business-forms \
   --group checkbox_service \
   --group client \
-  --group llm \
   --group liteparse \
   --group media \
   --group ocr-service-paddle \
@@ -76,7 +75,6 @@ COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
 COPY apps/server/business/forms /app/business/forms
 COPY apps/server/business/features /app/business/features
-COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/docling_inference /app/business/docling_inference
 COPY apps/server/business/extractions /app/business/extractions
 COPY apps/server/business/liteparse /app/business/liteparse
@@ -114,7 +112,6 @@ FROM builder AS test
 RUN uv sync --no-cache --group business-forms \
   --group checkbox_service \
   --group client \
-  --group llm \
   --group liteparse \
   --group media \
   --group ocr-service-paddle \

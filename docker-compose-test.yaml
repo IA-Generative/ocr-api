@@ -93,10 +93,6 @@ services:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       PROCESS_NAME: "paddleocr-2.10.0"
-      OPENAI_API_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
-      OPENAI_VLM_MODEL_NAME: ${VISION_MODEL}
     depends_on:
       - redis
       - db
@@ -130,15 +126,11 @@ services:
       - ./apps/server/services/:/app/services/
       - ./apps/server/business/cache:/app/business/cache
       - ./apps/server/business/paddleocr3:/app/business/paddleocr3
-      - ./apps/server/business/llm:/app/business/llm
       - ./apps/server/business/checkbox_service:/app/business/checkbox_service
     environment:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       PROCESS_NAME: "paddleocr-3.0.1"
-      OPENAI_API_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
     depends_on:
       - redis
       - db
@@ -181,9 +173,6 @@ services:
       DEV_MODE: "true"
       CELERY_APP_NAME: default
       DEVICE: "gpu"
-      OPENAI_API_BASE_URL: ${OPENAI_BASE_URL}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      INSTRUCT_MODEL_NAME: ${INSTRUCT_MODEL_NAME}
       PROCESS_NAME: "paddleocr-3.0.1"
     depends_on:
       - redis

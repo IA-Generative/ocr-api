@@ -28,14 +28,13 @@ WORKDIR /app
 
 COPY apps/server/pyproject.toml apps/server/uv.lock /app/
 
-RUN uv sync --no-cache --group ocr-service-paddle --group llm
+RUN uv sync --no-cache --group ocr-service-paddle
 
 ENV PYTHONPATH=/app
 COPY apps/server/services /app/services
 COPY apps/server/src /app/src
 COPY apps/server/business/__init__.py /app/business/__init__.py
 COPY apps/server/business/paddleocr3 /app/business/paddleocr3
-COPY apps/server/business/llm /app/business/llm
 COPY apps/server/business/cache /app/business/cache
 COPY apps/server/business/checkbox_service /app/business/checkbox_service
 
@@ -67,6 +66,6 @@ USER 10001:10001
 CMD ["uv", "run", "services/main.py"]
 
 FROM paddle_model AS test
-RUN uv sync --group test --group ocr-service-paddle --group llm
+RUN uv sync --group test --group ocr-service-paddle
 COPY --chown=10001:0 apps/server/tests /app/tests
 CMD ["uv", "run", "services/main.py"]

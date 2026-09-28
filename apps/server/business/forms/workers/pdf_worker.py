@@ -56,8 +56,6 @@ class PDFFormsExtractorWorker(BaseWorker):
     def is_applicable(self, task: TaskModel) -> bool:
         if task.input.content_type != "application/pdf":
             return False
-        if task.type in [TaskOperation.VLM_OCR]:
-            return False
         t = time.time()
         doc = self._get_cached_document(task)
 
