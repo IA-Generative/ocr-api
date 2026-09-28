@@ -29,6 +29,23 @@
 - code clean
 - :art: change minio vars
 
+## [0.21.0-rc](https://github.com/IA-Generative/ocr-api/compare/v0.20.2...v0.21.0-rc) (2026-09-28)
+
+
+### Features
+
+* **purge:** periodic purge of old tasks via Celery Beat ([e0f17e0](https://github.com/IA-Generative/ocr-api/commit/e0f17e0f47296c09612429385bf7a968561f9a4d))
+
+
+### Bug Fixes
+
+* **pipeline:** remove LLM-based OCR/form extraction entirely ([55a2357](https://github.com/IA-Generative/ocr-api/commit/55a23578e57766109c3d15a474467f7b18bb78fa))
+
+
+### Code Refactoring
+
+* **purge:** schedule purge with a Celery crontab instead of a plain interval ([1e2213c](https://github.com/IA-Generative/ocr-api/commit/1e2213c96703f7c4e333c2fba7b8d72c25a951a8))
+
 ## [0.20.2](https://github.com/IA-Generative/ocr-api/compare/v0.20.1...v0.20.2) (2026-09-16)
 
 
