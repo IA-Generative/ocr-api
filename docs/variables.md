@@ -55,7 +55,11 @@ Purge automatique des tâches terminales (`completed`, `failed`, `canceled`, `ti
 | `PURGE_ENABLED` | ❌ | Active/désactive l'enregistrement de la tâche planifiée. | `true` | `PurgeSettings` (`src/config/purge.py`) |
 | `TASK_RETENTION_DAYS` | ❌ | Âge (en jours, basé sur `created_at`) à partir duquel une tâche terminale est purgée. | `365` | `PurgeSettings` |
 | `PURGE_BATCH_SIZE` | ❌ | Taille des lots de suppression en base (évite une transaction unique sur un gros volume). | `100` | `PurgeSettings` |
-| `PURGE_SCHEDULE_SECONDS` | ❌ | Intervalle, en secondes, entre deux exécutions de la purge. | `86400` (1 jour) | `PurgeSettings` |
+| `PURGE_CRON_MINUTE` | ❌ | Champ `minute` du [crontab Celery](https://docs.celeryq.dev/en/4.0/userguide/periodic-tasks.html#crontab-schedules). | `0` | `PurgeSettings` |
+| `PURGE_CRON_HOUR` | ❌ | Champ `hour` du crontab Celery. | `2` | `PurgeSettings` |
+| `PURGE_CRON_DAY_OF_WEEK` | ❌ | Champ `day_of_week` du crontab Celery. | `*` | `PurgeSettings` |
+| `PURGE_CRON_DAY_OF_MONTH` | ❌ | Champ `day_of_month` du crontab Celery. | `*` | `PurgeSettings` |
+| `PURGE_CRON_MONTH_OF_YEAR` | ❌ | Champ `month_of_year` du crontab Celery. | `*` | `PurgeSettings` |
 
 ---
 
@@ -201,7 +205,11 @@ CELERY_APP_NAME=my-celery-app
 PURGE_ENABLED=true
 TASK_RETENTION_DAYS=365
 PURGE_BATCH_SIZE=100
-PURGE_SCHEDULE_SECONDS=86400
+PURGE_CRON_MINUTE=0
+PURGE_CRON_HOUR=2
+PURGE_CRON_DAY_OF_WEEK=*
+PURGE_CRON_DAY_OF_MONTH=*
+PURGE_CRON_MONTH_OF_YEAR=*
 
 # Connecteurs de stockage (S3 / RustFS, lu nativement par boto3)
 AWS_BUCKET_NAME=test
