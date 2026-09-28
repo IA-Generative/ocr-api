@@ -70,7 +70,6 @@ class TaskOperation(str, Enum):
     SAVE_TEMPLATE: str = "save_template"
     FORMS: str = "forms"
     VECTORIZE: str = "vectorize"
-    VLM_OCR: str = "vlm_ocr"
     DOCLING: str = "docling"
 
 

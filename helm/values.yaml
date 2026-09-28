@@ -2074,19 +2074,6 @@ worker:
     # Dockerfile) so the CUDA-enabled PaddlePaddle wheel is installed - then set this to "gpu"
     # and request `nvidia.com/gpu` below.
     # DEVICE: "gpu"
-    # OpenAI-compatible client used by the worker for vision/LLM extraction
-    # (`services/factory.py::load_worker`, `origin/main`). All three have safe fallbacks baked into
-    # the app itself (`os.environ.get(..., default)`), so leaving them as-is does NOT crash the
-    # worker - it just can't authenticate against a real endpoint until `OPENAI_API_KEY` is set.
-    # No safe default exists for the secret itself; the app's own fallback ("default-api-key")
-    # exists purely to avoid a crash, not to authenticate.
-    # OPENAI_API_KEY: ""
-    # Matches the app's own fallback (OpenAI's public endpoint).
-    # OPENAI_API_BASE_URL: "https://api.openai.com/v1"
-    # Leave empty to use the app's own fallback ("mistral-small-3.1-24b-instruct-2503") - that
-    # model name assumes a Mistral-compatible endpoint, not the OpenAI default above; set both
-    # together explicitly for a working combination.
-    # VISION_MODEL_NAME: ""
   # A: "A"
   # B:
   #   valueFrom:

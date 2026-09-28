@@ -36,7 +36,6 @@ COPY services /app/services
 COPY src /app/src
 COPY business/__init__.py /app/business/__init__.py
 COPY business/paddleocr3 /app/business/paddleocr3
-COPY business/llm /app/business/llm
 COPY business/cache /app/business/cache
 COPY business/checkbox_service /app/business/checkbox_service
 

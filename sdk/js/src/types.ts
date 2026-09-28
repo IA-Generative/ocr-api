@@ -21,7 +21,6 @@ export type TaskOperation
     | 'save_template'
     | 'forms'
     | 'vectorize'
-    | 'vlm_ocr'
     | 'docling'
 
 export interface BaseBox {

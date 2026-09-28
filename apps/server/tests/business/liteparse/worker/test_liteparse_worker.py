@@ -89,7 +89,7 @@ def test_is_applicable_false_wrong_mime(worker, content_type, filename):
     assert worker.is_applicable(task) is False
 
 
-@pytest.mark.parametrize("op", [TaskOperation.VLM_OCR, TaskOperation.DOCLING, TaskOperation.FORMS])
+@pytest.mark.parametrize("op", [TaskOperation.DOCLING, TaskOperation.FORMS])
 def test_is_applicable_false_wrong_operation(worker, op):
     task = _make_task("text/csv", "data.csv", task_type=op)
     assert worker.is_applicable(task) is False

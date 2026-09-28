@@ -222,7 +222,6 @@ TaskOperation.OCR            # OCR standard
 TaskOperation.SAVE_TEMPLATE  # Sauvegarder comme template
 TaskOperation.FORMS          # Extraction de formulaires
 TaskOperation.VECTORIZE      # Vectorisation
-TaskOperation.VLM_OCR        # OCR avec VLM
 TaskOperation.DOCLING        # Traitement Docling
 ```
 
