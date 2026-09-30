@@ -240,33 +240,6 @@ class SyncOCRClient:
 
         return TaskModel(**response.json())
 
-    def create_job_from_youtube(
-        self,
-        url: str,
-        group_id: str = "DEFAULT",
-        task_operation: TaskOperation = TaskOperation.DEFAULT,
-    ) -> TaskModel:
-        """Create a new OCR/transcription job from a YouTube URL.
-
-        Args:
-            url: YouTube video URL
-            group_id: Group ID for the task
-            task_operation: Type of operation to perform
-
-        Returns:
-            TaskModel with job details
-        """
-        response = self._request(
-            "POST",
-            "/api/jobs/youtube",
-            data={
-                "url": url,
-                "group_id": group_id,
-                "task_operation": task_operation.value,
-            },
-        )
-        return TaskModel(**response.json())
-
     def get_task(self, task_id: str) -> TaskModel:
         """Get task details by ID.
 

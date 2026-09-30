@@ -243,17 +243,6 @@ export class OCRClient {
     return (await response.json()) as TaskModel
   }
 
-  /** Create a transcription/extraction job from a YouTube URL. */
-  async createJobFromYoutube (url: string, options: CreateJobOptions = {}): Promise<TaskModel> {
-    const form = new FormData()
-    form.append('url', url)
-    form.append('group_id', options.groupId ?? DEFAULT_GROUP_ID)
-    form.append('task_operation', options.taskOperation ?? DEFAULT_TASK_OPERATION)
-
-    const response = await this.request('/api/jobs/youtube', { method: 'POST', body: form })
-    return (await response.json()) as TaskModel
-  }
-
   /** Get task details by ID. */
   async getTask (taskId: string): Promise<TaskModel> {
     const response = await this.request(`/api/tasks/${encodeURIComponent(taskId)}`, { method: 'GET' })

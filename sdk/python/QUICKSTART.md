@@ -148,7 +148,6 @@ Both clients have the same methods (async methods use `await`):
 - `refresh()` - Proactively renew the access token (called automatically on a 401)
 - `get_health()` - Get API health status
 - `create_job(file_path, ...)` - Upload file and create OCR job
-- `create_job_from_youtube(url, ...)` - Create a job from a YouTube URL
 - `get_task(task_id)` - Get task details
 - `get_task_page_image(task_id, page_number)` - Download a page's rendered image
 - `get_user_tasks(page, page_size)` - List user's tasks (paginated - `.items`/`.total`)
