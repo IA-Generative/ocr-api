@@ -36,7 +36,7 @@ app = FastAPI(
     title="MIrAI OCR API",
     version=__version__,
     description=(
-        "OCR/document extraction API: upload a file (or a YouTube URL) as a job, poll or "
+        "OCR/document extraction API: upload a file as a job, poll or "
         "wait for it to complete, then pull the extracted text/structured content.\n\n"
         "Authenticate with an `Authorization: Bearer <API key>` header on the `Jobs`/"
         "`Process`/`Tasks`/`Text` routes."
@@ -45,7 +45,7 @@ app = FastAPI(
     redoc_url="/api/redocs",
     openapi_url="/api/openapi.json",
     openapi_tags=[
-        {"name": "Jobs", "description": "Create OCR/extraction jobs from a file or a YouTube URL."},
+        {"name": "Jobs", "description": "Create OCR/extraction jobs from a file."},
         {
             "name": "Process",
             "description": "One-shot upload-and-wait endpoint (OpenWebUI-style): "

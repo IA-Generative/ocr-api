@@ -7,7 +7,7 @@ from src.logger import logger, Colors
 @runtime_checkable
 class ProcessWorker(Protocol):
     """Contrat minimal requis par ``Pipeline`` : un worker OCR (``BaseWorker``)
-    ou tout autre worker (ex: ``YoutubeTranscriptionWorker``) qui l'implémente."""
+    ou tout autre worker qui l'implémente."""
 
     name: str
 

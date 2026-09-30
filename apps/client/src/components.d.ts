@@ -27,8 +27,6 @@ declare module 'vue' {
     DsfrSearchBar: typeof import('@gouvminint/vue-dsfr')['DsfrSearchBar']
     DsfrTile: typeof import('@gouvminint/vue-dsfr')['DsfrTile']
     InfoBulle: typeof import('./components/InfoBulle.vue')['default']
-    MediaResultViewer: typeof import('./components/MediaResultViewer.vue')['default']
-    MediaViewer: typeof import('./components/MediaViewer.vue')['default']
     OcrViewer: typeof import('./components/OcrViewer.vue')['default']
     ProgressBar: typeof import('./components/ProgressBar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

@@ -135,11 +135,6 @@ ocr-docling = [
     "docling>=2.121.0",
 ]
 
-media = [
-    "yt-dlp>=2025.1.1",
-    "webvtt-py>=0.5.1",
-]
-
 
 [tool.commitizen]
 name = "cz_conventional_commits"
