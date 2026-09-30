@@ -57,11 +57,6 @@ RUN uv sync --no-cache --group business-forms \
   --group services \
   && uv cache clean
 
-# opencv-python (boxdetect, rapidocr), opencv-python-headless (ocr-api) and
-# opencv-contrib-python (paddlex) all ship into the same `cv2/` directory, and uv unpacks them
-# in parallel - a bad interleaving leaves a mixed install that fails on `import cv2`
-# ("partially initialized module 'cv2'"). Re-unpack the variant paddlex pins last so the
-# outcome is deterministic.
 RUN uv pip install --no-cache --reinstall --no-deps "opencv-contrib-python==4.10.0.84"
 
 RUN if [ "$PADDLE_DEVICE" = "gpu" ]; then \
