@@ -35,3 +35,7 @@ helm/charts/*.tgz
 
 # Local working notes, not meant to be committed.
 TODO.md
+
+# local environment (never commit; copy from .env.example)
+.env
+.env.local
