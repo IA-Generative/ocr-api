@@ -29,6 +29,15 @@
 - code clean
 - :art: change minio vars
 
+## [0.21.1-rc](https://github.com/IA-Generative/ocr-api/compare/v0.21.0...v0.21.1-rc) (2026-09-30)
+
+
+### Bug Fixes
+
+* **ci:** drop the YouTube SDK methods and make the paddle opencv install deterministic ([7042087](https://github.com/IA-Generative/ocr-api/commit/7042087d6459be524f3015757e9f35d478babfd2))
+* **client:** upgrade libexpat in the nginx image (CVE-2026-93990) ([cc7c170](https://github.com/IA-Generative/ocr-api/commit/cc7c1709aecaffa982cb41932b27b53403afee35))
+* **docker:** drop the removed media group and directory from the paddle image ([38a875e](https://github.com/IA-Generative/ocr-api/commit/38a875e3d6ada314e7f1f3d9109366668bd89696))
+
 ## [0.21.0](https://github.com/IA-Generative/ocr-api/compare/v0.20.2...v0.21.0) (2026-09-30)
 
 
