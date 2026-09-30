@@ -45,6 +45,12 @@ RUN pnpm run build
 # prod
 FROM docker.io/nginxinc/nginx-unprivileged:1.30.4-alpine AS prod
 
+# libexpat 2.8.4 (CVE-2026-93990) ships in the base image; pull the fixed 2.8.5 until the
+# nginx tag is bumped. Drop this once the base image already carries libexpat >= 2.8.5.
+USER root
+RUN apk upgrade --no-cache libexpat
+USER 101
+
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx/50x.html /usr/share/nginx/html
 COPY nginx/40x.html /usr/share/nginx/html
