@@ -147,8 +147,13 @@ doctor: ## Report which required tools are present on this machine
 ## ▸ Development
 # -----------------------------------------------------------------------------
 
+# `.env` is not tracked (see .gitignore): create it from the template when missing, so a
+# fresh clone or a CI runner gets the local-stack defaults docker-compose expects.
+.env:
+	cp .env.example .env
+
 .PHONY: up
-up: ## Start the containerised development stack
+up: .env ## Start the containerised development stack
 	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) up -d
 
 .PHONY: down
@@ -295,7 +300,7 @@ tests-liteparse: up-db ## Run the liteparse tests in Docker
 	@$(MAKE) down-test
 
 .PHONY: test-sdk
-test-sdk: install-uv ## Run the Python SDK test suite against a live stack
+test-sdk: .env install-uv ## Run the Python SDK test suite against a live stack
 	@$(DOCKER_COMPOSE) -f $(COMPOSE_DEV) up -d
 	@cd $(SDK_DIR) && \
 		$(UV) sync --dev && \
@@ -317,7 +322,7 @@ stress-stats: install-uv ## Print the load-test statistics
 # -----------------------------------------------------------------------------
 
 .PHONY: up-db
-up-db: ## Start only the data services (db, rustfs, redis) and apply migrations
+up-db: .env ## Start only the data services (db, rustfs, redis) and apply migrations
 	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) up -d db rustfs redis $(SVC_MIGRATION)
 
 .PHONY: upgrade-db
@@ -358,7 +363,7 @@ build-ocr-frontend: ## Build the frontend Docker image
 	@$(DOCKER_COMPOSE) -f $(COMPOSE_FRONT) build $(SVC_FRONTEND)
 
 .PHONY: build-deps
-build-deps: ## Build the Docker images the test stack depends on
+build-deps: .env ## Build the Docker images the test stack depends on
 	@$(DOCKER_COMPOSE) -f $(COMPOSE_TEST) build rustfs redis db $(SVC_MIGRATION)
 
 # Backwards-compatible alias — `build-container-dependencies` was the previous name.
