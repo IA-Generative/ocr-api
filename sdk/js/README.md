@@ -103,7 +103,6 @@ catch (err) {
 - `refresh()` — renouvelle le jeton d'accès de façon proactive (appelé automatiquement sur un 401)
 - `getHealth()`
 - `createJob(filePath, { groupId?, interestZone?, taskOperation? })`
-- `createJobFromYoutube(url, { groupId?, taskOperation? })`
 - `getTask(taskId)`
 - `getTaskPageImage(taskId, pageNumber)` — retourne un `Buffer`
 - `getUserTasks(page?, pageSize?)`
