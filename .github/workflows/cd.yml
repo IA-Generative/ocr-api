@@ -244,6 +244,13 @@ jobs:
   # its next versions from a pre-release state and conflicts with main on the
   # following promotion.
   #
+  # It runs on every push to main, release or not. The repository deletes head
+  # branches on merge, which removes dev once a promotion is merged; without a
+  # release in that promotion dev would stay missing, or keep commits that main
+  # now has under other SHAs. The shared workflow creates dev from main when it
+  # is missing and otherwise rebases it, and the concurrency group above keeps
+  # the run started by bump-chart's own push behind this one.
+  #
   # `needs:` lists exactly the jobs that COMMIT to main - release and
   # bump-chart - and nothing else. build-docker and release-chart commit
   # nothing, and listing them would only let a failed build or a failed publish
@@ -259,7 +266,10 @@ jobs:
     - expose-vars
     - release
     - bump-chart
-    if: ${{ github.ref_name == needs.expose-vars.outputs.RELEASE_BRANCH && needs.release.outputs.release-created == 'true' }}
+    # Also when nothing was released, but never after a failed release or chart
+    # bump: with a release it still waits for bump-chart, and `!cancelled()` is
+    # what lets it run while bump-chart is skipped.
+    if: ${{ !cancelled() && github.ref_name == needs.expose-vars.outputs.RELEASE_BRANCH && needs.release.result == 'success' && (needs.release.outputs.release-created != 'true' || needs.bump-chart.result == 'success') }}
     permissions:
       contents: write
     with:
