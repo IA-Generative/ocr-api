@@ -1,7 +1,7 @@
 apiVersion: v2
 name: ocr
 type: application
-version: 0.3.1
+version: 0.3.2
 appVersion: "0.21.1"
 description: A Helm chart to deploy ocr.
 # home: https://this-is-tobi.com
@@ -30,7 +30,7 @@ dependencies:
     repository: https://cloudnative-pg.github.io/charts
     condition: cnpg.enabled
 sources:
-  - https://github.com/IA-Generative/ocr-api
+  - https://github.com/IA-Generative/ocr
 maintainers: []
 # - name: this-is-tobi
 #   email: this-is-tobi@proton.me
